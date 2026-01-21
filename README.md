@@ -1,4 +1,4 @@
-# AI_utils & tools
+# AI utils & tools
 Simple utilities and apps made by Chris Bremer using AI
 
 ---
