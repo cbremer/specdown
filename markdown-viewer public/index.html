@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Diagram Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- CDN Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/yaml.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Markdown Diagram Viewer</h1>
+            <div class="header-controls">
+                <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Drop Zone (shown when no file is loaded) -->
+        <div id="drop-zone" class="drop-zone">
+            <div class="drop-zone-content">
+                <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h2>Drop Markdown File Here</h2>
+                <p>or click to browse</p>
+                <input type="file" id="file-input" accept=".md,.markdown" hidden>
+                <button id="browse-button" class="browse-button">Browse Files</button>
+            </div>
+            <div class="drop-zone-overlay">
+                <p>Drop file to open</p>
+            </div>
+        </div>
+
+        <!-- Content Area (shown when file is loaded) -->
+        <div id="content-area" class="content-area" style="display: none;">
+            <div class="content-header">
+                <div class="file-info">
+                    <span class="file-icon">📄</span>
+                    <span id="file-name" class="file-name"></span>
+                </div>
+                <button id="load-new-file" class="load-new-button" title="Load another file">
+                    Load New File
+                </button>
+            </div>
+            <div id="markdown-content" class="markdown-content"></div>
+        </div>
+
+        <!-- Fullscreen Overlay -->
+        <div id="fullscreen-overlay" class="fullscreen-overlay" style="display: none;">
+            <div class="fullscreen-content">
+                <div class="fullscreen-controls">
+                    <button class="zoom-in" title="Zoom in">+</button>
+                    <button class="zoom-out" title="Zoom out">-</button>
+                    <button class="reset" title="Reset view">⟲</button>
+                    <button class="close-fullscreen" title="Exit fullscreen (ESC)">✕</button>
+                </div>
+                <div class="fullscreen-diagram-wrapper"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

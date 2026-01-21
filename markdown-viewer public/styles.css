@@ -1,0 +1,594 @@
+/* ===========================
+   CSS Variables & Theming
+   =========================== */
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e8e8e8;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --border-color: #dddddd;
+    --accent-color: #4a90e2;
+    --accent-hover: #357abd;
+    --success-color: #7ed321;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+    --transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #3a3a3a;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-color: #444444;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* ===========================
+   Base Styles
+   =========================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ===========================
+   Header
+   =========================== */
+.app-header {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    z-index: 100;
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: var(--transition);
+}
+
+.theme-toggle:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+/* ===========================
+   Drop Zone
+   =========================== */
+.drop-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+}
+
+.drop-zone-content {
+    text-align: center;
+    padding: 4rem;
+    border: 3px dashed var(--border-color);
+    border-radius: 16px;
+    background-color: var(--bg-primary);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.drop-zone-content:hover {
+    border-color: var(--accent-color);
+    background-color: var(--bg-secondary);
+    transform: scale(1.02);
+}
+
+.drop-zone.drag-over .drop-zone-content {
+    border-color: var(--accent-color);
+    background-color: var(--bg-secondary);
+    transform: scale(1.05);
+}
+
+.drop-zone-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--accent-color);
+    margin: 0 auto 1rem;
+}
+
+.drop-zone-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.drop-zone-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.browse-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.browse-button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.drop-zone-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(74, 144, 226, 0.1);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    pointer-events: none;
+}
+
+.drop-zone.drag-over .drop-zone-overlay {
+    display: flex;
+}
+
+/* ===========================
+   Content Area
+   =========================== */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-header {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+}
+
+.file-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.load-new-button {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.load-new-button:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.markdown-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background-color: var(--bg-primary);
+}
+
+/* ===========================
+   Markdown Styling
+   =========================== */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-primary);
+}
+
+.markdown-content h1 { font-size: 2em; border-bottom: 2px solid var(--border-color); padding-bottom: 0.3em; }
+.markdown-content h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+.markdown-content h3 { font-size: 1.25em; }
+.markdown-content h4 { font-size: 1.1em; }
+.markdown-content h5 { font-size: 1em; }
+.markdown-content h6 { font-size: 0.9em; color: var(--text-secondary); }
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1em;
+    padding-left: 2em;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5em;
+}
+
+.markdown-content code {
+    background-color: var(--bg-tertiary);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1em;
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--border-color);
+    padding: 0.75em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--accent-color);
+    padding-left: 1em;
+    margin-left: 0;
+    margin-bottom: 1em;
+    color: var(--text-secondary);
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===========================
+   Diagram Container
+   =========================== */
+.diagram-container {
+    position: relative;
+    margin: 2em 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.diagram-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+    background-color: var(--bg-primary);
+    padding: 5px;
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+}
+
+.diagram-controls button {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+}
+
+.diagram-controls button:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.diagram-wrapper {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    cursor: grab;
+    overflow: hidden;
+    position: relative;
+}
+
+.diagram-wrapper:active {
+    cursor: grabbing;
+}
+
+.diagram-wrapper svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===========================
+   Fullscreen Overlay
+   =========================== */
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-secondary);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+/* Add semi-transparent backdrop effect based on theme */
+[data-theme="light"] .fullscreen-overlay {
+    background-color: rgba(245, 245, 245, 0.98);
+}
+
+[data-theme="dark"] .fullscreen-overlay {
+    background-color: rgba(26, 26, 26, 0.98);
+}
+
+.fullscreen-content {
+    position: relative;
+    width: 95vw;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 1001;
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+}
+
+.fullscreen-controls button {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+    min-width: 40px;
+}
+
+.fullscreen-controls button:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.fullscreen-controls .close-fullscreen {
+    background-color: #e74c3c;
+    color: white;
+    border-color: #c0392b;
+}
+
+.fullscreen-controls .close-fullscreen:hover {
+    background-color: #c0392b;
+}
+
+.fullscreen-diagram-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: grab;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.fullscreen-diagram-wrapper:active {
+    cursor: grabbing;
+}
+
+.fullscreen-diagram-wrapper svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* ===========================
+   Scrollbar Styling
+   =========================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ===========================
+   Animations
+   =========================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.markdown-content {
+    animation: fadeIn 0.4s ease;
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.2rem;
+    }
+
+    .markdown-content {
+        padding: 1rem;
+    }
+
+    .diagram-controls,
+    .fullscreen-controls {
+        flex-wrap: wrap;
+    }
+
+    .diagram-controls button,
+    .fullscreen-controls button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+@media print {
+    .app-header,
+    .content-header,
+    .diagram-controls,
+    .load-new-button,
+    .theme-toggle {
+        display: none !important;
+    }
+
+    .markdown-content {
+        padding: 0;
+    }
+
+    .diagram-wrapper {
+        page-break-inside: avoid;
+    }
+}
