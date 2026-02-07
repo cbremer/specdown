@@ -1,6 +1,6 @@
 {
   "name": "markdown-diagram-viewer",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "A lightweight, browser-based markdown viewer with enhanced diagram navigation capabilities",
   "main": "markdown-viewer/app.js",
   "scripts": {
