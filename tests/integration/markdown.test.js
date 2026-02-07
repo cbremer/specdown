@@ -18,22 +18,22 @@ describe('Markdown Rendering', () => {
     it('should configure marked with GFM enabled', () => {
       configureMarked();
 
-      expect(marked.setOptions).toHaveBeenCalled();
-      const config = marked.setOptions.mock.calls[0][0];
+      expect(marked.use).toHaveBeenCalled();
+      const config = marked.use.mock.calls[0][0];
       expect(config.gfm).toBe(true);
     });
 
     it('should enable line breaks', () => {
       configureMarked();
 
-      const config = marked.setOptions.mock.calls[0][0];
+      const config = marked.use.mock.calls[0][0];
       expect(config.breaks).toBe(true);
     });
 
     it('should configure a custom renderer for syntax highlighting', () => {
       configureMarked();
 
-      const config = marked.setOptions.mock.calls[0][0];
+      const config = marked.use.mock.calls[0][0];
       expect(config.renderer).toBeDefined();
       expect(typeof config.renderer.code).toBe('function');
     });
@@ -133,7 +133,7 @@ describe('Markdown Rendering', () => {
     it('should highlight code blocks via renderer.code', () => {
       configureMarked();
 
-      const config = marked.setOptions.mock.calls[0][0];
+      const config = marked.use.mock.calls[0][0];
       const codeRenderer = config.renderer.code;
 
       codeRenderer('console.log("test")', 'javascript');
@@ -146,7 +146,7 @@ describe('Markdown Rendering', () => {
     it('should handle highlight errors gracefully', () => {
       configureMarked();
 
-      const config = marked.setOptions.mock.calls[0][0];
+      const config = marked.use.mock.calls[0][0];
       const codeRenderer = config.renderer.code;
 
       hljs.highlight.mockImplementation(() => {
@@ -163,7 +163,7 @@ describe('Markdown Rendering', () => {
     it('should return escaped code for unknown languages', () => {
       configureMarked();
 
-      const config = marked.setOptions.mock.calls[0][0];
+      const config = marked.use.mock.calls[0][0];
       const codeRenderer = config.renderer.code;
 
       // Mock getLanguage to return undefined for unknown language
