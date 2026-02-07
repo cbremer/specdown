@@ -50,5 +50,11 @@
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.js"
     ]
+  },
+  "dependencies": {
+    "@highlightjs/cdn-assets": "^11.9.0",
+    "@panzoom/panzoom": "^4.5.1",
+    "marked": "^11.1.1",
+    "mermaid": "^10.6.1"
   }
 }
