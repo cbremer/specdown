@@ -66,10 +66,55 @@ body {
     z-index: 100;
 }
 
+.header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
 .app-header h1 {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+.version-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.version-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.version-update {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.version-update a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.version-update a:hover {
+    text-decoration: underline;
+}
+
+.source-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-left: 1px solid var(--border-color);
+    padding-left: 0.75rem;
+}
+
+.source-link:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
 }
 
 .header-controls {
@@ -552,8 +597,16 @@ body {
         padding: 0.75rem 1rem;
     }
 
+    .header-left {
+        gap: 0.5rem;
+    }
+
     .app-header h1 {
         font-size: 1.2rem;
+    }
+
+    .version-info {
+        font-size: 0.7rem;
     }
 
     .markdown-content {

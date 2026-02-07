@@ -17,6 +17,9 @@ jest.spyOn(Storage.prototype, 'clear');
 // Mock alert
 global.alert = jest.fn();
 
+// Mock fetch for version check
+global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
+
 // Mock console methods to reduce test noise (optional)
 global.console = {
   ...console,
@@ -77,6 +80,7 @@ beforeEach(() => {
   Storage.prototype.clear.mockClear();
 
   global.alert.mockClear();
+  global.fetch.mockClear();
   global.console.error.mockClear();
   global.console.warn.mockClear();
 

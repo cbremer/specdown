@@ -3,6 +3,10 @@
 // ===========================
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const APP_VERSION = '0.025';
+const APP_VERSION_LABEL = 'alpha';
+const SOURCE_REPO = 'cbremer/markdown-viewer';
+const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 
 // ===========================
 // Global State
@@ -31,6 +35,34 @@ function init() {
     setupEventListeners();
     configureMermaid();
     configureMarked();
+    checkForUpdates();
+}
+
+// ===========================
+// Version Check
+// ===========================
+function checkForUpdates() {
+    const apiUrl = 'https://api.github.com/repos/' + SOURCE_REPO + '/releases/latest';
+    fetch(apiUrl)
+        .then(function(response) {
+            if (!response.ok) return null;
+            return response.json();
+        })
+        .then(function(data) {
+            if (!data || !data.tag_name) return;
+            const latest = data.tag_name.replace(/^v/, '');
+            if (latest !== APP_VERSION) {
+                const updateEl = document.getElementById('version-update');
+                if (updateEl) {
+                    const releaseUrl = data.html_url || SOURCE_REPO_URL + '/releases/latest';
+                    updateEl.innerHTML = '<a href="' + releaseUrl + '" target="_blank" rel="noopener noreferrer">v' + latest + ' available</a>';
+                    updateEl.style.display = '';
+                }
+            }
+        })
+        .catch(function() {
+            // Version check is non-critical; silently ignore failures
+        });
 }
 
 // ===========================
