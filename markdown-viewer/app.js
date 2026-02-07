@@ -170,7 +170,9 @@ function configureMarked() {
         gfm: true,
         renderer: {
             code(code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
+                // Guard against non-string code or missing hljs
+                if (typeof code !== 'string') return false;
+                if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
                     try {
                         const highlighted = hljs.highlight(code, { language: lang }).value;
                         return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
