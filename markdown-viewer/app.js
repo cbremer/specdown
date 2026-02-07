@@ -162,20 +162,27 @@ function handleFile(file) {
 // Markdown Configuration
 // ===========================
 function configureMarked() {
-    // Configure marked with custom renderer
-    marked.setOptions({
-        highlight: function(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-                try {
-                    return hljs.highlight(code, { language: lang }).value;
-                } catch (err) {
-                    console.error('Highlight error:', err);
-                }
+    // Configure marked with custom renderer for syntax highlighting
+    // Note: marked v11 removed the top-level `highlight` option;
+    // use a custom renderer instead.
+    const renderer = new marked.Renderer();
+    renderer.code = function({ text, lang }) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                const highlighted = hljs.highlight(text, { language: lang }).value;
+                return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+            } catch (err) {
+                console.error('Highlight error:', err);
             }
-            return code;
-        },
+        }
+        const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
+    };
+
+    marked.setOptions({
         breaks: true,
-        gfm: true
+        gfm: true,
+        renderer: renderer
     });
 }
 
@@ -186,7 +193,7 @@ function configureMermaid() {
     mermaid.initialize({
         startOnLoad: false,
         theme: currentTheme === 'dark' ? 'dark' : 'default',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     });
 }
@@ -244,9 +251,11 @@ async function processMermaidDiagrams() {
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
 
+claude/analyze-test-coverage-WOZaG
             // Create diagram container
             const container = createDiagramContainer(svg, diagramId);
-
+            
+main
             // Replace pre/code block with diagram container
             preElement.replaceWith(container);
 
@@ -271,7 +280,7 @@ async function processMermaidDiagrams() {
     }
 }
 
-function createDiagramContainer(svg, diagramId) {
+function createDiagramContainer(svg, diagramId, mermaidSource) {
     const container = document.createElement('div');
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', diagramId);
@@ -291,7 +300,13 @@ function createDiagramContainer(svg, diagramId) {
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
     wrapper.innerHTML = svg;
-    
+
+    // Store mermaid source on the SVG for theme re-rendering
+    const svgEl = wrapper.querySelector('svg');
+    if (svgEl && mermaidSource) {
+        svgEl.setAttribute('data-mermaid-source', mermaidSource);
+    }
+
     container.appendChild(controls);
     container.appendChild(wrapper);
     
@@ -356,7 +371,7 @@ function initializePanzoom(diagramId) {
     wrapper.addEventListener('wheel', (e) => {
         e.preventDefault();
         panzoomInstance.zoomWithWheel(e);
-    });
+    }, { passive: false });
     
     // Double click to reset
     wrapper.addEventListener('dblclick', () => {
@@ -539,7 +554,7 @@ async function reRenderMermaidDiagrams() {
     mermaid.initialize({
         startOnLoad: false,
         theme: currentTheme === 'dark' ? 'dark' : 'default',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     });
     
@@ -574,10 +589,12 @@ async function reRenderMermaidDiagrams() {
             // Update wrapper content
             wrapper.innerHTML = svg;
 
+ claude/analyze-test-coverage-WOZaG
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
             if (newSvgElement) {
                 newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
+main
             }
 
             // Re-initialize panzoom
