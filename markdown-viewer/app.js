@@ -251,11 +251,9 @@ async function processMermaidDiagrams() {
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
 
-claude/analyze-test-coverage-WOZaG
             // Create diagram container
             const container = createDiagramContainer(svg, diagramId);
-            
-main
+
             // Replace pre/code block with diagram container
             preElement.replaceWith(container);
 
@@ -589,12 +587,10 @@ async function reRenderMermaidDiagrams() {
             // Update wrapper content
             wrapper.innerHTML = svg;
 
- claude/analyze-test-coverage-WOZaG
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
             if (newSvgElement) {
                 newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
-main
             }
 
             // Re-initialize panzoom

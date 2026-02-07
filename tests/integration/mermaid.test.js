@@ -43,12 +43,12 @@ describe('Mermaid Diagram Processing', () => {
       );
     });
 
-    it('should set security level to loose', () => {
+    it('should set security level to strict', () => {
       configureMermaid();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(
         expect.objectContaining({
-          securityLevel: 'loose'
+          securityLevel: 'strict'
         })
       );
     });

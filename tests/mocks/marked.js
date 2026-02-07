@@ -2,6 +2,9 @@
  * Mock for marked.js library
  */
 
+// Mock Renderer class matching marked v11 API
+class RendererMock {}
+
 const marked = {
   parse: jest.fn((markdown) => {
     // Simple mock implementation - converts markdown headers
@@ -19,6 +22,8 @@ const marked = {
   setOptions: jest.fn(),
 
   use: jest.fn(),
+
+  Renderer: RendererMock,
 };
 
 global.marked = marked;

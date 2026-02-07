@@ -30,12 +30,12 @@ describe('Markdown Rendering', () => {
       expect(config.breaks).toBe(true);
     });
 
-    it('should configure syntax highlighting', () => {
+    it('should configure a custom renderer for syntax highlighting', () => {
       configureMarked();
 
       const config = marked.setOptions.mock.calls[0][0];
-      expect(config.highlight).toBeDefined();
-      expect(typeof config.highlight).toBe('function');
+      expect(config.renderer).toBeDefined();
+      expect(typeof config.renderer.code).toBe('function');
     });
   });
 
@@ -130,13 +130,13 @@ describe('Markdown Rendering', () => {
   });
 
   describe('Syntax Highlighting Integration', () => {
-    it('should highlight code blocks', () => {
+    it('should highlight code blocks via renderer.code', () => {
       configureMarked();
 
       const config = marked.setOptions.mock.calls[0][0];
-      const highlightFunction = config.highlight;
+      const codeRenderer = config.renderer.code;
 
-      highlightFunction('console.log("test")', 'javascript');
+      codeRenderer('console.log("test")', 'javascript');
 
       expect(hljs.highlight).toHaveBeenCalledWith('console.log("test")', {
         language: 'javascript'
@@ -147,30 +147,33 @@ describe('Markdown Rendering', () => {
       configureMarked();
 
       const config = marked.setOptions.mock.calls[0][0];
-      const highlightFunction = config.highlight;
+      const codeRenderer = config.renderer.code;
 
       hljs.highlight.mockImplementation(() => {
         throw new Error('Highlight error');
       });
 
-      const result = highlightFunction('code', 'invalidlang');
+      const result = codeRenderer('code', 'invalidlang');
 
-      // Should return original code on error
-      expect(result).toBe('code');
+      // Should return escaped code in pre/code tags
+      expect(result).toContain('<pre><code');
+      expect(result).toContain('code');
     });
 
-    it('should return code unchanged for unknown languages', () => {
+    it('should return escaped code for unknown languages', () => {
       configureMarked();
 
       const config = marked.setOptions.mock.calls[0][0];
-      const highlightFunction = config.highlight;
+      const codeRenderer = config.renderer.code;
 
       // Mock getLanguage to return undefined for unknown language
       hljs.getLanguage = jest.fn(() => undefined);
 
-      const result = highlightFunction('code', 'unknown');
+      const result = codeRenderer('code', 'unknown');
 
-      expect(result).toBe('code');
+      // Should return escaped code wrapped in pre/code tags
+      expect(result).toContain('<pre><code');
+      expect(result).toContain('code');
     });
   });
 });
