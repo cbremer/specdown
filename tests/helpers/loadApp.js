@@ -26,6 +26,10 @@ function loadApp(document) {
   appCode = appCode.replace(/^function (\w+)/gm, 'global.$1 = function');
   appCode = appCode.replace(/^async function (\w+)/gm, 'global.$1 = async function');
 
+  // Expose top-level let/const variables to global scope for test access
+  appCode = appCode.replace(/^let (\w+)/gm, 'global.$1');
+  appCode = appCode.replace(/^const (\w+)/gm, 'global.$1');
+
   // Execute in the current context with eval
   // eslint-disable-next-line no-eval
   eval(appCode);

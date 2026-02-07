@@ -52,6 +52,18 @@ class PanzoomMock {
     return this;
   }
 
+  zoomWithWheel(event) {
+    if (!this.destroyed) {
+      // Simulate wheel zoom behavior
+      const delta = event.deltaY > 0 ? -0.2 : 0.2;
+      this.scale = Math.max(
+        this.options.minScale || 0.5,
+        Math.min(this.scale + delta, this.options.maxScale || 5)
+      );
+    }
+    return this;
+  }
+
   destroy() {
     this.destroyed = true;
   }

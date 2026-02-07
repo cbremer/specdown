@@ -164,18 +164,18 @@ function handleFile(file) {
 function configureMarked() {
     // Configure marked with custom renderer for syntax highlighting
     // Note: marked v11 removed the top-level `highlight` option;
-    // use a custom renderer instead.
+    // use a custom renderer with positional args (v11 API) instead.
     const renderer = new marked.Renderer();
-    renderer.code = function({ text, lang }) {
+    renderer.code = function(code, lang) {
         if (lang && hljs.getLanguage(lang)) {
             try {
-                const highlighted = hljs.highlight(text, { language: lang }).value;
+                const highlighted = hljs.highlight(code, { language: lang }).value;
                 return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
             } catch (err) {
                 console.error('Highlight error:', err);
             }
         }
-        const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
     };
 
@@ -251,11 +251,9 @@ async function processMermaidDiagrams() {
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
 
-claude/analyze-test-coverage-WOZaG
             // Create diagram container
             const container = createDiagramContainer(svg, diagramId);
-            
-main
+
             // Replace pre/code block with diagram container
             preElement.replaceWith(container);
 
@@ -589,12 +587,10 @@ async function reRenderMermaidDiagrams() {
             // Update wrapper content
             wrapper.innerHTML = svg;
 
- claude/analyze-test-coverage-WOZaG
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
             if (newSvgElement) {
                 newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
-main
             }
 
             // Re-initialize panzoom
