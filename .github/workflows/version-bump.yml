@@ -1,0 +1,40 @@
+name: Bump version on merge
+
+on:
+  push:
+    branches: [main]
+
+# Prevent the version bump commit from triggering another run
+concurrency:
+  group: version-bump
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    # Skip if the commit was made by this workflow (prevents infinite loop)
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump patch version
+        run: npm version patch -m "Bump version to %s [skip ci]"
+
+      - name: Push version commit and tag
+        run: git push --follow-tags origin main
