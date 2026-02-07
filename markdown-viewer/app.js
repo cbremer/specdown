@@ -164,18 +164,18 @@ function handleFile(file) {
 function configureMarked() {
     // Configure marked with custom renderer for syntax highlighting
     // Note: marked v11 removed the top-level `highlight` option;
-    // use a custom renderer instead.
+    // use a custom renderer with positional args (v11 API) instead.
     const renderer = new marked.Renderer();
-    renderer.code = function({ text, lang }) {
+    renderer.code = function(code, lang) {
         if (lang && hljs.getLanguage(lang)) {
             try {
-                const highlighted = hljs.highlight(text, { language: lang }).value;
+                const highlighted = hljs.highlight(code, { language: lang }).value;
                 return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
             } catch (err) {
                 console.error('Highlight error:', err);
             }
         }
-        const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
     };
 
