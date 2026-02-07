@@ -163,26 +163,25 @@ function handleFile(file) {
 // ===========================
 function configureMarked() {
     // Configure marked with custom renderer for syntax highlighting
-    // Note: marked v11 removed the top-level `highlight` option;
-    // use a custom renderer with positional args (v11 API) instead.
-    const renderer = new marked.Renderer();
-    renderer.code = function(code, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                const highlighted = hljs.highlight(code, { language: lang }).value;
-                return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
-            } catch (err) {
-                console.error('Highlight error:', err);
-            }
-        }
-        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
-    };
-
-    marked.setOptions({
+    // Use marked.use() which properly integrates overrides without
+    // replacing the entire renderer instance.
+    marked.use({
         breaks: true,
         gfm: true,
-        renderer: renderer
+        renderer: {
+            code(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        const highlighted = hljs.highlight(code, { language: lang }).value;
+                        return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+                    } catch (err) {
+                        console.error('Highlight error:', err);
+                    }
+                }
+                const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
+            }
+        }
     });
 }
 
