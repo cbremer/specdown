@@ -287,6 +287,11 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', diagramId);
     
+    // Store mermaid source on the container for theme re-rendering
+    if (mermaidSource) {
+        container.setAttribute('data-mermaid-source', mermaidSource);
+    }
+    
     // Create controls
     const controls = document.createElement('div');
     controls.className = 'diagram-controls';
@@ -302,12 +307,6 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
     wrapper.innerHTML = svg;
-
-    // Store mermaid source on the SVG for theme re-rendering
-    const svgEl = wrapper.querySelector('svg');
-    if (svgEl && mermaidSource) {
-        svgEl.setAttribute('data-mermaid-source', mermaidSource);
-    }
 
     container.appendChild(controls);
     container.appendChild(wrapper);
@@ -564,12 +563,8 @@ async function reRenderMermaidDiagrams() {
         
         if (!wrapper || !diagramId) continue;
         
-        // Find original mermaid code (stored in data attribute)
-        const svgElement = wrapper.querySelector('svg');
-        if (!svgElement) continue;
-        
-        // Get mermaid code from SVG or skip if not available
-        const mermaidCode = svgElement.getAttribute('data-mermaid-source');
+        // Get mermaid code from container or skip if not available
+        const mermaidCode = container.getAttribute('data-mermaid-source');
         if (!mermaidCode) continue;
         
         try {
@@ -585,12 +580,6 @@ async function reRenderMermaidDiagrams() {
 
             // Update wrapper content
             wrapper.innerHTML = svg;
-
-            // Store mermaid source on new SVG element
-            const newSvgElement = wrapper.querySelector('svg');
-            if (newSvgElement) {
-                newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
-            }
 
             // Re-initialize panzoom
             initializePanzoom(diagramId);

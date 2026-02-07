@@ -174,7 +174,7 @@ describe('Mermaid Diagram Processing', () => {
       expect(markdownContent.querySelector('pre')).toBeTruthy();
     });
 
-    it('should store mermaid source on SVG element', async () => {
+    it('should store mermaid source on container element', async () => {
       const markdownContent = document.getElementById('markdown-content');
       const mermaidCode = 'graph TD\nA --> B';
       markdownContent.innerHTML = `
@@ -183,9 +183,9 @@ describe('Mermaid Diagram Processing', () => {
 
       await processMermaidDiagrams();
 
-      const svgElement = markdownContent.querySelector('svg');
-      expect(svgElement).toBeTruthy();
-      expect(svgElement.getAttribute('data-mermaid-source')).toBe(mermaidCode);
+      const container = markdownContent.querySelector('.diagram-container');
+      expect(container).toBeTruthy();
+      expect(container.getAttribute('data-mermaid-source')).toBe(mermaidCode);
     });
   });
 
