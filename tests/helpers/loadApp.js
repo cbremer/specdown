@@ -13,6 +13,16 @@ require('../mocks/highlightjs');
 
 /**
  * Load the app.js file into the test environment
+ *
+ * Uses indirect eval — (0, eval)(code) — to execute app.js at global scope.
+ * This means function declarations and var-declared variables automatically
+ * become properties of the global object, eliminating the need for fragile
+ * regex transformations like "function X" → "global.X = function".
+ *
+ * The only regex remaining converts top-level let/const to var, since let/const
+ * are block-scoped and would not become global properties even at global scope.
+ * This regex only matches simple identifier patterns (not destructuring).
+ *
  * @param {Document} document - The jsdom document object
  * @returns {void}
  */
@@ -21,18 +31,17 @@ function loadApp(document) {
   const appPath = path.join(__dirname, '../../markdown-viewer/app.js');
   let appCode = fs.readFileSync(appPath, 'utf8');
 
-  // Replace function declarations with global assignments to make them accessible
-  // This makes functions available in the global scope for testing
-  appCode = appCode.replace(/^function (\w+)/gm, 'global.$1 = function');
-  appCode = appCode.replace(/^async function (\w+)/gm, 'global.$1 = async function');
+  // Convert top-level let/const to var so they become global properties.
+  // Only matches simple identifier patterns (e.g. "const foo"), not destructuring
+  // (e.g. "const { a, b }") which would need different handling.
+  appCode = appCode.replace(/^const (\w+)/gm, 'var $1');
+  appCode = appCode.replace(/^let (\w+)/gm, 'var $1');
 
-  // Expose top-level let/const variables to global scope for test access
-  appCode = appCode.replace(/^let (\w+)/gm, 'global.$1');
-  appCode = appCode.replace(/^const (\w+)/gm, 'global.$1');
-
-  // Execute in the current context with eval
-  // eslint-disable-next-line no-eval
-  eval(appCode);
+  // Indirect eval executes code at global scope rather than in the caller's
+  // local scope. This means var declarations and function declarations
+  // naturally become global object properties without needing explicit
+  // "global.X = ..." assignments.
+  (0, eval)(appCode); // eslint-disable-line no-eval
 }
 
 /**
