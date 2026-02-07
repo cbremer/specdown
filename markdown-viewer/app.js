@@ -1,4 +1,10 @@
 // ===========================
+// Constants
+// ===========================
+const VALID_EXTENSIONS = ['.md', '.markdown'];
+const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+// ===========================
 // Global State
 // ===========================
 let currentPanzoomInstances = [];
@@ -138,10 +144,9 @@ function handleFileSelect(e) {
 // ===========================
 function handleFile(file) {
     // Validate file type
-    const validExtensions = ['.md', '.markdown'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    
-    if (!validExtensions.includes(fileExtension)) {
+
+    if (!VALID_EXTENSIONS.includes(fileExtension)) {
         alert('Please select a valid Markdown file (.md or .markdown)');
         return;
     }
@@ -190,13 +195,17 @@ function configureMarked() {
 // ===========================
 // Mermaid Configuration
 // ===========================
-function configureMermaid() {
-    mermaid.initialize({
+function getMermaidConfig() {
+    return {
         startOnLoad: false,
         theme: currentTheme === 'dark' ? 'dark' : 'default',
         securityLevel: 'strict',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-    });
+        fontFamily: FONT_FAMILY
+    };
+}
+
+function configureMermaid() {
+    mermaid.initialize(getMermaidConfig());
 }
 
 // ===========================
@@ -252,17 +261,11 @@ async function processMermaidDiagrams() {
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
 
-            // Create diagram container
-            const container = createDiagramContainer(svg, diagramId);
+            // Create diagram container with mermaid source for re-rendering
+            const container = createDiagramContainer(svg, diagramId, mermaidCode);
 
             // Replace pre/code block with diagram container
             preElement.replaceWith(container);
-
-            // Store mermaid source on SVG element for re-rendering
-            const svgElement = container.querySelector('svg');
-            if (svgElement) {
-                svgElement.setAttribute('data-mermaid-source', mermaidCode);
-            }
 
             // Initialize panzoom for this diagram
             initializePanzoom(diagramId);
@@ -550,12 +553,7 @@ function showDropZone() {
 // ===========================
 async function reRenderMermaidDiagrams() {
     // Update mermaid theme
-    mermaid.initialize({
-        startOnLoad: false,
-        theme: currentTheme === 'dark' ? 'dark' : 'default',
-        securityLevel: 'strict',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-    });
+    mermaid.initialize(getMermaidConfig());
     
     // Get all diagram containers
     const containers = markdownContent.querySelectorAll('.diagram-container');
