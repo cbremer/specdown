@@ -247,16 +247,24 @@ async function processMermaidDiagrams() {
         try {
             // Generate unique ID
             const diagramId = `mermaid-diagram-${i}-${Date.now()}`;
-            
+
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
 
-            // Create diagram container, passing source for theme re-rendering
-            const container = createDiagramContainer(svg, diagramId, mermaidCode);
+claude/analyze-test-coverage-WOZaG
+            // Create diagram container
+            const container = createDiagramContainer(svg, diagramId);
             
+main
             // Replace pre/code block with diagram container
             preElement.replaceWith(container);
-            
+
+            // Store mermaid source on SVG element for re-rendering
+            const svgElement = container.querySelector('svg');
+            if (svgElement) {
+                svgElement.setAttribute('data-mermaid-source', mermaidCode);
+            }
+
             // Initialize panzoom for this diagram
             initializePanzoom(diagramId);
             
@@ -570,21 +578,23 @@ async function reRenderMermaidDiagrams() {
         try {
             // Re-render with new theme
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
-            
+
             // Clean up old panzoom
             const oldInstance = currentPanzoomInstances.find(p => p.id === diagramId);
             if (oldInstance) {
                 oldInstance.instance.destroy();
                 currentPanzoomInstances = currentPanzoomInstances.filter(p => p.id !== diagramId);
             }
-            
+
             // Update wrapper content
             wrapper.innerHTML = svg;
 
-            // Preserve mermaid source on new SVG for future re-renders
-            const newSvg = wrapper.querySelector('svg');
-            if (newSvg) {
-                newSvg.setAttribute('data-mermaid-source', mermaidCode);
+ claude/analyze-test-coverage-WOZaG
+            // Store mermaid source on new SVG element
+            const newSvgElement = wrapper.querySelector('svg');
+            if (newSvgElement) {
+                newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
+main
             }
 
             // Re-initialize panzoom
