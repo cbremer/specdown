@@ -159,7 +159,7 @@ function handleDragOver(e) {
 function handleDragLeave(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (e.target === dropZone) {
+    if (!dropZone.contains(e.relatedTarget)) {
         dropZone.classList.remove('drag-over');
     }
 }
