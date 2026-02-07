@@ -3,7 +3,7 @@
 // ===========================
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const APP_VERSION = '0.025';
+const APP_VERSION = '0.0.25';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/markdown-viewer';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
@@ -31,11 +31,22 @@ const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 // Initialization
 // ===========================
 function init() {
+    setupVersionInfo();
     setupTheme();
     setupEventListeners();
     configureMermaid();
     configureMarked();
     checkForUpdates();
+}
+
+// ===========================
+// Version Info
+// ===========================
+function setupVersionInfo() {
+    var versionLabel = document.getElementById('version-label');
+    if (versionLabel) {
+        versionLabel.textContent = 'v' + APP_VERSION + ' (' + APP_VERSION_LABEL + ')';
+    }
 }
 
 // ===========================
