@@ -252,13 +252,23 @@ describe('Mermaid Diagram Processing', () => {
       expect(dims).toEqual({ width: 1200, height: 800 });
     });
 
-    it('should handle viewBox with non-zero origin', () => {
+    it('should handle viewBox with non-zero origin (3rd/4th values are width/height)', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '50 100 1200 800');
 
       const dims = getSvgNaturalDimensions(svg);
 
+      // viewBox format is "min-x min-y width height" - 3rd and 4th ARE the dimensions
       expect(dims).toEqual({ width: 1200, height: 800 });
+    });
+
+    it('should handle viewBox with negative origin', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '-50 -10 913 642');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toEqual({ width: 913, height: 642 });
     });
 
     it('should fall back to width/height attributes when no viewBox', () => {
@@ -269,6 +279,16 @@ describe('Mermaid Diagram Processing', () => {
       const dims = getSvgNaturalDimensions(svg);
 
       expect(dims).toEqual({ width: 600, height: 400 });
+    });
+
+    it('should skip percentage width/height attributes', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toBeNull();
     });
 
     it('should return null when no dimensions available', () => {
@@ -334,6 +354,29 @@ describe('Mermaid Diagram Processing', () => {
 
       expect(svg.style.width).toBe('800px');
       expect(svg.style.height).toBe('600px');
+    });
+
+    it('should clear mermaid inline styles and set position absolute', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 800 600');
+      // Simulate mermaid-set inline styles
+      svg.style.cssText = 'max-width: 800px;';
+      svg.setAttribute('width', '100%');
+      wrapper.appendChild(svg);
+
+      Object.defineProperty(wrapper, 'clientWidth', { value: 1000, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: 500, configurable: true });
+
+      const panzoom = Panzoom(svg, {});
+      fitDiagramToContainer(wrapper, svg, panzoom);
+
+      // Mermaid max-width should be cleared
+      expect(svg.style.maxWidth).toBe('');
+      // width attribute should be removed
+      expect(svg.getAttribute('width')).toBeNull();
+      // Position should be absolute for layout isolation
+      expect(svg.style.position).toBe('absolute');
     });
 
     it('should calculate fit scale based on container and SVG dimensions', () => {
@@ -453,7 +496,7 @@ describe('Mermaid Diagram Processing', () => {
       expect(panzoomOptions.contain).toBeUndefined();
     });
 
-    it('should store homeState in panzoom instance data', async () => {
+    it('should store mutable state with homeState in panzoom instance data', async () => {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
@@ -461,12 +504,13 @@ describe('Mermaid Diagram Processing', () => {
 
       await processMermaidDiagrams();
 
-      // currentPanzoomInstances should have homeState
+      // currentPanzoomInstances should have state.homeState
       expect(currentPanzoomInstances.length).toBeGreaterThan(0);
-      expect(currentPanzoomInstances[0].homeState).toBeDefined();
-      expect(currentPanzoomInstances[0].homeState).toHaveProperty('scale');
-      expect(currentPanzoomInstances[0].homeState).toHaveProperty('x');
-      expect(currentPanzoomInstances[0].homeState).toHaveProperty('y');
+      expect(currentPanzoomInstances[0].state).toBeDefined();
+      expect(currentPanzoomInstances[0].state.homeState).toBeDefined();
+      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('scale');
+      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('x');
+      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('y');
     });
   });
 
@@ -486,7 +530,7 @@ describe('Mermaid Diagram Processing', () => {
       expect(overlay.panzoomInstance).toBeTruthy();
     });
 
-    it('should store homeState on fullscreen overlay', async () => {
+    it('should store mutable fullscreenState on fullscreen overlay', async () => {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
@@ -497,10 +541,11 @@ describe('Mermaid Diagram Processing', () => {
       openFullscreen(diagramId);
 
       const overlay = document.getElementById('fullscreen-overlay');
-      expect(overlay.homeState).toBeDefined();
-      expect(overlay.homeState).toHaveProperty('scale');
-      expect(overlay.homeState).toHaveProperty('x');
-      expect(overlay.homeState).toHaveProperty('y');
+      expect(overlay.fullscreenState).toBeDefined();
+      expect(overlay.fullscreenState.homeState).toBeDefined();
+      expect(overlay.fullscreenState.homeState).toHaveProperty('scale');
+      expect(overlay.fullscreenState.homeState).toHaveProperty('x');
+      expect(overlay.fullscreenState.homeState).toHaveProperty('y');
     });
 
     it('should initialize fullscreen panzoom with extended scale range', async () => {

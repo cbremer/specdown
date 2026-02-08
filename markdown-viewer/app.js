@@ -362,20 +362,28 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
 // Diagram Fit Helpers
 // ===========================
 function getSvgNaturalDimensions(svgElement) {
+    // SVG viewBox format: "min-x min-y width height"
+    // The 3rd and 4th values ARE the width and height (not coordinates)
     const viewBox = svgElement.getAttribute('viewBox');
     if (viewBox) {
         const parts = viewBox.split(/[\s,]+/);
         if (parts.length >= 4) {
-            return {
-                width: parseFloat(parts[2]) - parseFloat(parts[0]),
-                height: parseFloat(parts[3]) - parseFloat(parts[1])
-            };
+            const w = parseFloat(parts[2]);
+            const h = parseFloat(parts[3]);
+            if (w > 0 && h > 0) {
+                return { width: w, height: h };
+            }
         }
     }
-    const w = parseFloat(svgElement.getAttribute('width'));
-    const h = parseFloat(svgElement.getAttribute('height'));
-    if (w && h && !isNaN(w) && !isNaN(h)) {
-        return { width: w, height: h };
+    // Fall back to width/height attributes (skip percentage values like "100%")
+    const wAttr = svgElement.getAttribute('width');
+    const hAttr = svgElement.getAttribute('height');
+    if (wAttr && hAttr && !String(wAttr).includes('%') && !String(hAttr).includes('%')) {
+        const w = parseFloat(wAttr);
+        const h = parseFloat(hAttr);
+        if (w > 0 && h > 0 && !isNaN(w) && !isNaN(h)) {
+            return { width: w, height: h };
+        }
     }
     return null;
 }
@@ -389,9 +397,16 @@ function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
         return { scale: 1, x: 0, y: 0 };
     }
 
-    // Set SVG to its natural dimensions so panzoom transforms work correctly
+    // Clear all mermaid-set inline styles (e.g. max-width) that interfere with panzoom
+    svgElement.style.cssText = '';
+    // Remove mermaid's width/height attributes (often "100%") so they don't conflict
+    svgElement.removeAttribute('width');
+    svgElement.removeAttribute('height');
+    // Set explicit pixel dimensions matching the viewBox content size
     svgElement.style.width = dims.width + 'px';
     svgElement.style.height = dims.height + 'px';
+    svgElement.style.position = 'absolute';
+    svgElement.style.transformOrigin = '0 0';
 
     // Calculate scale to fit with 10% padding
     const scaleX = containerWidth / dims.width;
@@ -433,15 +448,23 @@ function initializePanzoom(diagramId) {
         cursor: 'grab'
     });
 
-    // Fit diagram to container and get home state
-    const homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
+    // Use a mutable state object so reset always uses the latest fit values.
+    // Initial fit runs immediately; a deferred fit via requestAnimationFrame
+    // recalculates after the browser has laid out the container (in case
+    // clientWidth/Height weren't available synchronously).
+    const state = {
+        homeState: fitDiagramToContainer(wrapper, svgElement, panzoomInstance)
+    };
+    requestAnimationFrame(() => {
+        state.homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
+    });
 
     // Store instance for cleanup
     currentPanzoomInstances.push({
         id: diagramId,
         instance: panzoomInstance,
         element: svgElement,
-        homeState: homeState
+        state: state
     });
 
     // Get controls
@@ -465,7 +488,7 @@ function initializePanzoom(diagramId) {
 
     resetBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, homeState);
+        resetToFit(panzoomInstance, state.homeState);
     });
 
     fullscreenBtn.addEventListener('click', (e) => {
@@ -481,7 +504,7 @@ function initializePanzoom(diagramId) {
 
     // Double click to reset to fit
     wrapper.addEventListener('dblclick', () => {
-        resetToFit(panzoomInstance, homeState);
+        resetToFit(panzoomInstance, state.homeState);
     });
 }
 
@@ -501,7 +524,7 @@ function openFullscreen(diagramId) {
         return;
     }
 
-    // Clone SVG for fullscreen
+    // Clone SVG for fullscreen - use original mermaid source SVG attributes
     const svgClone = svgElement.cloneNode(true);
 
     // Setup fullscreen wrapper
@@ -520,22 +543,27 @@ function openFullscreen(diagramId) {
         cursor: 'grab'
     });
 
-    // Fit diagram to fullscreen container
-    const homeState = fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom);
+    // Use mutable state for deferred fit recalculation
+    const fullscreenState = {
+        homeState: fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom)
+    };
+    requestAnimationFrame(() => {
+        fullscreenState.homeState = fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom);
+    });
 
     // Store for cleanup
     fullscreenOverlay.panzoomInstance = fullscreenPanzoom;
     fullscreenOverlay.diagramId = diagramId;
-    fullscreenOverlay.homeState = homeState;
+    fullscreenOverlay.fullscreenState = fullscreenState;
 
     // Setup fullscreen controls with fresh event listeners
-    setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, homeState);
+    setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, fullscreenState);
 
     // Focus for keyboard events
     fullscreenOverlay.focus();
 }
 
-function setupFullscreenControls(panzoomInstance, wrapper, homeState) {
+function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const controls = fullscreenOverlay.querySelector('.fullscreen-controls');
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
@@ -566,7 +594,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, homeState) {
 
     newReset.addEventListener('click', (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, homeState);
+        resetToFit(panzoomInstance, fullscreenState.homeState);
     });
 
     newClose.addEventListener('click', (e) => {
@@ -587,7 +615,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, homeState) {
     // Double click to reset to fit
     const dblClickHandler = (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, homeState);
+        resetToFit(panzoomInstance, fullscreenState.homeState);
     };
 
     wrapper.addEventListener('dblclick', dblClickHandler);
