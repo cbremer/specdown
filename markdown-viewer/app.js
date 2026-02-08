@@ -373,7 +373,8 @@ function initializePanzoom(diagramId) {
         maxScale: 5,
         minScale: 0.5,
         step: 0.2,
-        cursor: 'grab'
+        cursor: 'grab',
+        contain: 'outside'
     });
     
     // Store instance for cleanup
