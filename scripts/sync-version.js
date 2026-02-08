@@ -22,6 +22,9 @@ const readmePath = path.join(__dirname, '..', 'README.md');
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const version = pkg.version;
 
+// Semver pattern used in regex
+const SEMVER_PATTERN = '[0-9]+\\.[0-9]+\\.[0-9]+';
+
 // Update app.js
 let appCode = fs.readFileSync(appPath, 'utf8');
 
@@ -39,7 +42,7 @@ console.log('Synced version ' + version + ' into app.js');
 // Update README.md
 let readmeContent = fs.readFileSync(readmePath, 'utf8');
 
-const readmeVersionRegex = /^#### v[0-9]+\.[0-9]+\.[0-9]+ \(Current\)/m;
+const readmeVersionRegex = new RegExp('^#### v' + SEMVER_PATTERN + ' \\(Current\\)', 'm');
 if (!readmeVersionRegex.test(readmeContent)) {
     console.error('Could not find version header in README.md');
     process.exit(1);
