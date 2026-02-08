@@ -1,4 +1,4 @@
-# SpecDown
+# SpecDown: A Markdown Viewer
 
 A lightweight, browser-based markdown viewer with enhanced diagram navigation capabilities. Perfect for viewing documentation with complex Mermaid diagrams that need zooming, panning, and detailed exploration.
 
