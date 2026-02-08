@@ -6,9 +6,9 @@ const mermaid = {
   initialize: jest.fn(),
 
   render: jest.fn((id, code) => {
-    // Return a promise that resolves with mock SVG
+    // Return a promise that resolves with mock SVG including viewBox for dimension detection
     return Promise.resolve({
-      svg: `<svg id="${id}" class="mermaid-diagram"><text>${code}</text></svg>`,
+      svg: `<svg id="${id}" class="mermaid-diagram" viewBox="0 0 800 600" width="800" height="600"><text>${code}</text></svg>`,
       bindFunctions: jest.fn(),
     });
   }),

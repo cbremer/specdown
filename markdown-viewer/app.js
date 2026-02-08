@@ -359,31 +359,91 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
 }
 
 // ===========================
+// Diagram Fit Helpers
+// ===========================
+function getSvgNaturalDimensions(svgElement) {
+    const viewBox = svgElement.getAttribute('viewBox');
+    if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        if (parts.length >= 4) {
+            return {
+                width: parseFloat(parts[2]) - parseFloat(parts[0]),
+                height: parseFloat(parts[3]) - parseFloat(parts[1])
+            };
+        }
+    }
+    const w = parseFloat(svgElement.getAttribute('width'));
+    const h = parseFloat(svgElement.getAttribute('height'));
+    if (w && h && !isNaN(w) && !isNaN(h)) {
+        return { width: w, height: h };
+    }
+    return null;
+}
+
+function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
+    const dims = getSvgNaturalDimensions(svgElement);
+    const containerWidth = wrapper.clientWidth;
+    const containerHeight = wrapper.clientHeight;
+
+    if (!dims || !containerWidth || !containerHeight) {
+        return { scale: 1, x: 0, y: 0 };
+    }
+
+    // Set SVG to its natural dimensions so panzoom transforms work correctly
+    svgElement.style.width = dims.width + 'px';
+    svgElement.style.height = dims.height + 'px';
+
+    // Calculate scale to fit with 10% padding
+    const scaleX = containerWidth / dims.width;
+    const scaleY = containerHeight / dims.height;
+    const fitScale = Math.min(scaleX, scaleY) * 0.9;
+
+    // Center the diagram
+    const scaledWidth = dims.width * fitScale;
+    const scaledHeight = dims.height * fitScale;
+    const x = (containerWidth - scaledWidth) / 2;
+    const y = (containerHeight - scaledHeight) / 2;
+
+    panzoomInstance.zoom(fitScale, { animate: false });
+    panzoomInstance.pan(x, y, { animate: false });
+
+    return { scale: fitScale, x: x, y: y };
+}
+
+function resetToFit(panzoomInstance, homeState) {
+    panzoomInstance.zoom(homeState.scale, { animate: true });
+    panzoomInstance.pan(homeState.x, homeState.y, { animate: true });
+}
+
+// ===========================
 // Panzoom Initialization
 // ===========================
 function initializePanzoom(diagramId) {
     const wrapper = document.getElementById(`wrapper-${diagramId}`);
     if (!wrapper) return;
-    
+
     const svgElement = wrapper.querySelector('svg');
     if (!svgElement) return;
-    
-    // Initialize panzoom
+
+    // Initialize panzoom with wide scale range for free navigation
     const panzoomInstance = Panzoom(svgElement, {
-        maxScale: 5,
-        minScale: 0.5,
+        maxScale: 10,
+        minScale: 0.1,
         step: 0.2,
-        cursor: 'grab',
-        contain: 'outside'
+        cursor: 'grab'
     });
-    
+
+    // Fit diagram to container and get home state
+    const homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
+
     // Store instance for cleanup
     currentPanzoomInstances.push({
         id: diagramId,
         instance: panzoomInstance,
-        element: svgElement
+        element: svgElement,
+        homeState: homeState
     });
-    
+
     // Get controls
     const container = wrapper.closest('.diagram-container');
     const controls = container.querySelector('.diagram-controls');
@@ -391,37 +451,37 @@ function initializePanzoom(diagramId) {
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const resetBtn = controls.querySelector('.reset');
     const fullscreenBtn = controls.querySelector('.fullscreen');
-    
+
     // Bind control events
     zoomInBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
     });
-    
+
     zoomOutBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
     });
-    
+
     resetBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        panzoomInstance.reset();
+        resetToFit(panzoomInstance, homeState);
     });
-    
+
     fullscreenBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         openFullscreen(diagramId);
     });
-    
+
     // Mouse wheel zoom
     wrapper.addEventListener('wheel', (e) => {
         e.preventDefault();
         panzoomInstance.zoomWithWheel(e);
     }, { passive: false });
-    
-    // Double click to reset
+
+    // Double click to reset to fit
     wrapper.addEventListener('dblclick', () => {
-        panzoomInstance.reset();
+        resetToFit(panzoomInstance, homeState);
     });
 }
 
@@ -434,99 +494,102 @@ function openFullscreen(diagramId) {
         console.error('Wrapper not found for diagram:', diagramId);
         return;
     }
-    
+
     const svgElement = wrapper.querySelector('svg');
     if (!svgElement) {
         console.error('SVG element not found in wrapper');
         return;
     }
-    
+
     // Clone SVG for fullscreen
     const svgClone = svgElement.cloneNode(true);
-    
+
     // Setup fullscreen wrapper
     const fullscreenWrapper = fullscreenOverlay.querySelector('.fullscreen-diagram-wrapper');
     fullscreenWrapper.innerHTML = '';
     fullscreenWrapper.appendChild(svgClone);
-    
-    // Initialize panzoom for fullscreen
+
+    // Show fullscreen first so container dimensions are available for fit calculation
+    fullscreenOverlay.style.display = 'flex';
+
+    // Initialize panzoom for fullscreen with wide scale range
     const fullscreenPanzoom = Panzoom(svgClone, {
-        maxScale: 10,
-        minScale: 0.3,
+        maxScale: 20,
+        minScale: 0.05,
         step: 0.2,
-        cursor: 'grab',
-        contain: 'outside'
+        cursor: 'grab'
     });
-    
+
+    // Fit diagram to fullscreen container
+    const homeState = fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom);
+
     // Store for cleanup
     fullscreenOverlay.panzoomInstance = fullscreenPanzoom;
     fullscreenOverlay.diagramId = diagramId;
-    
+    fullscreenOverlay.homeState = homeState;
+
     // Setup fullscreen controls with fresh event listeners
-    setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper);
-    
-    // Show fullscreen
-    fullscreenOverlay.style.display = 'flex';
-    
+    setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, homeState);
+
     // Focus for keyboard events
     fullscreenOverlay.focus();
 }
 
-function setupFullscreenControls(panzoomInstance, wrapper) {
+function setupFullscreenControls(panzoomInstance, wrapper, homeState) {
     const controls = fullscreenOverlay.querySelector('.fullscreen-controls');
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const resetBtn = controls.querySelector('.reset');
     const closeBtn = controls.querySelector('.close-fullscreen');
-    
+
     // Remove old listeners by cloning
     const newZoomIn = zoomInBtn.cloneNode(true);
     const newZoomOut = zoomOutBtn.cloneNode(true);
     const newReset = resetBtn.cloneNode(true);
     const newClose = closeBtn.cloneNode(true);
-    
+
     zoomInBtn.replaceWith(newZoomIn);
     zoomOutBtn.replaceWith(newZoomOut);
     resetBtn.replaceWith(newReset);
     closeBtn.replaceWith(newClose);
-    
+
     // Add new listeners
     newZoomIn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
     });
-    
+
     newZoomOut.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
     });
-    
+
     newReset.addEventListener('click', (e) => {
         e.stopPropagation();
-        panzoomInstance.reset();
+        resetToFit(panzoomInstance, homeState);
     });
-    
+
     newClose.addEventListener('click', (e) => {
         e.stopPropagation();
         closeFullscreen();
     });
-    
+
     // Mouse wheel zoom - use passive: false to allow preventDefault
     const wheelHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         panzoomInstance.zoomWithWheel(e);
     };
-    
+
     wrapper.addEventListener('wheel', wheelHandler, { passive: false });
     fullscreenOverlay.wheelHandler = wheelHandler;
-    
-    // Double click to reset
+
+    // Double click to reset to fit
     const dblClickHandler = (e) => {
         e.stopPropagation();
-        panzoomInstance.reset();
+        resetToFit(panzoomInstance, homeState);
     };
-    
+
     wrapper.addEventListener('dblclick', dblClickHandler);
     fullscreenOverlay.dblClickHandler = dblClickHandler;
 }
