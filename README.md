@@ -1,9 +1,4 @@
-# AI utils & tools
-Simple utilities and apps made by Chris Bremer using AI
-
----
-
-## Markdown Diagram Viewer
+# SpecDown
 
 A lightweight, browser-based markdown viewer with enhanced diagram navigation capabilities. Perfect for viewing documentation with complex Mermaid diagrams that need zooming, panning, and detailed exploration.
 
@@ -84,7 +79,10 @@ markdown_viewer/
 └── markdown-viewer/            # Application directory
     ├── index.html              # Main application page
     ├── styles.css              # Application styles and theming
-    └── app.js                  # Core application logic
+    ├── app.js                  # Core application logic
+    ├── logo.svg                # SpecDown logo (light theme)
+    ├── logo-dark.svg           # SpecDown logo (dark theme)
+    └── favicon.svg             # Browser tab icon
 ```
 
 ### Technology Stack
@@ -290,4 +288,4 @@ For issues or questions:
 
 ---
 
-**Happy Diagram Viewing! 📊**
+**Happy Diagram Viewing with SpecDown! 📊**
