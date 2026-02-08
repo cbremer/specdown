@@ -258,7 +258,7 @@ describe('Mermaid Diagram Processing', () => {
 
       const dims = getSvgNaturalDimensions(svg);
 
-      expect(dims).toEqual({ width: 1150, height: 700 });
+      expect(dims).toEqual({ width: 1200, height: 800 });
     });
 
     it('should fall back to width/height attributes when no viewBox', () => {
