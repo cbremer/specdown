@@ -11,7 +11,7 @@
     "test:integration": "jest tests/integration",
     "test:verbose": "jest --verbose",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
-    "version": "node scripts/sync-version.js && git add markdown-viewer/app.js"
+    "version": "node scripts/sync-version.js && git add markdown-viewer/app.js README.md"
   },
   "keywords": [
     "markdown",
