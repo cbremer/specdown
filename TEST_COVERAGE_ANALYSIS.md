@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-The Markdown Diagram Viewer currently has **limited automated test coverage**. This analysis identifies critical areas requiring additional test coverage and proposes a phased testing strategy.
+SpecDown currently has **limited automated test coverage**. This analysis identifies critical areas requiring additional test coverage and proposes a phased testing strategy.
 
 ### Current State
 - **Total Source Files**: 3 (index.html, app.js, styles.css)
@@ -732,7 +732,7 @@ Add to `package.json`:
 
 ## Conclusion
 
-The Markdown Diagram Viewer has **zero test coverage**, representing a significant quality assurance gap. The application has complex functionality involving:
+SpecDown has **zero test coverage**, representing a significant quality assurance gap. The application has complex functionality involving:
 - File I/O
 - DOM manipulation
 - Third-party library integration
