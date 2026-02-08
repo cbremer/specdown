@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Syncs the version from package.json into app.js (APP_VERSION constant).
+ * Syncs the version from package.json into app.js (APP_VERSION constant)
+ * and README.md (Version History section).
  *
  * This runs automatically via the npm "version" lifecycle script, so
  * bumping the version is a single command:
