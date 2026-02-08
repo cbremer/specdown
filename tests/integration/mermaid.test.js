@@ -242,6 +242,289 @@ describe('Mermaid Diagram Processing', () => {
     });
   });
 
+  describe('getSvgNaturalDimensions', () => {
+    it('should extract dimensions from viewBox attribute', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 1200 800');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toEqual({ width: 1200, height: 800 });
+    });
+
+    it('should handle viewBox with non-zero origin', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '50 100 1200 800');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toEqual({ width: 1200, height: 800 });
+    });
+
+    it('should fall back to width/height attributes when no viewBox', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '600');
+      svg.setAttribute('height', '400');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toEqual({ width: 600, height: 400 });
+    });
+
+    it('should return null when no dimensions available', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toBeNull();
+    });
+
+    it('should prefer viewBox over width/height', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 1200 800');
+      svg.setAttribute('width', '600');
+      svg.setAttribute('height', '400');
+
+      const dims = getSvgNaturalDimensions(svg);
+
+      expect(dims).toEqual({ width: 1200, height: 800 });
+    });
+  });
+
+  describe('fitDiagramToContainer', () => {
+    it('should return default state when SVG has no dimensions', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      wrapper.appendChild(svg);
+
+      const panzoom = Panzoom(svg, {});
+
+      const result = fitDiagramToContainer(wrapper, svg, panzoom);
+
+      expect(result).toEqual({ scale: 1, x: 0, y: 0 });
+    });
+
+    it('should return default state when container has no dimensions', () => {
+      // jsdom reports 0 for clientWidth/clientHeight
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 800 600');
+      wrapper.appendChild(svg);
+
+      const panzoom = Panzoom(svg, {});
+
+      const result = fitDiagramToContainer(wrapper, svg, panzoom);
+
+      // clientWidth/Height are 0 in jsdom, so default is returned
+      expect(result).toEqual({ scale: 1, x: 0, y: 0 });
+    });
+
+    it('should set SVG dimensions from natural size', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 800 600');
+      wrapper.appendChild(svg);
+
+      // Mock container dimensions
+      Object.defineProperty(wrapper, 'clientWidth', { value: 1000, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: 500, configurable: true });
+
+      const panzoom = Panzoom(svg, {});
+      fitDiagramToContainer(wrapper, svg, panzoom);
+
+      expect(svg.style.width).toBe('800px');
+      expect(svg.style.height).toBe('600px');
+    });
+
+    it('should calculate fit scale based on container and SVG dimensions', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 500');
+      wrapper.appendChild(svg);
+
+      Object.defineProperty(wrapper, 'clientWidth', { value: 800, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: 600, configurable: true });
+
+      const panzoom = Panzoom(svg, {});
+      const result = fitDiagramToContainer(wrapper, svg, panzoom);
+
+      // scaleX = 800/1000 = 0.8, scaleY = 600/500 = 1.2
+      // fitScale = min(0.8, 1.2) * 0.9 = 0.72
+      expect(result.scale).toBeCloseTo(0.72, 2);
+    });
+
+    it('should center the diagram in the container', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 500');
+      wrapper.appendChild(svg);
+
+      Object.defineProperty(wrapper, 'clientWidth', { value: 800, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: 600, configurable: true });
+
+      const panzoom = Panzoom(svg, {});
+      const result = fitDiagramToContainer(wrapper, svg, panzoom);
+
+      // fitScale = 0.72, scaledWidth = 720, scaledHeight = 360
+      // x = (800 - 720) / 2 = 40
+      // y = (600 - 360) / 2 = 120
+      expect(result.x).toBeCloseTo(40, 0);
+      expect(result.y).toBeCloseTo(120, 0);
+    });
+
+    it('should call panzoom zoom and pan with correct values', () => {
+      const wrapper = document.createElement('div');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 500');
+      wrapper.appendChild(svg);
+
+      Object.defineProperty(wrapper, 'clientWidth', { value: 800, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: 600, configurable: true });
+
+      const panzoom = Panzoom(svg, {});
+      const zoomSpy = jest.spyOn(panzoom, 'zoom');
+      const panSpy = jest.spyOn(panzoom, 'pan');
+
+      fitDiagramToContainer(wrapper, svg, panzoom);
+
+      expect(zoomSpy).toHaveBeenCalledWith(expect.closeTo(0.72, 1), { animate: false });
+      expect(panSpy).toHaveBeenCalledWith(expect.closeTo(40, 0), expect.closeTo(120, 0), { animate: false });
+    });
+  });
+
+  describe('resetToFit', () => {
+    it('should restore panzoom to home state with animation', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const panzoom = Panzoom(svg, {});
+
+      const homeState = { scale: 0.5, x: 100, y: 50 };
+
+      // Simulate user zoomed in
+      panzoom.zoom(2);
+      panzoom.pan(300, 400);
+
+      resetToFit(panzoom, homeState);
+
+      expect(panzoom.getScale()).toBe(0.5);
+      expect(panzoom.getPan()).toEqual({ x: 100, y: 50 });
+    });
+
+    it('should pass animate: true for smooth transition', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const panzoom = Panzoom(svg, {});
+      const zoomSpy = jest.spyOn(panzoom, 'zoom');
+      const panSpy = jest.spyOn(panzoom, 'pan');
+
+      const homeState = { scale: 0.8, x: 20, y: 30 };
+      resetToFit(panzoom, homeState);
+
+      expect(zoomSpy).toHaveBeenCalledWith(0.8, { animate: true });
+      expect(panSpy).toHaveBeenCalledWith(20, 30, { animate: true });
+    });
+  });
+
+  describe('panzoom initialization with fit', () => {
+    it('should initialize panzoom with wider scale range', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+
+      await processMermaidDiagrams();
+
+      expect(Panzoom).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          maxScale: 10,
+          minScale: 0.1
+        })
+      );
+    });
+
+    it('should not use contain option for free panning', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+
+      await processMermaidDiagrams();
+
+      const panzoomOptions = Panzoom.mock.calls[0][1];
+      expect(panzoomOptions.contain).toBeUndefined();
+    });
+
+    it('should store homeState in panzoom instance data', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+
+      await processMermaidDiagrams();
+
+      // currentPanzoomInstances should have homeState
+      expect(currentPanzoomInstances.length).toBeGreaterThan(0);
+      expect(currentPanzoomInstances[0].homeState).toBeDefined();
+      expect(currentPanzoomInstances[0].homeState).toHaveProperty('scale');
+      expect(currentPanzoomInstances[0].homeState).toHaveProperty('x');
+      expect(currentPanzoomInstances[0].homeState).toHaveProperty('y');
+    });
+  });
+
+  describe('fullscreen diagram fit', () => {
+    it('should show overlay before initializing panzoom for dimension calculation', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+      await processMermaidDiagrams();
+
+      const diagramId = markdownContent.querySelector('.diagram-container').getAttribute('data-diagram-id');
+      openFullscreen(diagramId);
+
+      const overlay = document.getElementById('fullscreen-overlay');
+      expect(overlay.style.display).toBe('flex');
+      expect(overlay.panzoomInstance).toBeTruthy();
+    });
+
+    it('should store homeState on fullscreen overlay', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+      await processMermaidDiagrams();
+
+      const diagramId = markdownContent.querySelector('.diagram-container').getAttribute('data-diagram-id');
+      openFullscreen(diagramId);
+
+      const overlay = document.getElementById('fullscreen-overlay');
+      expect(overlay.homeState).toBeDefined();
+      expect(overlay.homeState).toHaveProperty('scale');
+      expect(overlay.homeState).toHaveProperty('x');
+      expect(overlay.homeState).toHaveProperty('y');
+    });
+
+    it('should initialize fullscreen panzoom with extended scale range', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+      markdownContent.innerHTML = `
+        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
+      `;
+      await processMermaidDiagrams();
+
+      Panzoom.mockClear();
+
+      const diagramId = markdownContent.querySelector('.diagram-container').getAttribute('data-diagram-id');
+      openFullscreen(diagramId);
+
+      expect(Panzoom).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          maxScale: 20,
+          minScale: 0.05
+        })
+      );
+    });
+  });
+
   describe('reRenderMermaidDiagrams', () => {
     it('should update mermaid config with new theme', async () => {
       // Set up a diagram
