@@ -74,7 +74,7 @@ All modern browsers with ES6+ support and FileReader API.
 ### File Structure
 
 ```
-markdown_viewer/
+specdown/
 ├── README.md                    # This file
 └── markdown-viewer/            # Application directory
     ├── index.html              # Main application page
@@ -101,15 +101,7 @@ markdown_viewer/
 
 ### Example Files
 
-Try the viewer with these example files:
-
-```bash
-# From the workspace
-/Users/cbremer/Documents/code/li-productivity-agents/docs/LIPA_SYSTEM_DIAGRAM.md
-/Users/cbremer/Documents/code/guide/GUIDE_SYSTEM_DIAGRAM.md
-```
-
-These files contain complex system architecture diagrams that showcase the interactive features.
+Try the viewer with any `.md` file containing Mermaid diagrams to explore the interactive features.
 
 ### Features in Detail
 
@@ -266,7 +258,7 @@ This project uses open-source libraries:
 
 ### Acknowledgments
 
-Built for viewing LinkedIn internal documentation with complex system diagrams. Optimized for exploring architecture diagrams like those in LIPA and GUIDE system documentation.
+Built for viewing documentation with complex system architecture diagrams.
 
 ### Version History
 

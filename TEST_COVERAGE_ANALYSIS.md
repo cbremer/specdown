@@ -1,4 +1,4 @@
-# Test Coverage Analysis - Markdown Diagram Viewer
+# Test Coverage Analysis - SpecDown
 
 **Date**: 2026-01-24
 **Branch**: claude/analyze-test-coverage-WOZaG
@@ -577,7 +577,7 @@ Need to mock CDN dependencies:
 ## Proposed Test File Structure
 
 ```
-markdown_viewer/
+specdown/
 ├── markdown-viewer/
 │   ├── index.html
 │   ├── app.js
