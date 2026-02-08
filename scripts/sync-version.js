@@ -38,13 +38,13 @@ console.log('Synced version ' + version + ' into app.js');
 // Update README.md version
 let readmeContent = fs.readFileSync(readmePath, 'utf8');
 
-const readmeVersionRegex = /^#### v[0-9]+\.[0-9]+\.[0-9]+ \(Current\)/m;
+const readmeVersionRegex = /^(\s*#### v)\S+ (\(Current\))/m;
 if (!readmeVersionRegex.test(readmeContent)) {
     console.error('Could not find version in README.md');
     process.exit(1);
 }
 
-readmeContent = readmeContent.replace(readmeVersionRegex, '#### v' + version + ' (Current)');
+readmeContent = readmeContent.replace(readmeVersionRegex, '$1' + version + ' $2');
 
 fs.writeFileSync(readmePath, readmeContent, 'utf8');
 console.log('Synced version ' + version + ' into README.md');
