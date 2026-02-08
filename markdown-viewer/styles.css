@@ -68,9 +68,32 @@ body {
 
 .header-left {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+.header-logo-dark {
+    display: none;
+}
+
+[data-theme="dark"] .header-logo-light {
+    display: none;
+}
+
+[data-theme="dark"] .header-logo-dark {
+    display: block;
 }
 
 .app-header h1 {

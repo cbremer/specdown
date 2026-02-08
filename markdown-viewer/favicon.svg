@@ -1,0 +1,31 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SpecDown app icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00A3BF"/>
+      <stop offset="1" stop-color="#FF7A4D"/>
+    </linearGradient>
+    <linearGradient id="c" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD36A"/>
+      <stop offset="1" stop-color="#FF7A00"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="224" height="224" rx="44" fill="#0B1220"/>
+  <circle cx="128" cy="128" r="88" fill="none" stroke="url(#g)" stroke-width="14" opacity="0.95"/>
+
+  <path d="M128 56
+           C84 56, 60 92, 60 126
+           C60 172, 92 202, 128 214
+           C164 202, 196 172, 196 126
+           C196 92, 172 56, 128 56 Z"
+        fill="#0F1724"/>
+
+  <path d="M92 132 Q106 122 120 132" fill="none" stroke="#00D5FF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+  <path d="M136 132 Q150 122 164 132" fill="none" stroke="#00D5FF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+
+  <g transform="translate(128,96)">
+    <path d="M0 -20 L20 0 L0 20 L-20 0 Z" fill="url(#c)"/>
+    <path d="M0 -20 L20 0 L0 20 L-20 0 Z" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.35"/>
+    <circle cx="0" cy="0" r="7" fill="#FFFFFF" opacity="0.30"/>
+  </g>
+</svg>

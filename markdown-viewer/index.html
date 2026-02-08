@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Diagram Viewer</title>
+    <title>SpecDown: A Markdown Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
-    
+
     <!-- Local Dependencies -->
     <script src="vendor/marked.min.js"></script>
     <script src="vendor/mermaid.min.js"></script>
@@ -24,11 +25,15 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-left">
-                <h1>Markdown Diagram Viewer</h1>
+                <a href="." class="logo-link" title="SpecDown: A Markdown Viewer">
+                    <img src="logo.svg" alt="SpecDown" class="header-logo header-logo-light">
+                    <img src="logo-dark.svg" alt="SpecDown" class="header-logo header-logo-dark">
+                </a>
+                <h1 style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">SpecDown: A Markdown Viewer</h1>
                 <div class="version-info">
                     <span id="version-label" class="version-label"></span>
                     <span id="version-update" class="version-update" style="display: none;"></span>
-                    <a id="source-link" class="source-link" href="https://github.com/cbremer/markdown-viewer" target="_blank" rel="noopener noreferrer">Source</a>
+                    <a id="source-link" class="source-link" href="https://github.com/cbremer/specdown" target="_blank" rel="noopener noreferrer">Source</a>
                 </div>
             </div>
             <div class="header-controls">
