@@ -1,6 +1,6 @@
 {
   "name": "specdown",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "description": "SpecDown: A lightweight, browser-based markdown viewer with enhanced diagram navigation capabilities",
   "main": "markdown-viewer/app.js",
   "scripts": {
