@@ -272,7 +272,7 @@ Built for viewing LinkedIn internal documentation with complex system diagrams. 
 
 ### Version History
 
-#### v1.0.0 (Current)
+#### v0.0.26 (Current)
 - Initial release
 - Full markdown rendering
 - Interactive mermaid diagrams

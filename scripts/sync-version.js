@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Syncs the version from package.json into app.js (APP_VERSION constant).
+ * Syncs the version from package.json into app.js (APP_VERSION constant)
+ * and README.md (Version History section).
  *
  * This runs automatically via the npm "version" lifecycle script, so
  * bumping the version is a single command:
@@ -16,10 +17,12 @@ const path = require('path');
 
 const pkgPath = path.join(__dirname, '..', 'package.json');
 const appPath = path.join(__dirname, '..', 'markdown-viewer', 'app.js');
+const readmePath = path.join(__dirname, '..', 'README.md');
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const version = pkg.version;
 
+// Update app.js
 let appCode = fs.readFileSync(appPath, 'utf8');
 
 const versionRegex = /^const APP_VERSION = '[^']*';/m;
@@ -32,3 +35,17 @@ appCode = appCode.replace(versionRegex, "const APP_VERSION = '" + version + "';"
 
 fs.writeFileSync(appPath, appCode, 'utf8');
 console.log('Synced version ' + version + ' into app.js');
+
+// Update README.md
+let readmeContent = fs.readFileSync(readmePath, 'utf8');
+
+const readmeVersionRegex = /^#### v[0-9]+\.[0-9]+\.[0-9]+ \(Current\)/m;
+if (!readmeVersionRegex.test(readmeContent)) {
+    console.error('Could not find version header in README.md');
+    process.exit(1);
+}
+
+readmeContent = readmeContent.replace(readmeVersionRegex, "#### v" + version + " (Current)");
+
+fs.writeFileSync(readmePath, readmeContent, 'utf8');
+console.log('Synced version ' + version + ' into README.md');
