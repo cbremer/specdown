@@ -18,7 +18,6 @@ jobs:
 
     permissions:
       contents: write
-      actions: write
 
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +38,3 @@ jobs:
 
       - name: Push version commit and tag
         run: git push --follow-tags origin main
-
-      - name: Trigger deploy workflow
-        run: gh workflow run "Deploy static content" --ref main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
