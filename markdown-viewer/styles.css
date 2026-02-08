@@ -456,13 +456,11 @@ body {
 
 .diagram-wrapper {
     min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     padding: 2rem;
     cursor: grab;
     overflow: hidden;
     position: relative;
+    text-align: center;
 }
 
 .diagram-wrapper:active {
@@ -472,6 +470,7 @@ body {
 .diagram-wrapper svg {
     max-width: 100%;
     height: auto;
+    display: inline-block;
 }
 
 /* ===========================
