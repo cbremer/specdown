@@ -105,8 +105,12 @@ function updateThemeIcon() {
 // Event Listeners
 // ===========================
 function setupEventListeners() {
-    // Browse button
-    browseButton.addEventListener('click', () => fileInput.click());
+    // Browse button - stopPropagation prevents the dropZone click handler
+    // from calling fileInput.click() a second time (button is inside drop-zone-content)
+    browseButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
     
     // File input change
     fileInput.addEventListener('change', handleFileSelect);

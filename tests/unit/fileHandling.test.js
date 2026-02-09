@@ -188,6 +188,23 @@ describe('File Handling', () => {
     });
   });
 
+  describe('browse button click', () => {
+    it('should stop propagation to prevent double fileInput.click()', () => {
+      const browseButton = document.getElementById('browse-button');
+      const fileInput = document.getElementById('file-input');
+
+      const clickSpy = jest.fn();
+      fileInput.click = clickSpy;
+
+      // Simulate a click event on the browse button
+      const event = new Event('click', { bubbles: true });
+      browseButton.dispatchEvent(event);
+
+      // fileInput.click() should be called exactly once, not twice
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('handleDrop', () => {
     it('should extract file from drag event', () => {
       const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
