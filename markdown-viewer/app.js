@@ -13,6 +13,8 @@ const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 // ===========================
 let currentPanzoomInstances = [];
 let currentTheme = localStorage.getItem('theme') || 'light';
+let currentRawMarkdown = '';
+let currentViewMode = 'preview'; // 'preview' or 'raw'
 
 // ===========================
 // DOM Elements
@@ -26,6 +28,7 @@ const fileName = document.getElementById('file-name');
 const loadNewFileButton = document.getElementById('load-new-file');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+const viewToggle = document.getElementById('view-toggle');
 
 // ===========================
 // Initialization
@@ -102,6 +105,45 @@ function updateThemeIcon() {
 }
 
 // ===========================
+// View Mode Toggle
+// ===========================
+function toggleViewMode() {
+    if (!currentRawMarkdown) return;
+
+    if (currentViewMode === 'preview') {
+        currentViewMode = 'raw';
+        // Clean up panzoom before switching
+        cleanupPanzoomInstances();
+        // Show raw markdown in a pre/code block
+        const escaped = currentRawMarkdown
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        markdownContent.innerHTML = '<pre class="raw-markdown"><code>' + escaped + '</code></pre>';
+    } else {
+        currentViewMode = 'preview';
+        // Re-render the preview
+        renderMarkdown(currentRawMarkdown, fileName.textContent);
+        return; // renderMarkdown handles the rest
+    }
+    updateViewToggleButton();
+}
+
+function updateViewToggleButton() {
+    const label = viewToggle.querySelector('.view-toggle-label');
+    const icon = viewToggle.querySelector('.view-toggle-icon');
+    if (currentViewMode === 'preview') {
+        label.textContent = 'Raw';
+        icon.innerHTML = '&lt;/&gt;';
+        viewToggle.classList.remove('active');
+    } else {
+        label.textContent = 'Preview';
+        icon.innerHTML = '&#9664;';
+        viewToggle.classList.add('active');
+    }
+}
+
+// ===========================
 // Event Listeners
 // ===========================
 function setupEventListeners() {
@@ -131,6 +173,9 @@ function setupEventListeners() {
     
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
+
+    // View toggle (preview/raw)
+    viewToggle.addEventListener('click', toggleViewMode);
     
     // Fullscreen overlay close
     fullscreenOverlay.addEventListener('click', (e) => {
@@ -262,10 +307,15 @@ async function renderMarkdown(content, filename) {
     try {
         // Clean up existing panzoom instances
         cleanupPanzoomInstances();
-        
+
+        // Store raw markdown for toggle
+        currentRawMarkdown = content;
+        currentViewMode = 'preview';
+        updateViewToggleButton();
+
         // Parse markdown to HTML
         const htmlContent = marked.parse(content);
-        
+
         // Update UI
         fileName.textContent = filename;
         markdownContent.innerHTML = htmlContent;
@@ -676,11 +726,14 @@ function showDropZone() {
     // Cleanup
     cleanupPanzoomInstances();
     closeFullscreen();
-    
+
     // Clear content
     markdownContent.innerHTML = '';
     fileName.textContent = '';
     fileInput.value = '';
+    currentRawMarkdown = '';
+    currentViewMode = 'preview';
+    updateViewToggleButton();
     
     // Show drop zone, hide content
     contentArea.style.display = 'none';
