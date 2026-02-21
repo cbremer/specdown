@@ -213,11 +213,20 @@ Each Mermaid diagram is automatically enhanced with:
 
 #### Running the Desktop App
 
+The desktop version runs as an Electron app from source. A downloadable `.dmg` is not yet available — that's coming in a future release via GitHub Releases.
+
+**First-time setup:**
 ```bash
-npm run desktop
+cd specdown               # navigate into the project directory
+npm install               # install Electron and all dependencies
 ```
 
-Launches the Electron window loading the Specdown web app. Requires Node.js and dependencies installed (`npm install`).
+**Launch the app:**
+```bash
+npm run desktop           # opens the Specdown Desktop window
+```
+
+Requires Node.js (v18+) installed on your machine.
 
 #### Running Tests
 

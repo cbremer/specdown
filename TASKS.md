@@ -42,7 +42,18 @@ Get the existing Specdown web app running inside an Electron window with a worki
 
 ### 4. Verify the web app renders correctly in Electron
 **Who:** Human developer (on a Mac)
-- Run `npm run desktop`
+
+**Prerequisites — run these first:**
+```bash
+cd specdown              # navigate into the project directory
+npm install              # install Electron and all dependencies
+```
+
+**Then launch the app:**
+```bash
+npm run desktop          # opens the Electron window
+```
+
 - Manual verification checklist:
   - [ ] Window opens with "Specdown Desktop" title
   - [ ] Drop zone / file picker UI appears
