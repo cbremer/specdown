@@ -114,27 +114,28 @@ Everything the existing web version does must work identically in the desktop ve
 
 ### Same Repo, Shared Code
 
-The desktop version lives in the same repository as the web version. Desktop-specific code is isolated in a `desktop/` directory. The existing `index.html`, `app.js`, `styles.css`, and `vendor/` directory are shared between both versions. The web version's GitHub Pages deployment is completely unaffected.
+The desktop version lives in the same repository as the web version. Desktop-specific code is isolated in a `desktop/` directory. The existing web app (`markdown-viewer/index.html`, `app.js`, `styles.css`, and `vendor/`) is shared between both versions. The web version's GitHub Pages deployment is completely unaffected.
 
 ### Repo Layout
 
 ```
 specdown/
-├── index.html            ← shared (web + desktop frontend)
-├── app.js                ← shared (modified for tab management + IPC)
-├── styles.css            ← shared (extended for tab bar UI)
-├── vendor/               ← shared (Marked, Mermaid, Panzoom, Highlight.js)
-├── tests/                ← existing web tests + new desktop tests
-├── package.json          ← extended with Electron deps + scripts
-├── desktop/              ← NEW: Electron-specific
-│   ├── main.js           ←   Main process (window, menus, file system, persistence)
-│   ├── preload.js        ←   Secure IPC bridge
-│   └── icons/            ←   App icons
+├── markdown-viewer/       ← existing web app (shared with desktop)
+│   ├── index.html         ←   Main application page
+│   ├── app.js             ←   Core app logic (modified for tab management + IPC)
+│   ├── styles.css         ←   Styles (extended for tab bar UI)
+│   └── vendor/            ←   Marked, Mermaid, Panzoom, Highlight.js
+├── desktop/               ← Electron-specific
+│   ├── main.js            ←   Main process (window, menus, file system, persistence)
+│   ├── preload.js         ←   Secure IPC bridge
+│   └── icons/             ←   App icons
+├── tests/                 ← existing web tests + new desktop tests
+├── package.json           ← extended with Electron deps + scripts
 ├── brainstorm.md
 ├── SPEC.md
 └── .github/workflows/
-    ├── static.yml        ← existing: deploys web version to GitHub Pages
-    └── desktop.yml       ← NEW: builds .dmg, attaches to GitHub Releases
+    ├── static.yml         ← existing: deploys web version to GitHub Pages
+    └── desktop.yml        ← NEW: builds .dmg, attaches to GitHub Releases
 ```
 
 ### Process Architecture
@@ -268,5 +269,21 @@ Playwright for Electron for full-app tests:
 - Open Recent menu population
 
 ---
+
+## Implementation Status
+
+| Feature | Status |
+|---|---|
+| Electron shell (`desktop/main.js`, `desktop/preload.js`) | Implemented |
+| Dev loop (`npm run desktop`) | Implemented |
+| Existing Jest test suite passing | Verified |
+| Multi-file tabs | Pending |
+| Native file open (`Cmd+O`) | Pending |
+| File watching | Pending |
+| Persistent state | Pending |
+| Recent files & favorites | Pending |
+| Print & PDF export | Pending |
+| Native macOS menus | Pending |
+| DMG packaging (`electron-builder`) | Pending |
 
 *Last updated: 2026-02-21*
