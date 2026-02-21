@@ -76,13 +76,20 @@ All modern browsers with ES6+ support and FileReader API.
 ```
 specdown/
 ├── README.md                    # This file
-└── markdown-viewer/            # Application directory
-    ├── index.html              # Main application page
-    ├── styles.css              # Application styles and theming
-    ├── app.js                  # Core application logic
-    ├── logo.svg                # SpecDown logo (light theme)
-    ├── logo-dark.svg           # SpecDown logo (dark theme)
-    └── favicon.svg             # Browser tab icon
+├── SPEC.md                      # Full product spec
+├── markdown-viewer/             # Web app (shared with desktop)
+│   ├── index.html               # Main application page
+│   ├── styles.css               # Application styles and theming
+│   ├── app.js                   # Core application logic
+│   ├── logo.svg                 # SpecDown logo (light theme)
+│   ├── logo-dark.svg            # SpecDown logo (dark theme)
+│   ├── favicon.svg              # Browser tab icon
+│   └── vendor/                  # Vendored libraries
+├── desktop/                     # Electron shell
+│   ├── main.js                  # Main process
+│   └── preload.js               # IPC bridge stub
+├── tests/                       # Jest test suite
+└── package.json
 ```
 
 ### Technology Stack
@@ -204,11 +211,29 @@ Each Mermaid diagram is automatically enhanced with:
 
 ### Development
 
+#### Running the Desktop App
+
+```bash
+npm run desktop
+```
+
+Launches the Electron window loading the Specdown web app. Requires Node.js and dependencies installed (`npm install`).
+
+#### Running Tests
+
+```bash
+npm test
+```
+
+Runs the full Jest test suite (unit + integration). All tests must pass before committing.
+
 #### Modifying the App
 
-1. **Styling**: Edit `styles.css` for visual changes
-2. **Functionality**: Edit `app.js` for behavior changes
-3. **Structure**: Edit `index.html` for layout changes
+1. **Styling**: Edit `markdown-viewer/styles.css` for visual changes
+2. **Functionality**: Edit `markdown-viewer/app.js` for behavior changes
+3. **Structure**: Edit `markdown-viewer/index.html` for layout changes
+4. **Electron main process**: Edit `desktop/main.js`
+5. **IPC bridge**: Edit `desktop/preload.js`
 
 #### Adding Features
 
