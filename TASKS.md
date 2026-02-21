@@ -99,6 +99,30 @@ npm run desktop          # opens the Electron window
 - Update SPEC.md "Current Spec" timestamp
 - Note in SPEC.md which features are now implemented (Electron shell, dev loop) vs. pending
 
+### 8. Set up DMG packaging and GitHub Releases distribution
+**Who:** AI coding agent
+- Configure `electron-builder` in `package.json` for macOS DMG packaging:
+  - App name: "Specdown Desktop"
+  - Bundle ID (e.g. `com.specdown.desktop`)
+  - Set `markdown-viewer/` and `desktop/` as included files
+  - Target: `dmg` for macOS
+  - No code signing or notarization (internal use — users bypass Gatekeeper via right-click > Open)
+- Add npm script: `"desktop:build"` — currently a no-op placeholder, wire it to `electron-builder`
+- Create `.github/workflows/desktop.yml` GitHub Actions workflow:
+  - Trigger: tag push (e.g. `v*-desktop`) or manual `workflow_dispatch`
+  - Runs on `macos-latest`
+  - Steps: checkout, `npm install`, `npm run desktop:build`, upload `.dmg` to GitHub Release
+  - Attach the built `.dmg` as a release asset
+- Update README with download instructions:
+  - "Download the latest `.dmg` from [GitHub Releases](link)"
+  - Note: unsigned app — right-click > Open on first launch
+- Verify the workflow file is valid YAML and references correct paths
+
+**Definition of done for this task:**
+- `npm run desktop:build` produces a `.dmg` file locally (requires macOS)
+- `.github/workflows/desktop.yml` exists and is valid
+- README documents how to download and install the desktop app
+
 ---
 
 ## Definition of Done
