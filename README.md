@@ -262,7 +262,7 @@ Built for viewing documentation with complex system architecture diagrams.
 
 ### Version History
 
-#### v0.0.40 (Current)
+#### v0.0.41 (Current)
 - Initial release
 - Full markdown rendering
 - Interactive mermaid diagrams
