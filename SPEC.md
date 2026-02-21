@@ -284,6 +284,6 @@ Playwright for Electron for full-app tests:
 | Recent files & favorites | Pending |
 | Print & PDF export | Pending |
 | Native macOS menus | Pending |
-| DMG packaging (`electron-builder`) | Pending |
+| DMG packaging (`electron-builder`) | Configured (awaiting macOS build) |
 
 *Last updated: 2026-02-21*

@@ -209,11 +209,23 @@ Each Mermaid diagram is automatically enhanced with:
 - Reset view if performance degrades
 - Simplify diagram if rendering is slow
 
+### Desktop App (macOS)
+
+#### Download
+
+Download the latest `.dmg` from [GitHub Releases](../../releases).
+
+> **Note:** The app is unsigned. On first launch, right-click the app and select **Open** to bypass Gatekeeper. Alternatively, run `xattr -cr /Applications/Specdown\ Desktop.app` after installing.
+
+#### Install
+
+1. Open the downloaded `.dmg`
+2. Drag **Specdown Desktop** to your Applications folder
+3. Right-click > **Open** on first launch
+
 ### Development
 
-#### Running the Desktop App
-
-The desktop version runs as an Electron app from source. A downloadable `.dmg` is not yet available — that's coming in a future release via GitHub Releases.
+#### Running the Desktop App from Source
 
 **First-time setup:**
 ```bash
@@ -224,6 +236,11 @@ npm install               # install Electron and all dependencies
 **Launch the app:**
 ```bash
 npm run desktop           # opens the Specdown Desktop window
+```
+
+**Build the DMG locally (macOS only):**
+```bash
+npm run desktop:build     # produces a .dmg in dist/
 ```
 
 Requires Node.js (v18+) installed on your machine.
