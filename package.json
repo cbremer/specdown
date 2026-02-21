@@ -5,7 +5,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "desktop": "electron .",
-    "desktop:build": "echo 'Packaging not yet configured'",
+    "desktop:build": "electron-builder --mac dmg",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -55,6 +55,25 @@
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.js"
     ]
+  },
+  "build": {
+    "appId": "com.specdown.desktop",
+    "productName": "Specdown Desktop",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*",
+      "markdown-viewer/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools"
+    },
+    "dmg": {
+      "title": "Specdown Desktop"
+    }
   },
   "dependencies": {
     "@highlightjs/cdn-assets": "^11.9.0",
