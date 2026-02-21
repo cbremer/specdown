@@ -354,6 +354,99 @@ A few guiding principles to avoid scope creep:
 
 ---
 
+## Development Strategy
+
+How to manage the web and desktop versions without breaking what already works.
+
+### Recommended: Same Repo, Two Deployment Paths
+
+The desktop app wraps the existing web code — it doesn't replace it. Desktop-specific files live in their own directory alongside the current files. GitHub Pages continues deploying the web version; the desktop app builds and ships separately via GitHub Releases.
+
+**Why this works:**
+- The desktop frameworks (Tauri, Electron, Swift) are designed to serve existing web files from a directory. They add their own config/native code next to your frontend — they don't modify it.
+- GitHub Pages only serves the files it's configured to (root or `docs/`). It ignores desktop-specific directories entirely.
+- Bug fixes and rendering improvements to `app.js` or `styles.css` benefit both versions automatically — no duplication.
+
+### How the Repo Layout Changes
+
+Current structure stays intact. Desktop-specific files get added alongside:
+
+**If Tauri:**
+```
+specdown/
+├── index.html          ← shared (web + desktop frontend)
+├── app.js              ← shared
+├── styles.css          ← shared
+├── vendor/             ← shared (Marked, Mermaid, Panzoom, Highlight.js)
+├── tests/              ← existing tests
+├── package.json        ← existing (add Tauri dev scripts)
+├── src-tauri/          ← NEW: Tauri-specific
+│   ├── Cargo.toml      ←   Rust dependencies
+│   ├── tauri.conf.json ←   App config (window size, title, permissions)
+│   ├── src/
+│   │   └── main.rs     ←   Native backend (file system, menus, persistence)
+│   └── icons/          ←   App icons
+└── .github/workflows/
+    ├── static.yml      ← existing: deploys web to GitHub Pages
+    └── desktop.yml     ← NEW: builds .dmg/.app, attaches to GitHub Releases
+```
+
+**If Electron:**
+```
+specdown/
+├── index.html          ← shared
+├── app.js              ← shared
+├── styles.css          ← shared
+├── vendor/             ← shared
+├── tests/              ← existing tests
+├── package.json        ← existing (add Electron deps + scripts)
+├── desktop/            ← NEW: Electron-specific
+│   ├── main.js         ←   Main process (window management, menus, file system)
+│   ├── preload.js      ←   Bridge between Node.js and web context
+│   └── icons/          ←   App icons
+└── .github/workflows/
+    ├── static.yml      ← existing: GitHub Pages
+    └── desktop.yml     ← NEW: builds .dmg/.app for GitHub Releases
+```
+
+### Two Deployment Paths, No Interference
+
+| | Web Version | Desktop Version |
+|---|---|---|
+| **What ships** | Static files (HTML/JS/CSS) | Bundled `.app` / `.dmg` |
+| **Deployed via** | GitHub Pages (`static.yml`) | GitHub Releases (`desktop.yml`) |
+| **Triggered by** | Push to main | Tag push (e.g. `v1.0.0-desktop`) or manual |
+| **Users get it from** | `cbremer.github.io/specdown` | GitHub Releases page (download link) |
+| **Auto-updates** | Instant (it's a website) | Framework-specific (Tauri updater / Electron autoUpdater) |
+
+### What's Shared vs. Separate
+
+| Shared (both versions) | Desktop-only |
+|---|---|
+| `index.html`, `app.js`, `styles.css` | Native backend code (Rust/JS/Swift) |
+| `vendor/` (Marked, Mermaid, Panzoom, Highlight.js) | App config (window size, permissions, file associations) |
+| CSS theming (light/dark variables) | Desktop CI workflow |
+| Core rendering and diagram logic | App icons and packaging config |
+| Existing tests | Persistent storage layer |
+
+### Versioning
+
+Two options:
+
+**A. Shared version number** — Web and desktop use the same version from `package.json`. Simpler, but a desktop-only change bumps the web version too. Works fine if releases are coordinated.
+
+**B. Independent versions** — Web stays on its current `package.json` version. Desktop gets its own version in `tauri.conf.json` / `electron-builder.yml` / Xcode. More flexible, but two numbers to track.
+
+**Recommendation:** Start with **A (shared)** while the desktop is new. Split later if release cadences diverge.
+
+### Alternatives Considered
+
+**Separate repo (fork):** Clean separation, but shared rendering code (`app.js`, `styles.css`) diverges over time. Every bug fix or feature improvement needs to be applied in two places. Not worth it for a project this size.
+
+**Monorepo with packages:** Extract shared code into `packages/core/`, separate `packages/web/` and `packages/desktop/` shells. Adds build tooling (workspaces, bundler) for minimal benefit when the "shared code" is literally three files. Overkill here.
+
+---
+
 ## Possible MVP Scope
 
 If we were to build a first version, the smallest useful thing might be:
