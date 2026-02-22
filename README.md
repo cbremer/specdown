@@ -76,7 +76,12 @@ All modern browsers with ES6+ support and FileReader API.
 ```
 specdown/
 ├── README.md                    # This file
-├── SPEC.md                      # Full product spec
+├── docs/
+│   └── project-desktop/         # Desktop project history & specs
+│       ├── README.md            # Start here — overview and timeline
+│       ├── 2026-02-20-brainstorm-desktop-electron.md
+│       ├── 2026-02-21-spec-desktop-v1.md
+│       └── 2026-02-21-tasks-session-01-electron-shell.md
 ├── markdown-viewer/             # Web app (shared with desktop)
 │   ├── index.html               # Main application page
 │   ├── styles.css               # Application styles and theming
