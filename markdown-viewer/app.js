@@ -17,10 +17,13 @@ let currentRawMarkdown = '';
 let currentViewMode = 'preview'; // 'preview' or 'raw'
 
 // Tab state
-let tabs = [];         // Array of { id, filename, rawMarkdown, viewMode, scrollTop }
+let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMode, scrollTop }
 let activeTabId = null;
 let nextTabId = 0;
 const MAX_TABS = 10;
+
+// Desktop detection
+const isDesktop = !!(typeof window !== 'undefined' && window.specdown && window.specdown.isDesktop);
 
 // ===========================
 // DOM Elements
@@ -46,6 +49,9 @@ function init() {
     configureMermaid();
     configureMarked();
     checkForUpdates();
+    if (isDesktop) {
+        setupDesktopIPC();
+    }
 }
 
 // ===========================
@@ -890,7 +896,7 @@ function renderTabBar() {
     }
 }
 
-function createTab(filename, content) {
+function createTab(filename, content, filePath) {
     if (tabs.length >= MAX_TABS) {
         alert('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.');
         return;
@@ -903,6 +909,7 @@ function createTab(filename, content) {
     const tab = {
         id,
         filename,
+        filePath: filePath || null,
         rawMarkdown: content,
         viewMode: 'preview',
         scrollTop: 0
@@ -984,6 +991,23 @@ async function closeTab(id) {
     } else {
         renderTabBar();
     }
+}
+
+// ===========================
+// Desktop IPC Integration
+// ===========================
+function setupDesktopIPC() {
+    // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
+    window.specdown.onFileOpened(function(fileData) {
+        createTab(fileData.filename, fileData.content, fileData.filePath);
+    });
+
+    // Listen for close-tab command from native menu (Cmd+W)
+    window.specdown.onCloseTab(function() {
+        if (activeTabId !== null) {
+            closeTab(activeTabId);
+        }
+    });
 }
 
 // ===========================
