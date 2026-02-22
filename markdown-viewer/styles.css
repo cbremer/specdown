@@ -703,13 +703,105 @@ body {
 }
 
 /* ===========================
+   Tab Bar
+   =========================== */
+.tab-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 0.5rem;
+    overflow-x: auto;
+    flex-shrink: 0;
+    gap: 0;
+}
+
+/* Hide scrollbar but keep scrollability for many tabs */
+.tab-bar::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bg-tertiary);
+    border-right: 1px solid var(--border-color);
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-width: 0;
+    max-width: 180px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+}
+
+.tab:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.tab-active {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: 500;
+    border-top: 2px solid var(--accent-color);
+    padding-top: calc(0.5rem - 2px);
+}
+
+.tab-filename {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.tab-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab-close:hover {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
+
+.tab-new {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-left: 0.25rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab-new:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--accent-color);
+}
+
+/* ===========================
    Print Styles
    =========================== */
 @media print {
     .app-header,
+    .tab-bar,
     .content-header,
     .diagram-controls,
-    .load-new-button,
     .theme-toggle {
         display: none !important;
     }

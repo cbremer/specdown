@@ -16,6 +16,12 @@ let currentTheme = localStorage.getItem('theme') || 'light';
 let currentRawMarkdown = '';
 let currentViewMode = 'preview'; // 'preview' or 'raw'
 
+// Tab state
+let tabs = [];         // Array of { id, filename, rawMarkdown, viewMode, scrollTop }
+let activeTabId = null;
+let nextTabId = 0;
+const MAX_TABS = 10;
+
 // ===========================
 // DOM Elements
 // ===========================
@@ -25,7 +31,7 @@ const browseButton = document.getElementById('browse-button');
 const contentArea = document.getElementById('content-area');
 const markdownContent = document.getElementById('markdown-content');
 const fileName = document.getElementById('file-name');
-const loadNewFileButton = document.getElementById('load-new-file');
+const tabBar = document.getElementById('tab-bar');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 const viewToggle = document.getElementById('view-toggle');
@@ -126,6 +132,13 @@ function toggleViewMode() {
         renderMarkdown(currentRawMarkdown, fileName.textContent);
         return; // renderMarkdown handles the rest
     }
+
+    // Persist view mode to active tab state
+    if (activeTabId !== null) {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) tab.viewMode = currentViewMode;
+    }
+
     updateViewToggleButton();
 }
 
@@ -168,9 +181,6 @@ function setupEventListeners() {
     dropZone.addEventListener('dragleave', handleDragLeave);
     dropZone.addEventListener('drop', handleDrop);
     
-    // Load new file button
-    loadNewFileButton.addEventListener('click', showDropZone);
-    
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
 
@@ -193,7 +203,19 @@ function setupEventListeners() {
     
     // Prevent default drag behavior on document
     document.addEventListener('dragover', (e) => e.preventDefault());
-    document.addEventListener('drop', (e) => e.preventDefault());
+
+    // Document-level drop: open files as new tabs when tabs are already open.
+    // When the drop zone is visible its handler fires first and calls
+    // stopPropagation(), so this listener is only reached for drops on the
+    // content area (when the drop zone is hidden).
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (tabs.length > 0 && e.dataTransfer && e.dataTransfer.files.length > 0) {
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                handleFile(e.dataTransfer.files[i]);
+            }
+        }
+    });
 }
 
 // ===========================
@@ -217,17 +239,21 @@ function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
     dropZone.classList.remove('drag-over');
-    
+
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        handleFile(files[0]);
+    for (let i = 0; i < files.length; i++) {
+        handleFile(files[i]);
     }
 }
 
 function handleFileSelect(e) {
     const files = e.target.files;
-    if (files.length > 0) {
-        handleFile(files[0]);
+    for (let i = 0; i < files.length; i++) {
+        handleFile(files[i]);
+    }
+    // Reset so the same file can be re-opened in a new tab
+    if (e.target && 'value' in e.target) {
+        e.target.value = '';
     }
 }
 
@@ -242,12 +268,12 @@ function handleFile(file) {
         alert('Please select a valid Markdown file (.md or .markdown)');
         return;
     }
-    
-    // Read file
+
+    // Read file and open in a new tab
     const reader = new FileReader();
     reader.onload = (e) => {
         const content = e.target.result;
-        renderMarkdown(content, file.name);
+        createTab(file.name, content);
     };
     reader.onerror = () => {
         alert('Error reading file. Please try again.');
@@ -734,7 +760,12 @@ function showDropZone() {
     currentRawMarkdown = '';
     currentViewMode = 'preview';
     updateViewToggleButton();
-    
+
+    // Clear tab state
+    tabs = [];
+    activeTabId = null;
+    renderTabBar();
+
     // Show drop zone, hide content
     contentArea.style.display = 'none';
     dropZone.style.display = 'flex';
@@ -790,6 +821,168 @@ async function reRenderMermaidDiagrams() {
         } catch (error) {
             console.error('Error re-rendering mermaid diagram:', error);
         }
+    }
+}
+
+// ===========================
+// Tab Management
+// ===========================
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function saveActiveTabState() {
+    if (activeTabId === null) return;
+    const tab = tabs.find(t => t.id === activeTabId);
+    if (!tab) return;
+    tab.viewMode = currentViewMode;
+    tab.scrollTop = markdownContent.scrollTop;
+}
+
+function renderTabBar() {
+    if (!tabBar) return;
+
+    if (tabs.length === 0) {
+        tabBar.style.display = 'none';
+        tabBar.innerHTML = '';
+        return;
+    }
+
+    tabBar.style.display = 'flex';
+
+    let html = '';
+    for (const tab of tabs) {
+        const isActive = tab.id === activeTabId;
+        html += `<div class="tab${isActive ? ' tab-active' : ''}" data-tab-id="${tab.id}">`;
+        html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
+        html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab">×</button>`;
+        html += `</div>`;
+    }
+    html += `<button class="tab-new" title="Open new file">+</button>`;
+
+    tabBar.innerHTML = html;
+
+    tabBar.querySelectorAll('.tab').forEach(tabEl => {
+        tabEl.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-close')) return;
+            const id = parseInt(tabEl.getAttribute('data-tab-id'), 10);
+            switchTab(id);
+        });
+    });
+
+    tabBar.querySelectorAll('.tab-close').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = parseInt(btn.getAttribute('data-close-id'), 10);
+            closeTab(id);
+        });
+    });
+
+    const newTabBtn = tabBar.querySelector('.tab-new');
+    if (newTabBtn) {
+        newTabBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+    }
+}
+
+function createTab(filename, content) {
+    if (tabs.length >= MAX_TABS) {
+        alert('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.');
+        return;
+    }
+
+    // Save current tab state before switching
+    saveActiveTabState();
+
+    const id = ++nextTabId;
+    const tab = {
+        id,
+        filename,
+        rawMarkdown: content,
+        viewMode: 'preview',
+        scrollTop: 0
+    };
+    tabs.push(tab);
+    activeTabId = id;
+
+    renderTabBar();
+    renderMarkdown(content, filename);
+}
+
+async function switchTab(id) {
+    if (id === activeTabId) return;
+
+    saveActiveTabState();
+    activeTabId = id;
+    const tab = tabs.find(t => t.id === id);
+    if (!tab) return;
+
+    renderTabBar();
+    cleanupPanzoomInstances();
+
+    if (tab.viewMode === 'raw') {
+        currentRawMarkdown = tab.rawMarkdown;
+        currentViewMode = 'raw';
+        const escaped = tab.rawMarkdown
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
+        fileName.textContent = tab.filename;
+        dropZone.style.display = 'none';
+        contentArea.style.display = 'flex';
+        updateViewToggleButton();
+        markdownContent.scrollTop = tab.scrollTop;
+    } else {
+        await renderMarkdown(tab.rawMarkdown, tab.filename);
+        markdownContent.scrollTop = tab.scrollTop;
+    }
+}
+
+async function closeTab(id) {
+    const idx = tabs.findIndex(t => t.id === id);
+    if (idx === -1) return;
+
+    const wasActive = (id === activeTabId);
+
+    if (wasActive) {
+        cleanupPanzoomInstances();
+    }
+
+    tabs.splice(idx, 1);
+
+    if (tabs.length === 0) {
+        activeTabId = null;
+        renderTabBar();
+        showDropZone();
+    } else if (wasActive) {
+        const newIdx = Math.min(idx, tabs.length - 1);
+        const newTab = tabs[newIdx];
+        activeTabId = newTab.id;
+        renderTabBar();
+
+        if (newTab.viewMode === 'raw') {
+            currentRawMarkdown = newTab.rawMarkdown;
+            currentViewMode = 'raw';
+            const escaped = newTab.rawMarkdown
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
+            fileName.textContent = newTab.filename;
+            dropZone.style.display = 'none';
+            contentArea.style.display = 'flex';
+            updateViewToggleButton();
+        } else {
+            await renderMarkdown(newTab.rawMarkdown, newTab.filename);
+        }
+    } else {
+        renderTabBar();
     }
 }
 

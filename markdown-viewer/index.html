@@ -43,6 +43,9 @@
             </div>
         </header>
 
+        <!-- Tab Bar (shown when one or more files are open) -->
+        <div id="tab-bar" class="tab-bar" style="display: none;"></div>
+
         <!-- Drop Zone (shown when no file is loaded) -->
         <div id="drop-zone" class="drop-zone">
             <div class="drop-zone-content">
@@ -53,7 +56,7 @@
                 </svg>
                 <h2>Drop Markdown File Here</h2>
                 <p>or click to browse</p>
-                <input type="file" id="file-input" accept=".md,.markdown" hidden>
+                <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
                 <button id="browse-button" class="browse-button">Browse Files</button>
             </div>
             <div class="drop-zone-overlay">
@@ -72,9 +75,6 @@
                     <button id="view-toggle" class="view-toggle-button" title="Toggle between preview and raw markdown">
                         <span class="view-toggle-icon">&lt;/&gt;</span>
                         <span class="view-toggle-label">Raw</span>
-                    </button>
-                    <button id="load-new-file" class="load-new-button" title="Load another file">
-                        Load New File
                     </button>
                 </div>
             </div>
