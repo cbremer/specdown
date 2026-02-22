@@ -1,9 +1,29 @@
-// Preload script — bridge between Electron main process and renderer.
-// This will later expose IPC APIs via contextBridge.
-// For now it's a stub to establish the architecture.
+// Preload script — secure IPC bridge between Electron main process and renderer.
+// Exposes a limited API via contextBridge so the renderer can communicate with
+// the main process without direct access to Node.js or Electron internals.
 
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('specdown', {
-  // IPC methods will be added here in future sessions
+  isDesktop: true,
+
+  // Called by the renderer to open the native file dialog
+  requestFileOpen: () => {
+    ipcRenderer.send('request-file-open');
+  },
+
+  // Register a callback for when a file is opened from the main process
+  // (via Cmd+O dialog, Finder double-click, drag-to-dock, etc.)
+  onFileOpened: (callback) => {
+    ipcRenderer.on('file-opened', (_event, fileData) => {
+      callback(fileData);
+    });
+  },
+
+  // Register a callback for when the menu requests closing the active tab
+  onCloseTab: (callback) => {
+    ipcRenderer.on('close-tab', () => {
+      callback();
+    });
+  },
 });

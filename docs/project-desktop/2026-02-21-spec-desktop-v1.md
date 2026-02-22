@@ -277,13 +277,13 @@ Playwright for Electron for full-app tests:
 | Electron shell (`desktop/main.js`, `desktop/preload.js`) | Implemented |
 | Dev loop (`npm run desktop`) | Implemented |
 | Existing Jest test suite passing | Verified |
-| Multi-file tabs | Pending |
-| Native file open (`Cmd+O`) | Pending |
+| Multi-file tabs | Implemented |
+| Native file open (`Cmd+O`) | Implemented |
+| Native macOS menus (File > Open) | Implemented |
 | File watching | Pending |
 | Persistent state | Pending |
 | Recent files & favorites | Pending |
 | Print & PDF export | Pending |
-| Native macOS menus | Pending |
 | DMG packaging (`electron-builder`) | Configured (awaiting macOS build) |
 
-*Last updated: 2026-02-21*
+*Last updated: 2026-02-22*

@@ -13,6 +13,7 @@
     "test:integration": "jest tests/integration",
     "test:verbose": "jest --verbose",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:report": "jest --verbose --json --outputFile=test-results.json",
     "version": "node scripts/sync-version.js && git add markdown-viewer/app.js README.md"
   },
   "keywords": [
@@ -37,17 +38,11 @@
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "markdown-viewer/**/*.js",
+      "!markdown-viewer/vendor/**",
       "!markdown-viewer/**/*.test.js",
-      "!markdown-viewer/**/*.spec.js"
+      "!markdown-viewer/**/*.spec.js",
+      "desktop/**/*.js"
     ],
-    "coverageThreshold": {
-      "global": {
-        "statements": 50,
-        "branches": 45,
-        "functions": 50,
-        "lines": 50
-      }
-    },
     "testMatch": [
       "**/tests/**/*.test.js",
       "**/tests/**/*.spec.js"

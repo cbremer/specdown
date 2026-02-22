@@ -37,10 +37,11 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Feb 20, 2026 | Brainstorm | [2026-02-20-brainstorm-desktop-electron.md](2026-02-20-brainstorm-desktop-electron.md) | Problem framing, framework comparison (Tauri vs Electron vs Swift + WKWebView), MVP scope, same-repo strategy |
 | Feb 21, 2026 | Spec | [2026-02-21-spec-desktop-v1.md](2026-02-21-spec-desktop-v1.md) | Full technical specification: feature list, architecture, IPC contract, testing strategy, implementation status |
 | Feb 21, 2026 | Tasks | [2026-02-21-tasks-session-01-electron-shell.md](2026-02-21-tasks-session-01-electron-shell.md) | Session 1 implementation checklist — Electron shell, DMG CI, dev loop |
+| Feb 22, 2026 | Tasks | [2026-02-22-tasks-session-02-native-file-open.md](2026-02-22-tasks-session-02-native-file-open.md) | Session 2 implementation checklist — Native file open, IPC bridge, macOS menus |
 
 ---
 
-## Current Status (as of Feb 21, 2026)
+## Current Status (as of Feb 22, 2026)
 
 | Feature | Status |
 |---|---|
@@ -48,15 +49,15 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Dev loop (`npm run desktop`) | Implemented |
 | DMG packaging (`electron-builder`) | Configured (awaiting macOS build) |
 | Existing Jest test suite passing | Verified |
-| Multi-file tabs | Pending |
-| Native file open (`Cmd+O`) | Pending |
+| Multi-file tabs | Implemented |
+| Native file open (`Cmd+O`) | Implemented |
+| Native macOS menus (File > Open) | Implemented |
 | File watching | Pending |
 | Persistent state | Pending |
 | Recent files & favorites | Pending |
 | Print & PDF export | Pending |
-| Native macOS menus | Pending |
 
-Session 2 will pick up with native file open, IPC bridge, and basic menus.
+Session 3 will pick up with file watching, persistent state, and additional menus.
 
 ---
 
@@ -78,7 +79,8 @@ YYYY-MM-DD-<type>-<detail>.md
 2026-02-20-brainstorm-desktop-electron.md
 2026-02-21-spec-desktop-v1.md
 2026-02-21-tasks-session-01-electron-shell.md
-2026-02-28-tasks-session-02-native-file-open.md    ← future
+2026-02-22-tasks-session-02-native-file-open.md
+2026-03-10-tasks-session-03-file-watching.md       ← future
 2026-03-10-spec-desktop-v2-tabs.md                 ← future major spec revision
 ```
 
