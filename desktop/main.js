@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const chokidar = require('chokidar');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 
@@ -83,6 +84,44 @@ async function showOpenDialog() {
 }
 
 // ===========================
+// File Watching
+// ===========================
+
+// Map of filePath → chokidar FSWatcher
+const watchers = new Map();
+
+function watchFile(filePath, webContents) {
+  if (watchers.has(filePath)) return; // already watching
+
+  const watcher = chokidar.watch(filePath, {
+    persistent: true,
+    ignoreInitial: true,
+    awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+  });
+
+  watcher.on('change', () => {
+    try {
+      const fileData = readMarkdownFile(filePath);
+      if (webContents && !webContents.isDestroyed()) {
+        webContents.send('file-changed', fileData);
+      }
+    } catch (err) {
+      console.error('Failed to re-read watched file:', filePath, err);
+    }
+  });
+
+  watchers.set(filePath, watcher);
+}
+
+function unwatchFile(filePath) {
+  const watcher = watchers.get(filePath);
+  if (watcher) {
+    watcher.close();
+    watchers.delete(filePath);
+  }
+}
+
+// ===========================
 // IPC Handlers
 // ===========================
 ipcMain.on('request-file-open', () => {
@@ -93,6 +132,14 @@ ipcMain.on('close-active-tab', () => {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('close-tab');
   }
+});
+
+ipcMain.on('watch-file', (event, filePath) => {
+  watchFile(filePath, event.sender);
+});
+
+ipcMain.on('unwatch-file', (_event, filePath) => {
+  unwatchFile(filePath);
 });
 
 // ===========================
@@ -226,5 +273,8 @@ module.exports = {
   isValidMarkdownFile,
   readMarkdownFile,
   buildMenu,
+  watchFile,
+  unwatchFile,
+  watchers,
   VALID_EXTENSIONS,
 };

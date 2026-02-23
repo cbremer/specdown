@@ -38,10 +38,11 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Feb 21, 2026 | Spec | [2026-02-21-spec-desktop-v1.md](2026-02-21-spec-desktop-v1.md) | Full technical specification: feature list, architecture, IPC contract, testing strategy, implementation status |
 | Feb 21, 2026 | Tasks | [2026-02-21-tasks-session-01-electron-shell.md](2026-02-21-tasks-session-01-electron-shell.md) | Session 1 implementation checklist — Electron shell, DMG CI, dev loop |
 | Feb 22, 2026 | Tasks | [2026-02-22-tasks-session-02-native-file-open.md](2026-02-22-tasks-session-02-native-file-open.md) | Session 2 implementation checklist — Native file open, IPC bridge, macOS menus |
+| Feb 23, 2026 | Tasks | [2026-02-23-tasks-session-03-file-watching.md](2026-02-23-tasks-session-03-file-watching.md) | Session 3 implementation checklist — File watching (chokidar, per-tab toggle) |
 
 ---
 
-## Current Status (as of Feb 22, 2026)
+## Current Status (as of Feb 23, 2026)
 
 | Feature | Status |
 |---|---|
@@ -52,12 +53,12 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Multi-file tabs | Implemented |
 | Native file open (`Cmd+O`) | Implemented |
 | Native macOS menus (File > Open) | Implemented |
-| File watching | Pending |
+| File watching | Implemented |
 | Persistent state | Pending |
 | Recent files & favorites | Pending |
 | Print & PDF export | Pending |
 
-Session 3 will pick up with file watching, persistent state, and additional menus.
+Session 4 will pick up with persistent state and additional menus.
 
 ---
 

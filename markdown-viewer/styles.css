@@ -292,6 +292,51 @@ body {
     gap: 0.5rem;
 }
 
+.watch-toggle-button {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.watch-toggle-button:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.watch-toggle-button.active {
+    background-color: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.watch-toggle-button.active:hover {
+    background-color: #219a52;
+    border-color: #219a52;
+}
+
+.watch-toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.tab-watching-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #27ae60;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
 .view-toggle-button {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);

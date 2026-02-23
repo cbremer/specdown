@@ -280,10 +280,10 @@ Playwright for Electron for full-app tests:
 | Multi-file tabs | Implemented |
 | Native file open (`Cmd+O`) | Implemented |
 | Native macOS menus (File > Open) | Implemented |
-| File watching | Pending |
+| File watching | Implemented |
 | Persistent state | Pending |
 | Recent files & favorites | Pending |
 | Print & PDF export | Pending |
 | DMG packaging (`electron-builder`) | Configured (awaiting macOS build) |
 
-*Last updated: 2026-02-22*
+*Last updated: 2026-02-23*

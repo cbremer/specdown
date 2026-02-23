@@ -9,6 +9,14 @@
 const path = require('path');
 const fs = require('fs');
 
+// Mock chokidar before requiring main.js
+jest.mock('chokidar', () => ({
+  watch: jest.fn(() => ({
+    on: jest.fn().mockReturnThis(),
+    close: jest.fn(),
+  })),
+}));
+
 // Mock Electron modules before requiring main.js
 jest.mock('electron', () => ({
   app: {
@@ -34,7 +42,7 @@ jest.mock('electron', () => ({
   },
 }));
 
-const { isValidMarkdownFile, readMarkdownFile, buildMenu, VALID_EXTENSIONS } = require('../../desktop/main');
+const { isValidMarkdownFile, readMarkdownFile, buildMenu, watchFile, unwatchFile, watchers, VALID_EXTENSIONS } = require('../../desktop/main');
 
 describe('desktop/main.js', () => {
   describe('VALID_EXTENSIONS', () => {
@@ -157,6 +165,95 @@ describe('desktop/main.js', () => {
       const registeredChannels = ipcMain.on.mock.calls.map(call => call[0]);
       expect(registeredChannels).toContain('request-file-open');
       expect(registeredChannels).toContain('close-active-tab');
+    });
+
+    it('registers watch-file and unwatch-file handlers', () => {
+      const { ipcMain } = require('electron');
+      const registeredChannels = ipcMain.on.mock.calls.map(call => call[0]);
+      expect(registeredChannels).toContain('watch-file');
+      expect(registeredChannels).toContain('unwatch-file');
+    });
+  });
+
+  describe('file watching', () => {
+    const chokidar = require('chokidar');
+
+    beforeEach(() => {
+      // Clear watchers map and reset mocks between tests
+      watchers.clear();
+      chokidar.watch.mockClear();
+      chokidar.watch.mockReturnValue({
+        on: jest.fn().mockReturnThis(),
+        close: jest.fn(),
+      });
+    });
+
+    afterEach(() => {
+      // Clean up any watchers created during tests
+      watchers.forEach((watcher) => watcher.close());
+      watchers.clear();
+    });
+
+    describe('watchFile', () => {
+      it('creates a chokidar watcher for the given path', () => {
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+        watchFile('/path/to/file.md', mockWebContents);
+
+        expect(chokidar.watch).toHaveBeenCalledWith('/path/to/file.md', expect.objectContaining({
+          persistent: true,
+          ignoreInitial: true,
+        }));
+        expect(watchers.has('/path/to/file.md')).toBe(true);
+      });
+
+      it('does not create a second watcher for the same path', () => {
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+        watchFile('/path/to/file.md', mockWebContents);
+        watchFile('/path/to/file.md', mockWebContents);
+
+        expect(chokidar.watch).toHaveBeenCalledTimes(1);
+        expect(watchers.size).toBe(1);
+      });
+
+      it('registers a change handler on the watcher', () => {
+        const mockWatcher = { on: jest.fn().mockReturnThis(), close: jest.fn() };
+        chokidar.watch.mockReturnValue(mockWatcher);
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+        watchFile('/path/to/file.md', mockWebContents);
+
+        expect(mockWatcher.on).toHaveBeenCalledWith('change', expect.any(Function));
+      });
+
+      it('can watch multiple different paths', () => {
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+        watchFile('/path/to/a.md', mockWebContents);
+        watchFile('/path/to/b.md', mockWebContents);
+
+        expect(watchers.size).toBe(2);
+        expect(watchers.has('/path/to/a.md')).toBe(true);
+        expect(watchers.has('/path/to/b.md')).toBe(true);
+      });
+    });
+
+    describe('unwatchFile', () => {
+      it('closes the watcher and removes it from the map', () => {
+        const mockWatcher = { on: jest.fn().mockReturnThis(), close: jest.fn() };
+        chokidar.watch.mockReturnValue(mockWatcher);
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+        watchFile('/path/to/file.md', mockWebContents);
+        expect(watchers.has('/path/to/file.md')).toBe(true);
+
+        unwatchFile('/path/to/file.md');
+
+        expect(mockWatcher.close).toHaveBeenCalledTimes(1);
+        expect(watchers.has('/path/to/file.md')).toBe(false);
+      });
+
+      it('does nothing if the path is not being watched', () => {
+        expect(() => unwatchFile('/not/watched.md')).not.toThrow();
+      });
     });
   });
 });

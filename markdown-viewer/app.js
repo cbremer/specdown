@@ -17,7 +17,7 @@ let currentRawMarkdown = '';
 let currentViewMode = 'preview'; // 'preview' or 'raw'
 
 // Tab state
-let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMode, scrollTop }
+let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMode, scrollTop, watching }
 let activeTabId = null;
 let nextTabId = 0;
 const MAX_TABS = 10;
@@ -38,6 +38,7 @@ const tabBar = document.getElementById('tab-bar');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 const viewToggle = document.getElementById('view-toggle');
+const watchToggle = document.getElementById('watch-toggle');
 
 // ===========================
 // Initialization
@@ -864,6 +865,9 @@ function renderTabBar() {
     for (const tab of tabs) {
         const isActive = tab.id === activeTabId;
         html += `<div class="tab${isActive ? ' tab-active' : ''}" data-tab-id="${tab.id}">`;
+        if (tab.watching) {
+            html += `<span class="tab-watching-dot" title="Watching for changes"></span>`;
+        }
         html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
         html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab">×</button>`;
         html += `</div>`;
@@ -912,12 +916,14 @@ function createTab(filename, content, filePath) {
         filePath: filePath || null,
         rawMarkdown: content,
         viewMode: 'preview',
-        scrollTop: 0
+        scrollTop: 0,
+        watching: false
     };
     tabs.push(tab);
     activeTabId = id;
 
     renderTabBar();
+    if (isDesktop) updateWatchToggle();
     renderMarkdown(content, filename);
 }
 
@@ -930,6 +936,7 @@ async function switchTab(id) {
     if (!tab) return;
 
     renderTabBar();
+    if (isDesktop) updateWatchToggle();
     cleanupPanzoomInstances();
 
     if (tab.viewMode === 'raw') {
@@ -956,6 +963,12 @@ async function closeTab(id) {
     if (idx === -1) return;
 
     const wasActive = (id === activeTabId);
+    const closedTab = tabs[idx];
+
+    // Stop watching before removing the tab
+    if (isDesktop && closedTab.watching && closedTab.filePath) {
+        window.specdown.unwatchFile(closedTab.filePath);
+    }
 
     if (wasActive) {
         cleanupPanzoomInstances();
@@ -966,12 +979,14 @@ async function closeTab(id) {
     if (tabs.length === 0) {
         activeTabId = null;
         renderTabBar();
+        if (isDesktop) updateWatchToggle();
         showDropZone();
     } else if (wasActive) {
         const newIdx = Math.min(idx, tabs.length - 1);
         const newTab = tabs[newIdx];
         activeTabId = newTab.id;
         renderTabBar();
+        if (isDesktop) updateWatchToggle();
 
         if (newTab.viewMode === 'raw') {
             currentRawMarkdown = newTab.rawMarkdown;
@@ -996,6 +1011,44 @@ async function closeTab(id) {
 // ===========================
 // Desktop IPC Integration
 // ===========================
+function updateWatchToggle() {
+    if (!watchToggle) return;
+
+    const tab = activeTabId !== null ? tabs.find(t => t.id === activeTabId) : null;
+    const canWatch = !!(tab && tab.filePath);
+
+    if (!canWatch) {
+        watchToggle.style.display = 'none';
+        return;
+    }
+
+    watchToggle.style.display = '';
+    if (tab.watching) {
+        watchToggle.classList.add('active');
+        watchToggle.title = 'Watching — click to stop';
+    } else {
+        watchToggle.classList.remove('active');
+        watchToggle.title = 'Auto-reload when file changes on disk';
+    }
+}
+
+function toggleWatching() {
+    if (!isDesktop) return;
+    const tab = activeTabId !== null ? tabs.find(t => t.id === activeTabId) : null;
+    if (!tab || !tab.filePath) return;
+
+    tab.watching = !tab.watching;
+
+    if (tab.watching) {
+        window.specdown.watchFile(tab.filePath);
+    } else {
+        window.specdown.unwatchFile(tab.filePath);
+    }
+
+    renderTabBar();
+    updateWatchToggle();
+}
+
 function setupDesktopIPC() {
     // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
     window.specdown.onFileOpened(function(fileData) {
@@ -1008,6 +1061,33 @@ function setupDesktopIPC() {
             closeTab(activeTabId);
         }
     });
+
+    // Listen for file-changed events (watched file updated on disk)
+    window.specdown.onFileChanged(function(fileData) {
+        const tab = tabs.find(t => t.filePath === fileData.filePath);
+        if (!tab) return;
+
+        tab.rawMarkdown = fileData.content;
+        tab.filename = fileData.filename;
+
+        if (tab.id === activeTabId) {
+            if (tab.viewMode === 'raw') {
+                currentRawMarkdown = fileData.content;
+                const escaped = fileData.content
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
+            } else {
+                renderMarkdown(fileData.content, fileData.filename);
+            }
+        }
+    });
+
+    // Wire up watch toggle button
+    if (watchToggle) {
+        watchToggle.addEventListener('click', toggleWatching);
+    }
 }
 
 // ===========================

@@ -26,4 +26,21 @@ contextBridge.exposeInMainWorld('specdown', {
       callback();
     });
   },
+
+  // Request the main process to start watching a file for changes
+  watchFile: (filePath) => {
+    ipcRenderer.send('watch-file', filePath);
+  },
+
+  // Request the main process to stop watching a file
+  unwatchFile: (filePath) => {
+    ipcRenderer.send('unwatch-file', filePath);
+  },
+
+  // Register a callback for when a watched file changes on disk
+  onFileChanged: (callback) => {
+    ipcRenderer.on('file-changed', (_event, fileData) => {
+      callback(fileData);
+    });
+  },
 });
