@@ -47,6 +47,24 @@ describe('URL Handling', () => {
       const expected = 'https://raw.githubusercontent.com/user/repo/main/file.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
+
+    it('converts a GitHub Enterprise blob URL to a raw URL on the same host', () => {
+      const input = 'https://github.linkedin.com/linkedin-multiproduct/scout-docs/blob/master/docs/intro.md';
+      const expected = 'https://github.linkedin.com/linkedin-multiproduct/scout-docs/raw/master/docs/intro.md';
+      expect(normalizeMarkdownUrl(input)).toBe(expected);
+    });
+
+    it('preserves the protocol for GitHub Enterprise http URLs', () => {
+      const input = 'http://git.internal.company.com/team/project/blob/develop/README.md';
+      const expected = 'http://git.internal.company.com/team/project/raw/develop/README.md';
+      expect(normalizeMarkdownUrl(input)).toBe(expected);
+    });
+
+    it('converts a GitHub Enterprise blob URL with a deep path', () => {
+      const input = 'https://github.corp.net/org/repo/blob/feature/src/docs/spec.md';
+      const expected = 'https://github.corp.net/org/repo/raw/feature/src/docs/spec.md';
+      expect(normalizeMarkdownUrl(input)).toBe(expected);
+    });
   });
 
   // ===========================
@@ -107,7 +125,8 @@ describe('URL Handling', () => {
       await handleUrl('https://raw.githubusercontent.com/user/repo/main/README.md');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/user/repo/main/README.md'
+        'https://raw.githubusercontent.com/user/repo/main/README.md',
+        { credentials: 'include' }
       );
 
       // Content area should be visible (tab was created)
@@ -124,7 +143,22 @@ describe('URL Handling', () => {
       await handleUrl('https://github.com/user/repo/blob/main/spec.md');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/user/repo/main/spec.md'
+        'https://raw.githubusercontent.com/user/repo/main/spec.md',
+        { credentials: 'include' }
+      );
+    });
+
+    it('auto-converts a GitHub Enterprise blob URL and fetches with credentials', async () => {
+      global.fetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve('# Enterprise Doc'),
+      }));
+
+      await handleUrl('https://github.linkedin.com/org/repo/blob/master/docs/intro.md');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://github.linkedin.com/org/repo/raw/master/docs/intro.md',
+        { credentials: 'include' }
       );
     });
 
