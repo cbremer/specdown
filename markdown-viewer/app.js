@@ -39,6 +39,9 @@ const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 const viewToggle = document.getElementById('view-toggle');
 const watchToggle = document.getElementById('watch-toggle');
+const urlInput = document.getElementById('url-input');
+const openUrlBtn = document.getElementById('open-url-btn');
+const urlError = document.getElementById('url-error');
 
 // ===========================
 // Initialization
@@ -179,6 +182,7 @@ function setupEventListeners() {
     
     // Drag and drop
     dropZone.addEventListener('click', (e) => {
+        if (e.target.closest && e.target.closest('.url-section')) return;
         if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
             fileInput.click();
         }
@@ -208,6 +212,20 @@ function setupEventListeners() {
         }
     });
     
+    // URL input
+    if (openUrlBtn) {
+        openUrlBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleUrl(urlInput ? urlInput.value.trim() : '');
+        });
+    }
+    if (urlInput) {
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleUrl(urlInput.value.trim());
+        });
+        urlInput.addEventListener('click', (e) => e.stopPropagation());
+    }
+
     // Prevent default drag behavior on document
     document.addEventListener('dragover', (e) => e.preventDefault());
 
@@ -286,6 +304,68 @@ function handleFile(file) {
         alert('Error reading file. Please try again.');
     };
     reader.readAsText(file);
+}
+
+// ===========================
+// URL Loading
+// ===========================
+function normalizeMarkdownUrl(url) {
+    const githubBlobPattern = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/;
+    const match = url.match(githubBlobPattern);
+    if (match) {
+        return 'https://raw.githubusercontent.com/' + match[1] + '/' + match[2] + '/' + match[3];
+    }
+    return url;
+}
+
+function getFilenameFromUrl(url) {
+    try {
+        const pathname = new URL(url).pathname;
+        const segments = pathname.split('/').filter(function(s) { return s.length > 0; });
+        if (segments.length > 0) {
+            return segments[segments.length - 1];
+        }
+    } catch (e) {
+        // ignore invalid URL
+    }
+    return 'untitled.md';
+}
+
+function showUrlError(message) {
+    if (!urlError) return;
+    urlError.textContent = message;
+    urlError.style.display = '';
+}
+
+function clearUrlError() {
+    if (!urlError) return;
+    urlError.style.display = 'none';
+    urlError.textContent = '';
+}
+
+async function handleUrl(url) {
+    clearUrlError();
+
+    if (!url || !/^https?:\/\//.test(url)) {
+        showUrlError('Please enter a valid URL starting with http:// or https://');
+        return;
+    }
+
+    const fetchUrl = normalizeMarkdownUrl(url);
+    const filename = getFilenameFromUrl(url);
+
+    try {
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+            showUrlError('Failed to fetch URL: HTTP ' + response.status);
+            return;
+        }
+        const markdown = await response.text();
+        if (urlInput) urlInput.value = '';
+        createTab(filename, markdown);
+    } catch (e) {
+        showUrlError('Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.');
+    }
 }
 
 // ===========================

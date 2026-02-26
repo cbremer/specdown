@@ -231,6 +231,69 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.url-section {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.url-separator {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: lowercase;
+    letter-spacing: 0.03em;
+}
+
+.url-input-row {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.url-input-row input[type="url"] {
+    flex: 1;
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.url-input-row input[type="url"]:focus {
+    border-color: var(--accent-color);
+}
+
+.url-input-row button {
+    padding: 0.55rem 1.1rem;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.url-input-row button:hover {
+    background-color: var(--accent-hover);
+}
+
+.url-error {
+    font-size: 0.8rem;
+    color: #e53935;
+    text-align: center;
+    max-width: 420px;
+}
+
 .drop-zone-overlay {
     display: none;
     position: absolute;
