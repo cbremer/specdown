@@ -294,6 +294,14 @@ body {
     max-width: 420px;
 }
 
+.url-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 0.25rem;
+    opacity: 0.75;
+}
+
 .drop-zone-overlay {
     display: none;
     position: absolute;
