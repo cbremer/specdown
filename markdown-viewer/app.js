@@ -25,6 +25,17 @@ const MAX_TABS = 10;
 // Desktop detection
 const isDesktop = !!(typeof window !== 'undefined' && window.specdown && window.specdown.isDesktop);
 
+// TOC state
+let tocVisible = false;
+
+// Split view state
+let splitViewActive = false;
+
+// Search state
+let searchMatches = [];
+let searchCurrentIndex = -1;
+let searchHighlightNodes = [];
+
 // ===========================
 // DOM Elements
 // ===========================
@@ -42,6 +53,21 @@ const watchToggle = document.getElementById('watch-toggle');
 const urlInput = document.getElementById('url-input');
 const openUrlBtn = document.getElementById('open-url-btn');
 const urlError = document.getElementById('url-error');
+const tocToggle = document.getElementById('toc-toggle');
+const annotationToggle = document.getElementById('annotation-toggle');
+const tocSidebar = document.getElementById('toc-sidebar');
+const tocNav = document.getElementById('toc-nav');
+const splitToggle = document.getElementById('split-toggle');
+const splitRawPane = document.getElementById('split-raw-pane');
+const splitRawContent = document.getElementById('split-raw-content');
+const printButton = document.getElementById('print-button');
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
+const searchCount = document.getElementById('search-count');
+const searchPrev = document.getElementById('search-prev');
+const searchNext = document.getElementById('search-next');
+const searchClose = document.getElementById('search-close');
+const shareToast = document.getElementById('share-toast');
 
 // ===========================
 // Initialization
@@ -53,6 +79,7 @@ function init() {
     configureMermaid();
     configureMarked();
     checkForUpdates();
+    checkForDiagramLink();
     if (isDesktop) {
         setupDesktopIPC();
     }
@@ -176,10 +203,10 @@ function setupEventListeners() {
         e.stopPropagation();
         fileInput.click();
     });
-    
+
     // File input change
     fileInput.addEventListener('change', handleFileSelect);
-    
+
     // Drag and drop
     dropZone.addEventListener('click', (e) => {
         if (e.target.closest && e.target.closest('.url-section')) return;
@@ -187,31 +214,87 @@ function setupEventListeners() {
             fileInput.click();
         }
     });
-    
+
     dropZone.addEventListener('dragover', handleDragOver);
     dropZone.addEventListener('dragleave', handleDragLeave);
     dropZone.addEventListener('drop', handleDrop);
-    
+
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
 
     // View toggle (preview/raw)
     viewToggle.addEventListener('click', toggleViewMode);
-    
+
+    // TOC toggle
+    if (tocToggle) {
+        tocToggle.addEventListener('click', toggleToc);
+    }
+
+    // Annotation toggle
+    if (annotationToggle) {
+        annotationToggle.addEventListener('click', toggleAnnotationMode);
+    }
+
+    // Split view toggle
+    if (splitToggle) {
+        splitToggle.addEventListener('click', toggleSplitView);
+    }
+
+    // Print button
+    if (printButton) {
+        printButton.addEventListener('click', () => window.print());
+    }
+
+    // Search bar events
+    if (searchInput) {
+        searchInput.addEventListener('input', () => runSearch(searchInput.value));
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.shiftKey ? navigateSearch(-1) : navigateSearch(1);
+            } else if (e.key === 'Escape') {
+                closeSearch();
+            }
+        });
+    }
+    if (searchPrev) searchPrev.addEventListener('click', () => navigateSearch(-1));
+    if (searchNext) searchNext.addEventListener('click', () => navigateSearch(1));
+    if (searchClose) searchClose.addEventListener('click', closeSearch);
+
     // Fullscreen overlay close
     fullscreenOverlay.addEventListener('click', (e) => {
         if (e.target === fullscreenOverlay) {
             closeFullscreen();
         }
     });
-    
-    // ESC key to close fullscreen
+
+    // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && fullscreenOverlay.style.display !== 'none') {
-            closeFullscreen();
+        // ESC
+        if (e.key === 'Escape') {
+            if (fullscreenOverlay.style.display !== 'none') {
+                closeFullscreen();
+            } else if (searchBar && searchBar.style.display !== 'none') {
+                closeSearch();
+            }
+            return;
+        }
+        // Cmd/Ctrl+F — open search
+        if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+            if (contentArea.style.display !== 'none') {
+                e.preventDefault();
+                openSearch();
+            }
+            return;
+        }
+        // Cmd/Ctrl+P — print
+        if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+            if (contentArea.style.display !== 'none') {
+                e.preventDefault();
+                window.print();
+            }
         }
     });
-    
+
     // URL input
     if (openUrlBtn) {
         openUrlBtn.addEventListener('click', (e) => {
@@ -241,6 +324,9 @@ function setupEventListeners() {
             }
         }
     });
+
+    // TOC scroll spy
+    markdownContent.addEventListener('scroll', updateTocActiveHeading);
 }
 
 // ===========================
@@ -364,6 +450,16 @@ async function handleUrl(url) {
         return;
     }
 
+    // Check if this is a GitHub repo URL to show the file browser
+    const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(url);
+    if (isRepoBrowserUrl) {
+        const handled = await handleRepoUrl(url);
+        if (handled) {
+            if (urlInput) urlInput.value = '';
+            return;
+        }
+    }
+
     const fetchUrl = normalizeMarkdownUrl(url);
     const filename = getFilenameFromUrl(url);
 
@@ -445,17 +541,32 @@ async function renderMarkdown(content, filename) {
         // Update UI
         fileName.textContent = filename;
         markdownContent.innerHTML = htmlContent;
-        
+
         // Show content area, hide drop zone
         dropZone.style.display = 'none';
         contentArea.style.display = 'flex';
-        
+
         // Process mermaid diagrams
         await processMermaidDiagrams();
-        
+
+        // Refresh TOC
+        buildToc();
+
+        // Update split raw pane if active
+        if (splitViewActive) {
+            updateSplitRawPane(content);
+        }
+
+        // Clear any active search
+        clearSearchHighlights();
+
+        // Render annotations for this document
+        renderAnnotations(filename);
+        if (annotationMode) attachAnnotationHandlers();
+
         // Scroll to top
         markdownContent.scrollTop = 0;
-        
+
     } catch (error) {
         console.error('Error rendering markdown:', error);
         alert('Error rendering markdown content. Please check the file format.');
@@ -509,7 +620,7 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     const container = document.createElement('div');
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', diagramId);
-    
+
     // Create controls
     const controls = document.createElement('div');
     controls.className = 'diagram-controls';
@@ -517,16 +628,19 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
         <button class="zoom-in" title="Zoom in">+</button>
         <button class="zoom-out" title="Zoom out">-</button>
         <button class="reset" title="Reset view">⟲</button>
+        <button class="export-svg" title="Download as SVG">SVG</button>
+        <button class="export-png" title="Download as PNG">PNG</button>
+        <button class="share-diagram" title="Copy shareable link">🔗</button>
         <button class="fullscreen" title="Fullscreen">⛶</button>
     `;
-    
+
     // Create wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
     wrapper.innerHTML = svg;
 
-    // Store mermaid source on the SVG for theme re-rendering
+    // Store mermaid source on the SVG for theme re-rendering and export
     const svgEl = wrapper.querySelector('svg');
     if (svgEl && mermaidSource) {
         svgEl.setAttribute('data-mermaid-source', mermaidSource);
@@ -534,7 +648,7 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
 
     container.appendChild(controls);
     container.appendChild(wrapper);
-    
+
     return container;
 }
 
@@ -653,6 +767,9 @@ function initializePanzoom(diagramId) {
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const resetBtn = controls.querySelector('.reset');
+    const exportSvgBtn = controls.querySelector('.export-svg');
+    const exportPngBtn = controls.querySelector('.export-png');
+    const shareBtn = controls.querySelector('.share-diagram');
     const fullscreenBtn = controls.querySelector('.fullscreen');
 
     // Bind control events
@@ -670,6 +787,27 @@ function initializePanzoom(diagramId) {
         e.stopPropagation();
         resetToFit(panzoomInstance, state.homeState);
     });
+
+    if (exportSvgBtn) {
+        exportSvgBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadDiagramSvg(diagramId);
+        });
+    }
+
+    if (exportPngBtn) {
+        exportPngBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadDiagramPng(diagramId);
+        });
+    }
+
+    if (shareBtn) {
+        shareBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            shareDiagramLink(diagramId);
+        });
+    }
 
     fullscreenBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -739,6 +877,17 @@ function openFullscreen(diagramId) {
     // Setup fullscreen controls with fresh event listeners
     setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, fullscreenState);
 
+    // Setup minimap
+    requestAnimationFrame(() => {
+        updateMinimap(svgClone);
+        updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
+    });
+
+    // Update minimap viewport on pan/zoom
+    svgClone.addEventListener('panzoomchange', () => {
+        updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
+    });
+
     // Focus for keyboard events
     fullscreenOverlay.focus();
 }
@@ -748,17 +897,23 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const resetBtn = controls.querySelector('.reset');
+    const exportSvgBtn = controls.querySelector('.export-svg');
+    const exportPngBtn = controls.querySelector('.export-png');
     const closeBtn = controls.querySelector('.close-fullscreen');
 
     // Remove old listeners by cloning
     const newZoomIn = zoomInBtn.cloneNode(true);
     const newZoomOut = zoomOutBtn.cloneNode(true);
     const newReset = resetBtn.cloneNode(true);
+    const newExportSvg = exportSvgBtn ? exportSvgBtn.cloneNode(true) : null;
+    const newExportPng = exportPngBtn ? exportPngBtn.cloneNode(true) : null;
     const newClose = closeBtn.cloneNode(true);
 
     zoomInBtn.replaceWith(newZoomIn);
     zoomOutBtn.replaceWith(newZoomOut);
     resetBtn.replaceWith(newReset);
+    if (exportSvgBtn && newExportSvg) exportSvgBtn.replaceWith(newExportSvg);
+    if (exportPngBtn && newExportPng) exportPngBtn.replaceWith(newExportPng);
     closeBtn.replaceWith(newClose);
 
     // Add new listeners
@@ -776,6 +931,20 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
         e.stopPropagation();
         resetToFit(panzoomInstance, fullscreenState.homeState);
     });
+
+    if (newExportSvg) {
+        newExportSvg.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadDiagramSvg(fullscreenOverlay.diagramId);
+        });
+    }
+
+    if (newExportPng) {
+        newExportPng.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadDiagramPng(fullscreenOverlay.diagramId);
+        });
+    }
 
     newClose.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -852,6 +1021,7 @@ function showDropZone() {
     // Cleanup
     cleanupPanzoomInstances();
     closeFullscreen();
+    closeSearch();
 
     // Clear content
     markdownContent.innerHTML = '';
@@ -865,6 +1035,11 @@ function showDropZone() {
     tabs = [];
     activeTabId = null;
     renderTabBar();
+
+    // Reset TOC and split view
+    if (tocVisible) toggleToc();
+    if (splitViewActive) toggleSplitView();
+    if (tocNav) tocNav.innerHTML = '';
 
     // Show drop zone, hide content
     contentArea.style.display = 'none';
@@ -1016,7 +1191,10 @@ function createTab(filename, content, filePath) {
     activeTabId = id;
 
     renderTabBar();
-    if (isDesktop) updateWatchToggle();
+    if (isDesktop) {
+        updateWatchToggle();
+        saveDesktopSession();
+    }
     renderMarkdown(content, filename);
 }
 
@@ -1068,6 +1246,8 @@ async function closeTab(id) {
     }
 
     tabs.splice(idx, 1);
+
+    if (isDesktop) saveDesktopSession();
 
     if (tabs.length === 0) {
         activeTabId = null;
@@ -1181,6 +1361,720 @@ function setupDesktopIPC() {
     if (watchToggle) {
         watchToggle.addEventListener('click', toggleWatching);
     }
+
+    // Native menu: File > Print
+    if (window.specdown.onTriggerPrint) {
+        window.specdown.onTriggerPrint(function() {
+            window.print();
+        });
+    }
+
+    // Native menu: Edit > Find
+    if (window.specdown.onTriggerSearch) {
+        window.specdown.onTriggerSearch(function() {
+            if (contentArea.style.display !== 'none') {
+                openSearch();
+            }
+        });
+    }
+
+    // Appearance menu: apply custom CSS theme
+    if (window.specdown.onApplyCustomCss) {
+        window.specdown.onApplyCustomCss(function(cssContent) {
+            applyCustomCss(cssContent);
+        });
+    }
+}
+
+function saveDesktopSession() {
+    if (!isDesktop || !window.specdown.saveSession) return;
+    window.specdown.saveSession(tabs.map(t => ({
+        filePath: t.filePath,
+        filename: t.filename
+    })));
+}
+
+// ===========================
+// Feature: Print / PDF Export
+// ===========================
+// Print button wired in setupEventListeners; Cmd+P wired in keydown handler.
+// CSS print styles in styles.css hide UI chrome automatically.
+
+// ===========================
+// Feature: Table of Contents
+// ===========================
+function buildToc() {
+    if (!tocNav) return;
+    const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
+    tocNav.innerHTML = '';
+
+    if (headings.length === 0) {
+        if (tocToggle) tocToggle.style.display = 'none';
+        return;
+    }
+
+    if (tocToggle) tocToggle.style.display = '';
+
+    headings.forEach((h, i) => {
+        // Ensure each heading has an id for anchor linking
+        if (!h.id) {
+            h.id = 'toc-heading-' + i;
+        }
+
+        const level = parseInt(h.tagName[1], 10);
+        const link = document.createElement('a');
+        link.className = 'toc-link toc-level-' + level;
+        link.href = '#' + h.id;
+        link.textContent = h.textContent;
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        tocNav.appendChild(link);
+    });
+}
+
+function toggleToc() {
+    tocVisible = !tocVisible;
+    if (tocSidebar) tocSidebar.style.display = tocVisible ? '' : 'none';
+    if (tocToggle) tocToggle.classList.toggle('active', tocVisible);
+}
+
+function updateTocActiveHeading() {
+    if (!tocVisible || !tocNav) return;
+    const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
+    const scrollTop = markdownContent.scrollTop;
+    let activeId = null;
+
+    headings.forEach((h) => {
+        if (h.offsetTop - 60 <= scrollTop) {
+            activeId = h.id;
+        }
+    });
+
+    tocNav.querySelectorAll('.toc-link').forEach((link) => {
+        const isActive = link.getAttribute('href') === '#' + activeId;
+        link.classList.toggle('toc-link-active', isActive);
+    });
+}
+
+// ===========================
+// Feature: In-Document Search
+// ===========================
+function openSearch() {
+    if (!searchBar) return;
+    searchBar.style.display = 'flex';
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    clearSearchHighlights();
+    updateSearchCount();
+}
+
+function closeSearch() {
+    if (!searchBar) return;
+    searchBar.style.display = 'none';
+    clearSearchHighlights();
+    searchMatches = [];
+    searchCurrentIndex = -1;
+    updateSearchCount();
+}
+
+function runSearch(query) {
+    clearSearchHighlights();
+    searchMatches = [];
+    searchCurrentIndex = -1;
+
+    if (!query || query.length < 1) {
+        updateSearchCount();
+        return;
+    }
+
+    // Walk text nodes in markdownContent, wrap matches with <mark>
+    const walker = document.createTreeWalker(
+        markdownContent,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode: (node) => {
+                // Skip script/style and diagram wrappers
+                const parent = node.parentElement;
+                if (!parent) return NodeFilter.FILTER_REJECT;
+                const tag = parent.tagName;
+                if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
+                if (parent.closest('.diagram-wrapper')) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    const regex = new RegExp(escapeRegex(query), 'gi');
+    const nodesToProcess = [];
+    let node;
+    while ((node = walker.nextNode())) {
+        if (regex.test(node.textContent)) {
+            nodesToProcess.push(node);
+        }
+        regex.lastIndex = 0;
+    }
+
+    nodesToProcess.forEach((textNode) => {
+        const text = textNode.textContent;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+        regex.lastIndex = 0;
+
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+            const mark = document.createElement('mark');
+            mark.className = 'search-highlight';
+            mark.textContent = match[0];
+            parts.push(mark);
+            searchHighlightNodes.push(mark);
+            searchMatches.push(mark);
+            lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            parts.push(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        if (parts.length > 0 && textNode.parentNode) {
+            const frag = document.createDocumentFragment();
+            parts.forEach((p) => frag.appendChild(p));
+            textNode.parentNode.replaceChild(frag, textNode);
+        }
+    });
+
+    if (searchMatches.length > 0) {
+        searchCurrentIndex = 0;
+        highlightCurrentMatch();
+    }
+    updateSearchCount();
+}
+
+function navigateSearch(direction) {
+    if (searchMatches.length === 0) return;
+    searchCurrentIndex = (searchCurrentIndex + direction + searchMatches.length) % searchMatches.length;
+    highlightCurrentMatch();
+    updateSearchCount();
+}
+
+function highlightCurrentMatch() {
+    searchMatches.forEach((m, i) => {
+        m.classList.toggle('search-highlight-current', i === searchCurrentIndex);
+    });
+    if (searchMatches[searchCurrentIndex]) {
+        searchMatches[searchCurrentIndex].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+}
+
+function clearSearchHighlights() {
+    // Unwrap all <mark> elements
+    searchHighlightNodes.forEach((mark) => {
+        if (mark.parentNode) {
+            const text = document.createTextNode(mark.textContent);
+            mark.parentNode.replaceChild(text, mark);
+        }
+    });
+    searchHighlightNodes = [];
+    searchMatches = [];
+    searchCurrentIndex = -1;
+
+    // Normalize text nodes that were split
+    if (markdownContent) markdownContent.normalize();
+}
+
+function updateSearchCount() {
+    if (!searchCount) return;
+    if (searchMatches.length === 0) {
+        searchCount.textContent = '';
+    } else {
+        searchCount.textContent = (searchCurrentIndex + 1) + ' / ' + searchMatches.length;
+    }
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ===========================
+// Feature: Split View
+// ===========================
+function toggleSplitView() {
+    splitViewActive = !splitViewActive;
+
+    if (splitToggle) splitToggle.classList.toggle('active', splitViewActive);
+
+    const contentMain = document.getElementById('content-main');
+    if (contentMain) {
+        contentMain.classList.toggle('split-active', splitViewActive);
+    }
+
+    if (splitRawPane) {
+        splitRawPane.style.display = splitViewActive ? '' : 'none';
+    }
+
+    if (splitViewActive && currentRawMarkdown) {
+        updateSplitRawPane(currentRawMarkdown);
+    }
+}
+
+function updateSplitRawPane(content) {
+    if (!splitRawContent) return;
+    const escaped = content
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    splitRawContent.innerHTML = `<code>${escaped}</code>`;
+}
+
+// ===========================
+// Feature: Diagram Export (SVG / PNG)
+// ===========================
+function getSvgElementForDiagram(diagramId) {
+    const wrapper = document.getElementById('wrapper-' + diagramId);
+    if (!wrapper) return null;
+    // Try original wrapper first, then fullscreen wrapper
+    return wrapper.querySelector('svg') ||
+        fullscreenOverlay.querySelector('.fullscreen-diagram-wrapper svg');
+}
+
+function downloadDiagramSvg(diagramId) {
+    const svgEl = getSvgElementForDiagram(diagramId);
+    if (!svgEl) return;
+
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svgEl);
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    triggerDownload(blob, (diagramId || 'diagram') + '.svg');
+}
+
+function downloadDiagramPng(diagramId) {
+    const svgEl = getSvgElementForDiagram(diagramId);
+    if (!svgEl) return;
+
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svgEl);
+    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Use natural SVG viewBox size for crisp export
+        const dims = getSvgNaturalDimensions(svgEl);
+        const scale = 2; // 2x for retina quality
+        canvas.width = (dims ? dims.width : img.naturalWidth || 800) * scale;
+        canvas.height = (dims ? dims.height : img.naturalHeight || 600) * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((pngBlob) => {
+            triggerDownload(pngBlob, (diagramId || 'diagram') + '.png');
+        }, 'image/png');
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+}
+
+function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ===========================
+// Feature: Shareable Diagram Links
+// ===========================
+function shareDiagramLink(diagramId) {
+    const wrapper = document.getElementById('wrapper-' + diagramId);
+    if (!wrapper) return;
+    const svgEl = wrapper.querySelector('svg');
+    if (!svgEl) return;
+    const source = svgEl.getAttribute('data-mermaid-source');
+    if (!source) return;
+
+    const encoded = btoa(unescape(encodeURIComponent(source)));
+    const shareUrl = window.location.origin + window.location.pathname + '?diagram=' + encodeURIComponent(encoded);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => showShareToast());
+    } else {
+        // Fallback: select from a temporary textarea
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showShareToast();
+    }
+}
+
+function showShareToast() {
+    if (!shareToast) return;
+    shareToast.style.display = '';
+    setTimeout(() => { shareToast.style.display = 'none'; }, 2500);
+}
+
+function checkForDiagramLink() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('diagram');
+        if (!encoded) return;
+        const source = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
+        if (!source) return;
+
+        // Synthesize a one-diagram markdown document
+        const md = '```mermaid\n' + source + '\n```\n';
+        createTab('shared-diagram.md', md);
+    } catch (e) {
+        // Silently ignore malformed deep links
+    }
+}
+
+// ===========================
+// Feature: Diagram Minimap (Fullscreen)
+// ===========================
+function updateMinimap(svgElement) {
+    const minimapEl = document.getElementById('fullscreen-minimap');
+    const canvas = document.getElementById('minimap-canvas');
+    if (!minimapEl || !canvas) return;
+
+    const dims = getSvgNaturalDimensions(svgElement);
+    if (!dims) { minimapEl.style.display = 'none'; return; }
+
+    minimapEl.style.display = '';
+
+    const MAX_MINIMAP = 160;
+    const scale = Math.min(MAX_MINIMAP / dims.width, MAX_MINIMAP / dims.height);
+    canvas.width = Math.round(dims.width * scale);
+    canvas.height = Math.round(dims.height * scale);
+    canvas.style.width = canvas.width + 'px';
+    canvas.style.height = canvas.height + 'px';
+
+    // Render the SVG into the minimap canvas via an image
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svgElement);
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+}
+
+function updateMinimapViewport(panzoomInstance, wrapper) {
+    const viewportEl = document.getElementById('minimap-viewport');
+    const canvas = document.getElementById('minimap-canvas');
+    if (!viewportEl || !canvas || !panzoomInstance) return;
+
+    const pan = panzoomInstance.getPan();
+    const scale = panzoomInstance.getScale();
+    const wW = wrapper.clientWidth;
+    const wH = wrapper.clientHeight;
+    const cW = canvas.width;
+    const cH = canvas.height;
+
+    // The SVG has dims.width x dims.height at scale 1.
+    // The viewport shows wW/scale x wH/scale of the SVG content.
+    // The minimap scale factor: cW / dims.width
+    const svgEl = wrapper.querySelector('svg');
+    const dims = svgEl ? getSvgNaturalDimensions(svgEl) : null;
+    if (!dims) return;
+
+    const minimapScale = cW / dims.width;
+    const vpW = Math.min((wW / scale) * minimapScale, cW);
+    const vpH = Math.min((wH / scale) * minimapScale, cH);
+    const vpX = (-pan.x / scale) * minimapScale;
+    const vpY = (-pan.y / scale) * minimapScale;
+
+    viewportEl.style.left = Math.max(0, vpX) + 'px';
+    viewportEl.style.top = Math.max(0, vpY) + 'px';
+    viewportEl.style.width = vpW + 'px';
+    viewportEl.style.height = vpH + 'px';
+}
+
+// ===========================
+// Feature: Custom CSS Themes
+// ===========================
+let customStyleEl = null;
+
+function applyCustomCss(cssContent) {
+    if (!customStyleEl) {
+        customStyleEl = document.createElement('style');
+        customStyleEl.id = 'custom-theme';
+        document.head.appendChild(customStyleEl);
+    }
+    customStyleEl.textContent = cssContent || '';
+}
+
+// ===========================
+// Feature: GitHub Repo File Browser
+// ===========================
+// Enhances the URL input to accept github.com/<owner>/<repo> URLs and
+// show a list of .md files from the repo for the user to pick one.
+
+async function fetchGitHubRepoFiles(repoUrl) {
+    // Match: https://github.com/<owner>/<repo>
+    const repoPattern = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/;
+    const match = repoUrl.match(repoPattern);
+    if (!match) return null;
+
+    const owner = match[1];
+    const repo = match[2].replace(/\.git$/, '');
+
+    // Use GitHub Search API to find .md files (avoids full tree traversal)
+    const apiUrl = `https://api.github.com/search/code?q=extension:md+repo:${owner}/${repo}&per_page=100`;
+
+    try {
+        const resp = await fetch(apiUrl, {
+            headers: { Accept: 'application/vnd.github+json' }
+        });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (!data.items || data.items.length === 0) return [];
+
+        return data.items.map((item) => ({
+            path: item.path,
+            url: item.html_url,
+            rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${item.path}`
+        }));
+    } catch (e) {
+        return null;
+    }
+}
+
+async function handleRepoUrl(url) {
+    clearUrlError();
+    const files = await fetchGitHubRepoFiles(url);
+    if (files === null) {
+        // Not a repo URL or fetch failed — fall through to normal URL handling
+        return false;
+    }
+    if (files.length === 0) {
+        showUrlError('No markdown files found in this repository.');
+        return true;
+    }
+
+    showRepoBrowser(files, url);
+    return true;
+}
+
+function showRepoBrowser(files, repoUrl) {
+    let modal = document.getElementById('repo-browser-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'repo-browser-modal';
+        modal.className = 'repo-browser-modal';
+        document.body.appendChild(modal);
+    }
+
+    const repoName = repoUrl.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+
+    modal.innerHTML = `
+        <div class="repo-browser-content">
+            <div class="repo-browser-header">
+                <span class="repo-browser-title">${escapeHtml(repoName)}</span>
+                <button class="repo-browser-close" title="Close">&#10005;</button>
+            </div>
+            <div class="repo-browser-search">
+                <input type="text" class="repo-browser-filter" placeholder="Filter files..." autocomplete="off">
+            </div>
+            <ul class="repo-browser-list">
+                ${files.map((f) => `
+                    <li class="repo-browser-item" data-raw-url="${escapeHtml(f.rawUrl)}">
+                        <span class="repo-file-icon">📄</span>
+                        <span class="repo-file-path">${escapeHtml(f.path)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
+    modal.style.display = 'flex';
+
+    modal.querySelector('.repo-browser-close').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+
+    const filterInput = modal.querySelector('.repo-browser-filter');
+    filterInput.addEventListener('input', () => {
+        const q = filterInput.value.toLowerCase();
+        modal.querySelectorAll('.repo-browser-item').forEach((item) => {
+            const path = item.querySelector('.repo-file-path').textContent.toLowerCase();
+            item.style.display = path.includes(q) ? '' : 'none';
+        });
+    });
+    filterInput.focus();
+
+    modal.querySelectorAll('.repo-browser-item').forEach((item) => {
+        item.addEventListener('click', () => {
+            const rawUrl = item.getAttribute('data-raw-url');
+            modal.style.display = 'none';
+            handleUrl(rawUrl);
+        });
+    });
+}
+
+// ===========================
+// Feature: Annotation Mode
+// ===========================
+// Lightweight sticky-note annotations stored in localStorage, keyed by filename.
+// Users can double-click any paragraph or heading to add/edit an annotation.
+
+const ANNOTATIONS_KEY = 'specdown-annotations';
+
+function loadAnnotations(key) {
+    try {
+        const raw = localStorage.getItem(ANNOTATIONS_KEY);
+        const all = raw ? JSON.parse(raw) : {};
+        return all[key] || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveAnnotations(key, annotations) {
+    try {
+        const raw = localStorage.getItem(ANNOTATIONS_KEY);
+        const all = raw ? JSON.parse(raw) : {};
+        if (Object.keys(annotations).length === 0) {
+            delete all[key];
+        } else {
+            all[key] = annotations;
+        }
+        localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(all));
+    } catch (e) {
+        // localStorage quota exceeded — silently ignore
+    }
+}
+
+let annotationMode = false;
+let annotationKey = '';
+
+function toggleAnnotationMode() {
+    annotationMode = !annotationMode;
+    const btn = document.getElementById('annotation-toggle');
+    if (btn) btn.classList.toggle('active', annotationMode);
+
+    if (annotationMode && annotationKey) {
+        attachAnnotationHandlers();
+    } else {
+        detachAnnotationHandlers();
+    }
+}
+
+function renderAnnotations(key) {
+    annotationKey = key;
+    // Remove old annotation badges
+    markdownContent.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
+
+    const annotations = loadAnnotations(key);
+    Object.entries(annotations).forEach(([idx, text]) => {
+        const el = markdownContent.querySelectorAll('[data-annot-idx]')[parseInt(idx, 10)];
+        if (el) attachAnnotationBadge(el, parseInt(idx, 10), text);
+    });
+}
+
+function attachAnnotationHandlers() {
+    // Index all annotatable elements
+    const els = markdownContent.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
+    els.forEach((el, idx) => {
+        el.setAttribute('data-annot-idx', idx);
+        el.classList.add('annotatable');
+        el.addEventListener('dblclick', handleAnnotationDblClick);
+    });
+}
+
+function detachAnnotationHandlers() {
+    markdownContent.querySelectorAll('.annotatable').forEach((el) => {
+        el.removeEventListener('dblclick', handleAnnotationDblClick);
+        el.classList.remove('annotatable');
+    });
+}
+
+function handleAnnotationDblClick(e) {
+    if (!annotationMode) return;
+    const el = e.currentTarget;
+    const idx = parseInt(el.getAttribute('data-annot-idx'), 10);
+    const annotations = loadAnnotations(annotationKey);
+    const existing = annotations[idx] || '';
+
+    const note = prompt('Add annotation (leave blank to remove):', existing);
+    if (note === null) return; // cancelled
+
+    if (note.trim() === '') {
+        delete annotations[idx];
+        const badge = el.querySelector('.annotation-badge');
+        if (badge) badge.remove();
+    } else {
+        annotations[idx] = note.trim();
+        attachAnnotationBadge(el, idx, note.trim());
+    }
+    saveAnnotations(annotationKey, annotations);
+}
+
+function attachAnnotationBadge(el, idx, text) {
+    // Remove existing badge first
+    const existing = el.querySelector('.annotation-badge');
+    if (existing) existing.remove();
+
+    el.setAttribute('data-annot-idx', idx);
+    el.classList.add('has-annotation');
+
+    const badge = document.createElement('span');
+    badge.className = 'annotation-badge';
+    badge.title = text;
+    badge.textContent = '✎';
+    badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showAnnotationPopover(badge, text);
+    });
+    el.appendChild(badge);
+}
+
+function showAnnotationPopover(anchor, text) {
+    let popover = document.getElementById('annotation-popover');
+    if (!popover) {
+        popover = document.createElement('div');
+        popover.id = 'annotation-popover';
+        popover.className = 'annotation-popover';
+        document.body.appendChild(popover);
+    }
+    popover.textContent = text;
+    const rect = anchor.getBoundingClientRect();
+    popover.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    popover.style.left = (rect.left + window.scrollX) + 'px';
+    popover.style.display = '';
+
+    const hide = (e) => {
+        if (!popover.contains(e.target) && e.target !== anchor) {
+            popover.style.display = 'none';
+            document.removeEventListener('click', hide);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', hide), 0);
 }
 
 // ===========================

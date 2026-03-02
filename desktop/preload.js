@@ -43,4 +43,30 @@ contextBridge.exposeInMainWorld('specdown', {
       callback(fileData);
     });
   },
+
+  // Save the current tab session to disk (called when tabs change)
+  saveSession: (tabs) => {
+    ipcRenderer.send('save-session', tabs);
+  },
+
+  // Register a callback for when the native File > Print menu item is clicked
+  onTriggerPrint: (callback) => {
+    ipcRenderer.on('trigger-print', () => {
+      callback();
+    });
+  },
+
+  // Register a callback for when the native Edit > Find menu item is clicked
+  onTriggerSearch: (callback) => {
+    ipcRenderer.on('trigger-search', () => {
+      callback();
+    });
+  },
+
+  // Register a callback for applying custom CSS (Appearance menu or saved theme)
+  onApplyCustomCss: (callback) => {
+    ipcRenderer.on('apply-custom-css', (_event, cssContent) => {
+      callback(cssContent);
+    });
+  },
 });

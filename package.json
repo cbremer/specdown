@@ -5,7 +5,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "desktop": "electron .",
-    "desktop:build": "electron-builder --mac dmg",
+    "desktop:build": "electron-builder",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -68,6 +68,18 @@
     },
     "dmg": {
       "title": "Specdown Desktop"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "markdown-viewer/favicon.svg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development"
     }
   },
   "dependencies": {

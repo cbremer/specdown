@@ -13,11 +13,27 @@
     <script src="vendor/panzoom.min.js"></script>
     <script src="vendor/highlight.min.js"></script>
     <script src="vendor/languages/javascript.min.js"></script>
+    <script src="vendor/languages/typescript.min.js"></script>
     <script src="vendor/languages/python.min.js"></script>
     <script src="vendor/languages/java.min.js"></script>
+    <script src="vendor/languages/kotlin.min.js"></script>
+    <script src="vendor/languages/scala.min.js"></script>
+    <script src="vendor/languages/swift.min.js"></script>
+    <script src="vendor/languages/go.min.js"></script>
+    <script src="vendor/languages/rust.min.js"></script>
+    <script src="vendor/languages/ruby.min.js"></script>
+    <script src="vendor/languages/php.min.js"></script>
+    <script src="vendor/languages/lua.min.js"></script>
     <script src="vendor/languages/bash.min.js"></script>
+    <script src="vendor/languages/shell.min.js"></script>
+    <script src="vendor/languages/powershell.min.js"></script>
+    <script src="vendor/languages/sql.min.js"></script>
     <script src="vendor/languages/json.min.js"></script>
     <script src="vendor/languages/yaml.min.js"></script>
+    <script src="vendor/languages/xml.min.js"></script>
+    <script src="vendor/languages/css.min.js"></script>
+    <script src="vendor/languages/dockerfile.min.js"></script>
+    <script src="vendor/languages/makefile.min.js"></script>
     <link rel="stylesheet" href="vendor/github-dark.min.css">
 </head>
 <body>
@@ -85,13 +101,54 @@
                         <span class="watch-toggle-icon">⟳</span>
                         <span class="watch-toggle-label">Watch</span>
                     </button>
+                    <button id="toc-toggle" class="toc-toggle-button" title="Toggle table of contents">
+                        <span class="toc-toggle-icon">☰</span>
+                        <span class="toc-toggle-label">Contents</span>
+                    </button>
+                    <button id="split-toggle" class="split-toggle-button" title="Toggle split view (preview + raw)">
+                        <span class="split-toggle-icon">⊟</span>
+                        <span class="split-toggle-label">Split</span>
+                    </button>
+                    <button id="annotation-toggle" class="annotation-toggle-button" title="Toggle annotation mode (double-click text to add notes)">
+                        <span class="annotation-toggle-icon">✎</span>
+                        <span class="annotation-toggle-label">Annotate</span>
+                    </button>
+                    <button id="print-button" class="print-button" title="Print / Save as PDF (Cmd+P)">
+                        <span class="print-button-icon">⎙</span>
+                        <span class="print-button-label">Print</span>
+                    </button>
                     <button id="view-toggle" class="view-toggle-button" title="Toggle between preview and raw markdown">
                         <span class="view-toggle-icon">&lt;/&gt;</span>
                         <span class="view-toggle-label">Raw</span>
                     </button>
                 </div>
             </div>
-            <div id="markdown-content" class="markdown-content"></div>
+
+            <!-- Search Bar (shown when Cmd/Ctrl+F pressed) -->
+            <div id="search-bar" class="search-bar" style="display: none;">
+                <input type="text" id="search-input" class="search-input" placeholder="Search..." autocomplete="off" spellcheck="false">
+                <span id="search-count" class="search-count"></span>
+                <button id="search-prev" class="search-nav-btn" title="Previous match">&#8593;</button>
+                <button id="search-next" class="search-nav-btn" title="Next match">&#8595;</button>
+                <button id="search-close" class="search-close-btn" title="Close search (Esc)">&#10005;</button>
+            </div>
+
+            <!-- Body with TOC sidebar + main content -->
+            <div class="content-body">
+                <!-- Table of Contents Sidebar -->
+                <aside id="toc-sidebar" class="toc-sidebar" style="display: none;">
+                    <div class="toc-header">Contents</div>
+                    <nav id="toc-nav" class="toc-nav"></nav>
+                </aside>
+
+                <!-- Main content pane (preview + optional raw split) -->
+                <div id="content-main" class="content-main">
+                    <div id="markdown-content" class="markdown-content"></div>
+                    <div id="split-raw-pane" class="split-raw-pane" style="display: none;">
+                        <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Fullscreen Overlay -->
@@ -101,11 +158,21 @@
                     <button class="zoom-in" title="Zoom in">+</button>
                     <button class="zoom-out" title="Zoom out">-</button>
                     <button class="reset" title="Reset view">⟲</button>
+                    <button class="export-svg" title="Download as SVG">SVG</button>
+                    <button class="export-png" title="Download as PNG">PNG</button>
                     <button class="close-fullscreen" title="Exit fullscreen (ESC)">✕</button>
                 </div>
                 <div class="fullscreen-diagram-wrapper"></div>
+                <!-- Minimap -->
+                <div id="fullscreen-minimap" class="fullscreen-minimap">
+                    <canvas id="minimap-canvas" class="minimap-canvas"></canvas>
+                    <div id="minimap-viewport" class="minimap-viewport"></div>
+                </div>
             </div>
         </div>
+
+        <!-- Diagram Share Toast -->
+        <div id="share-toast" class="share-toast" style="display: none;">Link copied to clipboard!</div>
     </div>
 
     <script src="app.js"></script>

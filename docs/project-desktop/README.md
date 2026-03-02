@@ -39,26 +39,38 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Feb 21, 2026 | Tasks | [2026-02-21-tasks-session-01-electron-shell.md](2026-02-21-tasks-session-01-electron-shell.md) | Session 1 implementation checklist — Electron shell, DMG CI, dev loop |
 | Feb 22, 2026 | Tasks | [2026-02-22-tasks-session-02-native-file-open.md](2026-02-22-tasks-session-02-native-file-open.md) | Session 2 implementation checklist — Native file open, IPC bridge, macOS menus |
 | Feb 23, 2026 | Tasks | [2026-02-23-tasks-session-03-file-watching.md](2026-02-23-tasks-session-03-file-watching.md) | Session 3 implementation checklist — File watching (chokidar, per-tab toggle) |
+| Mar 02, 2026 | Tasks | [2026-03-02-tasks-session-04-product-ideas.md](2026-03-02-tasks-session-04-product-ideas.md) | Session 4 — All 15 product ideas implemented (search, TOC, split view, diagram export, shareable links, minimap, annotations, GitHub browser, custom CSS, session restore, recent files, global shortcut, Windows/Linux CI) |
 
 ---
 
-## Current Status (as of Feb 23, 2026)
+## Current Status (as of Mar 02, 2026)
 
 | Feature | Status |
 |---|---|
-| Electron shell (`desktop/main.js`, `desktop/preload.js`) | Implemented |
-| Dev loop (`npm run desktop`) | Implemented |
-| DMG packaging (`electron-builder`) | Configured (awaiting macOS build) |
-| Existing Jest test suite passing | Verified |
-| Multi-file tabs | Implemented |
-| Native file open (`Cmd+O`) | Implemented |
-| Native macOS menus (File > Open) | Implemented |
-| File watching | Implemented |
-| Persistent state | Pending |
-| Recent files & favorites | Pending |
-| Print & PDF export | Pending |
-
-Session 4 will pick up with persistent state and additional menus.
+| Electron shell (`desktop/main.js`, `desktop/preload.js`) | ✅ Implemented |
+| Dev loop (`npm run desktop`) | ✅ Implemented |
+| macOS DMG packaging | ✅ CI builds on `macos-latest` |
+| Windows NSIS installer | ✅ CI builds on `windows-latest` |
+| Linux AppImage | ✅ CI builds on `ubuntu-latest` |
+| Jest test suite (141 tests) | ✅ Passing |
+| Multi-file tabs (up to 10) | ✅ Implemented |
+| Native file open (`Cmd+O`, Finder, drag-to-dock) | ✅ Implemented |
+| File watching (chokidar, per-tab toggle) | ✅ Implemented |
+| Persistent session restore (electron-store) | ✅ Implemented |
+| Recent files menu (`File > Open Recent`) | ✅ Implemented |
+| Print / PDF export (`Cmd+P`, `File > Print`) | ✅ Implemented |
+| Custom CSS themes (`Appearance > Load Custom CSS Theme`) | ✅ Implemented |
+| Global keyboard shortcut (`Cmd+Shift+M`) | ✅ Implemented |
+| Native Find menu (`Edit > Find`) | ✅ Implemented |
+| Syntax highlighting (22 languages) | ✅ Implemented |
+| In-document search (`Cmd/Ctrl+F`) | ✅ Implemented |
+| Table of contents sidebar | ✅ Implemented |
+| Side-by-side split view | ✅ Implemented |
+| Mermaid diagram export (SVG + PNG) | ✅ Implemented |
+| Shareable diagram deep links | ✅ Implemented |
+| Diagram minimap (fullscreen) | ✅ Implemented |
+| GitHub repo file browser | ✅ Implemented |
+| Annotation mode | ✅ Implemented |
 
 ---
 
