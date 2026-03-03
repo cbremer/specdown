@@ -106,9 +106,9 @@ jobs:
       - name: Trigger desktop build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run desktop.yml --ref "${{ steps.tag.outputs.tag }}"
+        run: gh workflow run desktop.yml --ref main
 
       - name: Trigger static deploy
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run static.yml --ref "${{ steps.tag.outputs.tag }}"
+        run: gh workflow run static.yml --ref main
