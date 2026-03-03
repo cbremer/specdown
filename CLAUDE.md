@@ -3,6 +3,8 @@
 This file is read automatically by Claude Code at the start of every session.
 It captures project conventions so any AI assistant can pick up context quickly.
 
+<!-- test: verify version-bump pipeline -->
+
 ---
 
 ## Project Overview
