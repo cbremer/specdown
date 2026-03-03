@@ -12,7 +12,9 @@ concurrency:
 
 jobs:
   # -----------------------------------------------------------------
-  # bump: creates a version-bump PR when new code lands on main.
+  # bump: commits a version bump directly to main when new code lands.
+  # Uses ADMIN_PAT so the push is from a repo admin, bypassing branch
+  # protection. The [version bump] marker prevents infinite loops.
   # For pull_request events it is a no-op so the required "bump"
   # status check passes on every PR.
   # -----------------------------------------------------------------
@@ -27,7 +29,6 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -50,32 +51,17 @@ jobs:
         if: github.event_name == 'push'
         run: npm version patch --no-git-tag-version
 
-      - name: Create version bump PR
+      - name: Commit and push version bump to main
         if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.ADMIN_PAT }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          BRANCH="auto/version-bump-v${VERSION}"
-
-          # Clean up branch from any previous failed run
-          git push origin --delete "$BRANCH" 2>/dev/null || true
-
-          git checkout -b "$BRANCH"
           git add package.json markdown-viewer/app.js README.md
           git commit -m "Bump version to v${VERSION} [version bump]"
-          git push -u origin "$BRANCH"
-
-          gh pr create \
-            --title "Bump version to v${VERSION} [version bump]" \
-            --body "Automated version bump to v${VERSION}" \
-            --base main \
-            --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash --delete-branch
+          git push origin main
 
   # -----------------------------------------------------------------
-  # tag: after a version-bump PR is squash-merged into main, create
-  # the version tag, then explicitly trigger the desktop build and
+  # tag: after a version-bump commit lands on main, create the
+  # version tag, then explicitly trigger the desktop build and
   # static deploy workflows.
   #
   # Why explicit triggers? Tags pushed with GITHUB_TOKEN do NOT fire
