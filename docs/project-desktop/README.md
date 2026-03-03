@@ -40,6 +40,7 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Feb 22, 2026 | Tasks | [2026-02-22-tasks-session-02-native-file-open.md](2026-02-22-tasks-session-02-native-file-open.md) | Session 2 implementation checklist — Native file open, IPC bridge, macOS menus |
 | Feb 23, 2026 | Tasks | [2026-02-23-tasks-session-03-file-watching.md](2026-02-23-tasks-session-03-file-watching.md) | Session 3 implementation checklist — File watching (chokidar, per-tab toggle) |
 | Mar 02, 2026 | Tasks | [2026-03-02-tasks-session-04-product-ideas.md](2026-03-02-tasks-session-04-product-ideas.md) | Session 4 — All 15 product ideas implemented (search, TOC, split view, diagram export, shareable links, minimap, annotations, GitHub browser, custom CSS, session restore, recent files, global shortcut, Windows/Linux CI) |
+| Mar 03, 2026 | Tasks | [2026-03-03-tasks-session-05-verification-checklist.md](2026-03-03-tasks-session-05-verification-checklist.md) | Session 5 verification checklist — what shipped in last 48 hours, what remains, and QA sign-off list |
 
 ---
 
