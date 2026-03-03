@@ -12,7 +12,8 @@ concurrency:
 
 jobs:
   # -----------------------------------------------------------------
-  # bump: creates a version-bump PR when new code lands on main.
+  # bump: commits the version bump directly to main and tags the
+  # release when new code lands on main.
   # For pull_request events it is a no-op so the required "bump"
   # status check passes on every PR.
   # -----------------------------------------------------------------
@@ -27,7 +28,6 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -46,55 +46,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Pull latest
+        if: github.event_name == 'push'
+        run: git pull --rebase origin main
+
       - name: Bump patch version
         if: github.event_name == 'push'
         run: npm version patch --no-git-tag-version
 
-      - name: Create version bump PR
+      - name: Commit, tag, and push
         if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          BRANCH="auto/version-bump-v${VERSION}"
-
-          # Clean up branch from any previous failed run
-          git push origin --delete "$BRANCH" 2>/dev/null || true
-
-          git checkout -b "$BRANCH"
           git add package.json markdown-viewer/app.js README.md
           git commit -m "Bump version to v${VERSION} [version bump]"
-          git push -u origin "$BRANCH"
-
-          gh pr create \
-            --title "Bump version to v${VERSION} [version bump]" \
-            --body "Automated version bump to v${VERSION}" \
-            --base main \
-            --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash --delete-branch
-
-  # -----------------------------------------------------------------
-  # tag: after a version-bump PR is squash-merged into main, create
-  # and push the version tag. This triggers the desktop build and
-  # GitHub Release workflows.
-  # -----------------------------------------------------------------
-  tag:
-    runs-on: ubuntu-latest
-
-    if: >-
-      github.event_name == 'push' &&
-      contains(github.event.head_commit.message, '[version bump]')
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create and push tag
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "v${VERSION}" -m "v${VERSION}"
-          git push origin "v${VERSION}"
+          git push origin main "v${VERSION}"

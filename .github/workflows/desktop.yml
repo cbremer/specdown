@@ -5,21 +5,13 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Bump version on merge"]
-    types:
-      - completed
 
 jobs:
   # -------------------------------------------------------
-  # Shared condition: run on tag push, manual, or after version-bump
+  # macOS: DMG
   # -------------------------------------------------------
   build-macos:
     name: Build macOS DMG
-    if: >
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: macos-latest
     permissions:
       contents: write
@@ -64,10 +56,6 @@ jobs:
   # -------------------------------------------------------
   build-windows:
     name: Build Windows Installer
-    if: >
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: windows-latest
     permissions:
       contents: write
@@ -113,10 +101,6 @@ jobs:
   # -------------------------------------------------------
   build-linux:
     name: Build Linux AppImage
-    if: >
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
