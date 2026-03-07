@@ -71,7 +71,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "markdown-viewer/favicon.svg"
+      "icon": "markdown-viewer/favicon.png"
     },
     "nsis": {
       "oneClick": false,
