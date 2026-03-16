@@ -31,12 +31,14 @@ The web version works in mobile Safari but isn't optimized for touch. The deskto
 | Date | Type | Document | Summary |
 |---|---|---|---|
 | Feb 23, 2026 | Brainstorm | [2026-02-23-brainstorm-ios.md](2026-02-23-brainstorm-ios.md) | Problem framing, framework options, touch considerations, code sharing strategy, MVP scope |
+| Mar 16, 2026 | Spec | [2026-03-16-spec-ios-v1.md](2026-03-16-spec-ios-v1.md) | Full technical specification: Swift + WKWebView architecture, IPC contract, 4-session feature scope, touch interaction plan |
+| Mar 16, 2026 | Tasks | [2026-03-16-tasks-session-01-project-setup.md](2026-03-16-tasks-session-01-project-setup.md) | Session 1 checklist — Xcode project, WKWebView shell, web assets bundled, JS bridge skeleton, CI workflow |
 
 ---
 
-## Current Status (as of Feb 23, 2026)
+## Current Status (as of Mar 16, 2026)
 
-**Phase: Brainstorming** — No code yet. Exploring approaches and scoping the project.
+**Phase: Spec complete, ready for Session 1** — Architecture decided (Swift + WKWebView). Spec written. Session 1 tasks defined. No code yet.
 
 ---
 
