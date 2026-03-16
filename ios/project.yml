@@ -1,0 +1,52 @@
+name: SpecDown
+
+options:
+  bundleIdPrefix: com.cbremer
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  SWIFT_VERSION: "5.9"
+
+targets:
+  SpecDown:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+
+    sources:
+      - path: SpecDown
+
+    # Bundle the shared web viewer as a folder reference (blue folder).
+    # The entire markdown-viewer/ directory is copied into the app bundle,
+    # accessible at runtime as markdown-viewer/index.html.
+    resources:
+      - path: ../markdown-viewer
+        type: folder
+
+    settings:
+      PRODUCT_NAME: Specdown
+      TARGETED_DEVICE_FAMILY: "1,2"   # 1 = iPhone, 2 = iPad
+
+    info:
+      path: SpecDown/Info.plist
+      properties:
+        CFBundleDisplayName: Specdown
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
