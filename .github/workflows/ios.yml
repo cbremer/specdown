@@ -1,0 +1,53 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "ios/**"
+      - "markdown-viewer/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - "markdown-viewer/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  build:
+    name: Build (iOS Simulator)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project ios/SpecDown.xcodeproj \
+            -scheme SpecDown \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcpretty || true
+
+      - name: Build (raw output on failure)
+        if: failure()
+        run: |
+          xcodebuild \
+            -project ios/SpecDown.xcodeproj \
+            -scheme SpecDown \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build

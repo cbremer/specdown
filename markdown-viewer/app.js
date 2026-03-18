@@ -147,6 +147,22 @@ function updateThemeIcon() {
     icon.textContent = currentTheme === 'light' ? '🌙' : '☀️';
 }
 
+// iOS API: called by Swift shell to set theme externally
+window.setTheme = function(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('theme', currentTheme);
+    updateThemeIcon();
+    if (contentArea && contentArea.style.display !== 'none') {
+        reRenderMermaidDiagrams();
+    }
+};
+
+// iOS API: called by Swift shell to load a file (Session 2+)
+window.loadFileContent = function(content, filename) {
+    renderMarkdown(content, filename);
+};
+
 // ===========================
 // View Mode Toggle
 // ===========================
