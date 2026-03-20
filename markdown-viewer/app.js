@@ -558,6 +558,9 @@ async function renderMarkdown(content, filename) {
         fileName.textContent = filename;
         markdownContent.innerHTML = htmlContent;
 
+        // Make HTML comments visible
+        revealHtmlComments(markdownContent);
+
         // Show content area, hide drop zone
         dropZone.style.display = 'none';
         contentArea.style.display = 'flex';
@@ -587,6 +590,33 @@ async function renderMarkdown(content, filename) {
         console.error('Error rendering markdown:', error);
         alert('Error rendering markdown content. Please check the file format.');
     }
+}
+
+// ===========================
+// HTML Comment Reveal
+// ===========================
+function revealHtmlComments(container) {
+    // Walk the DOM and replace comment nodes with visible styled blocks
+    const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_COMMENT,
+        null
+    );
+
+    const commentNodes = [];
+    while (walker.nextNode()) {
+        commentNodes.push(walker.currentNode);
+    }
+
+    commentNodes.forEach((node) => {
+        const text = node.nodeValue.trim();
+        if (!text) return;
+
+        const block = document.createElement('div');
+        block.className = 'html-comment-block';
+        block.textContent = text;
+        node.parentNode.replaceChild(block, node);
+    });
 }
 
 // ===========================

@@ -563,6 +563,17 @@ body {
     height: auto;
 }
 
+.markdown-content .html-comment-block {
+    background-color: var(--bg-secondary);
+    border-left: 3px solid var(--text-secondary);
+    padding: 0.75em 1em;
+    margin-bottom: 1em;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    border-radius: 0 4px 4px 0;
+}
+
 /* ===========================
    Raw Markdown View
    =========================== */
