@@ -21,6 +21,7 @@ let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMo
 let activeTabId = null;
 let nextTabId = 0;
 const MAX_TABS = 10;
+const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
 // Desktop detection
 const isDesktop = !!(typeof window !== 'undefined' && window.specdown && window.specdown.isDesktop);
@@ -213,10 +214,19 @@ function updateViewToggleButton() {
 // Event Listeners
 // ===========================
 function setupEventListeners() {
+    function requestNativeOpenIfDesktop() {
+        if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
+            window.specdown.requestFileOpen();
+            return true;
+        }
+        return false;
+    }
+
     // Browse button - stopPropagation prevents the dropZone click handler
     // from calling fileInput.click() a second time (button is inside drop-zone-content)
     browseButton.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (requestNativeOpenIfDesktop()) return;
         fileInput.click();
     });
 
@@ -227,6 +237,7 @@ function setupEventListeners() {
     dropZone.addEventListener('click', (e) => {
         if (e.target.closest && e.target.closest('.url-section')) return;
         if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
+            if (requestNativeOpenIfDesktop()) return;
             fileInput.click();
         }
     });
@@ -400,7 +411,7 @@ function handleFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const content = e.target.result;
-        createTab(file.name, content);
+        createTab(file.name, content, file.path || null);
     };
     reader.onerror = () => {
         alert('Error reading file. Please try again.');
@@ -1209,6 +1220,10 @@ function renderTabBar() {
     const newTabBtn = tabBar.querySelector('.tab-new');
     if (newTabBtn) {
         newTabBtn.addEventListener('click', () => {
+            if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
+                window.specdown.requestFileOpen();
+                return;
+            }
             fileInput.click();
         });
     }
@@ -1231,10 +1246,14 @@ function createTab(filename, content, filePath) {
         rawMarkdown: content,
         viewMode: 'preview',
         scrollTop: 0,
-        watching: false
+        watching: !!(isDesktop && filePath)
     };
     tabs.push(tab);
     activeTabId = id;
+
+    if (tab.watching) {
+        startWatchingFilePath(tab.filePath);
+    }
 
     renderTabBar();
     if (isDesktop) {
@@ -1284,7 +1303,7 @@ async function closeTab(id) {
 
     // Stop watching before removing the tab
     if (isDesktop && closedTab.watching && closedTab.filePath) {
-        window.specdown.unwatchFile(closedTab.filePath);
+        stopWatchingFilePath(closedTab.filePath);
     }
 
     if (wasActive) {
@@ -1351,6 +1370,30 @@ function updateWatchToggle() {
     }
 }
 
+function startWatchingFilePath(filePath) {
+    if (!isDesktop || !filePath || !window.specdown || !window.specdown.watchFile) return;
+
+    const currentCount = watchRefCounts.get(filePath) || 0;
+    watchRefCounts.set(filePath, currentCount + 1);
+
+    if (currentCount === 0) {
+        window.specdown.watchFile(filePath);
+    }
+}
+
+function stopWatchingFilePath(filePath) {
+    if (!isDesktop || !filePath || !window.specdown || !window.specdown.unwatchFile) return;
+
+    const currentCount = watchRefCounts.get(filePath) || 0;
+    if (currentCount <= 1) {
+        watchRefCounts.delete(filePath);
+        window.specdown.unwatchFile(filePath);
+        return;
+    }
+
+    watchRefCounts.set(filePath, currentCount - 1);
+}
+
 function toggleWatching() {
     if (!isDesktop) return;
     const tab = activeTabId !== null ? tabs.find(t => t.id === activeTabId) : null;
@@ -1359,9 +1402,9 @@ function toggleWatching() {
     tab.watching = !tab.watching;
 
     if (tab.watching) {
-        window.specdown.watchFile(tab.filePath);
+        startWatchingFilePath(tab.filePath);
     } else {
-        window.specdown.unwatchFile(tab.filePath);
+        stopWatchingFilePath(tab.filePath);
     }
 
     renderTabBar();
