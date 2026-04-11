@@ -80,11 +80,23 @@ function initStore() {
     logError('Failed to load state file; starting with defaults', err);
   }
 
+  // Atomic write: write to a sibling temp file, then rename over the target.
+  // Rename is atomic on POSIX + NTFS, so a crash/kill mid-write can never
+  // leave `specdown-state.json` truncated — the worst case is a leftover
+  // `.tmp` file that gets overwritten on the next successful write.
   const write = () => {
+    const tempPath = `${statePath}.tmp`;
     try {
-      fs.writeFileSync(statePath, JSON.stringify(data, null, 2));
+      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+      fs.renameSync(tempPath, statePath);
     } catch (err) {
       logError('Failed to write state file', err);
+      // Best-effort cleanup of the temp file so it doesn't accumulate.
+      try {
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      } catch (_) {
+        // Swallow — we've already logged the real failure.
+      }
     }
   };
 
@@ -234,8 +246,6 @@ async function showOpenDialog() {
 // File Watching
 // ===========================
 
-// Map of filePath → chokidar FSWatcher.
-//
 // Why we watch the parent directory instead of the file itself:
 // Most modern editors (VSCode, vim, Sublime, JetBrains) save atomically —
 // they write a temp file and rename it over the target. Renaming changes
@@ -244,10 +254,18 @@ async function showOpenDialog() {
 // with a basename filter sidesteps this entirely and is robust against
 // unlink → add sequences.
 //
-// We also don't capture `webContents` in the change closure anymore:
-// if the renderer is reloaded (View > Reload), the captured reference
-// becomes stale. Instead we look up `mainWindow.webContents` lazily.
-const watchers = new Map();
+// Why we share one chokidar watcher per directory across files:
+// Opening several tabs from the same folder shouldn't create redundant
+// OS-level watches. `dirWatchers` holds one watcher per directory; each
+// entry maintains a `files` map (basename → full filePath) so incoming
+// events can be routed to the right tab. The exported `watchers` map
+// stays keyed by filePath for external API compatibility.
+//
+// We also don't capture `webContents` in the event closure anymore: if
+// the renderer is reloaded (View > Reload), a captured reference becomes
+// stale. Instead we look up `mainWindow.webContents` lazily at event time.
+const watchers = new Map();          // filePath → { dir }
+const dirWatchers = new Map();       // dir → { watcher, files: Map<basename, filePath> }
 
 function watchFile(filePath, _webContents) {
   if (watchers.has(filePath)) return; // already watching
@@ -255,45 +273,67 @@ function watchFile(filePath, _webContents) {
   const dir = path.dirname(filePath);
   const basename = path.basename(filePath);
 
-  const watcher = chokidar.watch(dir, {
-    persistent: true,
-    ignoreInitial: true,
-    depth: 0, // Only the directory itself, not subdirs.
-    awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-  });
+  let dirEntry = dirWatchers.get(dir);
+  if (!dirEntry) {
+    const files = new Map();
 
-  const handleEvent = (eventPath) => {
-    // chokidar may pass a full path or just a basename depending on platform.
-    const eventBase = eventPath ? path.basename(eventPath) : '';
-    if (eventBase && eventBase !== basename) return;
+    const handleEvent = (eventPath) => {
+      // chokidar may pass a full path or just a basename depending on platform.
+      const eventBase = eventPath ? path.basename(eventPath) : '';
+      const target = files.get(eventBase);
+      if (!target) return;
 
-    try {
-      const fileData = readMarkdownFile(filePath);
-      const target = mainWindow && mainWindow.webContents;
-      if (target && !target.isDestroyed()) {
-        target.send('file-changed', fileData);
+      try {
+        const fileData = readMarkdownFile(target);
+        const wc = mainWindow && mainWindow.webContents;
+        if (wc && !wc.isDestroyed()) {
+          wc.send('file-changed', fileData);
+        }
+      } catch (err) {
+        logError(`Failed to re-read watched file: ${target}`, err);
       }
-    } catch (err) {
-      logError(`Failed to re-read watched file: ${filePath}`, err);
-    }
-  };
+    };
 
-  // 'change' covers in-place edits; 'add' covers the post-rename inode of an
-  // atomic-save, which chokidar sees as the "new" file appearing.
-  watcher.on('change', handleEvent);
-  watcher.on('add', handleEvent);
-  watcher.on('error', (err) => {
-    logError(`Watcher error for ${filePath}`, err);
-  });
+    const watcher = chokidar.watch(dir, {
+      persistent: true,
+      ignoreInitial: true,
+      depth: 0, // Only the directory itself, not subdirs.
+      awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+    });
 
-  watchers.set(filePath, watcher);
+    // 'change' covers in-place edits; 'add' covers the post-rename inode
+    // of an atomic-save, which chokidar sees as a "new" file appearing.
+    watcher.on('change', handleEvent);
+    watcher.on('add', handleEvent);
+    watcher.on('error', (err) => {
+      logError(`Watcher error for ${dir}`, err);
+    });
+
+    dirEntry = { watcher, files };
+    dirWatchers.set(dir, dirEntry);
+  }
+
+  dirEntry.files.set(basename, filePath);
+  watchers.set(filePath, { dir });
 }
 
 function unwatchFile(filePath) {
-  const watcher = watchers.get(filePath);
-  if (watcher) {
-    watcher.close();
-    watchers.delete(filePath);
+  const entry = watchers.get(filePath);
+  if (!entry) return;
+
+  watchers.delete(filePath);
+
+  const dirEntry = dirWatchers.get(entry.dir);
+  if (!dirEntry) return;
+
+  dirEntry.files.delete(path.basename(filePath));
+  if (dirEntry.files.size === 0) {
+    try {
+      dirEntry.watcher.close();
+    } catch (err) {
+      logError(`Failed to close watcher for ${entry.dir}`, err);
+    }
+    dirWatchers.delete(entry.dir);
   }
 }
 
@@ -539,7 +579,17 @@ function buildMenu() {
               if (!fs.existsSync(logFilePath)) {
                 fs.writeFileSync(logFilePath, '');
               }
-              shell.openPath(logFilePath);
+              // shell.openPath returns Promise<string>: '' on success, an
+              // error message string on failure. Both arms need handling.
+              shell.openPath(logFilePath)
+                .then((result) => {
+                  if (result) {
+                    logError('Failed to open log file', new Error(result));
+                  }
+                })
+                .catch((err) => {
+                  logError('Failed to open log file', err);
+                });
             } catch (err) {
               logError('Failed to open log file', err);
             }
