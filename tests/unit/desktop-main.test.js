@@ -218,8 +218,10 @@ describe('desktop/main.js', () => {
     });
 
     afterEach(() => {
-      // Clean up any watchers created during tests
-      watchers.forEach((watcher) => watcher.close());
+      // Route cleanup through unwatchFile so the internal dirWatchers
+      // map also gets cleared between tests (entries in `watchers` are
+      // metadata, not chokidar watchers).
+      [...watchers.keys()].forEach((filePath) => unwatchFile(filePath));
       watchers.clear();
     });
 
@@ -272,6 +274,17 @@ describe('desktop/main.js', () => {
         expect(watchers.has('/path/to/a.md')).toBe(true);
         expect(watchers.has('/other/dir/b.md')).toBe(true);
       });
+
+      it('reuses a single chokidar watcher for files in the same directory', () => {
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+        watchFile('/shared/dir/a.md', mockWebContents);
+        watchFile('/shared/dir/b.md', mockWebContents);
+
+        // One OS-level watch on the parent dir serves both files.
+        expect(chokidar.watch).toHaveBeenCalledTimes(1);
+        expect(chokidar.watch).toHaveBeenCalledWith('/shared/dir', expect.any(Object));
+        expect(watchers.size).toBe(2);
+      });
     });
 
     describe('unwatchFile', () => {
@@ -287,6 +300,25 @@ describe('desktop/main.js', () => {
 
         expect(mockWatcher.close).toHaveBeenCalledTimes(1);
         expect(watchers.has('/path/to/file.md')).toBe(false);
+      });
+
+      it('keeps the shared dir watcher alive while other files in it are watched', () => {
+        const mockWatcher = { on: jest.fn().mockReturnThis(), close: jest.fn() };
+        chokidar.watch.mockReturnValue(mockWatcher);
+        const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+        watchFile('/shared/dir/a.md', mockWebContents);
+        watchFile('/shared/dir/b.md', mockWebContents);
+
+        unwatchFile('/shared/dir/a.md');
+        // One file in /shared/dir is still being watched, so the underlying
+        // chokidar watcher must stay open.
+        expect(mockWatcher.close).not.toHaveBeenCalled();
+        expect(watchers.has('/shared/dir/b.md')).toBe(true);
+
+        unwatchFile('/shared/dir/b.md');
+        // Last file gone → watcher closes.
+        expect(mockWatcher.close).toHaveBeenCalledTimes(1);
       });
 
       it('does nothing if the path is not being watched', () => {
