@@ -397,6 +397,20 @@ body {
 .watch-toggle-icon {
     font-size: 1rem;
     line-height: 1;
+    display: inline-block;
+}
+
+/* Reload feedback: briefly spin + scale the watch icon so the user
+   sees that an auto-reload just happened. The JS strips the class
+   after ~1.2s. */
+@keyframes watch-toggle-pulse {
+    0%   { transform: rotate(0deg)   scale(1);    opacity: 1; }
+    40%  { transform: rotate(180deg) scale(1.25); opacity: 0.75; }
+    100% { transform: rotate(360deg) scale(1);    opacity: 1; }
+}
+
+.watch-toggle-button.reloaded .watch-toggle-icon {
+    animation: watch-toggle-pulse 900ms ease-out;
 }
 
 .tab-watching-dot {
@@ -406,6 +420,19 @@ body {
     background-color: #27ae60;
     border-radius: 50%;
     flex-shrink: 0;
+    transition: background-color 0.2s ease;
+}
+
+/* Background tab whose file changed on disk since the user last looked
+   at it. Amber dot + subtle pulse draws the eye without being noisy. */
+.tab.tab-has-changes .tab-watching-dot {
+    background-color: #f59e0b;
+    animation: tab-changed-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tab-changed-pulse {
+    0%, 100% { opacity: 1;   transform: scale(1);    }
+    50%      { opacity: 0.45; transform: scale(1.35); }
 }
 
 .view-toggle-button {

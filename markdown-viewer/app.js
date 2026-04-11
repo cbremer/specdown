@@ -1189,9 +1189,14 @@ function renderTabBar() {
     let html = '';
     for (const tab of tabs) {
         const isActive = tab.id === activeTabId;
-        html += `<div class="tab${isActive ? ' tab-active' : ''}" data-tab-id="${tab.id}">`;
+        const hasChanges = !!tab.hasUnseenChanges;
+        const classes = ['tab'];
+        if (isActive) classes.push('tab-active');
+        if (hasChanges) classes.push('tab-has-changes');
+        html += `<div class="${classes.join(' ')}" data-tab-id="${tab.id}">`;
         if (tab.watching) {
-            html += `<span class="tab-watching-dot" title="Watching for changes"></span>`;
+            const dotTitle = hasChanges ? 'File changed on disk' : 'Watching for changes';
+            html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
         }
         html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
         html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab">×</button>`;
@@ -1246,7 +1251,8 @@ function createTab(filename, content, filePath) {
         rawMarkdown: content,
         viewMode: 'preview',
         scrollTop: 0,
-        watching: !!(isDesktop && filePath)
+        watching: !!(isDesktop && filePath),
+        hasUnseenChanges: false
     };
     tabs.push(tab);
     activeTabId = id;
@@ -1270,6 +1276,9 @@ async function switchTab(id) {
     activeTabId = id;
     const tab = tabs.find(t => t.id === id);
     if (!tab) return;
+
+    // Clear the "unseen changes" flag now that the user is looking at it.
+    tab.hasUnseenChanges = false;
 
     renderTabBar();
     if (isDesktop) updateWatchToggle();
@@ -1370,6 +1379,29 @@ function updateWatchToggle() {
     }
 }
 
+// Briefly animate the watch toggle to signal that an auto-reload just
+// happened. Without this, the reload is invisible if the user happens
+// not to be looking at the content area when the disk write lands.
+let watchTogglePulseTimer = null;
+function pulseWatchToggle() {
+    if (!watchToggle) return;
+    watchToggle.classList.remove('reloaded');
+    // Force reflow so re-adding the class restarts the animation even
+    // when multiple reloads happen in quick succession.
+    // eslint-disable-next-line no-unused-expressions
+    void watchToggle.offsetWidth;
+    watchToggle.classList.add('reloaded');
+    watchToggle.title = 'Reloaded from disk';
+
+    if (watchTogglePulseTimer) clearTimeout(watchTogglePulseTimer);
+    watchTogglePulseTimer = setTimeout(() => {
+        watchToggle.classList.remove('reloaded');
+        // Restore the state-appropriate tooltip.
+        updateWatchToggle();
+        watchTogglePulseTimer = null;
+    }, 1200);
+}
+
 function startWatchingFilePath(filePath) {
     if (!isDesktop || !filePath || !window.specdown || !window.specdown.watchFile) return;
 
@@ -1425,7 +1457,7 @@ function setupDesktopIPC() {
     });
 
     // Listen for file-changed events (watched file updated on disk)
-    window.specdown.onFileChanged(function(fileData) {
+    window.specdown.onFileChanged(async function(fileData) {
         const tab = tabs.find(t => t.filePath === fileData.filePath);
         if (!tab) return;
 
@@ -1433,6 +1465,10 @@ function setupDesktopIPC() {
         tab.filename = fileData.filename;
 
         if (tab.id === activeTabId) {
+            // Preserve scroll position across the re-render so an
+            // auto-reload doesn't yank the user back to the top.
+            const savedScrollTop = markdownContent.scrollTop;
+
             if (tab.viewMode === 'raw') {
                 currentRawMarkdown = fileData.content;
                 const escaped = fileData.content
@@ -1440,9 +1476,20 @@ function setupDesktopIPC() {
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
                 markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
+                markdownContent.scrollTop = savedScrollTop;
             } else {
-                renderMarkdown(fileData.content, fileData.filename);
+                await renderMarkdown(fileData.content, fileData.filename);
+                markdownContent.scrollTop = savedScrollTop;
             }
+
+            // Visual feedback that an auto-reload happened — otherwise
+            // the user has no way to tell the content just changed.
+            pulseWatchToggle();
+        } else {
+            // Background tab: flag it so the user sees that something
+            // changed when they come back to it.
+            tab.hasUnseenChanges = true;
+            renderTabBar();
         }
     });
 
