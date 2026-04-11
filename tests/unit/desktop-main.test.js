@@ -21,24 +21,42 @@ jest.mock('chokidar', () => ({
 jest.mock('electron', () => ({
   app: {
     name: 'Specdown Desktop',
+    // A thenable whose `then` never resolves — the IIFE in main.js awaits
+    // this, so its body stays suspended during tests and we can exercise
+    // the exported pure functions in isolation.
     whenReady: jest.fn(() => ({ then: jest.fn() })),
     on: jest.fn(),
     quit: jest.fn(),
+    getPath: jest.fn(() => '/tmp/specdown-test-userdata'),
+    addRecentDocument: jest.fn(),
   },
-  BrowserWindow: jest.fn(() => ({
-    loadFile: jest.fn(),
-    webContents: { on: jest.fn(), send: jest.fn() },
-    on: jest.fn(),
-  })),
+  BrowserWindow: Object.assign(
+    jest.fn(() => ({
+      loadFile: jest.fn(),
+      webContents: { on: jest.fn(), send: jest.fn() },
+      on: jest.fn(),
+    })),
+    { getAllWindows: jest.fn(() => []) }
+  ),
   Menu: {
     buildFromTemplate: jest.fn((template) => template),
     setApplicationMenu: jest.fn(),
   },
   dialog: {
     showOpenDialog: jest.fn(),
+    showErrorBox: jest.fn(),
+    showMessageBox: jest.fn(),
   },
   ipcMain: {
     on: jest.fn(),
+  },
+  globalShortcut: {
+    register: jest.fn(),
+    unregisterAll: jest.fn(),
+  },
+  shell: {
+    openPath: jest.fn(),
+    showItemInFolder: jest.fn(),
   },
 }));
 
@@ -156,6 +174,17 @@ describe('desktop/main.js', () => {
       expect(template.find(m => m.label === 'View')).toBeDefined();
       expect(template.find(m => m.label === 'Window')).toBeDefined();
     });
+
+    it('includes a Help menu with Open Log File', () => {
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const helpMenu = template.find(m => m.label === 'Help');
+      expect(helpMenu).toBeDefined();
+
+      const openLog = helpMenu.submenu.find(item => item.label === 'Open Log File');
+      expect(openLog).toBeDefined();
+      expect(typeof openLog.click).toBe('function');
+    });
   });
 
   describe('IPC handlers', () => {
@@ -195,13 +224,16 @@ describe('desktop/main.js', () => {
     });
 
     describe('watchFile', () => {
-      it('creates a chokidar watcher for the given path', () => {
+      it('creates a chokidar watcher for the parent directory of the file', () => {
         const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
         watchFile('/path/to/file.md', mockWebContents);
 
-        expect(chokidar.watch).toHaveBeenCalledWith('/path/to/file.md', expect.objectContaining({
+        // We watch the parent dir (not the file) so atomic renames don't
+        // orphan the watcher on the old inode.
+        expect(chokidar.watch).toHaveBeenCalledWith('/path/to', expect.objectContaining({
           persistent: true,
           ignoreInitial: true,
+          depth: 0,
         }));
         expect(watchers.has('/path/to/file.md')).toBe(true);
       });
@@ -215,24 +247,30 @@ describe('desktop/main.js', () => {
         expect(watchers.size).toBe(1);
       });
 
-      it('registers a change handler on the watcher', () => {
+      it('registers change, add, and error handlers on the watcher', () => {
         const mockWatcher = { on: jest.fn().mockReturnThis(), close: jest.fn() };
         chokidar.watch.mockReturnValue(mockWatcher);
         const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
 
         watchFile('/path/to/file.md', mockWebContents);
 
-        expect(mockWatcher.on).toHaveBeenCalledWith('change', expect.any(Function));
+        // 'change' for in-place edits; 'add' catches atomic saves (where the
+        // editor replaces the file via rename and chokidar sees it as a new
+        // add event on the post-rename inode).
+        const registeredEvents = mockWatcher.on.mock.calls.map((call) => call[0]);
+        expect(registeredEvents).toContain('change');
+        expect(registeredEvents).toContain('add');
+        expect(registeredEvents).toContain('error');
       });
 
       it('can watch multiple different paths', () => {
         const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
         watchFile('/path/to/a.md', mockWebContents);
-        watchFile('/path/to/b.md', mockWebContents);
+        watchFile('/other/dir/b.md', mockWebContents);
 
         expect(watchers.size).toBe(2);
         expect(watchers.has('/path/to/a.md')).toBe(true);
-        expect(watchers.has('/path/to/b.md')).toBe(true);
+        expect(watchers.has('/other/dir/b.md')).toBe(true);
       });
     });
 

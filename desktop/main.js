@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const chokidar = require('chokidar');
@@ -8,24 +8,93 @@ const MAX_RECENT_FILES = 15;
 
 let mainWindow = null;
 let store = null;
+let logFilePath = null;
 
 // Queue files requested before the window is ready (e.g. Finder double-click on launch)
 let pendingFilePaths = [];
 
 // ===========================
-// Store (electron-store)
+// Logging
 // ===========================
-async function initStore() {
-  // electron-store v11+ is ESM-only, so we use dynamic import
-  const { default: Store } = await import('electron-store');
-  store = new Store({
-    name: 'specdown-state',
-    defaults: {
-      recentFiles: [],
-      windowBounds: { width: 1200, height: 800 },
-      session: { tabs: [] },
+// Writes to a user-accessible log file so silent failures in packaged builds
+// (ASAR + ESM dynamic imports, missing native bindings, etc.) are recoverable.
+function initLogFile() {
+  try {
+    const userData = app.getPath('userData');
+    if (!fs.existsSync(userData)) {
+      fs.mkdirSync(userData, { recursive: true });
+    }
+    logFilePath = path.join(userData, 'specdown-main.log');
+  } catch (_) {
+    // Can't establish a log file — fall back to console only.
+    logFilePath = null;
+  }
+}
+
+function logError(msg, err) {
+  const detail = err && err.stack ? err.stack : String(err || '');
+  const line = `[${new Date().toISOString()}] ${msg}: ${detail}\n`;
+  // eslint-disable-next-line no-console
+  console.error(line);
+  if (logFilePath) {
+    try {
+      fs.appendFileSync(logFilePath, line);
+    } catch (_) {
+      // Swallow — logging must never crash the app.
+    }
+  }
+}
+
+// ===========================
+// Store (simple JSON persistence)
+// ===========================
+// Replaces electron-store v11, which is ESM-only and has a history of
+// silently failing to load in packaged ASAR builds (breaking recent files
+// and session restore). A tiny synchronous JSON file in userData is simpler,
+// has no native deps, and is trivially debuggable.
+function initStore() {
+  const defaults = {
+    recentFiles: [],
+    windowBounds: { width: 1200, height: 800 },
+    session: { tabs: [] },
+    customCssPath: '',
+  };
+
+  let statePath;
+  try {
+    statePath = path.join(app.getPath('userData'), 'specdown-state.json');
+  } catch (err) {
+    logError('Failed to resolve userData path; persistence disabled', err);
+    store = null;
+    return;
+  }
+
+  let data = { ...defaults };
+  try {
+    if (fs.existsSync(statePath)) {
+      const raw = fs.readFileSync(statePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      data = { ...defaults, ...parsed };
+    }
+  } catch (err) {
+    logError('Failed to load state file; starting with defaults', err);
+  }
+
+  const write = () => {
+    try {
+      fs.writeFileSync(statePath, JSON.stringify(data, null, 2));
+    } catch (err) {
+      logError('Failed to write state file', err);
+    }
+  };
+
+  store = {
+    get: (key, fallback) => (Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback),
+    set: (key, value) => {
+      data[key] = value;
+      write();
     },
-  });
+  };
 }
 
 function getRecentFiles() {
@@ -33,6 +102,17 @@ function getRecentFiles() {
 }
 
 function addRecentFile(filePath) {
+  // Feed the native OS recent-documents list (macOS Dock, Windows jump list).
+  // This is independent of our own persistent store so it still works even if
+  // JSON persistence is broken.
+  if (typeof app.addRecentDocument === 'function') {
+    try {
+      app.addRecentDocument(filePath);
+    } catch (err) {
+      logError('app.addRecentDocument failed', err);
+    }
+  }
+
   if (!store) return;
   let recent = store.get('recentFiles', []);
   recent = recent.filter((p) => p !== filePath);
@@ -154,27 +234,56 @@ async function showOpenDialog() {
 // File Watching
 // ===========================
 
-// Map of filePath → chokidar FSWatcher
+// Map of filePath → chokidar FSWatcher.
+//
+// Why we watch the parent directory instead of the file itself:
+// Most modern editors (VSCode, vim, Sublime, JetBrains) save atomically —
+// they write a temp file and rename it over the target. Renaming changes
+// the inode, and chokidar's single-file watch follows the inode, so the
+// watcher goes dead after the first save. Watching the parent directory
+// with a basename filter sidesteps this entirely and is robust against
+// unlink → add sequences.
+//
+// We also don't capture `webContents` in the change closure anymore:
+// if the renderer is reloaded (View > Reload), the captured reference
+// becomes stale. Instead we look up `mainWindow.webContents` lazily.
 const watchers = new Map();
 
-function watchFile(filePath, webContents) {
+function watchFile(filePath, _webContents) {
   if (watchers.has(filePath)) return; // already watching
 
-  const watcher = chokidar.watch(filePath, {
+  const dir = path.dirname(filePath);
+  const basename = path.basename(filePath);
+
+  const watcher = chokidar.watch(dir, {
     persistent: true,
     ignoreInitial: true,
+    depth: 0, // Only the directory itself, not subdirs.
     awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
   });
 
-  watcher.on('change', () => {
+  const handleEvent = (eventPath) => {
+    // chokidar may pass a full path or just a basename depending on platform.
+    const eventBase = eventPath ? path.basename(eventPath) : '';
+    if (eventBase && eventBase !== basename) return;
+
     try {
       const fileData = readMarkdownFile(filePath);
-      if (webContents && !webContents.isDestroyed()) {
-        webContents.send('file-changed', fileData);
+      const target = mainWindow && mainWindow.webContents;
+      if (target && !target.isDestroyed()) {
+        target.send('file-changed', fileData);
       }
     } catch (err) {
-      console.error('Failed to re-read watched file:', filePath, err);
+      logError(`Failed to re-read watched file: ${filePath}`, err);
     }
+  };
+
+  // 'change' covers in-place edits; 'add' covers the post-rename inode of an
+  // atomic-save, which chokidar sees as the "new" file appearing.
+  watcher.on('change', handleEvent);
+  watcher.on('add', handleEvent);
+  watcher.on('error', (err) => {
+    logError(`Watcher error for ${filePath}`, err);
   });
 
   watchers.set(filePath, watcher);
@@ -411,6 +520,41 @@ function buildMenu() {
         ]),
       ],
     },
+    // Help menu — diagnostics live here so issues are reportable.
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Open Log File',
+          click: () => {
+            if (!logFilePath) {
+              dialog.showMessageBox({
+                type: 'info',
+                message: 'No log file has been created yet.',
+              });
+              return;
+            }
+            // Ensure the file exists so the OS doesn't refuse to open it.
+            try {
+              if (!fs.existsSync(logFilePath)) {
+                fs.writeFileSync(logFilePath, '');
+              }
+              shell.openPath(logFilePath);
+            } catch (err) {
+              logError('Failed to open log file', err);
+            }
+          },
+        },
+        {
+          label: 'Show Log File In Folder',
+          click: () => {
+            if (logFilePath && fs.existsSync(logFilePath)) {
+              shell.showItemInFolder(logFilePath);
+            }
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);
@@ -424,28 +568,57 @@ function rebuildMenu() {
 // ===========================
 // App Lifecycle
 // ===========================
-app.whenReady().then(async () => {
-  await initStore();
-  buildMenu();
-  createWindow();
-
-  // Global shortcut: Cmd+Shift+M brings SpecDown to front and prompts open
-  globalShortcut.register('CommandOrControl+Shift+M', () => {
-    if (!mainWindow) {
-      createWindow();
-    } else {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-      showOpenDialog();
-    }
-  });
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
+// Catch-all: surface any unhandled error in the main process so silent
+// failures become visible (log + optional dialog once we have one).
+process.on('uncaughtException', (err) => {
+  logError('uncaughtException', err);
 });
+process.on('unhandledRejection', (reason) => {
+  logError('unhandledRejection', reason);
+});
+
+// IIFE instead of `app.whenReady().then(...)` so we can await, catch, and
+// surface startup errors. Previously a rejection anywhere in the startup
+// chain (e.g. electron-store ESM import failure in a packaged build) was
+// swallowed silently — which is exactly how recent files and session
+// restore "never worked" in shipped DMGs.
+(async () => {
+  try {
+    await app.whenReady();
+
+    initLogFile();
+    initStore();
+    buildMenu();
+    createWindow();
+
+    // Global shortcut: Cmd+Shift+M brings SpecDown to front and prompts open
+    globalShortcut.register('CommandOrControl+Shift+M', () => {
+      if (!mainWindow) {
+        createWindow();
+      } else {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+        showOpenDialog();
+      }
+    });
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  } catch (err) {
+    logError('Startup failed', err);
+    try {
+      dialog.showErrorBox(
+        'SpecDown failed to start',
+        String(err && err.message ? err.message : err)
+      );
+    } catch (_) {
+      // Dialog may not be available yet — the log line above is our fallback.
+    }
+  }
+})();
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
