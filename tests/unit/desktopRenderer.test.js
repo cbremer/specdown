@@ -63,4 +63,36 @@ describe('Desktop renderer integration', () => {
     expect(window.specdown.unwatchFile).toHaveBeenCalledTimes(1);
     expect(window.specdown.unwatchFile).toHaveBeenCalledWith('/tmp/one.md');
   });
+
+  it('flags background tabs whose watched file changed on disk, clearing on focus', async () => {
+    // Register the onFileChanged callback that app.js wired up during init.
+    const fileChangedCallback = window.specdown.onFileChanged.mock.calls[0][0];
+    expect(typeof fileChangedCallback).toBe('function');
+
+    createTab('a.md', '# A', '/tmp/a.md');
+    createTab('b.md', '# B', '/tmp/b.md');
+
+    // Tab b is now active; deliver a file-changed event for tab a.
+    const backgroundTab = tabs.find(t => t.filePath === '/tmp/a.md');
+    const activeTab = tabs.find(t => t.filePath === '/tmp/b.md');
+    expect(activeTabId).toBe(activeTab.id);
+
+    await fileChangedCallback({
+      filename: 'a.md',
+      filePath: '/tmp/a.md',
+      content: '# A (updated)',
+    });
+
+    // Background tab should be flagged and its DOM element should carry
+    // the change indicator class so the user sees something changed.
+    expect(backgroundTab.hasUnseenChanges).toBe(true);
+    const backgroundEl = document.querySelector(`.tab[data-tab-id="${backgroundTab.id}"]`);
+    expect(backgroundEl.classList.contains('tab-has-changes')).toBe(true);
+
+    // Switching to the background tab should clear the flag.
+    await switchTab(backgroundTab.id);
+    expect(backgroundTab.hasUnseenChanges).toBe(false);
+    const refreshedEl = document.querySelector(`.tab[data-tab-id="${backgroundTab.id}"]`);
+    expect(refreshedEl.classList.contains('tab-has-changes')).toBe(false);
+  });
 });
