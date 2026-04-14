@@ -33,9 +33,22 @@ function initLogFile() {
 
 function logError(msg, err) {
   const detail = err && err.stack ? err.stack : String(err || '');
-  const line = `[${new Date().toISOString()}] ${msg}: ${detail}\n`;
+  const line = `[${new Date().toISOString()}] ERROR ${msg}: ${detail}\n`;
   // eslint-disable-next-line no-console
   console.error(line);
+  if (logFilePath) {
+    try {
+      fs.appendFileSync(logFilePath, line);
+    } catch (_) {
+      // Swallow — logging must never crash the app.
+    }
+  }
+}
+
+function logInfo(msg) {
+  const line = `[${new Date().toISOString()}] INFO  ${msg}\n`;
+  // eslint-disable-next-line no-console
+  console.log(line);
   if (logFilePath) {
     try {
       fs.appendFileSync(logFilePath, line);
@@ -294,11 +307,23 @@ function watchFile(filePath, _webContents) {
       }
     };
 
+    // Escape hatch for users on filesystems where fs.watch is unreliable:
+    // network mounts (SMB/NFS/Dropbox/iCloud Drive), VM shared folders,
+    // certain fuse filesystems. Setting SPECDOWN_WATCH_POLLING=1 forces
+    // chokidar into polling mode at a 500ms interval. CPU cost is small
+    // for a handful of files and it works everywhere.
+    const usePolling = process.env.SPECDOWN_WATCH_POLLING === '1';
+    if (usePolling) {
+      logInfo(`Chokidar polling mode enabled for ${dir} (SPECDOWN_WATCH_POLLING=1)`);
+    }
+
     const watcher = chokidar.watch(dir, {
       persistent: true,
       ignoreInitial: true,
       depth: 0, // Only the directory itself, not subdirs.
       awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+      usePolling,
+      interval: usePolling ? 500 : undefined,
     });
 
     // 'change' covers in-place edits; 'add' covers the post-rename inode
