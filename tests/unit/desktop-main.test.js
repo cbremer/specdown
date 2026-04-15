@@ -285,6 +285,53 @@ describe('desktop/main.js', () => {
         expect(chokidar.watch).toHaveBeenCalledWith('/shared/dir', expect.any(Object));
         expect(watchers.size).toBe(2);
       });
+
+      describe('SPECDOWN_WATCH_POLLING env var', () => {
+        const originalEnv = process.env.SPECDOWN_WATCH_POLLING;
+
+        afterEach(() => {
+          if (originalEnv === undefined) {
+            delete process.env.SPECDOWN_WATCH_POLLING;
+          } else {
+            process.env.SPECDOWN_WATCH_POLLING = originalEnv;
+          }
+        });
+
+        it('enables chokidar polling when SPECDOWN_WATCH_POLLING=1', () => {
+          process.env.SPECDOWN_WATCH_POLLING = '1';
+          const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+          watchFile('/path/to/file.md', mockWebContents);
+
+          expect(chokidar.watch).toHaveBeenCalledWith('/path/to', expect.objectContaining({
+            usePolling: true,
+            interval: 500,
+          }));
+        });
+
+        it('does not enable polling when the env var is unset', () => {
+          delete process.env.SPECDOWN_WATCH_POLLING;
+          const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+          watchFile('/path/to/file.md', mockWebContents);
+
+          const options = chokidar.watch.mock.calls[0][1];
+          expect(options.usePolling).toBe(false);
+          expect(options.interval).toBeUndefined();
+        });
+
+        it('does not enable polling for other truthy values', () => {
+          // Only the exact string '1' flips the switch — prevents accidental
+          // activation via e.g. `SPECDOWN_WATCH_POLLING=true`.
+          process.env.SPECDOWN_WATCH_POLLING = 'true';
+          const mockWebContents = { isDestroyed: jest.fn(() => false), send: jest.fn() };
+
+          watchFile('/path/to/file.md', mockWebContents);
+
+          const options = chokidar.watch.mock.calls[0][1];
+          expect(options.usePolling).toBe(false);
+        });
+      });
     });
 
     describe('unwatchFile', () => {
