@@ -1,5 +1,6 @@
 import WebKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Manages all communication between the WKWebView (JavaScript) and the native Swift layer.
 ///
@@ -11,6 +12,12 @@ class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     private var pageLoaded = false
     private var pendingTheme: String?
+
+    private let defaults = UserDefaults.standard
+    private enum Keys {
+        static let preferences = "specdown.preferences"
+        static let recentFiles = "specdown.recentFiles"
+    }
 
     // MARK: - JS → Swift
 
@@ -30,19 +37,16 @@ class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
         switch action {
         case "openFilePicker":
-            // Session 2: will present UIDocumentPickerViewController
-            print("[Bridge] openFilePicker — not yet implemented (Session 2)")
+            presentDocumentPicker()
 
         case "savePreferences":
             if let prefs = data {
-                print("[Bridge] savePreferences: \(prefs)")
-                // Session 3: persist via UserDefaults
+                defaults.set(prefs, forKey: Keys.preferences)
             }
 
         case "fileLoaded":
             if let name = data?["name"] as? String {
-                print("[Bridge] fileLoaded: \(name)")
-                // Session 3: add to recent files list
+                trackRecentFile(name: name)
             }
 
         default:
@@ -71,21 +75,19 @@ class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             pendingTheme = theme
             return
         }
-        // window.setTheme is defined in app.js and sets the theme + re-renders Mermaid
-        webView?.evaluateJavaScript("window.setTheme('\(theme)')") { _, error in
+        webView?.evaluateJavaScript("window.setTheme('\\(theme)')") { _, error in
             if let error = error {
-                print("[Bridge] setTheme('\(theme)') error: \(error)")
+                print("[Bridge] setTheme('\\(theme)') error: \(error)")
             }
         }
     }
 
-    /// Deliver a file's content to the web layer (used from Session 2 onward).
+    /// Deliver a file's content to the web layer.
     func loadFile(name: String, content: String) {
         guard pageLoaded else {
             print("[Bridge] loadFile called before page loaded — dropping")
             return
         }
-        // Escape content for JS string literal injection
         let escaped = content
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "`", with: "\\`")
@@ -93,6 +95,60 @@ class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             if let error = error {
                 print("[Bridge] loadFile error: \(error)")
             }
+        }
+    }
+
+    // MARK: - Native integrations
+
+    private func presentDocumentPicker() {
+        let types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+
+        guard let presenter = topViewController() else {
+            print("[Bridge] Could not find presenter for document picker")
+            return
+        }
+        presenter.present(picker, animated: true)
+    }
+
+    private func topViewController() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let keyWindow = scenes
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
+    private func trackRecentFile(name: String) {
+        var recent = defaults.stringArray(forKey: Keys.recentFiles) ?? []
+        recent.removeAll { $0 == name }
+        recent.insert(name, at: 0)
+        defaults.set(Array(recent.prefix(10)), forKey: Keys.recentFiles)
+    }
+}
+
+extension WebBridge: UIDocumentPickerDelegate {
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let url = urls.first else { return }
+        let granted = url.startAccessingSecurityScopedResource()
+        defer {
+            if granted {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        do {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            loadFile(name: url.lastPathComponent, content: content)
+        } catch {
+            print("[Bridge] Failed to read file: \(error)")
         }
     }
 }
