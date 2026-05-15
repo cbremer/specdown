@@ -33,12 +33,14 @@ The web version works in mobile Safari but isn't optimized for touch. The deskto
 | Feb 23, 2026 | Brainstorm | [2026-02-23-brainstorm-ios.md](2026-02-23-brainstorm-ios.md) | Problem framing, framework options, touch considerations, code sharing strategy, MVP scope |
 | Mar 16, 2026 | Spec | [2026-03-16-spec-ios-v1.md](2026-03-16-spec-ios-v1.md) | Full technical specification: Swift + WKWebView architecture, IPC contract, 4-session feature scope, touch interaction plan |
 | Mar 16, 2026 | Tasks | [2026-03-16-tasks-session-01-project-setup.md](2026-03-16-tasks-session-01-project-setup.md) | Session 1 checklist — Xcode project, WKWebView shell, web assets bundled, JS bridge skeleton, CI workflow |
+| May 15, 2026 | Spec | [2026-05-15-spec-ios-v2.md](2026-05-15-spec-ios-v2.md) | Adaptive shell revision for iPadOS: native split layout, layout-mode bridge, shared viewer retained in detail pane |
+| May 15, 2026 | Tasks | [2026-05-15-tasks-session-02-ipados-shell.md](2026-05-15-tasks-session-02-ipados-shell.md) | Session 2 checklist — iPad regular-width split shell, sidebar actions, shared viewer layout-mode switching |
 
 ---
 
-## Current Status (as of Mar 16, 2026)
+## Current Status (as of May 15, 2026)
 
-**Phase: Spec complete, ready for Session 1** — Architecture decided (Swift + WKWebView). Spec written. Session 1 tasks defined. No code yet.
+**Phase: iOS shell implemented, iPadOS shell upgraded** — The shared WKWebView-based app is now running, and the latest revision adds an adaptive iPadOS split layout on top of the existing iPhone-first shell.
 
 ---
 

@@ -27,4 +27,4 @@ YYYY-MM-DD-<type>-<detail>.md
 
 - **Desktop (`project-desktop`)**: No remaining features in the current Session 1–4 scope.
 - **URL opening (`project-url`)**: Inline reviewer comments (Google Docs-style) are still unimplemented and intentionally deferred from Session 01.
-- **iOS/iPad (`project-ios`)**: Still in brainstorming (no implementation yet); next major milestones are authoring `spec-ios-v1` and executing Session 01 setup tasks.
+- **iOS/iPad (`project-ios`)**: Shell is implemented; latest work adds an adaptive iPadOS split layout while keeping the shared viewer architecture intact.

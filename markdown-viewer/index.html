@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
@@ -74,6 +74,13 @@
                 <p>or click to browse</p>
                 <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
                 <button id="browse-button" class="browse-button">Browse Files</button>
+                <div id="ios-sample-section" class="sample-section" style="display: none;">
+                    <span class="url-separator">or open a bundled sample</span>
+                    <div class="sample-button-row">
+                        <button id="open-sample-basic" class="sample-button">Open Sample</button>
+                        <button id="open-sample-mermaid" class="sample-button">Open Mermaid Sample</button>
+                    </div>
+                </div>
                 <div class="url-section">
                     <span class="url-separator">or open from URL</span>
                     <div class="url-input-row">
@@ -147,6 +154,49 @@
                     <div id="split-raw-pane" class="split-raw-pane" style="display: none;">
                         <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ios-action-bar" class="ios-action-bar" style="display: none;">
+            <button id="ios-open-button" class="ios-action-button" title="Open file">
+                <span class="ios-action-icon">+</span>
+                <span class="ios-action-label">Open</span>
+            </button>
+            <button id="ios-contents-button" class="ios-action-button" title="Show contents">
+                <span class="ios-action-icon">☰</span>
+                <span class="ios-action-label">Contents</span>
+            </button>
+            <button id="ios-view-button" class="ios-action-button" title="Toggle raw markdown">
+                <span class="ios-action-icon">&lt;/&gt;</span>
+                <span class="ios-action-label">Raw</span>
+            </button>
+            <button id="ios-more-button" class="ios-action-button" title="More actions">
+                <span class="ios-action-icon">⋯</span>
+                <span class="ios-action-label">More</span>
+            </button>
+        </div>
+
+        <div id="ios-toc-sheet" class="ios-sheet-backdrop" style="display: none;">
+            <div class="ios-sheet ios-toc-sheet">
+                <div class="ios-sheet-header">
+                    <h2 class="ios-sheet-title">Contents</h2>
+                    <button id="ios-toc-close" class="ios-sheet-close" title="Close contents">✕</button>
+                </div>
+                <nav id="ios-toc-nav" class="toc-nav ios-toc-nav"></nav>
+            </div>
+        </div>
+
+        <div id="ios-action-sheet" class="ios-sheet-backdrop" style="display: none;">
+            <div class="ios-sheet">
+                <div class="ios-sheet-header">
+                    <h2 class="ios-sheet-title">Viewer Actions</h2>
+                    <button id="ios-action-sheet-close" class="ios-sheet-close" title="Close actions">✕</button>
+                </div>
+                <div class="ios-sheet-actions">
+                    <button id="ios-split-button" class="ios-sheet-action-button">Split View</button>
+                    <button id="ios-print-button" class="ios-sheet-action-button">Print</button>
+                    <button id="ios-theme-button" class="ios-sheet-action-button">Theme</button>
                 </div>
             </div>
         </div>

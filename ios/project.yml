@@ -18,13 +18,13 @@ targets:
 
     sources:
       - path: SpecDown
+      - path: ../markdown-viewer
+        type: folder
+        buildPhase: resources
 
     # Bundle the shared web viewer as a folder reference (blue folder).
     # The entire markdown-viewer/ directory is copied into the app bundle,
     # accessible at runtime as markdown-viewer/index.html.
-    resources:
-      - path: ../markdown-viewer
-        type: folder
 
     settings:
       PRODUCT_NAME: Specdown
