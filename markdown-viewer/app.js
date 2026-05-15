@@ -25,12 +25,22 @@ const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
 // Desktop detection
 const isDesktop = !!(typeof window !== 'undefined' && window.specdown && window.specdown.isDesktop);
+const isIOSNative = !!(
+    typeof window !== 'undefined'
+    && window.iosNative
+    && window.webkit
+    && window.webkit.messageHandlers
+    && window.webkit.messageHandlers.specdown
+);
 
 // TOC state
 let tocVisible = false;
+let tocEntries = [];
+let tocScrollSpyScheduled = false;
 
 // Split view state
 let splitViewActive = false;
+let iosLayoutMode = 'phone';
 
 // Search state
 let searchMatches = [];
@@ -43,6 +53,9 @@ let searchHighlightNodes = [];
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const browseButton = document.getElementById('browse-button');
+const iosSampleSection = document.getElementById('ios-sample-section');
+const openSampleBasic = document.getElementById('open-sample-basic');
+const openSampleMermaid = document.getElementById('open-sample-mermaid');
 const contentArea = document.getElementById('content-area');
 const markdownContent = document.getElementById('markdown-content');
 const fileName = document.getElementById('file-name');
@@ -69,6 +82,19 @@ const searchPrev = document.getElementById('search-prev');
 const searchNext = document.getElementById('search-next');
 const searchClose = document.getElementById('search-close');
 const shareToast = document.getElementById('share-toast');
+const iosActionBar = document.getElementById('ios-action-bar');
+const iosOpenButton = document.getElementById('ios-open-button');
+const iosContentsButton = document.getElementById('ios-contents-button');
+const iosViewButton = document.getElementById('ios-view-button');
+const iosMoreButton = document.getElementById('ios-more-button');
+const iosActionSheet = document.getElementById('ios-action-sheet');
+const iosActionSheetClose = document.getElementById('ios-action-sheet-close');
+const iosSplitButton = document.getElementById('ios-split-button');
+const iosPrintButton = document.getElementById('ios-print-button');
+const iosThemeButton = document.getElementById('ios-theme-button');
+const iosTocSheet = document.getElementById('ios-toc-sheet');
+const iosTocClose = document.getElementById('ios-toc-close');
+const iosTocNav = document.getElementById('ios-toc-nav');
 
 // ===========================
 // Initialization
@@ -76,6 +102,7 @@ const shareToast = document.getElementById('share-toast');
 function init() {
     setupVersionInfo();
     setupTheme();
+    setupIOSNativeUI();
     setupEventListeners();
     configureMermaid();
     configureMarked();
@@ -84,6 +111,294 @@ function init() {
     if (isDesktop) {
         setupDesktopIPC();
     }
+}
+
+function setupIOSNativeUI() {
+    document.body.classList.toggle('ios-native', isIOSNative);
+    document.documentElement.classList.toggle('ios-native', isIOSNative);
+    if (iosSampleSection) {
+        iosSampleSection.style.display = isIOSNative ? '' : 'none';
+    }
+    document.body.classList.toggle('ios-pad', isIOSNative && iosLayoutMode === 'pad');
+    document.documentElement.classList.toggle('ios-pad', isIOSNative && iosLayoutMode === 'pad');
+    syncIOSChrome();
+}
+
+function requestNativeOpenIfAvailable() {
+    if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
+        window.specdown.requestFileOpen();
+        return true;
+    }
+    if (isIOSNative && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.specdown) {
+        window.webkit.messageHandlers.specdown.postMessage({ action: 'openFilePicker' });
+        return true;
+    }
+    return false;
+}
+
+function requestBundledSampleIfAvailable(sampleName) {
+    if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown) {
+        return false;
+    }
+    window.webkit.messageHandlers.specdown.postMessage({
+        action: 'openBundledSample',
+        data: { name: sampleName }
+    });
+    return true;
+}
+
+function requestNativePrintIfAvailable() {
+    if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown || !hasLoadedContent()) {
+        return false;
+    }
+    window.webkit.messageHandlers.specdown.postMessage({
+        action: 'printDocument',
+        data: {
+            title: fileName ? fileName.textContent : '',
+            html: buildPrintableDocument()
+        }
+    });
+    return true;
+}
+
+function hasLoadedContent() {
+    return !!(contentArea && contentArea.style.display !== 'none' && currentRawMarkdown);
+}
+
+function setIOSSheetVisibility(sheet, visible) {
+    if (!sheet) return;
+    sheet.style.display = visible ? 'flex' : 'none';
+}
+
+function closeIOSActionSheet() {
+    setIOSSheetVisibility(iosActionSheet, false);
+}
+
+function closeIOSTocSheet() {
+    setIOSSheetVisibility(iosTocSheet, false);
+    tocVisible = false;
+    if (tocToggle) tocToggle.classList.remove('active');
+    syncIOSChrome();
+}
+
+function updateIOSActionButtonLabel(button, label) {
+    if (!button) return;
+    const labelEl = button.querySelector('.ios-action-label');
+    if (labelEl) {
+        labelEl.textContent = label;
+    }
+}
+
+function updateIOSSheetButton(button, label, active) {
+    if (!button) return;
+    button.textContent = label;
+    button.classList.toggle('active', !!active);
+}
+
+function performPrint() {
+    if (requestNativePrintIfAvailable()) {
+        return;
+    }
+    window.print();
+}
+
+window.setIOSLayoutMode = function(mode) {
+    iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
+    if (isIOSNative) {
+        document.body.classList.toggle('ios-pad', iosLayoutMode === 'pad');
+        document.documentElement.classList.toggle('ios-pad', iosLayoutMode === 'pad');
+        if (iosLayoutMode === 'pad') {
+            closeIOSActionSheet();
+            closeIOSTocSheet();
+        }
+    }
+    syncIOSChrome();
+};
+
+function buildPrintableDocument() {
+    const title = (fileName && fileName.textContent) ? fileName.textContent : 'Specdown Document';
+    const printableContent = markdownContent.cloneNode(true);
+
+    printableContent.querySelectorAll('.diagram-controls, .annotation-popover, .search-highlight, .search-highlight-current')
+        .forEach((element) => element.remove());
+    printableContent.querySelectorAll('.annotation-badge').forEach((badge) => badge.remove());
+    printableContent.querySelectorAll('.has-annotation').forEach((element) => {
+        element.classList.remove('has-annotation');
+    });
+    printableContent.querySelectorAll('.diagram-wrapper').forEach((wrapper) => {
+        wrapper.style.height = 'auto';
+        wrapper.style.overflow = 'visible';
+    });
+    printableContent.querySelectorAll('.diagram-wrapper svg').forEach((svg) => {
+        svg.style.maxWidth = '100%';
+        svg.style.height = 'auto';
+        svg.style.position = 'static';
+        svg.style.transform = 'none';
+    });
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(title)}</title>
+    <style>
+        @page {
+            margin: 18mm 14mm;
+        }
+        html {
+            box-sizing: border-box;
+            background: #ffffff;
+        }
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111827;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .print-shell {
+            max-width: 100%;
+            padding: 12px 10px 16px;
+        }
+        .print-title {
+            margin: 0 0 24px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .print-content h1,
+        .print-content h2,
+        .print-content h3,
+        .print-content h4,
+        .print-content h5,
+        .print-content h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            line-height: 1.3;
+        }
+        .print-content h1,
+        .print-content h2 {
+            padding-bottom: 0.3em;
+            border-bottom: 1px solid #d1d5db;
+        }
+        .print-content p,
+        .print-content ul,
+        .print-content ol,
+        .print-content table,
+        .print-content blockquote,
+        .print-content pre,
+        .print-content .diagram-container {
+            margin-bottom: 1em;
+        }
+        .print-content ul,
+        .print-content ol {
+            padding-left: 2em;
+        }
+        .print-content code {
+            font-family: "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, monospace;
+            background: #f3f4f6;
+            padding: 0.15em 0.35em;
+            border-radius: 4px;
+            font-size: 0.92em;
+        }
+        .print-content pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow: visible;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1em;
+        }
+        .print-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+        .print-content table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .print-content th,
+        .print-content td {
+            border: 1px solid #d1d5db;
+            padding: 0.6em;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        .print-content blockquote {
+            margin-left: 0;
+            padding-left: 1em;
+            border-left: 4px solid #60a5fa;
+            color: #4b5563;
+        }
+        .print-content img,
+        .print-content svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .print-content .raw-markdown,
+        .print-content .html-comment-block,
+        .print-content .diagram-container,
+        .print-content pre,
+        .print-content table,
+        .print-content blockquote {
+            max-width: 100%;
+        }
+        .print-content .diagram-container,
+        .print-content .diagram-wrapper {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <main class="print-shell">
+        <h1 class="print-title">${escapeHtml(title)}</h1>
+        <section class="print-content">${printableContent.innerHTML}</section>
+    </main>
+</body>
+</html>`;
+}
+
+function syncIOSChrome() {
+    if (!isIOSNative) return;
+
+    const hasContent = hasLoadedContent();
+    const showActionBar = (hasContent || tabs.length > 0) && iosLayoutMode !== 'pad';
+    const canShowContents = hasContent && currentViewMode === 'preview' && tocEntries.length > 0;
+
+    if (iosActionBar) {
+        iosActionBar.style.display = showActionBar ? 'grid' : 'none';
+    }
+
+    if (iosContentsButton) {
+        iosContentsButton.disabled = !canShowContents;
+        iosContentsButton.classList.toggle('active', tocVisible);
+    }
+
+    if (iosViewButton) {
+        iosViewButton.disabled = !hasContent;
+        iosViewButton.classList.toggle('active', currentViewMode === 'raw');
+        updateIOSActionButtonLabel(iosViewButton, currentViewMode === 'preview' ? 'Raw' : 'Preview');
+    }
+
+    if (iosMoreButton) {
+        iosMoreButton.disabled = !hasContent;
+    }
+
+    updateIOSSheetButton(iosSplitButton, splitViewActive ? 'Hide Split View' : 'Show Split View', splitViewActive);
+    updateIOSSheetButton(iosThemeButton, currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
+
+    if (iosSplitButton) iosSplitButton.disabled = !hasContent;
+    if (iosPrintButton) iosPrintButton.disabled = !hasContent;
 }
 
 // ===========================
@@ -100,6 +415,9 @@ function setupVersionInfo() {
 // Version Check
 // ===========================
 function checkForUpdates() {
+    if (isIOSNative) {
+        return;
+    }
     const apiUrl = 'https://api.github.com/repos/' + SOURCE_REPO + '/releases/latest';
     fetch(apiUrl)
         .then(function(response) {
@@ -136,6 +454,7 @@ function toggleTheme() {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('theme', currentTheme);
     updateThemeIcon();
+    syncIOSChrome();
     
     // Re-render mermaid diagrams with new theme
     if (contentArea.style.display !== 'none') {
@@ -154,6 +473,7 @@ window.setTheme = function(theme) {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('theme', currentTheme);
     updateThemeIcon();
+    syncIOSChrome();
     if (contentArea && contentArea.style.display !== 'none') {
         reRenderMermaidDiagrams();
     }
@@ -161,7 +481,7 @@ window.setTheme = function(theme) {
 
 // iOS API: called by Swift shell to load a file (Session 2+)
 window.loadFileContent = function(content, filename) {
-    renderMarkdown(content, filename);
+    createTab(filename, content);
 };
 
 // ===========================
@@ -172,6 +492,9 @@ function toggleViewMode() {
 
     if (currentViewMode === 'preview') {
         currentViewMode = 'raw';
+        if (tocVisible) {
+            toggleToc(false);
+        }
         // Clean up panzoom before switching
         cleanupPanzoomInstances();
         // Show raw markdown in a pre/code block
@@ -194,6 +517,7 @@ function toggleViewMode() {
     }
 
     updateViewToggleButton();
+    syncIOSChrome();
 }
 
 function updateViewToggleButton() {
@@ -214,21 +538,27 @@ function updateViewToggleButton() {
 // Event Listeners
 // ===========================
 function setupEventListeners() {
-    function requestNativeOpenIfDesktop() {
-        if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
-            window.specdown.requestFileOpen();
-            return true;
-        }
-        return false;
-    }
-
     // Browse button - stopPropagation prevents the dropZone click handler
     // from calling fileInput.click() a second time (button is inside drop-zone-content)
     browseButton.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (requestNativeOpenIfDesktop()) return;
+        if (requestNativeOpenIfAvailable()) return;
         fileInput.click();
     });
+
+    if (openSampleBasic) {
+        openSampleBasic.addEventListener('click', (e) => {
+            e.stopPropagation();
+            requestBundledSampleIfAvailable('sample.md');
+        });
+    }
+
+    if (openSampleMermaid) {
+        openSampleMermaid.addEventListener('click', (e) => {
+            e.stopPropagation();
+            requestBundledSampleIfAvailable('sample-with-mermaid.md');
+        });
+    }
 
     // File input change
     fileInput.addEventListener('change', handleFileSelect);
@@ -237,7 +567,7 @@ function setupEventListeners() {
     dropZone.addEventListener('click', (e) => {
         if (e.target.closest && e.target.closest('.url-section')) return;
         if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
-            if (requestNativeOpenIfDesktop()) return;
+            if (requestNativeOpenIfAvailable()) return;
             fileInput.click();
         }
     });
@@ -269,7 +599,85 @@ function setupEventListeners() {
 
     // Print button
     if (printButton) {
-        printButton.addEventListener('click', () => window.print());
+        printButton.addEventListener('click', performPrint);
+    }
+
+    if (iosOpenButton) {
+        iosOpenButton.addEventListener('click', () => {
+            closeIOSActionSheet();
+            if (requestNativeOpenIfAvailable()) return;
+            fileInput.click();
+        });
+    }
+
+    if (iosContentsButton) {
+        iosContentsButton.addEventListener('click', () => {
+            if (iosContentsButton.disabled) return;
+            toggleToc();
+        });
+    }
+
+    if (iosViewButton) {
+        iosViewButton.addEventListener('click', () => {
+            if (iosViewButton.disabled) return;
+            closeIOSActionSheet();
+            toggleViewMode();
+        });
+    }
+
+    if (iosMoreButton) {
+        iosMoreButton.addEventListener('click', () => {
+            if (iosMoreButton.disabled) return;
+            closeIOSTocSheet();
+            setIOSSheetVisibility(iosActionSheet, true);
+        });
+    }
+
+    if (iosActionSheetClose) {
+        iosActionSheetClose.addEventListener('click', closeIOSActionSheet);
+    }
+
+    if (iosActionSheet) {
+        iosActionSheet.addEventListener('click', (e) => {
+            if (e.target === iosActionSheet) {
+                closeIOSActionSheet();
+            }
+        });
+    }
+
+    if (iosTocClose) {
+        iosTocClose.addEventListener('click', closeIOSTocSheet);
+    }
+
+    if (iosTocSheet) {
+        iosTocSheet.addEventListener('click', (e) => {
+            if (e.target === iosTocSheet) {
+                closeIOSTocSheet();
+            }
+        });
+    }
+
+    if (iosSplitButton) {
+        iosSplitButton.addEventListener('click', () => {
+            if (iosSplitButton.disabled) return;
+            closeIOSActionSheet();
+            toggleSplitView();
+        });
+    }
+
+    if (iosPrintButton) {
+        iosPrintButton.addEventListener('click', () => {
+            if (iosPrintButton.disabled) return;
+            closeIOSActionSheet();
+            performPrint();
+        });
+    }
+
+    if (iosThemeButton) {
+        iosThemeButton.addEventListener('click', () => {
+            closeIOSActionSheet();
+            toggleTheme();
+        });
     }
 
     // Search bar events
@@ -317,7 +725,7 @@ function setupEventListeners() {
         if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
             if (contentArea.style.display !== 'none') {
                 e.preventDefault();
-                window.print();
+                performPrint();
             }
         }
     });
@@ -353,7 +761,7 @@ function setupEventListeners() {
     });
 
     // TOC scroll spy
-    markdownContent.addEventListener('scroll', updateTocActiveHeading);
+    markdownContent.addEventListener('scroll', scheduleTocActiveHeadingUpdate);
 }
 
 // ===========================
@@ -575,6 +983,7 @@ async function renderMarkdown(content, filename) {
         // Show content area, hide drop zone
         dropZone.style.display = 'none';
         contentArea.style.display = 'flex';
+        syncIOSChrome();
 
         // Process mermaid diagrams
         await processMermaidDiagrams();
@@ -596,6 +1005,7 @@ async function renderMarkdown(content, filename) {
 
         // Scroll to top
         markdownContent.scrollTop = 0;
+        syncIOSChrome();
 
     } catch (error) {
         console.error('Error rendering markdown:', error);
@@ -934,16 +1344,18 @@ function openFullscreen(diagramId) {
     // Setup fullscreen controls with fresh event listeners
     setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, fullscreenState);
 
-    // Setup minimap
-    requestAnimationFrame(() => {
-        updateMinimap(svgClone);
-        updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
-    });
+    if (!isIOSNative) {
+        // Setup minimap
+        requestAnimationFrame(() => {
+            updateMinimap(svgClone);
+            updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
+        });
 
-    // Update minimap viewport on pan/zoom
-    svgClone.addEventListener('panzoomchange', () => {
-        updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
-    });
+        // Update minimap viewport on pan/zoom
+        svgClone.addEventListener('panzoomchange', () => {
+            updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
+        });
+    }
 
     // Focus for keyboard events
     fullscreenOverlay.focus();
@@ -1079,6 +1491,8 @@ function showDropZone() {
     cleanupPanzoomInstances();
     closeFullscreen();
     closeSearch();
+    closeIOSActionSheet();
+    closeIOSTocSheet();
 
     // Clear content
     markdownContent.innerHTML = '';
@@ -1094,13 +1508,17 @@ function showDropZone() {
     renderTabBar();
 
     // Reset TOC and split view
-    if (tocVisible) toggleToc();
+    if (tocVisible) toggleToc(false);
     if (splitViewActive) toggleSplitView();
     if (tocNav) tocNav.innerHTML = '';
+    if (iosTocNav) iosTocNav.innerHTML = '';
+    tocEntries = [];
+    if (tocSidebar) tocSidebar.style.display = 'none';
 
     // Show drop zone, hide content
     contentArea.style.display = 'none';
     dropZone.style.display = 'flex';
+    syncIOSChrome();
 }
 
 // ===========================
@@ -1225,10 +1643,7 @@ function renderTabBar() {
     const newTabBtn = tabBar.querySelector('.tab-new');
     if (newTabBtn) {
         newTabBtn.addEventListener('click', () => {
-            if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
-                window.specdown.requestFileOpen();
-                return;
-            }
+            if (requestNativeOpenIfAvailable()) return;
             fileInput.click();
         });
     }
@@ -1285,6 +1700,9 @@ async function switchTab(id) {
     cleanupPanzoomInstances();
 
     if (tab.viewMode === 'raw') {
+        if (tocVisible) {
+            toggleToc(false);
+        }
         currentRawMarkdown = tab.rawMarkdown;
         currentViewMode = 'raw';
         const escaped = tab.rawMarkdown
@@ -1297,6 +1715,7 @@ async function switchTab(id) {
         contentArea.style.display = 'flex';
         updateViewToggleButton();
         markdownContent.scrollTop = tab.scrollTop;
+        syncIOSChrome();
     } else {
         await renderMarkdown(tab.rawMarkdown, tab.filename);
         markdownContent.scrollTop = tab.scrollTop;
@@ -1336,6 +1755,9 @@ async function closeTab(id) {
         if (isDesktop) updateWatchToggle();
 
         if (newTab.viewMode === 'raw') {
+            if (tocVisible) {
+                toggleToc(false);
+            }
             currentRawMarkdown = newTab.rawMarkdown;
             currentViewMode = 'raw';
             const escaped = newTab.rawMarkdown
@@ -1347,6 +1769,7 @@ async function closeTab(id) {
             dropZone.style.display = 'none';
             contentArea.style.display = 'flex';
             updateViewToggleButton();
+            syncIOSChrome();
         } else {
             await renderMarkdown(newTab.rawMarkdown, newTab.filename);
         }
@@ -1501,7 +1924,7 @@ function setupDesktopIPC() {
     // Native menu: File > Print
     if (window.specdown.onTriggerPrint) {
         window.specdown.onTriggerPrint(function() {
-            window.print();
+            performPrint();
         });
     }
 
@@ -1540,16 +1963,9 @@ function saveDesktopSession() {
 // Feature: Table of Contents
 // ===========================
 function buildToc() {
-    if (!tocNav) return;
+    if (!tocNav && !iosTocNav) return;
     const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
-    tocNav.innerHTML = '';
-
-    if (headings.length === 0) {
-        if (tocToggle) tocToggle.style.display = 'none';
-        return;
-    }
-
-    if (tocToggle) tocToggle.style.display = '';
+    tocEntries = [];
 
     headings.forEach((h, i) => {
         // Ensure each heading has an id for anchor linking
@@ -1557,27 +1973,84 @@ function buildToc() {
             h.id = 'toc-heading-' + i;
         }
 
-        const level = parseInt(h.tagName[1], 10);
+        tocEntries.push({
+            id: h.id,
+            level: parseInt(h.tagName[1], 10),
+            text: h.textContent
+        });
+    });
+
+    renderTocNavigation(tocNav);
+    renderTocNavigation(iosTocNav);
+
+    if (tocToggle) {
+        tocToggle.style.display = tocEntries.length > 0 && !isIOSNative ? '' : 'none';
+    }
+
+    if (tocEntries.length === 0 && tocVisible) {
+        toggleToc(false);
+    } else {
+        scheduleTocActiveHeadingUpdate();
+    }
+
+    syncIOSChrome();
+}
+
+function renderTocNavigation(navElement) {
+    if (!navElement) return;
+    navElement.innerHTML = '';
+
+    tocEntries.forEach((entry) => {
         const link = document.createElement('a');
-        link.className = 'toc-link toc-level-' + level;
-        link.href = '#' + h.id;
-        link.textContent = h.textContent;
+        link.className = 'toc-link toc-level-' + entry.level;
+        link.href = '#' + entry.id;
+        link.textContent = entry.text;
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const heading = document.getElementById(entry.id);
+            if (!heading) return;
+            heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (isIOSNative) {
+                closeIOSTocSheet();
+            }
         });
-        tocNav.appendChild(link);
+        navElement.appendChild(link);
     });
 }
 
-function toggleToc() {
-    tocVisible = !tocVisible;
-    if (tocSidebar) tocSidebar.style.display = tocVisible ? '' : 'none';
+function toggleToc(forceState) {
+    const nextVisible = typeof forceState === 'boolean' ? forceState : !tocVisible;
+    if (isIOSNative && nextVisible && (currentViewMode !== 'preview' || tocEntries.length === 0)) {
+        return;
+    }
+
+    tocVisible = nextVisible;
+    if (isIOSNative) {
+        if (tocVisible) {
+            closeIOSActionSheet();
+            setIOSSheetVisibility(iosTocSheet, true);
+            updateTocActiveHeading();
+        } else {
+            setIOSSheetVisibility(iosTocSheet, false);
+        }
+    } else if (tocSidebar) {
+        tocSidebar.style.display = tocVisible ? '' : 'none';
+    }
     if (tocToggle) tocToggle.classList.toggle('active', tocVisible);
+    syncIOSChrome();
+}
+
+function scheduleTocActiveHeadingUpdate() {
+    if (!tocVisible || tocScrollSpyScheduled) return;
+    tocScrollSpyScheduled = true;
+    requestAnimationFrame(() => {
+        tocScrollSpyScheduled = false;
+        updateTocActiveHeading();
+    });
 }
 
 function updateTocActiveHeading() {
-    if (!tocVisible || !tocNav) return;
+    if (!tocVisible) return;
     const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
     const scrollTop = markdownContent.scrollTop;
     let activeId = null;
@@ -1588,9 +2061,12 @@ function updateTocActiveHeading() {
         }
     });
 
-    tocNav.querySelectorAll('.toc-link').forEach((link) => {
-        const isActive = link.getAttribute('href') === '#' + activeId;
-        link.classList.toggle('toc-link-active', isActive);
+    [tocNav, iosTocNav].forEach((navElement) => {
+        if (!navElement) return;
+        navElement.querySelectorAll('.toc-link').forEach((link) => {
+            const isActive = link.getAttribute('href') === '#' + activeId;
+            link.classList.toggle('toc-link-active', isActive);
+        });
     });
 }
 
@@ -1757,6 +2233,8 @@ function toggleSplitView() {
     if (splitViewActive && currentRawMarkdown) {
         updateSplitRawPane(currentRawMarkdown);
     }
+
+    syncIOSChrome();
 }
 
 function updateSplitRawPane(content) {
@@ -2119,6 +2597,8 @@ function toggleAnnotationMode() {
     } else {
         detachAnnotationHandlers();
     }
+
+    syncIOSChrome();
 }
 
 function renderAnnotations(key) {

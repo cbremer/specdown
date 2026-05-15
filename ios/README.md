@@ -17,6 +17,12 @@ open SpecDown.xcodeproj  # Opens in Xcode
 
 Then select an iPhone or iPad simulator and press Run.
 
+For a reproducible command-line build on machines with different simulator inventories, prefer the generic simulator destination:
+
+```bash
+xcodebuild -project SpecDown.xcodeproj -scheme SpecDown -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+```
+
 ## Structure
 
 ```
@@ -34,6 +40,12 @@ ios/
 ## Web Assets
 
 The `markdown-viewer/` directory at the repo root is bundled into the app as a folder reference. Any changes to the web viewer are automatically picked up on the next build — no separate copy step needed.
+
+Bundled sample markdown files live at `markdown-viewer/samples/`, ship inside the app bundle for smoke testing, and can be opened from the iOS drop screen.
+
+External links opened from inside the viewer stay in the system browser instead of navigating the embedded app shell away from its bundled content.
+
+On iPad in regular-width layouts, the SwiftUI shell presents a native sidebar for opening files and samples while the shared viewer stays in the detail pane.
 
 ## Why XcodeGen?
 
