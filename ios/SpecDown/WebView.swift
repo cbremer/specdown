@@ -40,7 +40,10 @@ struct WebView: UIViewRepresentable {
         config.userContentController.addUserScript(touchScript)
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        // Use .scrollableAxes to expose safe area insets to CSS env() variables without
+        // automatic content inset adjustments. This allows CSS to handle Dynamic Island
+        // and notch areas via env(safe-area-inset-*) while preventing double-insets.
+        webView.scrollView.contentInsetAdjustmentBehavior = .scrollableAxes
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         bridge.webView = webView
