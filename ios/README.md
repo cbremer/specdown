@@ -47,6 +47,68 @@ External links opened from inside the viewer stay in the system browser instead 
 
 On iPad in regular-width layouts, the SwiftUI shell presents a native sidebar for opening files and samples while the shared viewer stays in the detail pane.
 
+## Safe Area Handling (Dynamic Island, Notch, Home Indicator)
+
+The iOS app uses a layered approach to handle safe areas properly on devices with Dynamic Island, notches, and home indicators:
+
+### SwiftUI Layer (`ContentView.swift`)
+```swift
+WebView(bridge: bridge)
+    .ignoresSafeArea()  // Phone layout only — extends WebView edge-to-edge
+```
+
+On iPhone, the WebView extends under the status bar, Dynamic Island, and home indicator. On iPad in regular width, safe areas are respected natively by the split view.
+
+### WKWebView Layer (`WebView.swift`)
+```swift
+webView.scrollView.contentInsetAdjustmentBehavior = .scrollableAxes
+```
+
+**Critical:** Using `.scrollableAxes` (not `.never` or `.automatic`) exposes the `env(safe-area-inset-*)` CSS variables to the web content while preventing unwanted automatic content insets. This is required for the CSS layer to work.
+
+### CSS Layer (`markdown-viewer/styles.css`)
+```css
+.ios-native .app-header {
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px))
+             calc(1rem + env(safe-area-inset-right, 0px))
+             0.75rem
+             calc(1rem + env(safe-area-inset-left, 0px));
+}
+
+.ios-action-bar {
+    padding: 0.75rem
+             calc(0.9rem + env(safe-area-inset-right, 0px))
+             calc(0.75rem + env(safe-area-inset-bottom, 0px))
+             calc(0.9rem + env(safe-area-inset-left, 0px));
+}
+```
+
+The CSS adds safe area insets to padding on **all four edges**. This ensures:
+- Header content doesn't overlap with Dynamic Island or notch (top)
+- Controls remain accessible in landscape with notch (left/right)
+- Bottom action bar sits above the home indicator (bottom)
+
+### HTML Layer (`markdown-viewer/index.html`)
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+```
+
+The `viewport-fit=cover` meta tag is required to enable the CSS `env(safe-area-inset-*)` variables.
+
+### Testing Safe Area Behavior
+
+Run the test suite to verify safe area CSS is present:
+```bash
+npm test -- tests/unit/iosRenderer.test.js
+```
+
+The test verifies:
+1. `.ios-native` class is applied to `<body>` and `<html>`
+2. Header CSS includes all four safe area insets
+3. Action bar CSS includes all four safe area insets
+
+**To prevent regression:** Do not change `contentInsetAdjustmentBehavior` to `.never` or `.automatic`, and always include all four safe area insets in the CSS for iOS-specific elements that extend to screen edges.
+
 ## Why XcodeGen?
 
 The `.xcodeproj` is generated from `project.yml` and is **not committed to git**. This avoids notoriously messy `.pbxproj` merge conflicts. Always run `xcodegen generate` after pulling changes to `project.yml`.

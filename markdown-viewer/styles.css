@@ -1331,7 +1331,7 @@ mark.search-highlight-current {
 }
 
 .ios-native .app-header {
-    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem;
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) 0.75rem calc(1rem + env(safe-area-inset-left, 0px));
 }
 
 .ios-native .version-update,
@@ -1408,7 +1408,7 @@ mark.search-highlight-current {
     display: none;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
-    padding: 0.75rem 0.9rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.75rem calc(0.9rem + env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) calc(0.9rem + env(safe-area-inset-left, 0px));
     background: rgba(255, 255, 255, 0.96);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);

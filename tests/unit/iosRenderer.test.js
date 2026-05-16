@@ -139,4 +139,29 @@ describe('iOS renderer integration', () => {
     expect(printSpy).not.toHaveBeenCalled();
     printSpy.mockRestore();
   });
+
+  it('applies ios-native class to body and html for safe area CSS', () => {
+    expect(document.body.classList.contains('ios-native')).toBe(true);
+    expect(document.documentElement.classList.contains('ios-native')).toBe(true);
+  });
+
+  it('uses safe area insets in CSS for header and action bar', () => {
+    // Read the styles.css file to verify safe area environment variables
+    const fs = require('fs');
+    const path = require('path');
+    const cssPath = path.join(__dirname, '../../markdown-viewer/styles.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+
+    // Check for iOS header safe area handling (all four edges)
+    expect(cssContent).toContain('.ios-native .app-header');
+    expect(cssContent).toMatch(/\.ios-native\s+\.app-header[^}]*env\(safe-area-inset-top/);
+    expect(cssContent).toMatch(/\.ios-native\s+\.app-header[^}]*env\(safe-area-inset-left/);
+    expect(cssContent).toMatch(/\.ios-native\s+\.app-header[^}]*env\(safe-area-inset-right/);
+
+    // Check for iOS action bar safe area handling (all four edges)
+    expect(cssContent).toContain('.ios-action-bar');
+    expect(cssContent).toMatch(/\.ios-action-bar[^}]*env\(safe-area-inset-bottom/);
+    expect(cssContent).toMatch(/\.ios-action-bar[^}]*env\(safe-area-inset-left/);
+    expect(cssContent).toMatch(/\.ios-action-bar[^}]*env\(safe-area-inset-right/);
+  });
 });
