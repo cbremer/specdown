@@ -136,10 +136,16 @@ struct WebView: UIViewRepresentable {
             navigationAction.navigationType == .linkActivated
                 && navigationAction.targetFrame?.isMainFrame == true
                 && !url.isFileURL
+                && isAllowedScheme(url)
         }
 
         private func shouldOpenInNewWindow(_ navigationAction: WKNavigationAction, url: URL) -> Bool {
-            navigationAction.targetFrame == nil && !url.isFileURL
+            navigationAction.targetFrame == nil && !url.isFileURL && isAllowedScheme(url)
+        }
+
+        private func isAllowedScheme(_ url: URL) -> Bool {
+            let scheme = url.scheme?.lowercased() ?? ""
+            return scheme == "https" || scheme == "http" || scheme == "mailto"
         }
 
         private func handleNavigationFailure(in webView: WKWebView, error: Error) {

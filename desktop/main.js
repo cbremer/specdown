@@ -182,6 +182,20 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '..', 'markdown-viewer', 'index.html'));
 
+  // Prevent the renderer from navigating away from the bundled local file.
+  // This guards against malicious content (e.g. a crafted markdown link)
+  // driving the main-frame URL to an external site inside the Electron shell.
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file://')) {
+      event.preventDefault();
+    }
+  });
+
+  // Block any attempt by the renderer to open a new BrowserWindow.
+  // External links in markdown are expected to open in the system browser
+  // via shell.openExternal rather than as new Electron windows.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
   mainWindow.webContents.on('did-finish-load', () => {
     // Deliver any files that were queued before the window was ready
     for (const filePath of pendingFilePaths) {
@@ -548,7 +562,7 @@ function buildMenu() {
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
-        { role: 'toggleDevTools' },
+        ...(app.isPackaged ? [] : [{ role: 'toggleDevTools' }]),
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },

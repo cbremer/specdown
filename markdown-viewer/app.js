@@ -431,7 +431,13 @@ function checkForUpdates() {
                 const updateEl = document.getElementById('version-update');
                 if (updateEl) {
                     const releaseUrl = data.html_url || SOURCE_REPO_URL + '/releases/latest';
-                    updateEl.innerHTML = '<a href="' + releaseUrl + '" target="_blank" rel="noopener noreferrer">v' + latest + ' available</a>';
+                    const link = document.createElement('a');
+                    link.href = releaseUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = 'v' + latest + ' available';
+                    updateEl.textContent = '';
+                    updateEl.appendChild(link);
                     updateEl.style.display = '';
                 }
             }
@@ -899,7 +905,7 @@ async function handleUrl(url) {
     const filename = getFilenameFromUrl(url);
 
     try {
-        const response = await fetch(fetchUrl, { credentials: 'include' });
+        const response = await fetch(fetchUrl, { credentials: 'omit' });
         if (!response.ok) {
             showUrlError('Failed to fetch URL: HTTP ' + response.status);
             return;
@@ -1582,7 +1588,8 @@ function escapeHtml(str) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function saveActiveTabState() {
@@ -2348,6 +2355,7 @@ function checkForDiagramLink() {
         const params = new URLSearchParams(window.location.search);
         const encoded = params.get('diagram');
         if (!encoded) return;
+        if (encoded.length > 65536) return;
         const source = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
         if (!source) return;
 
