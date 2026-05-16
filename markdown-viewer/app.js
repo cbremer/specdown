@@ -7,6 +7,7 @@ const APP_VERSION = '0.0.73';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
+const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 
 // ===========================
 // Global State
@@ -431,7 +432,13 @@ function checkForUpdates() {
                 const updateEl = document.getElementById('version-update');
                 if (updateEl) {
                     const releaseUrl = data.html_url || SOURCE_REPO_URL + '/releases/latest';
-                    updateEl.innerHTML = '<a href="' + releaseUrl + '" target="_blank" rel="noopener noreferrer">v' + latest + ' available</a>';
+                    const link = document.createElement('a');
+                    link.href = releaseUrl;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = 'v' + latest + ' available';
+                    updateEl.textContent = '';
+                    updateEl.appendChild(link);
                     updateEl.style.display = '';
                 }
             }
@@ -899,7 +906,7 @@ async function handleUrl(url) {
     const filename = getFilenameFromUrl(url);
 
     try {
-        const response = await fetch(fetchUrl, { credentials: 'include' });
+        const response = await fetch(fetchUrl, { credentials: 'omit' });
         if (!response.ok) {
             showUrlError('Failed to fetch URL: HTTP ' + response.status);
             return;
@@ -975,7 +982,7 @@ async function renderMarkdown(content, filename) {
 
         // Update UI
         fileName.textContent = filename;
-        markdownContent.innerHTML = htmlContent;
+        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent);
 
         // Make HTML comments visible
         revealHtmlComments(markdownContent);
@@ -1105,7 +1112,7 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
-    wrapper.innerHTML = svg;
+    wrapper.innerHTML = DOMPurify.sanitize(svg);
 
     // Store mermaid source on the SVG for theme re-rendering and export
     const svgEl = wrapper.querySelector('svg');
@@ -1557,7 +1564,7 @@ async function reRenderMermaidDiagrams() {
             }
 
             // Update wrapper content
-            wrapper.innerHTML = svg;
+            wrapper.innerHTML = DOMPurify.sanitize(svg);
 
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
@@ -1582,7 +1589,8 @@ function escapeHtml(str) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function saveActiveTabState() {
@@ -2348,6 +2356,7 @@ function checkForDiagramLink() {
         const params = new URLSearchParams(window.location.search);
         const encoded = params.get('diagram');
         if (!encoded) return;
+        if (encoded.length > MAX_DIAGRAM_URL_PARAM_LENGTH) return;
         const source = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
         if (!source) return;
 

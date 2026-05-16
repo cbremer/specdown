@@ -126,7 +126,7 @@ describe('URL Handling', () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/user/repo/main/README.md',
-        { credentials: 'include' }
+        { credentials: 'omit' }
       );
 
       // Content area should be visible (tab was created)
@@ -144,11 +144,11 @@ describe('URL Handling', () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/user/repo/main/spec.md',
-        { credentials: 'include' }
+        { credentials: 'omit' }
       );
     });
 
-    it('auto-converts a GitHub Enterprise blob URL and fetches with credentials', async () => {
+    it('auto-converts a GitHub Enterprise blob URL and fetches', async () => {
       global.fetch.mockImplementation(() => Promise.resolve({
         ok: true,
         text: () => Promise.resolve('# Enterprise Doc'),
@@ -158,7 +158,7 @@ describe('URL Handling', () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://github.linkedin.com/org/repo/raw/master/docs/intro.md',
-        { credentials: 'include' }
+        { credentials: 'omit' }
       );
     });
 
