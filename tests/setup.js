@@ -14,6 +14,11 @@ jest.spyOn(Storage.prototype, 'setItem');
 jest.spyOn(Storage.prototype, 'removeItem');
 jest.spyOn(Storage.prototype, 'clear');
 
+// Mock DOMPurify - passthrough that strips nothing in tests
+global.DOMPurify = {
+  sanitize: jest.fn((dirty) => dirty),
+};
+
 // Mock alert
 global.alert = jest.fn();
 
@@ -81,6 +86,7 @@ beforeEach(() => {
 
   global.alert.mockClear();
   global.fetch.mockClear();
+  global.DOMPurify.sanitize.mockClear();
   global.console.error.mockClear();
   global.console.warn.mockClear();
 

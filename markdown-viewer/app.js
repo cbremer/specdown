@@ -975,7 +975,7 @@ async function renderMarkdown(content, filename) {
 
         // Update UI
         fileName.textContent = filename;
-        markdownContent.innerHTML = htmlContent;
+        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent);
 
         // Make HTML comments visible
         revealHtmlComments(markdownContent);
@@ -1105,7 +1105,7 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
-    wrapper.innerHTML = svg;
+    wrapper.innerHTML = DOMPurify.sanitize(svg);
 
     // Store mermaid source on the SVG for theme re-rendering and export
     const svgEl = wrapper.querySelector('svg');
@@ -1557,7 +1557,7 @@ async function reRenderMermaidDiagrams() {
             }
 
             // Update wrapper content
-            wrapper.innerHTML = svg;
+            wrapper.innerHTML = DOMPurify.sanitize(svg);
 
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
