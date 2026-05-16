@@ -7,6 +7,7 @@ const APP_VERSION = '0.0.73';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
+const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 
 // ===========================
 // Global State
@@ -2355,7 +2356,7 @@ function checkForDiagramLink() {
         const params = new URLSearchParams(window.location.search);
         const encoded = params.get('diagram');
         if (!encoded) return;
-        if (encoded.length > 65536) return;
+        if (encoded.length > MAX_DIAGRAM_URL_PARAM_LENGTH) return;
         const source = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
         if (!source) return;
 

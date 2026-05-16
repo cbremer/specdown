@@ -186,7 +186,11 @@ function createWindow() {
   // This guards against malicious content (e.g. a crafted markdown link)
   // driving the main-frame URL to an external site inside the Electron shell.
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file://')) {
+    try {
+      if (new URL(url).protocol !== 'file:') {
+        event.preventDefault();
+      }
+    } catch (_) {
       event.preventDefault();
     }
   });
