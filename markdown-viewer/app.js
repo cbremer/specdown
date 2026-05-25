@@ -735,6 +735,26 @@ function setupEventListeners() {
                 performPrint();
             }
         }
+
+        if (fullscreenOverlay.style.display !== 'none' && fullscreenOverlay.panzoomInstance) {
+            const instance = fullscreenOverlay.panzoomInstance;
+            const controls = fullscreenOverlay.querySelector('.fullscreen-controls');
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                instance.zoomIn();
+                updateZoomUI(instance, controls);
+            } else if (e.key === '-') {
+                e.preventDefault();
+                instance.zoomOut();
+                updateZoomUI(instance, controls);
+            } else if (e.key === '0') {
+                e.preventDefault();
+                if (fullscreenOverlay.fullscreenState?.homeState) {
+                    resetToFit(instance, fullscreenOverlay.fullscreenState.homeState);
+                    updateZoomUI(instance, controls);
+                }
+            }
+        }
     });
 
     // URL input
@@ -1101,6 +1121,10 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     controls.innerHTML = `
         <button class="zoom-in" title="Zoom in">+</button>
         <button class="zoom-out" title="Zoom out">-</button>
+        <label class="zoom-range-label" title="Zoom level">
+            <span class="zoom-percent">100%</span>
+            <input class="zoom-range" type="range" min="25" max="400" value="100" step="5" aria-label="Diagram zoom level">
+        </label>
         <button class="reset" title="Reset view">⟲</button>
         <button class="export-svg" title="Download as SVG">SVG</button>
         <button class="export-png" title="Download as PNG">PNG</button>
@@ -1198,6 +1222,16 @@ function resetToFit(panzoomInstance, homeState) {
     panzoomInstance.pan(homeState.x, homeState.y, { animate: true });
 }
 
+function updateZoomUI(panzoomInstance, controlsRoot) {
+    if (!panzoomInstance || !controlsRoot) return;
+    const percentEl = controlsRoot.querySelector('.zoom-percent');
+    const rangeEl = controlsRoot.querySelector('.zoom-range');
+    if (!percentEl || !rangeEl) return;
+    const zoomPercent = Math.max(25, Math.min(400, Math.round(panzoomInstance.getScale() * 100)));
+    percentEl.textContent = `${zoomPercent}%`;
+    rangeEl.value = String(zoomPercent);
+}
+
 // ===========================
 // Panzoom Initialization
 // ===========================
@@ -1240,6 +1274,7 @@ function initializePanzoom(diagramId) {
     const controls = container.querySelector('.diagram-controls');
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
+    const zoomRange = controls.querySelector('.zoom-range');
     const resetBtn = controls.querySelector('.reset');
     const exportSvgBtn = controls.querySelector('.export-svg');
     const exportPngBtn = controls.querySelector('.export-png');
@@ -1250,16 +1285,30 @@ function initializePanzoom(diagramId) {
     zoomInBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
+        updateZoomUI(panzoomInstance, controls);
     });
 
     zoomOutBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
+        updateZoomUI(panzoomInstance, controls);
     });
+
+    if (zoomRange) {
+        zoomRange.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const targetPercent = Number(e.target.value);
+            if (!isNaN(targetPercent)) {
+                panzoomInstance.zoom(targetPercent / 100);
+                updateZoomUI(panzoomInstance, controls);
+            }
+        });
+    }
 
     resetBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, state.homeState);
+        updateZoomUI(panzoomInstance, controls);
     });
 
     if (exportSvgBtn) {
@@ -1292,12 +1341,15 @@ function initializePanzoom(diagramId) {
     wrapper.addEventListener('wheel', (e) => {
         e.preventDefault();
         panzoomInstance.zoomWithWheel(e);
+        updateZoomUI(panzoomInstance, controls);
     }, { passive: false });
 
     // Double click to reset to fit
     wrapper.addEventListener('dblclick', () => {
         resetToFit(panzoomInstance, state.homeState);
+        updateZoomUI(panzoomInstance, controls);
     });
+    updateZoomUI(panzoomInstance, controls);
 }
 
 // ===========================
@@ -1372,6 +1424,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const controls = fullscreenOverlay.querySelector('.fullscreen-controls');
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
+    const zoomRange = controls.querySelector('.zoom-range');
     const resetBtn = controls.querySelector('.reset');
     const exportSvgBtn = controls.querySelector('.export-svg');
     const exportPngBtn = controls.querySelector('.export-png');
@@ -1381,6 +1434,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const newZoomIn = zoomInBtn.cloneNode(true);
     const newZoomOut = zoomOutBtn.cloneNode(true);
     const newReset = resetBtn.cloneNode(true);
+    const newZoomRangeLabel = zoomRange ? zoomRange.closest('.zoom-range-label').cloneNode(true) : null;
     const newExportSvg = exportSvgBtn ? exportSvgBtn.cloneNode(true) : null;
     const newExportPng = exportPngBtn ? exportPngBtn.cloneNode(true) : null;
     const newClose = closeBtn.cloneNode(true);
@@ -1388,6 +1442,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     zoomInBtn.replaceWith(newZoomIn);
     zoomOutBtn.replaceWith(newZoomOut);
     resetBtn.replaceWith(newReset);
+    if (zoomRange && newZoomRangeLabel) zoomRange.closest('.zoom-range-label').replaceWith(newZoomRangeLabel);
     if (exportSvgBtn && newExportSvg) exportSvgBtn.replaceWith(newExportSvg);
     if (exportPngBtn && newExportPng) exportPngBtn.replaceWith(newExportPng);
     closeBtn.replaceWith(newClose);
@@ -1396,17 +1451,32 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     newZoomIn.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
+        updateZoomUI(panzoomInstance, controls);
     });
 
     newZoomOut.addEventListener('click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
+        updateZoomUI(panzoomInstance, controls);
     });
 
     newReset.addEventListener('click', (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, fullscreenState.homeState);
+        updateZoomUI(panzoomInstance, controls);
     });
+
+    const newZoomRange = controls.querySelector('.zoom-range');
+    if (newZoomRange) {
+        newZoomRange.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const targetPercent = Number(e.target.value);
+            if (!isNaN(targetPercent)) {
+                panzoomInstance.zoom(targetPercent / 100);
+                updateZoomUI(panzoomInstance, controls);
+            }
+        });
+    }
 
     if (newExportSvg) {
         newExportSvg.addEventListener('click', (e) => {
@@ -1432,6 +1502,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
         e.preventDefault();
         e.stopPropagation();
         panzoomInstance.zoomWithWheel(e);
+        updateZoomUI(panzoomInstance, controls);
     };
 
     wrapper.addEventListener('wheel', wheelHandler, { passive: false });
@@ -1441,10 +1512,12 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const dblClickHandler = (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, fullscreenState.homeState);
+        updateZoomUI(panzoomInstance, controls);
     };
 
     wrapper.addEventListener('dblclick', dblClickHandler);
     fullscreenOverlay.dblClickHandler = dblClickHandler;
+    updateZoomUI(panzoomInstance, controls);
 }
 
 function closeFullscreen() {

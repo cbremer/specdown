@@ -697,6 +697,8 @@ body {
     cursor: pointer;
     transition: var(--transition);
     font-weight: 600;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .diagram-controls button:hover {
@@ -779,7 +781,30 @@ body {
     cursor: pointer;
     transition: var(--transition);
     font-weight: 600;
-    min-width: 40px;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.zoom-range-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+}
+
+.zoom-percent {
+    min-width: 3.2rem;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.zoom-range {
+    width: 110px;
 }
 
 .fullscreen-controls button:hover {
