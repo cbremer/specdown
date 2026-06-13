@@ -12,7 +12,7 @@
       img-src stay permissive (https/http) because the viewer intentionally
       fetches user-supplied URLs and the GitHub API/raw hosts.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-eval' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: https: http: file:; font-src 'self' data: file:; connect-src 'self' https: http: file:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: http: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: http: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
