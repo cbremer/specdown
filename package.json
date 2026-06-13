@@ -18,7 +18,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "version": "node scripts/sync-version.js && git add markdown-viewer/app.js README.md"
+    "version": "node scripts/sync-version.js && git add markdown-viewer/app.js"
   },
   "keywords": [
     "markdown",
