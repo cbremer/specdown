@@ -36,3 +36,36 @@ export function normalizeMarkdownUrl(url) {
   }
   return url;
 }
+
+/**
+ * Read an SVG element's natural pixel dimensions from its viewBox (preferred)
+ * or width/height attributes. Returns null when no usable size is found.
+ * @param {SVGElement} svgElement
+ * @returns {{ width: number, height: number } | null}
+ */
+export function getSvgNaturalDimensions(svgElement) {
+  // SVG viewBox format: "min-x min-y width height" — the 3rd/4th values are
+  // the width and height (not coordinates).
+  const viewBox = svgElement.getAttribute('viewBox');
+  if (viewBox) {
+    const parts = viewBox.split(/[\s,]+/);
+    if (parts.length >= 4) {
+      const w = parseFloat(parts[2]);
+      const h = parseFloat(parts[3]);
+      if (w > 0 && h > 0) {
+        return { width: w, height: h };
+      }
+    }
+  }
+  // Fall back to width/height attributes (skip percentage values like "100%").
+  const wAttr = svgElement.getAttribute('width');
+  const hAttr = svgElement.getAttribute('height');
+  if (wAttr && hAttr && !String(wAttr).includes('%') && !String(hAttr).includes('%')) {
+    const w = parseFloat(wAttr);
+    const h = parseFloat(hAttr);
+    if (w > 0 && h > 0 && !isNaN(w) && !isNaN(h)) {
+      return { width: w, height: h };
+    }
+  }
+  return null;
+}

@@ -29,7 +29,7 @@ require('../mocks/highlightjs');
  * @param {Document} document - The jsdom document object
  * @returns {void}
  */
-const RELATIVE_IMPORT_RE = /^\s*import\b[^'"]*['"](\.[^'"]+)['"][^\n]*$/gm;
+const RELATIVE_IMPORT_RE = /from\s+['"](\.[^'"]+)['"]/g;
 
 function inlineModule(filePath, visited, chunks) {
   const resolved = filePath.endsWith('.js') ? filePath : filePath + '.js';
@@ -40,7 +40,8 @@ function inlineModule(filePath, visited, chunks) {
   const dir = path.dirname(resolved);
 
   // Inline relative-import dependencies first (depth-first) so their
-  // declarations exist before the importing module's body runs.
+  // declarations exist before the importing module's body runs. Matches the
+  // path in `from './x.js'`, which works for single- and multi-line imports.
   let match;
   RELATIVE_IMPORT_RE.lastIndex = 0;
   const deps = [];
@@ -50,10 +51,15 @@ function inlineModule(filePath, visited, chunks) {
   }
   for (const dep of deps) inlineModule(dep, visited, chunks);
 
-  // Strip module syntax so the body evals at global scope, and convert
-  // top-level let/const (simple identifiers only) to var so they become globals.
+  // Strip module syntax so the body evals at global scope:
+  //  - `import ... from '...'`  (named/default/namespace, single or multi-line)
+  //  - `import '...'`           (side-effect imports, e.g. CSS)
+  //  - `export` keywords on declarations and re-export lists
+  // then convert top-level let/const (simple identifiers) to var so they
+  // become globals.
   code = code
-    .replace(/^\s*import\b[^\n]*$/gm, '')
+    .replace(/^[ \t]*import\b[\s\S]*?from\s+['"][^'"]+['"];?/gm, '')
+    .replace(/^[ \t]*import\s+['"][^'"]+['"];?/gm, '')
     .replace(/^export\s+default\s+/gm, '')
     .replace(/^export\s+\{[^}]*\};?\s*$/gm, '')
     .replace(/^export\s+/gm, '')
