@@ -36,7 +36,7 @@ jobs:
         with:
           token: ${{ secrets.ADMIN_PAT }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         if: github.event_name == 'push'
         with:
           node-version: 22
