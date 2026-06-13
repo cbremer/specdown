@@ -39,6 +39,14 @@ struct WebView: UIViewRepresentable {
         )
         config.userContentController.addUserScript(touchScript)
 
+        // Serve the bundled web app over a custom URL scheme instead of file://.
+        // WKWebView refuses to execute ES-module <script type="module"> loaded
+        // from file:// (null-origin CORS rule for modules), which left the app
+        // unstyled with no JS. A custom scheme gives the page a real, same-origin
+        // context where the Vite module bundle loads normally.
+        let schemeHandler = BundleSchemeHandler()
+        config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
+
         let webView = WKWebView(frame: .zero, configuration: config)
         // Use .scrollableAxes to expose safe area insets to CSS env() variables without
         // automatic content inset adjustments. This allows CSS to handle Dynamic Island
@@ -48,14 +56,10 @@ struct WebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         bridge.webView = webView
 
-        // Load the bundled web app (Vite build output in dist/); allowingReadAccessTo covers all assets in dist/
-        if let url = Bundle.main.url(
-            forResource: "index",
-            withExtension: "html",
-            subdirectory: "dist"
-        ) {
+        // Load the bundled Vite build over the custom scheme (see above).
+        if BundleSchemeHandler.bundledIndexExists, let url = BundleSchemeHandler.indexURL {
             bridge.pageWillLoad()
-            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            webView.load(URLRequest(url: url))
         } else {
             // Fallback: show an error page if assets are missing from the bundle
             loadErrorPage(
@@ -166,11 +170,7 @@ struct WebView: UIViewRepresentable {
         }
 
         private func reloadBundledViewer(in webView: WKWebView) {
-            guard let url = Bundle.main.url(
-                forResource: "index",
-                withExtension: "html",
-                subdirectory: "dist"
-            ) else {
+            guard BundleSchemeHandler.bundledIndexExists, let url = BundleSchemeHandler.indexURL else {
                 loadErrorPage(
                     in: webView,
                     title: "Missing bundled assets",
@@ -180,7 +180,7 @@ struct WebView: UIViewRepresentable {
             }
 
             bridge.pageWillLoad()
-            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            webView.load(URLRequest(url: url))
         }
     }
 }
@@ -220,5 +220,81 @@ private class WeakMessageHandler: NSObject, WKScriptMessageHandler {
         didReceive message: WKScriptMessage
     ) {
         delegate?.userContentController(userContentController, didReceive: message)
+    }
+}
+
+// MARK: - BundleSchemeHandler
+
+/// Serves the bundled Vite build (dist/) over a custom URL scheme so the page
+/// has a real same-origin context. WKWebView will not execute ES-module scripts
+/// loaded from file://, so the app must not be served via loadFileURL.
+final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
+    static let scheme = "specdown"
+    static let host = "app"
+
+    /// The dist/ directory inside the app bundle.
+    static let rootURL: URL? = Bundle.main
+        .url(forResource: "index", withExtension: "html", subdirectory: "dist")?
+        .deletingLastPathComponent()
+
+    static var bundledIndexExists: Bool { rootURL != nil }
+
+    /// The entry URL to load, e.g. specdown://app/index.html
+    static var indexURL: URL? { URL(string: "\(scheme)://\(host)/index.html") }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url, let root = Self.rootURL else {
+            urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+            return
+        }
+
+        // Map the request path to a file under dist/. "/" → index.html.
+        var relativePath = url.path
+        if relativePath.hasPrefix("/") { relativePath.removeFirst() }
+        if relativePath.isEmpty { relativePath = "index.html" }
+
+        let rootStd = root.standardizedFileURL
+        let fileURL = rootStd.appendingPathComponent(relativePath).standardizedFileURL
+
+        // Guard against path traversal outside the bundled dist/ directory.
+        guard fileURL.path.hasPrefix(rootStd.path),
+              let data = try? Data(contentsOf: fileURL) else {
+            urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+            return
+        }
+
+        let response = HTTPURLResponse(
+            url: url,
+            statusCode: 200,
+            httpVersion: "HTTP/1.1",
+            headerFields: [
+                "Content-Type": Self.mimeType(forExtension: fileURL.pathExtension),
+                "Content-Length": String(data.count),
+                "Access-Control-Allow-Origin": "*",
+            ]
+        )!
+
+        urlSchemeTask.didReceive(response)
+        urlSchemeTask.didReceive(data)
+        urlSchemeTask.didFinish()
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private static func mimeType(forExtension ext: String) -> String {
+        switch ext.lowercased() {
+        case "html": return "text/html; charset=utf-8"
+        case "css": return "text/css; charset=utf-8"
+        case "js", "mjs": return "text/javascript; charset=utf-8"
+        case "json": return "application/json; charset=utf-8"
+        case "svg": return "image/svg+xml"
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "md", "markdown": return "text/markdown; charset=utf-8"
+        case "woff2": return "font/woff2"
+        case "woff": return "font/woff"
+        case "ttf": return "font/ttf"
+        default: return "application/octet-stream"
+        }
     }
 }
