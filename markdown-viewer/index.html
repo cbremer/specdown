@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!--
+      Content-Security-Policy: defense-in-depth on top of DOMPurify. Scripts are
+      restricted to same-origin vendored files ('unsafe-eval' is required by
+      Mermaid's runtime); styles allow inline because Mermaid and the app inject
+      <style> blocks and style attributes. connect-src / img-src stay permissive
+      (https/http) because the viewer intentionally fetches user-supplied URLs
+      and the GitHub API/raw hosts.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self' https: http:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
