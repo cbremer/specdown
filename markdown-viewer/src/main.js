@@ -993,7 +993,13 @@ function getMermaidConfig() {
         startOnLoad: false,
         theme: currentTheme === 'dark' ? 'dark' : 'default',
         securityLevel: 'strict',
-        fontFamily: FONT_FAMILY
+        fontFamily: FONT_FAMILY,
+        // Render node labels as SVG <text> rather than <foreignObject> HTML.
+        // Mermaid 11 defaults to HTML labels; our DOMPurify pass strips the
+        // foreignObject, so shapes render but the label text disappears. SVG
+        // text survives sanitization (this matches Mermaid 10's behavior).
+        htmlLabels: false,
+        flowchart: { htmlLabels: false }
     };
 }
 
@@ -1153,7 +1159,12 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
-    wrapper.innerHTML = DOMPurify.sanitize(svg);
+    // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
+    // diagram types that use them) so DOMPurify does not strip the text.
+    wrapper.innerHTML = DOMPurify.sanitize(svg, {
+        ADD_TAGS: ['foreignObject'],
+        ADD_ATTR: ['xmlns'],
+    });
 
     // Store mermaid source on the SVG for theme re-rendering and export
     const svgEl = wrapper.querySelector('svg');
@@ -1654,7 +1665,12 @@ async function reRenderMermaidDiagrams() {
             }
 
             // Update wrapper content
-            wrapper.innerHTML = DOMPurify.sanitize(svg);
+            // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
+    // diagram types that use them) so DOMPurify does not strip the text.
+    wrapper.innerHTML = DOMPurify.sanitize(svg, {
+        ADD_TAGS: ['foreignObject'],
+        ADD_ATTR: ['xmlns'],
+    });
 
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
