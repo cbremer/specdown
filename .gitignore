@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
+# package-lock.json IS committed (CI uses `npm ci` for reproducible installs).
 
 # Coverage reports
 coverage/

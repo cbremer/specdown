@@ -9,12 +9,19 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | Date | Doc | Summary |
 |---|---|---|
 | 2026-06-13 | [brainstorm-modernization-evaluation](2026-06-13-brainstorm-modernization-evaluation.md) | PM/UX/engineering evaluation of v0.0.82, north-star vision, phased roadmap (Phases 0–4) |
+| 2026-06-13 | [tasks-session-01-phase0-hygiene](2026-06-13-tasks-session-01-phase0-hygiene.md) | Phase 0 implementation: desktop external-link fix, iOS CI honesty, lockfile + ESLint/Prettier + CI lane + Dependabot + CSP, docs reconciliation |
 
 ## Current Status
 
-**Evaluation complete; awaiting decisions on open questions** (iOS
-investment, Apple Developer membership for signing, Electron vs Tauri spike)
-before Phase 0 work begins.
+**Phase 0 (Foundation & hygiene) implemented** — see the session 01 tasks doc.
+Defect fixes (desktop external links, iOS CI `|| true`), tooling (lockfile,
+ESLint + Prettier, CI lint/test lane, Dependabot, CSP), and docs reconciliation
+are done; lint + 297 tests are green locally. CSP and the desktop link fix need
+a manual browser/Electron check before merge (not runnable headless).
+
+The open questions below (iOS investment, Apple Developer membership for
+signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.
+Phase 1 (Vite + ES modules, split `app.js`) is the next session.
 
 Phase summary:
 

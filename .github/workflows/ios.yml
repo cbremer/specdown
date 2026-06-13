@@ -38,7 +38,7 @@ jobs:
             -configuration Debug \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
-            build | xcpretty || true
+            build | xcpretty
 
       - name: Build (raw output on failure)
         if: failure()

@@ -1,0 +1,6 @@
+markdown-viewer/vendor/
+dist/
+coverage/
+node_modules/
+ios/
+package-lock.json

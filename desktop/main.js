@@ -185,20 +185,37 @@ function createWindow() {
   // Prevent the renderer from navigating away from the bundled local file.
   // This guards against malicious content (e.g. a crafted markdown link)
   // driving the main-frame URL to an external site inside the Electron shell.
+  // Genuine external links (http/https) are instead handed to the system
+  // browser via shell.openExternal so they are not silently dropped.
   mainWindow.webContents.on('will-navigate', (event, url) => {
+    let protocol;
     try {
-      if (new URL(url).protocol !== 'file:') {
-        event.preventDefault();
-      }
+      protocol = new URL(url).protocol;
     } catch (_) {
       event.preventDefault();
+      return;
+    }
+    if (protocol === 'file:') return;
+    event.preventDefault();
+    if (protocol === 'http:' || protocol === 'https:') {
+      shell.openExternal(url);
     }
   });
 
-  // Block any attempt by the renderer to open a new BrowserWindow.
-  // External links in markdown are expected to open in the system browser
-  // via shell.openExternal rather than as new Electron windows.
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // Block any attempt by the renderer to open a new BrowserWindow, but route
+  // external http/https links to the system browser via shell.openExternal
+  // rather than dropping them. Anything else is denied outright.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const { protocol } = new URL(url);
+      if (protocol === 'http:' || protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (_) {
+      // Malformed URL — deny without opening anything.
+    }
+    return { action: 'deny' };
+  });
 
   mainWindow.webContents.on('did-finish-load', () => {
     // Deliver any files that were queued before the window was ready

@@ -99,17 +99,26 @@ specdown/
 
 ### Technology Stack
 
-#### Core Libraries (CDN)
+#### Core Libraries (vendored locally)
 - **Marked.js** (v11.1.1) - Markdown parsing
 - **Mermaid.js** (v10.6.1) - Diagram rendering
 - **Panzoom** (v4.5.1) - Interactive pan/zoom functionality
 - **Highlight.js** (v11.9.0) - Code syntax highlighting
+- **DOMPurify** - HTML/SVG sanitization
 
-#### Why CDN?
+These are committed under `markdown-viewer/vendor/` and loaded with relative
+`<script>` tags — there is no CDN dependency at runtime.
+
+#### Why vendored (no CDN)?
 - Zero build step required
-- Instant setup - just open `index.html`
-- Always up-to-date libraries
-- Fast loading from CDN caching
+- Works fully offline and inside the Electron/iOS shells (`file:` origin)
+- No third-party network request to render a document
+- Reproducible: the exact library bytes are pinned in the repo
+
+> Note: the matching `marked` / `mermaid` versions are also declared in
+> `package.json` so tooling and Dependabot can track them; the runtime uses the
+> vendored copies. Phase 1 of the modernization roadmap replaces vendoring with
+> a Vite build that imports these as real dependencies.
 
 ### Example Files
 
@@ -276,7 +285,8 @@ npm run desktop           # opens the Specdown Desktop window
 npm run desktop:build     # produces a .dmg in dist/
 ```
 
-Requires Node.js (v18+) installed on your machine.
+Requires Node.js (v22.12+) installed on your machine (see `engines` in
+`package.json`).
 
 #### Running Tests
 
@@ -285,6 +295,18 @@ npm test
 ```
 
 Runs the full Jest test suite (unit + integration). All tests must pass before committing.
+
+#### Linting & Formatting
+
+```bash
+npm run lint          # ESLint (flat config) — must be clean
+npm run lint:fix      # auto-fix what ESLint can
+npm run format        # Prettier — write
+npm run format:check  # Prettier — check only
+```
+
+Lint and tests also run in CI (`.github/workflows/ci.yml`) on every pull
+request.
 
 #### Modifying the App
 
@@ -316,11 +338,13 @@ The codebase is organized into clear sections:
 
 #### Extending Markdown Support
 
-To add more syntax highlighting languages:
+To add more syntax highlighting languages, vendor the Highlight.js language
+file under `markdown-viewer/vendor/languages/` and reference it with a relative
+`<script>` tag (matching the existing entries — no CDN):
 
 ```html
-<!-- Add to index.html -->
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/rust.min.js"></script>
+<!-- Add to index.html, alongside the other vendored language scripts -->
+<script src="vendor/languages/rust.min.js"></script>
 ```
 
 ### Contributing
@@ -346,13 +370,19 @@ Built for viewing documentation with complex system architecture diagrams.
 
 ### Version History
 
-#### v0.0.83 (Current)
-- Initial release
-- Full markdown rendering
-- Interactive mermaid diagrams
-- Zoom, pan, reset, fullscreen
+SpecDown auto-bumps the patch version on every merge to `main` (see the
+[Releasing](#releasing) section above), so the `vX.Y.Z` number is
+a build counter rather than a curated release log. For the changes in any given
+build, see the commit history and the
+[GitHub Releases page](../../releases). A human-readable changelog is planned as
+part of Phase 3 of the modernization roadmap (conventional-commit changelog
+pipeline).
+
+Core capabilities:
+- Full GitHub-flavored markdown rendering
+- Interactive Mermaid diagrams (pan, zoom, reset, fullscreen, minimap, export)
 - Dark/light theme support
-- Drag & drop file loading
+- Drag & drop and URL/GitHub-repo file loading
 
 ### Support
 

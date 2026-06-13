@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # npm dependencies (shared viewer + Electron desktop shell + tooling).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # Batch routine dev-tooling bumps into a single PR to cut noise.
+      dev-dependencies:
+        dependency-type: "development"
+
+  # GitHub Actions used across the CI / release workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

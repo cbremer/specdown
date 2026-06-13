@@ -22,29 +22,37 @@ It has two surfaces that share the same `markdown-viewer/` codebase:
 ```
 specdown/
 ├── CLAUDE.md                    # You are here
+├── AGENTS.md                    # Pointer to CLAUDE.md + cloud-agent notes
 ├── README.md                    # User-facing project overview
 ├── package.json                 # npm scripts, Jest config, electron-builder config
+├── package-lock.json            # Pinned dependency tree (used by `npm ci`)
+├── eslint.config.js             # ESLint flat config
+├── .prettierrc.json             # Prettier config
 ├── docs/                        # All project documentation (AI-generated and human-edited)
 │   ├── README.md                # Index of all project doc folders
-│   └── project-desktop/         # Desktop project — brainstorms, specs, session tasks
-│       ├── README.md            # Entry point: overview, timeline, naming conventions
-│       ├── 2026-02-20-brainstorm-desktop-electron.md
-│       ├── 2026-02-21-spec-desktop-v1.md
-│       └── 2026-02-21-tasks-session-01-electron-shell.md
-├── markdown-viewer/             # Shared web app (used by both web and desktop)
+│   ├── project-desktop/         # Electron desktop project — brainstorms, specs, tasks
+│   ├── project-ios/             # iOS/iPadOS WKWebView shell project
+│   ├── project-url/             # URL-opening / GitHub repo browser project
+│   └── project-modernization/   # Cross-platform modernization roadmap (current)
+├── markdown-viewer/             # Shared web app (used by web, desktop, and iOS)
 │   ├── index.html
 │   ├── styles.css
-│   └── app.js
+│   ├── app.js
+│   └── vendor/                  # Vendored libraries (marked, mermaid, panzoom, hljs, DOMPurify)
 ├── desktop/                     # Electron shell
 │   ├── main.js                  # Main process
 │   └── preload.js               # IPC bridge
+├── ios/                         # iOS/iPadOS Swift + WKWebView shell (XcodeGen project)
 ├── tests/                       # Jest test suite
 │   ├── unit/
 │   ├── integration/
 │   ├── fixtures/
+│   ├── helpers/
+│   ├── mocks/
 │   └── setup.js
-└── scripts/
-    └── sync-version.js          # Keeps version in sync across files on npm version
+├── scripts/
+│   └── sync-version.js          # Keeps version in sync across files on npm version
+└── .github/workflows/           # CI (ci.yml), desktop build, iOS build, Pages deploy, version bump
 ```
 
 ---
@@ -93,11 +101,15 @@ When starting a new session, **add a tasks file** with the next session number a
 ```bash
 npm test                  # run full Jest suite (required before committing)
 npm run test:coverage     # coverage report
+npm run lint              # ESLint (flat config) — must be clean before committing
+npm run format            # Prettier — write
 npm run desktop           # launch Electron app from source (macOS)
 npm run desktop:build     # build .dmg locally (macOS only)
 ```
 
-Tests must pass before committing. Coverage thresholds are enforced (see `package.json`).
+Tests and lint must pass before committing; both run in CI on every PR
+(`.github/workflows/ci.yml`). Coverage is reported by `npm run test:coverage`
+but no hard `coverageThreshold` is configured in `package.json` yet.
 
 ---
 
