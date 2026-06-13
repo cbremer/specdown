@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <!--
       Content-Security-Policy: defense-in-depth on top of DOMPurify. Scripts are
-      restricted to same-origin vendored files ('unsafe-eval' is required by
+      restricted to same-origin bundled files ('unsafe-eval' is required by
       Mermaid's runtime); styles allow inline because Mermaid and the app inject
-      <style> blocks and style attributes. connect-src / img-src stay permissive
-      (https/http) because the viewer intentionally fetches user-supplied URLs
-      and the GitHub API/raw hosts.
+      <style> blocks and style attributes. The `file:` scheme is allowed so the
+      bundled assets load inside the Electron and iOS WKWebView shells (which
+      serve from file://, where 'self' is not reliably matched). connect-src /
+      img-src stay permissive (https/http) because the viewer intentionally
+      fetches user-supplied URLs and the GitHub API/raw hosts.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self' https: http:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-eval' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: blob: https: http: file:; font-src 'self' data: file:; connect-src 'self' https: http: file:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
