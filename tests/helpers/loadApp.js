@@ -12,43 +12,62 @@ require('../mocks/panzoom');
 require('../mocks/highlightjs');
 
 /**
- * Load the app.js file into the test environment
+ * Load the viewer entry module (and its local module graph) into the test
+ * environment via indirect eval at global scope.
  *
- * Uses indirect eval — (0, eval)(code) — to execute app.js at global scope.
- * This means function declarations and var-declared variables automatically
- * become properties of the global object, eliminating the need for fragile
- * regex transformations like "function X" → "global.X = function".
+ * The production build is ES modules bundled by Vite. Under test we inline the
+ * module graph: starting from src/main.js we follow relative (`./`, `../`)
+ * imports depth-first so each module's code is concatenated before the modules
+ * that import it, then strip the import/export keywords and eval the whole thing
+ * at global scope. Function declarations and (converted) var declarations then
+ * become global properties, which is what the test suite references.
  *
- * The only regex remaining converts top-level let/const to var, since let/const
- * are block-scoped and would not become global properties even at global scope.
- * This regex only matches simple identifier patterns (not destructuring).
+ * Bare imports (marked, mermaid, Panzoom, hljs, DOMPurify, CSS) are stripped,
+ * not inlined — those libraries are provided as globals by tests/mocks/* and
+ * tests/setup.js.
  *
  * @param {Document} document - The jsdom document object
  * @returns {void}
  */
+const RELATIVE_IMPORT_RE = /^\s*import\b[^'"]*['"](\.[^'"]+)['"][^\n]*$/gm;
+
+function inlineModule(filePath, visited, chunks) {
+  const resolved = filePath.endsWith('.js') ? filePath : filePath + '.js';
+  if (visited.has(resolved)) return;
+  visited.add(resolved);
+
+  let code = fs.readFileSync(resolved, 'utf8');
+  const dir = path.dirname(resolved);
+
+  // Inline relative-import dependencies first (depth-first) so their
+  // declarations exist before the importing module's body runs.
+  let match;
+  RELATIVE_IMPORT_RE.lastIndex = 0;
+  const deps = [];
+  while ((match = RELATIVE_IMPORT_RE.exec(code)) !== null) {
+    if (match[1].endsWith('.css')) continue;
+    deps.push(path.resolve(dir, match[1]));
+  }
+  for (const dep of deps) inlineModule(dep, visited, chunks);
+
+  // Strip module syntax so the body evals at global scope, and convert
+  // top-level let/const (simple identifiers only) to var so they become globals.
+  code = code
+    .replace(/^\s*import\b[^\n]*$/gm, '')
+    .replace(/^export\s+default\s+/gm, '')
+    .replace(/^export\s+\{[^}]*\};?\s*$/gm, '')
+    .replace(/^export\s+/gm, '')
+    .replace(/^const (\w+)/gm, 'var $1')
+    .replace(/^let (\w+)/gm, 'var $1');
+
+  chunks.push(code);
+}
+
 function loadApp(document) {
-  // Read the viewer entry module.
-  const appPath = path.join(__dirname, '../../markdown-viewer/src/main.js');
-  let appCode = fs.readFileSync(appPath, 'utf8');
-
-  // Strip ES-module import statements. In the production build Vite resolves
-  // these to bundled dependencies; under test the libraries (marked, mermaid,
-  // Panzoom, hljs, DOMPurify) are provided as globals by tests/mocks/* and
-  // tests/setup.js, and the bare CSS import has no runtime behavior. Removing
-  // the import lines lets us keep evaluating the module body at global scope.
-  appCode = appCode.replace(/^\s*import\b[^\n]*$/gm, '');
-
-  // Convert top-level let/const to var so they become global properties.
-  // Only matches simple identifier patterns (e.g. "const foo"), not destructuring
-  // (e.g. "const { a, b }") which would need different handling.
-  appCode = appCode.replace(/^const (\w+)/gm, 'var $1');
-  appCode = appCode.replace(/^let (\w+)/gm, 'var $1');
-
-  // Indirect eval executes code at global scope rather than in the caller's
-  // local scope. This means var declarations and function declarations
-  // naturally become global object properties without needing explicit
-  // "global.X = ..." assignments.
-  (0, eval)(appCode);
+  const entryPath = path.join(__dirname, '../../markdown-viewer/src/main.js');
+  const chunks = [];
+  inlineModule(entryPath, new Set(), chunks);
+  (0, eval)(chunks.join('\n'));
 }
 
 /**

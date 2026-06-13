@@ -13,6 +13,9 @@ import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
 
+// Internal modules (Phase 1 split — extracting cohesive units out of this entry).
+import { escapeHtml, normalizeMarkdownUrl } from './core/utils.js';
+
 // ===========================
 // Constants
 // ===========================
@@ -872,28 +875,6 @@ function handleFile(file) {
 // ===========================
 // URL Loading
 // ===========================
-function normalizeMarkdownUrl(url) {
-    // Match GitHub-style blob URLs on any host (supports github.com and GitHub Enterprise)
-    // Pattern: https://<host>/<owner>/<repo>/blob/<ref>/<path>
-    const githubBlobPattern = /^(https?):\/\/([^/]+)\/([^/]+)\/([^/]+)\/blob\/(.+)$/;
-    const match = url.match(githubBlobPattern);
-    if (match) {
-        var protocol = match[1];
-        var host = match[2];
-        var owner = match[3];
-        var repo = match[4];
-        var rest = match[5];
-
-        // github.com uses a dedicated raw content host
-        if (host === 'github.com') {
-            return 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + rest;
-        }
-        // GitHub Enterprise uses /raw/ instead of /blob/ on the same host
-        return protocol + '://' + host + '/' + owner + '/' + repo + '/raw/' + rest;
-    }
-    return url;
-}
-
 function getFilenameFromUrl(url) {
     try {
         const pathname = new URL(url).pathname;
@@ -1690,15 +1671,6 @@ async function reRenderMermaidDiagrams() {
 // ===========================
 // Tab Management
 // ===========================
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 function saveActiveTabState() {
     if (activeTabId === null) return;
     const tab = tabs.find(t => t.id === activeTabId);
