@@ -55,7 +55,7 @@ jobs:
         if: github.event_name == 'push'
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          git add package.json markdown-viewer/app.js README.md
+          git add package.json markdown-viewer/src/main.js
           git commit -m "Bump version to v${VERSION} [version bump]"
           git push origin main
 
