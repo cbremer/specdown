@@ -48,11 +48,11 @@ struct WebView: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         bridge.webView = webView
 
-        // Load the bundled web app; allowingReadAccessTo covers all assets in markdown-viewer/
+        // Load the bundled web app (Vite build output in dist/); allowingReadAccessTo covers all assets in dist/
         if let url = Bundle.main.url(
             forResource: "index",
             withExtension: "html",
-            subdirectory: "markdown-viewer"
+            subdirectory: "dist"
         ) {
             bridge.pageWillLoad()
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
@@ -61,7 +61,7 @@ struct WebView: UIViewRepresentable {
             loadErrorPage(
                 in: webView,
                 title: "Missing bundled assets",
-                message: "markdown-viewer/ assets were not found in the app bundle."
+                message: "dist/ assets were not found in the app bundle."
             )
         }
 
@@ -169,12 +169,12 @@ struct WebView: UIViewRepresentable {
             guard let url = Bundle.main.url(
                 forResource: "index",
                 withExtension: "html",
-                subdirectory: "markdown-viewer"
+                subdirectory: "dist"
             ) else {
                 loadErrorPage(
                     in: webView,
                     title: "Missing bundled assets",
-                    message: "markdown-viewer/ assets were not found in the app bundle."
+                    message: "dist/ assets were not found in the app bundle."
                 )
                 return
             }

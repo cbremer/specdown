@@ -82,43 +82,46 @@ specdown/
 │       ├── 2026-02-20-brainstorm-desktop-electron.md
 │       ├── 2026-02-21-spec-desktop-v1.md
 │       └── 2026-02-21-tasks-session-01-electron-shell.md
-├── markdown-viewer/             # Web app (shared with desktop)
-│   ├── index.html               # Main application page
+├── markdown-viewer/             # Web app (shared with desktop + iOS)
+│   ├── index.html               # Vite entry page
 │   ├── styles.css               # Application styles and theming
-│   ├── app.js                   # Core application logic
+│   ├── src/main.js              # Core application logic (ES module entry)
+│   ├── samples/                 # Bundled sample documents (shipped in iOS app)
 │   ├── logo.svg                 # SpecDown logo (light theme)
 │   ├── logo-dark.svg            # SpecDown logo (dark theme)
 │   ├── favicon.svg              # Browser tab icon
-│   └── vendor/                  # Vendored libraries
+│   └── dist/                    # Vite build output (git-ignored, built in CI)
 ├── desktop/                     # Electron shell
 │   ├── main.js                  # Main process
 │   └── preload.js               # IPC bridge stub
+├── ios/                         # iOS/iPadOS Swift + WKWebView shell
+├── vite.config.js               # Vite build config
 ├── tests/                       # Jest test suite
 └── package.json
 ```
 
 ### Technology Stack
 
-#### Core Libraries (vendored locally)
-- **Marked.js** (v11.1.1) - Markdown parsing
-- **Mermaid.js** (v10.6.1) - Diagram rendering
-- **Panzoom** (v4.5.1) - Interactive pan/zoom functionality
-- **Highlight.js** (v11.9.0) - Code syntax highlighting
+#### Core Libraries (npm dependencies, bundled by Vite)
+- **Marked** - Markdown parsing
+- **Mermaid** - Diagram rendering
+- **@panzoom/panzoom** - Interactive pan/zoom functionality
+- **Highlight.js** - Code syntax highlighting
 - **DOMPurify** - HTML/SVG sanitization
 
-These are committed under `markdown-viewer/vendor/` and loaded with relative
-`<script>` tags — there is no CDN dependency at runtime.
+These are real `package.json` dependencies imported as ES modules from
+`markdown-viewer/src/main.js` and bundled by [Vite](https://vitejs.dev) into
+`markdown-viewer/dist/`. There is no runtime CDN dependency, and the exact
+versions are pinned in `package-lock.json`.
 
-#### Why vendored (no CDN)?
-- Zero build step required
-- Works fully offline and inside the Electron/iOS shells (`file:` origin)
-- No third-party network request to render a document
-- Reproducible: the exact library bytes are pinned in the repo
-
-> Note: the matching `marked` / `mermaid` versions are also declared in
-> `package.json` so tooling and Dependabot can track them; the runtime uses the
-> vendored copies. Phase 1 of the modernization roadmap replaces vendoring with
-> a Vite build that imports these as real dependencies.
+#### Build & architecture
+- Source: ES modules under `markdown-viewer/src/` (entry `main.js`).
+- `npm run dev` — Vite dev server with hot reload.
+- `npm run build` — production build to `markdown-viewer/dist/` (+ a copy step
+  that places `samples/` into `dist/samples/`).
+- All three surfaces (web, desktop, iOS) load the `dist/` build output, so the
+  same bundle ships everywhere. Mermaid's per-diagram code is automatically
+  code-split into lazy chunks.
 
 ### Example Files
 
@@ -267,22 +270,25 @@ npm run desktop:build    # produces a .dmg in dist/
 
 ### Development
 
-#### Running the Desktop App from Source
-
 **First-time setup:**
 ```bash
 cd specdown               # navigate into the project directory
-npm install               # install Electron and all dependencies
+npm install               # install all dependencies
 ```
 
-**Launch the app:**
+#### Running the Web App from Source
+
 ```bash
-npm run desktop           # opens the Specdown Desktop window
+npm run dev               # Vite dev server with hot reload
+npm run build             # production build → markdown-viewer/dist/
+npm run preview           # serve the production build locally
 ```
 
-**Build the DMG locally (macOS only):**
+#### Running the Desktop App from Source
+
 ```bash
-npm run desktop:build     # produces a .dmg in dist/
+npm run desktop           # builds the web app, then opens the Specdown Desktop window
+npm run desktop:build     # builds the web app + a .dmg (macOS only) in dist/
 ```
 
 Requires Node.js (v22.12+) installed on your machine (see `engines` in
@@ -311,7 +317,7 @@ request.
 #### Modifying the App
 
 1. **Styling**: Edit `markdown-viewer/styles.css` for visual changes
-2. **Functionality**: Edit `markdown-viewer/app.js` for behavior changes
+2. **Functionality**: Edit `markdown-viewer/src/main.js` for behavior changes
 3. **Structure**: Edit `markdown-viewer/index.html` for layout changes
 4. **Electron main process**: Edit `desktop/main.js`
 5. **IPC bridge**: Edit `desktop/preload.js`
@@ -321,7 +327,7 @@ request.
 The codebase is organized into clear sections:
 
 ```javascript
-// app.js structure
+// src/main.js structure
 - Global State
 - DOM Elements
 - Initialization
@@ -338,14 +344,10 @@ The codebase is organized into clear sections:
 
 #### Extending Markdown Support
 
-To add more syntax highlighting languages, vendor the Highlight.js language
-file under `markdown-viewer/vendor/languages/` and reference it with a relative
-`<script>` tag (matching the existing entries — no CDN):
-
-```html
-<!-- Add to index.html, alongside the other vendored language scripts -->
-<script src="vendor/languages/rust.min.js"></script>
-```
+Syntax highlighting uses the full Highlight.js build imported in
+`markdown-viewer/src/main.js`, so all bundled languages are available out of the
+box — no per-language wiring needed. To change the highlight theme, swap the
+`import 'highlight.js/styles/…​.css'` line in `src/main.js`.
 
 ### Contributing
 

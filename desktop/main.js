@@ -180,7 +180,11 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'markdown-viewer', 'index.html'));
+  // Loads the Vite build output. `npm run desktop` / `desktop:build` run the
+  // web build first so this file exists.
+  mainWindow.loadFile(
+    path.join(__dirname, '..', 'markdown-viewer', 'dist', 'index.html')
+  );
 
   // Prevent the renderer from navigating away from the bundled local file.
   // This guards against malicious content (e.g. a crafted markdown link)

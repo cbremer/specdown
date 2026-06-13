@@ -18,13 +18,15 @@ targets:
 
     sources:
       - path: SpecDown
-      - path: ../markdown-viewer
+      - path: ../markdown-viewer/dist
         type: folder
         buildPhase: resources
 
-    # Bundle the shared web viewer as a folder reference (blue folder).
-    # The entire markdown-viewer/ directory is copied into the app bundle,
-    # accessible at runtime as markdown-viewer/index.html.
+    # Bundle the shared web viewer's Vite build output as a folder reference
+    # (blue folder). The dist/ directory is copied into the app bundle,
+    # accessible at runtime as dist/index.html (and dist/samples/ for the
+    # bundled sample documents). Run `npm run build` before generating/building
+    # the Xcode project so dist/ exists.
 
     settings:
       PRODUCT_NAME: Specdown

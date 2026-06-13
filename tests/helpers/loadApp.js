@@ -27,9 +27,16 @@ require('../mocks/highlightjs');
  * @returns {void}
  */
 function loadApp(document) {
-  // Read the app.js file
-  const appPath = path.join(__dirname, '../../markdown-viewer/app.js');
+  // Read the viewer entry module.
+  const appPath = path.join(__dirname, '../../markdown-viewer/src/main.js');
   let appCode = fs.readFileSync(appPath, 'utf8');
+
+  // Strip ES-module import statements. In the production build Vite resolves
+  // these to bundled dependencies; under test the libraries (marked, mermaid,
+  // Panzoom, hljs, DOMPurify) are provided as globals by tests/mocks/* and
+  // tests/setup.js, and the bare CSS import has no runtime behavior. Removing
+  // the import lines lets us keep evaluating the module body at global scope.
+  appCode = appCode.replace(/^\s*import\b[^\n]*$/gm, '');
 
   // Convert top-level let/const to var so they become global properties.
   // Only matches simple identifier patterns (e.g. "const foo"), not destructuring
@@ -41,7 +48,7 @@ function loadApp(document) {
   // local scope. This means var declarations and function declarations
   // naturally become global object properties without needing explicit
   // "global.X = ..." assignments.
-  (0, eval)(appCode); // eslint-disable-line no-eval
+  (0, eval)(appCode);
 }
 
 /**
@@ -53,8 +60,9 @@ function loadHTML(document) {
   const htmlPath = path.join(__dirname, '../../markdown-viewer/index.html');
   const html = fs.readFileSync(htmlPath, 'utf8');
 
-  // Extract body content (skip script tags)
-  const bodyMatch = html.match(/<body>([\s\S]*)<script src="app\.js"><\/script>/);
+  // Extract body content. The module <script> now lives in <head>, so the
+  // body no longer contains script tags — take everything inside <body>.
+  const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/);
   if (bodyMatch) {
     document.body.innerHTML = bodyMatch[1];
   }

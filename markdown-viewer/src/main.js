@@ -1,3 +1,18 @@
+// SpecDown — shared viewer entry point.
+//
+// Phase 1 (modernization roadmap): the formerly-vendored browser globals are
+// now real ES-module imports bundled by Vite. They are bound to the same
+// identifiers (`marked`, `mermaid`, `Panzoom`, `hljs`, `DOMPurify`) the rest of
+// this file already used, so the app logic below is unchanged. The internal
+// split into core/features/platform modules is a subsequent slice; for now the
+// logic remains in this single module to keep the migration behavior-preserving.
+import { marked } from 'marked';
+import mermaid from 'mermaid';
+import Panzoom from '@panzoom/panzoom';
+import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
+import 'highlight.js/styles/github-dark.css';
+
 // ===========================
 // Constants
 // ===========================
