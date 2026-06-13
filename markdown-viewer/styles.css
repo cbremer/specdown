@@ -6,10 +6,12 @@
     --bg-secondary: #f5f5f5;
     --bg-tertiary: #e8e8e8;
     --text-primary: #1a1a1a;
-    --text-secondary: #666666;
+    --text-secondary: #595959;
     --border-color: #dddddd;
-    --accent-color: #4a90e2;
-    --accent-hover: #357abd;
+    /* Darkened for WCAG AA contrast on the light background (the old #4a90e2
+       failed AA for text/links). Dark theme re-lightens it below. */
+    --accent-color: #1f6bb8;
+    --accent-hover: #17528f;
     --success-color: #7ed321;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -24,6 +26,9 @@
     --text-primary: #ffffff;
     --text-secondary: #cccccc;
     --border-color: #444444;
+    /* Lighter accent on the dark background for readable contrast. */
+    --accent-color: #5aa0ec;
+    --accent-hover: #7ab4f0;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
@@ -581,8 +586,12 @@ body {
 }
 
 .markdown-content pre {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    /* Always-dark code blocks: the bundled highlight.js theme (github-dark)
+       uses light syntax colors, which were near-invisible on the previous
+       light background in light mode. A fixed dark surface keeps code
+       readable in both app themes. */
+    background-color: #0d1117;
+    border: 1px solid #30363d;
     border-radius: 6px;
     padding: 1em;
     overflow-x: auto;
@@ -592,6 +601,9 @@ body {
 .markdown-content pre code {
     background-color: transparent;
     padding: 0;
+    /* Fallback color for code blocks without a recognized language (no
+       highlight.js token colors); highlighted blocks override per-token. */
+    color: #e6edf3;
 }
 
 .markdown-content table {

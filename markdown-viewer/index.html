@@ -16,34 +16,12 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
 
-    <!-- Local Dependencies -->
-    <script src="vendor/marked.min.js"></script>
-    <script src="vendor/mermaid.min.js"></script>
-    <script src="vendor/panzoom.min.js"></script>
-    <script src="vendor/highlight.min.js"></script>
-    <script src="vendor/languages/javascript.min.js"></script>
-    <script src="vendor/languages/typescript.min.js"></script>
-    <script src="vendor/languages/python.min.js"></script>
-    <script src="vendor/languages/java.min.js"></script>
-    <script src="vendor/languages/kotlin.min.js"></script>
-    <script src="vendor/languages/scala.min.js"></script>
-    <script src="vendor/languages/swift.min.js"></script>
-    <script src="vendor/languages/go.min.js"></script>
-    <script src="vendor/languages/rust.min.js"></script>
-    <script src="vendor/languages/ruby.min.js"></script>
-    <script src="vendor/languages/php.min.js"></script>
-    <script src="vendor/languages/lua.min.js"></script>
-    <script src="vendor/languages/bash.min.js"></script>
-    <script src="vendor/languages/shell.min.js"></script>
-    <script src="vendor/languages/powershell.min.js"></script>
-    <script src="vendor/languages/sql.min.js"></script>
-    <script src="vendor/languages/json.min.js"></script>
-    <script src="vendor/languages/yaml.min.js"></script>
-    <script src="vendor/languages/xml.min.js"></script>
-    <script src="vendor/languages/css.min.js"></script>
-    <script src="vendor/languages/dockerfile.min.js"></script>
-    <script src="vendor/languages/makefile.min.js"></script>
-    <link rel="stylesheet" href="vendor/github-dark.min.css">
+    <!--
+      Dependencies (marked, mermaid, panzoom, highlight.js, DOMPurify) and the
+      highlight.js theme are imported as ES modules from src/main.js and bundled
+      by Vite. The previous vendor/ <script> soup has been removed.
+    -->
+    <script type="module" src="/src/main.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -237,8 +215,5 @@
         <!-- Diagram Share Toast -->
         <div id="share-toast" class="share-toast" style="display: none;">Link copied to clipboard!</div>
     </div>
-
-    <script src="vendor/purify.min.js"></script>
-    <script src="app.js"></script>
 </body>
 </html>

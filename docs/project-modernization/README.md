@@ -10,18 +10,24 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 |---|---|---|
 | 2026-06-13 | [brainstorm-modernization-evaluation](2026-06-13-brainstorm-modernization-evaluation.md) | PM/UX/engineering evaluation of v0.0.82, north-star vision, phased roadmap (Phases 0–4) |
 | 2026-06-13 | [tasks-session-01-phase0-hygiene](2026-06-13-tasks-session-01-phase0-hygiene.md) | Phase 0 implementation: desktop external-link fix, iOS CI honesty, lockfile + ESLint/Prettier + CI lane + Dependabot + CSP, docs reconciliation |
+| 2026-06-13 | [tasks-session-02-phase1-vite-foundation](2026-06-13-tasks-session-02-phase1-vite-foundation.md) | Phase 1 slice 1: Vite + ES-module build foundation, real npm deps replace `vendor/`, all surfaces load `dist/`, harness migrated, sync-version regression fixed |
 
 ## Current Status
 
-**Phase 0 (Foundation & hygiene) implemented** — see the session 01 tasks doc.
-Defect fixes (desktop external links, iOS CI `|| true`), tooling (lockfile,
-ESLint + Prettier, CI lint/test lane, Dependabot, CSP), and docs reconciliation
-are done; lint + 297 tests are green locally. CSP and the desktop link fix need
-a manual browser/Electron check before merge (not runnable headless).
+**Phase 0 implemented and merged** (PR #92). **Phase 1 slice 1 (Vite + ESM build
+foundation) implemented** — see the session 02 tasks doc. The shared viewer is
+now a Vite + ES-module build; `vendor/` is deleted and all three surfaces load
+`markdown-viewer/dist/`. App logic remains in one module (`src/main.js`) this
+slice; lint + 297 tests are green and the web build is verified headlessly.
+**Desktop (Electron) and iOS load `file://` and need a manual smoke-test on the
+branch before merge** (see the session 02 verification checklist).
+
+Remaining Phase 1 work (next slices): split `src/main.js` into
+core/features/platform modules (no file > 500 lines), lazy-load the Mermaid
+engine, begin gradual TypeScript.
 
 The open questions below (iOS investment, Apple Developer membership for
 signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.
-Phase 1 (Vite + ES modules, split `app.js`) is the next session.
 
 Phase summary:
 

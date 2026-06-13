@@ -3,6 +3,10 @@ node_modules/
 yarn.lock
 # package-lock.json IS committed (CI uses `npm ci` for reproducible installs).
 
+# Build output (Vite web build + electron-builder installers) — produced in CI
+dist/
+markdown-viewer/dist/
+
 # Coverage reports
 coverage/
 *.lcov

@@ -1,11 +1,10 @@
-// ESLint flat config (Phase 0 — Foundation & hygiene).
+// ESLint flat config (modernization roadmap).
 //
-// Intentionally pragmatic: the shared `markdown-viewer/app.js` is still a
-// single ~2,800-line browser global-scope file (Phase 1 will split it into ES
-// modules). Until then we declare the browser + vendored-library globals it
-// relies on and keep the rule set focused on real correctness signals so the
-// CI lane is honest rather than drowning in stylistic noise that Prettier
-// already owns.
+// Phase 1 moved the shared viewer to a Vite + ES-module build. The viewer
+// source under markdown-viewer/src/ is ESM; the libraries it used to read as
+// vendored globals (marked, mermaid, …) are now real imports. We keep the rule
+// set focused on real correctness signals so the CI lane is honest rather than
+// drowning in stylistic noise that Prettier already owns.
 
 const js = require('@eslint/js');
 const globals = require('globals');
@@ -15,6 +14,7 @@ module.exports = [
   {
     ignores: [
       'markdown-viewer/vendor/**',
+      'markdown-viewer/dist/**',
       'dist/**',
       'coverage/**',
       'node_modules/**',
@@ -22,21 +22,14 @@ module.exports = [
     ],
   },
 
-  // Shared browser viewer core.
+  // Shared browser viewer source (ES modules, bundled by Vite).
   {
     files: ['markdown-viewer/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
-      sourceType: 'script',
+      sourceType: 'module',
       globals: {
         ...globals.browser,
-        // Vendored libraries exposed as browser globals.
-        marked: 'readonly',
-        mermaid: 'readonly',
-        hljs: 'readonly',
-        Panzoom: 'readonly',
-        panzoom: 'readonly',
-        DOMPurify: 'readonly',
         // Native bridges injected by the desktop/iOS shells.
         webkit: 'readonly',
       },
@@ -64,7 +57,7 @@ module.exports = [
     },
   },
 
-  // Tooling / config files.
+  // CommonJS tooling / config files (eslint.config.js, scripts/*).
   {
     files: ['*.js', 'scripts/**/*.js'],
     languageOptions: {
@@ -75,6 +68,16 @@ module.exports = [
     rules: {
       ...js.configs.recommended.rules,
       'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
+    },
+  },
+
+  // ESM config files (overrides the CommonJS block above for these paths).
+  {
+    files: ['vite.config.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node },
     },
   },
 

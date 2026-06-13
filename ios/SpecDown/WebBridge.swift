@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 /// Swift → JS: Swift calls `webView.evaluateJavaScript("window.setTheme('dark')")`
 @MainActor
 final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
-    private static let bundledSamplesSubdirectory = "markdown-viewer/samples"
+    private static let bundledSamplesSubdirectory = "dist/samples"
     private static let defaultPrintJobName = "Specdown Document"
 
     private struct PendingFile {

@@ -26,6 +26,7 @@ specdown/
 ├── README.md                    # User-facing project overview
 ├── package.json                 # npm scripts, Jest config, electron-builder config
 ├── package-lock.json            # Pinned dependency tree (used by `npm ci`)
+├── vite.config.js               # Vite build config for the shared web app
 ├── eslint.config.js             # ESLint flat config
 ├── .prettierrc.json             # Prettier config
 ├── docs/                        # All project documentation (AI-generated and human-edited)
@@ -35,10 +36,12 @@ specdown/
 │   ├── project-url/             # URL-opening / GitHub repo browser project
 │   └── project-modernization/   # Cross-platform modernization roadmap (current)
 ├── markdown-viewer/             # Shared web app (used by web, desktop, and iOS)
-│   ├── index.html
+│   ├── index.html               # Vite entry (loads src/main.js as a module)
 │   ├── styles.css
-│   ├── app.js
-│   └── vendor/                  # Vendored libraries (marked, mermaid, panzoom, hljs, DOMPurify)
+│   ├── samples/                 # Bundled sample docs (shipped in the iOS app)
+│   ├── src/
+│   │   └── main.js              # Viewer entry module (imports marked/mermaid/…)
+│   └── dist/                    # Vite build output (git-ignored; built in CI)
 ├── desktop/                     # Electron shell
 │   ├── main.js                  # Main process
 │   └── preload.js               # IPC bridge
@@ -99,13 +102,21 @@ When starting a new session, **add a tasks file** with the next session number a
 ## Development Commands
 
 ```bash
+npm run dev               # Vite dev server for the web app (hot reload)
+npm run build             # Vite production build → markdown-viewer/dist/
+npm run preview           # serve the production build locally
 npm test                  # run full Jest suite (required before committing)
 npm run test:coverage     # coverage report
 npm run lint              # ESLint (flat config) — must be clean before committing
 npm run format            # Prettier — write
-npm run desktop           # launch Electron app from source (macOS)
-npm run desktop:build     # build .dmg locally (macOS only)
+npm run desktop           # build the web app, then launch Electron (macOS)
+npm run desktop:build     # build the web app + .dmg locally (macOS only)
 ```
+
+The shared web app is a Vite + ES-module build. All three surfaces (web, desktop,
+iOS) load the build output in `markdown-viewer/dist/`, so `npm run build` must
+run before packaging the desktop or iOS app (the `desktop`/`desktop:build`
+scripts and the CI workflows do this for you).
 
 Tests and lint must pass before committing; both run in CI on every PR
 (`.github/workflows/ci.yml`). Coverage is reported by `npm run test:coverage`

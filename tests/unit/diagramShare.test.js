@@ -168,13 +168,10 @@ describe('Shareable Diagram Links', () => {
       const source = 'graph TD\nStart-->End';
       const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(source))));
 
-      // Temporarily override window.location.search
-      const originalSearch = window.location.search;
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '?diagram=' + encoded },
-        configurable: true,
-        writable: true,
-      });
+      // Set window.location.search via the History API. jsdom (jest 30+)
+      // makes window.location non-configurable, so redefining the property
+      // throws; replaceState updates location.search without that.
+      window.history.replaceState({}, '', '?diagram=' + encoded);
 
       checkForDiagramLink();
 
@@ -184,27 +181,15 @@ describe('Shareable Diagram Links', () => {
       expect(tab.rawMarkdown).toContain(source);
 
       // Restore
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: originalSearch },
-        configurable: true,
-        writable: true,
-      });
+      window.history.replaceState({}, '', '/');
     });
 
     it('silently ignores a malformed diagram param', () => {
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '?diagram=NOT_VALID_BASE64!!!@@@' },
-        configurable: true,
-        writable: true,
-      });
+      window.history.replaceState({}, '', '?diagram=NOT_VALID_BASE64!!!@@@');
 
       expect(() => checkForDiagramLink()).not.toThrow();
 
-      Object.defineProperty(window, 'location', {
-        value: { ...window.location, search: '' },
-        configurable: true,
-        writable: true,
-      });
+      window.history.replaceState({}, '', '/');
     });
   });
 });

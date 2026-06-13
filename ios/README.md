@@ -39,9 +39,15 @@ ios/
 
 ## Web Assets
 
-The `markdown-viewer/` directory at the repo root is bundled into the app as a folder reference. Any changes to the web viewer are automatically picked up on the next build — no separate copy step needed.
+The shared web app is a Vite + ES-module build. Run `npm run build` at the repo
+root first; its output, `markdown-viewer/dist/`, is bundled into the app as a
+folder reference (available at runtime as `dist/index.html`). The CI workflow
+(`.github/workflows/ios.yml`) runs the build before generating the Xcode
+project; for local builds run `npm run build` before `xcodegen generate`.
 
-Bundled sample markdown files live at `markdown-viewer/samples/`, ship inside the app bundle for smoke testing, and can be opened from the iOS drop screen.
+Bundled sample markdown files live at `markdown-viewer/samples/` and are copied
+into `dist/samples/` by the build, where they ship inside the app bundle for
+smoke testing and can be opened from the iOS drop screen.
 
 External links opened from inside the viewer stay in the system browser instead of navigating the embedded app shell away from its bundled content.
 

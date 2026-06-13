@@ -6,11 +6,19 @@ on:
     paths:
       - "ios/**"
       - "markdown-viewer/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "scripts/**"
       - ".github/workflows/ios.yml"
   pull_request:
     paths:
       - "ios/**"
       - "markdown-viewer/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "scripts/**"
       - ".github/workflows/ios.yml"
 
 jobs:
@@ -21,6 +29,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
 
       - name: Install XcodeGen
         run: brew install xcodegen

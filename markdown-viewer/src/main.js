@@ -1,3 +1,18 @@
+// SpecDown — shared viewer entry point.
+//
+// Phase 1 (modernization roadmap): the formerly-vendored browser globals are
+// now real ES-module imports bundled by Vite. They are bound to the same
+// identifiers (`marked`, `mermaid`, `Panzoom`, `hljs`, `DOMPurify`) the rest of
+// this file already used, so the app logic below is unchanged. The internal
+// split into core/features/platform modules is a subsequent slice; for now the
+// logic remains in this single module to keep the migration behavior-preserving.
+import { marked } from 'marked';
+import mermaid from 'mermaid';
+import Panzoom from '@panzoom/panzoom';
+import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
+import 'highlight.js/styles/github-dark.css';
+
 // ===========================
 // Constants
 // ===========================
@@ -950,7 +965,9 @@ function configureMarked() {
         breaks: true,
         gfm: true,
         renderer: {
-            code(code, lang) {
+            // marked v16+ passes the code token object ({ text, lang, ... })
+            // to renderer methods rather than positional (code, lang) args.
+            code({ text: code, lang }) {
                 // Guard against non-string code or missing hljs
                 if (typeof code !== 'string') return false;
                 if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
@@ -976,7 +993,13 @@ function getMermaidConfig() {
         startOnLoad: false,
         theme: currentTheme === 'dark' ? 'dark' : 'default',
         securityLevel: 'strict',
-        fontFamily: FONT_FAMILY
+        fontFamily: FONT_FAMILY,
+        // Render node labels as SVG <text> rather than <foreignObject> HTML.
+        // Mermaid 11 defaults to HTML labels; our DOMPurify pass strips the
+        // foreignObject, so shapes render but the label text disappears. SVG
+        // text survives sanitization (this matches Mermaid 10's behavior).
+        htmlLabels: false,
+        flowchart: { htmlLabels: false }
     };
 }
 
@@ -1136,7 +1159,12 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';
     wrapper.id = `wrapper-${diagramId}`;
-    wrapper.innerHTML = DOMPurify.sanitize(svg);
+    // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
+    // diagram types that use them) so DOMPurify does not strip the text.
+    wrapper.innerHTML = DOMPurify.sanitize(svg, {
+        ADD_TAGS: ['foreignObject'],
+        ADD_ATTR: ['xmlns'],
+    });
 
     // Store mermaid source on the SVG for theme re-rendering and export
     const svgEl = wrapper.querySelector('svg');
@@ -1637,7 +1665,12 @@ async function reRenderMermaidDiagrams() {
             }
 
             // Update wrapper content
-            wrapper.innerHTML = DOMPurify.sanitize(svg);
+            // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
+    // diagram types that use them) so DOMPurify does not strip the text.
+    wrapper.innerHTML = DOMPurify.sanitize(svg, {
+        ADD_TAGS: ['foreignObject'],
+        ADD_ATTR: ['xmlns'],
+    });
 
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
