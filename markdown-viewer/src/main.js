@@ -965,7 +965,9 @@ function configureMarked() {
         breaks: true,
         gfm: true,
         renderer: {
-            code(code, lang) {
+            // marked v16+ passes the code token object ({ text, lang, ... })
+            // to renderer methods rather than positional (code, lang) args.
+            code({ text: code, lang }) {
                 // Guard against non-string code or missing hljs
                 if (typeof code !== 'string') return false;
                 if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {

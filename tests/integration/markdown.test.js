@@ -136,7 +136,8 @@ describe('Markdown Rendering', () => {
       const config = marked.use.mock.calls[0][0];
       const codeRenderer = config.renderer.code;
 
-      codeRenderer('console.log("test")', 'javascript');
+      // marked v16+ invokes renderer.code with a token object.
+      codeRenderer({ text: 'console.log("test")', lang: 'javascript' });
 
       expect(hljs.highlight).toHaveBeenCalledWith('console.log("test")', {
         language: 'javascript'
@@ -153,7 +154,7 @@ describe('Markdown Rendering', () => {
         throw new Error('Highlight error');
       });
 
-      const result = codeRenderer('code', 'invalidlang');
+      const result = codeRenderer({ text: 'code', lang: 'invalidlang' });
 
       // Should return escaped code in pre/code tags
       expect(result).toContain('<pre><code');
@@ -169,7 +170,7 @@ describe('Markdown Rendering', () => {
       // Mock getLanguage to return undefined for unknown language
       hljs.getLanguage = jest.fn(() => undefined);
 
-      const result = codeRenderer('code', 'unknown');
+      const result = codeRenderer({ text: 'code', lang: 'unknown' });
 
       // Should return escaped code wrapped in pre/code tags
       expect(result).toContain('<pre><code');
