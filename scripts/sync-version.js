@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Syncs the version from package.json into app.js (APP_VERSION constant)
- * and README.md (Version History section).
+ * Syncs the version from package.json into app.js (APP_VERSION constant).
  *
  * This runs automatically via the npm "version" lifecycle script, so
  * bumping the version is a single command:
@@ -17,7 +16,6 @@ const path = require('path');
 
 const pkgPath = path.join(__dirname, '..', 'package.json');
 const appPath = path.join(__dirname, '..', 'markdown-viewer', 'app.js');
-const readmePath = path.join(__dirname, '..', 'README.md');
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const version = pkg.version;
@@ -35,16 +33,5 @@ appCode = appCode.replace(versionRegex, "const APP_VERSION = '" + version + "';"
 fs.writeFileSync(appPath, appCode, 'utf8');
 console.log('Synced version ' + version + ' into app.js');
 
-// Update README.md version
-let readmeContent = fs.readFileSync(readmePath, 'utf8');
-
-const readmeVersionRegex = /^(\s*#### v)\S+ (\(Current\))/m;
-if (!readmeVersionRegex.test(readmeContent)) {
-    console.error('Could not find version in README.md');
-    process.exit(1);
-}
-
-readmeContent = readmeContent.replace(readmeVersionRegex, '$1' + version + ' $2');
-
-fs.writeFileSync(readmePath, readmeContent, 'utf8');
-console.log('Synced version ' + version + ' into README.md');
+// The README no longer carries a per-build "#### vX.Y.Z (Current)" line — the
+// version is a build counter, not a changelog. Nothing to sync there.
