@@ -49,7 +49,6 @@ import {
 } from './features/annotations.js';
 import { handleRepoUrl } from './features/repo-browser.js';
 import { updateMinimap, updateMinimapViewport } from './features/minimap.js';
-import { applyCustomCss } from './features/custom-css.js';
 import {
   processMermaidDiagrams,
   cleanupPanzoomInstances,
@@ -92,14 +91,15 @@ import {
   checkForDiagramLink,
   configureShareLinks,
 } from './features/share-links.js';
+import { createTab, configureTabs } from './features/tabs.js';
 import {
-  createTab,
-  switchTab,
-  closeTab,
-  renderTabBar,
-  showDropZone,
-  configureTabs,
-} from './features/tabs.js';
+  setupDesktopIPC,
+  updateWatchToggle,
+  saveDesktopSession,
+  startWatchingFilePath,
+  stopWatchingFilePath,
+  configureDesktop,
+} from './platform/desktop.js';
 
 // ===========================
 // Constants
@@ -112,9 +112,6 @@ const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 // ===========================
 // Global State
 // ===========================
-
-// Desktop file-watch state
-const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
 // ===========================
 // DOM Elements
@@ -130,7 +127,6 @@ const fileName = document.getElementById('file-name');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 const viewToggle = document.getElementById('view-toggle');
-const watchToggle = document.getElementById('watch-toggle');
 const urlInput = document.getElementById('url-input');
 const openUrlBtn = document.getElementById('open-url-btn');
 const urlError = document.getElementById('url-error');
@@ -176,6 +172,7 @@ function init() {
         startWatchingFilePath: (filePath) => startWatchingFilePath(filePath),
         stopWatchingFilePath: (filePath) => stopWatchingFilePath(filePath),
     });
+    configureDesktop({ renderMarkdown: (content, title) => renderMarkdown(content, title) });
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
@@ -578,181 +575,6 @@ async function renderMarkdown(content, filename) {
     }
 }
 
-
-// ===========================
-// Desktop IPC Integration
-// ===========================
-function updateWatchToggle() {
-    if (!watchToggle) return;
-
-    const tab = state.activeTabId !== null ? state.tabs.find(t => t.id === state.activeTabId) : null;
-    const canWatch = !!(tab && tab.filePath);
-
-    if (!canWatch) {
-        watchToggle.style.display = 'none';
-        return;
-    }
-
-    watchToggle.style.display = '';
-    if (tab.watching) {
-        watchToggle.classList.add('active');
-        watchToggle.title = 'Watching — click to stop';
-    } else {
-        watchToggle.classList.remove('active');
-        watchToggle.title = 'Auto-reload when file changes on disk';
-    }
-}
-
-// Briefly animate the watch toggle to signal that an auto-reload just
-// happened. Without this, the reload is invisible if the user happens
-// not to be looking at the content area when the disk write lands.
-let watchTogglePulseTimer = null;
-function pulseWatchToggle() {
-    if (!watchToggle) return;
-    watchToggle.classList.remove('reloaded');
-    // Force reflow so re-adding the class restarts the animation even
-    // when multiple reloads happen in quick succession.
-    // eslint-disable-next-line no-unused-expressions
-    void watchToggle.offsetWidth;
-    watchToggle.classList.add('reloaded');
-    watchToggle.title = 'Reloaded from disk';
-
-    if (watchTogglePulseTimer) clearTimeout(watchTogglePulseTimer);
-    watchTogglePulseTimer = setTimeout(() => {
-        watchToggle.classList.remove('reloaded');
-        // Restore the state-appropriate tooltip.
-        updateWatchToggle();
-        watchTogglePulseTimer = null;
-    }, 1200);
-}
-
-function startWatchingFilePath(filePath) {
-    if (!isDesktop || !filePath || !window.specdown || !window.specdown.watchFile) return;
-
-    const currentCount = watchRefCounts.get(filePath) || 0;
-    watchRefCounts.set(filePath, currentCount + 1);
-
-    if (currentCount === 0) {
-        window.specdown.watchFile(filePath);
-    }
-}
-
-function stopWatchingFilePath(filePath) {
-    if (!isDesktop || !filePath || !window.specdown || !window.specdown.unwatchFile) return;
-
-    const currentCount = watchRefCounts.get(filePath) || 0;
-    if (currentCount <= 1) {
-        watchRefCounts.delete(filePath);
-        window.specdown.unwatchFile(filePath);
-        return;
-    }
-
-    watchRefCounts.set(filePath, currentCount - 1);
-}
-
-function toggleWatching() {
-    if (!isDesktop) return;
-    const tab = state.activeTabId !== null ? state.tabs.find(t => t.id === state.activeTabId) : null;
-    if (!tab || !tab.filePath) return;
-
-    tab.watching = !tab.watching;
-
-    if (tab.watching) {
-        startWatchingFilePath(tab.filePath);
-    } else {
-        stopWatchingFilePath(tab.filePath);
-    }
-
-    renderTabBar();
-    updateWatchToggle();
-}
-
-function setupDesktopIPC() {
-    // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
-    window.specdown.onFileOpened(function(fileData) {
-        createTab(fileData.filename, fileData.content, fileData.filePath);
-    });
-
-    // Listen for close-tab command from native menu (Cmd+W)
-    window.specdown.onCloseTab(function() {
-        if (state.activeTabId !== null) {
-            closeTab(state.activeTabId);
-        }
-    });
-
-    // Listen for file-changed events (watched file updated on disk)
-    window.specdown.onFileChanged(async function(fileData) {
-        const tab = state.tabs.find(t => t.filePath === fileData.filePath);
-        if (!tab) return;
-
-        tab.rawMarkdown = fileData.content;
-        tab.filename = fileData.filename;
-
-        if (tab.id === state.activeTabId) {
-            // Preserve scroll position across the re-render so an
-            // auto-reload doesn't yank the user back to the top.
-            const savedScrollTop = markdownContent.scrollTop;
-
-            if (tab.viewMode === 'raw') {
-                state.currentRawMarkdown = fileData.content;
-                const escaped = fileData.content
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;');
-                markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
-                markdownContent.scrollTop = savedScrollTop;
-            } else {
-                await renderMarkdown(fileData.content, fileData.filename);
-                markdownContent.scrollTop = savedScrollTop;
-            }
-
-            // Visual feedback that an auto-reload happened — otherwise
-            // the user has no way to tell the content just changed.
-            pulseWatchToggle();
-        } else {
-            // Background tab: flag it so the user sees that something
-            // changed when they come back to it.
-            tab.hasUnseenChanges = true;
-            renderTabBar();
-        }
-    });
-
-    // Wire up watch toggle button
-    if (watchToggle) {
-        watchToggle.addEventListener('click', toggleWatching);
-    }
-
-    // Native menu: File > Print
-    if (window.specdown.onTriggerPrint) {
-        window.specdown.onTriggerPrint(function() {
-            performPrint();
-        });
-    }
-
-    // Native menu: Edit > Find
-    if (window.specdown.onTriggerSearch) {
-        window.specdown.onTriggerSearch(function() {
-            if (contentArea.style.display !== 'none') {
-                openSearch();
-            }
-        });
-    }
-
-    // Appearance menu: apply custom CSS theme
-    if (window.specdown.onApplyCustomCss) {
-        window.specdown.onApplyCustomCss(function(cssContent) {
-            applyCustomCss(cssContent);
-        });
-    }
-}
-
-function saveDesktopSession() {
-    if (!isDesktop || !window.specdown.saveSession) return;
-    window.specdown.saveSession(state.tabs.map(t => ({
-        filePath: t.filePath,
-        filename: t.filename
-    })));
-}
 
 // ===========================
 // Feature: Print / PDF Export
