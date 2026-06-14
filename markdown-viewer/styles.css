@@ -26,9 +26,12 @@
     --text-primary: #ffffff;
     --text-secondary: #cccccc;
     --border-color: #444444;
-    /* Lighter accent on the dark background for readable contrast. */
-    --accent-color: #5aa0ec;
-    --accent-hover: #7ab4f0;
+    /* Accent for the dark theme. #5aa0ec read well as link text but made
+       white-on-accent buttons (Browse / Open / samples) too low-contrast;
+       this medium blue keeps both link text and button text legible on the
+       dark background. A fuller light/dark token split is Phase 2 work. */
+    --accent-color: #4a90e2;
+    --accent-hover: #357abd;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
