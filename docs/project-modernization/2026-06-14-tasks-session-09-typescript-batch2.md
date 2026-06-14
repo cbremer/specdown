@@ -20,9 +20,13 @@ visual-review Phase 2 slices.
 | `features/view-mode.js` | typed the `renderPreview`/`cleanupPanzoom` DI callbacks; null-guard on `markdown-content` |
 | `features/diagram-export.js` | cast the complex-selector `querySelector` to `SVGElement`; null-guards on the 2D context and `toBlob` result |
 | `features/minimap.js` | cast `getElementById` to `HTMLCanvasElement`; null-guard on the 2D context |
+| `features/theme.js` | typed `THEME_ORDER` as the preference union; `setTheme` narrows the incoming string via `.find` |
+| `features/file-loading.js` | typed the `openTab` DI callback + `FileReader` result; cast the file input / url input to `HTMLInputElement` |
+| `features/toc.js` | null-guards on `markdown-content`; `HTMLElement` cast for `offsetTop`; typed `activeId` |
+| `features/search.js` | typed the match/highlight node arrays; `textContent || ''` for the regex/walker paths; `HTMLInputElement` cast |
 
-That's **9 of ~25 source modules** now type-checked (core/platform, core/state,
-core/utils, toast, command-palette, shortcuts from before, plus these six).
+That's **13 of ~25 source modules** now type-checked (core/platform, core/state,
+core/utils, toast, command-palette, shortcuts from before, plus these ten).
 
 ## Patterns established for the DOM-heavy modules
 

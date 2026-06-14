@@ -1,3 +1,4 @@
+// @ts-check
 // Table of contents: builds a heading outline, toggles the sidebar (or the iOS
 // sheet), and runs scroll-spy to highlight the active heading.
 
@@ -10,13 +11,14 @@ import {
   setIOSSheetVisibility,
 } from '../platform/ios-chrome.js';
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
 export function buildToc() {
   const tocNav = el('toc-nav');
   const iosTocNav = el('ios-toc-nav');
   if (!tocNav && !iosTocNav) return;
   const markdownContent = el('markdown-content');
+  if (!markdownContent) return;
   const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
   state.tocEntries = [];
 
@@ -50,6 +52,7 @@ export function buildToc() {
   syncIOSChrome();
 }
 
+/** @param {HTMLElement | null} navElement */
 function renderTocNavigation(navElement) {
   if (!navElement) return;
   navElement.innerHTML = '';
@@ -72,6 +75,7 @@ function renderTocNavigation(navElement) {
   });
 }
 
+/** @param {boolean} [forceState] */
 export function toggleToc(forceState) {
   const nextVisible = typeof forceState === 'boolean' ? forceState : !state.tocVisible;
   if (isIOSNative && nextVisible && (state.currentViewMode !== 'preview' || state.tocEntries.length === 0)) {
@@ -108,13 +112,16 @@ export function scheduleTocActiveHeadingUpdate() {
 function updateTocActiveHeading() {
   if (!state.tocVisible) return;
   const markdownContent = el('markdown-content');
+  if (!markdownContent) return;
   const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
   const scrollTop = markdownContent.scrollTop;
+  /** @type {string | null} */
   let activeId = null;
 
   headings.forEach((h) => {
-    if (h.offsetTop - 60 <= scrollTop) {
-      activeId = h.id;
+    const heading = /** @type {HTMLElement} */ (h);
+    if (heading.offsetTop - 60 <= scrollTop) {
+      activeId = heading.id;
     }
   });
 

@@ -1,12 +1,16 @@
+// @ts-check
 // In-document search: highlight matches in the rendered markdown and navigate
 // between them. State is private to this module.
 
+/** @type {HTMLElement[]} */
 let searchMatches = [];
 let searchCurrentIndex = -1;
+/** @type {HTMLElement[]} */
 let searchHighlightNodes = [];
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
+/** @param {string} str */
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -38,7 +42,7 @@ export function openSearch() {
   const searchBar = el('search-bar');
   if (!searchBar) return;
   searchBar.style.display = 'flex';
-  const searchInput = el('search-input');
+  const searchInput = /** @type {HTMLInputElement | null} */ (el('search-input'));
   if (searchInput) {
     searchInput.value = '';
     searchInput.focus();
@@ -57,6 +61,7 @@ export function closeSearch() {
   updateSearchCount();
 }
 
+/** @param {string} query */
 export function runSearch(query) {
   const markdownContent = el('markdown-content');
   clearSearchHighlights();
@@ -67,6 +72,7 @@ export function runSearch(query) {
     updateSearchCount();
     return;
   }
+  if (!markdownContent) return;
 
   // Walk text nodes in markdownContent, wrap matches with <mark>
   const walker = document.createTreeWalker(markdownContent, NodeFilter.SHOW_TEXT, {
@@ -85,14 +91,14 @@ export function runSearch(query) {
   const nodesToProcess = [];
   let node;
   while ((node = walker.nextNode())) {
-    if (regex.test(node.textContent)) {
+    if (regex.test(node.textContent || '')) {
       nodesToProcess.push(node);
     }
     regex.lastIndex = 0;
   }
 
   nodesToProcess.forEach((textNode) => {
-    const text = textNode.textContent;
+    const text = textNode.textContent || '';
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -129,6 +135,7 @@ export function runSearch(query) {
   updateSearchCount();
 }
 
+/** @param {number} direction */
 export function navigateSearch(direction) {
   if (searchMatches.length === 0) return;
   searchCurrentIndex =
@@ -141,7 +148,7 @@ export function clearSearchHighlights() {
   // Unwrap all <mark> elements
   searchHighlightNodes.forEach((mark) => {
     if (mark.parentNode) {
-      const text = document.createTextNode(mark.textContent);
+      const text = document.createTextNode(mark.textContent || '');
       mark.parentNode.replaceChild(text, mark);
     }
   });
