@@ -1452,6 +1452,141 @@ mark.search-highlight-current {
 }
 
 /* ===========================
+   Command Palette
+   =========================== */
+.command-palette-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12vh;
+    z-index: 10002;
+}
+
+.command-palette {
+    width: min(92vw, 38rem);
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.command-palette-input {
+    border: none;
+    outline: none;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: transparent;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.command-palette-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    overflow-y: auto;
+}
+
+.command-palette-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.command-palette-item.is-selected {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.command-palette-item-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.command-palette-item.is-selected .command-palette-item-hint {
+    opacity: 0.9;
+}
+
+.command-palette-empty {
+    padding: 0.85rem;
+    text-align: center;
+    opacity: 0.7;
+}
+
+/* ===========================
+   Keyboard Shortcuts Sheet
+   =========================== */
+.shortcuts-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+}
+
+.shortcuts-sheet {
+    width: min(92vw, 26rem);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 1.25rem 1.5rem;
+    outline: none;
+}
+
+.shortcuts-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.shortcuts-list {
+    margin: 0;
+}
+
+.shortcuts-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.35rem 0;
+}
+
+.shortcuts-row dt,
+.shortcuts-row dd {
+    margin: 0;
+}
+
+.shortcuts-row dt {
+    min-width: 4.5rem;
+}
+
+.shortcuts-row kbd {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+/* ===========================
    iOS Native Shell
    =========================== */
 .ios-native {

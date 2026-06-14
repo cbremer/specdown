@@ -87,6 +87,17 @@ import {
 import { createTab, configureTabs } from './features/tabs.js';
 import { showToast } from './features/toast.js';
 import {
+  registerCommands,
+  toggleCommandPalette,
+  closeCommandPalette,
+  isCommandPaletteOpen,
+} from './features/command-palette.js';
+import {
+  openShortcutsSheet,
+  closeShortcutsSheet,
+  isShortcutsSheetOpen,
+} from './features/shortcuts.js';
+import {
   setupDesktopIPC,
   updateWatchToggle,
   saveDesktopSession,
@@ -167,6 +178,7 @@ function init() {
         stopWatchingFilePath: (filePath) => stopWatchingFilePath(filePath),
     });
     configureDesktop({ renderMarkdown: (content, title) => renderMarkdown(content, title) });
+    registerAppCommands();
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
@@ -177,6 +189,88 @@ function init() {
     if (isDesktop) {
         setupDesktopIPC();
     }
+}
+
+// ===========================
+// Command Palette registry
+// ===========================
+// The modifier glyph shown in command hints — ⌘ on Apple platforms, Ctrl else.
+const CMD_MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl';
+
+// Commands that act on the open document are only offered while one is visible.
+const isDocumentOpen = () => contentArea.style.display !== 'none';
+
+function registerAppCommands() {
+    registerCommands([
+        {
+            id: 'open-file',
+            title: 'Open file…',
+            keywords: ['browse', 'load', 'new'],
+            run: () => {
+                if (!requestNativeOpenIfAvailable()) fileInput.click();
+            },
+        },
+        {
+            id: 'toggle-theme',
+            title: 'Toggle theme (light / dark / system)',
+            keywords: ['dark', 'light', 'appearance', 'color'],
+            run: () => toggleTheme(),
+        },
+        {
+            id: 'toggle-view',
+            title: 'Toggle raw / preview',
+            keywords: ['markdown', 'source', 'code'],
+            run: () => toggleViewMode(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'toggle-toc',
+            title: 'Toggle table of contents',
+            keywords: ['outline', 'headings', 'contents'],
+            run: () => toggleToc(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'toggle-split',
+            title: 'Toggle split view',
+            keywords: ['preview', 'raw', 'side'],
+            run: () => toggleSplitView(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'toggle-annotate',
+            title: 'Toggle annotation mode',
+            keywords: ['notes', 'comment', 'markup'],
+            run: () => {
+                toggleAnnotationMode();
+                syncIOSChrome();
+            },
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'find',
+            title: 'Find in document',
+            hint: CMD_MOD + ' F',
+            keywords: ['search'],
+            run: () => openSearch(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'print',
+            title: 'Print / Save as PDF',
+            hint: CMD_MOD + ' P',
+            keywords: ['pdf', 'export', 'save'],
+            run: () => performPrint(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'shortcuts',
+            title: 'Keyboard shortcuts',
+            hint: '?',
+            keywords: ['help', 'keys', 'cheatsheet'],
+            run: () => openShortcutsSheet(),
+        },
+    ]);
 }
 
 // ===========================
@@ -404,9 +498,25 @@ function setupEventListeners() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl+K — toggle the command palette (works anywhere)
+        if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+            e.preventDefault();
+            toggleCommandPalette();
+            return;
+        }
+        // "?" — open the keyboard shortcut sheet (unless typing or in a dialog)
+        if (e.key === '?' && !isTypingTarget(e.target) && !isCommandPaletteOpen()) {
+            e.preventDefault();
+            openShortcutsSheet();
+            return;
+        }
         // ESC
         if (e.key === 'Escape') {
-            if (fullscreenOverlay.style.display !== 'none') {
+            if (isCommandPaletteOpen()) {
+                closeCommandPalette();
+            } else if (isShortcutsSheetOpen()) {
+                closeShortcutsSheet();
+            } else if (fullscreenOverlay.style.display !== 'none') {
                 closeFullscreen();
             } else if (searchBar && searchBar.style.display !== 'none') {
                 closeSearch();
@@ -482,6 +592,14 @@ function setupEventListeners() {
 
     // TOC scroll spy
     markdownContent.addEventListener('scroll', scheduleTocActiveHeadingUpdate);
+}
+
+// True when the event target is a text-entry element, so global single-key
+// shortcuts (like "?") don't fire while the user is typing.
+function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable === true;
 }
 
 // ===========================
