@@ -22,6 +22,11 @@ import {
   getSvgNaturalDimensions,
 } from './core/utils.js';
 import {
+  configureMarked,
+  configureMermaid,
+  getMermaidConfig,
+} from './core/render-config.js';
+import {
   downloadDiagramSvg,
   downloadDiagramPng,
 } from './features/diagram-export.js';
@@ -78,7 +83,6 @@ import {
 // Constants
 // ===========================
 const VALID_EXTENSIONS = ['.md', '.markdown'];
-const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 const APP_VERSION = '0.0.100';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
@@ -598,59 +602,6 @@ async function handleUrl(url) {
     } catch (e) {
         showUrlError('Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.');
     }
-}
-
-// ===========================
-// Markdown Configuration
-// ===========================
-function configureMarked() {
-    // Configure marked with custom renderer for syntax highlighting
-    // Use marked.use() which properly integrates overrides without
-    // replacing the entire renderer instance.
-    marked.use({
-        breaks: true,
-        gfm: true,
-        renderer: {
-            // marked v16+ passes the code token object ({ text, lang, ... })
-            // to renderer methods rather than positional (code, lang) args.
-            code({ text: code, lang }) {
-                // Guard against non-string code or missing hljs
-                if (typeof code !== 'string') return false;
-                if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
-                    try {
-                        const highlighted = hljs.highlight(code, { language: lang }).value;
-                        return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
-                    } catch (err) {
-                        console.error('Highlight error:', err);
-                    }
-                }
-                const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
-            }
-        }
-    });
-}
-
-// ===========================
-// Mermaid Configuration
-// ===========================
-function getMermaidConfig() {
-    return {
-        startOnLoad: false,
-        theme: state.currentTheme === 'dark' ? 'dark' : 'default',
-        securityLevel: 'strict',
-        fontFamily: FONT_FAMILY,
-        // Render node labels as SVG <text> rather than <foreignObject> HTML.
-        // Mermaid 11 defaults to HTML labels; our DOMPurify pass strips the
-        // foreignObject, so shapes render but the label text disappears. SVG
-        // text survives sanitization (this matches Mermaid 10's behavior).
-        htmlLabels: false,
-        flowchart: { htmlLabels: false }
-    };
-}
-
-function configureMermaid() {
-    mermaid.initialize(getMermaidConfig());
 }
 
 // ===========================
