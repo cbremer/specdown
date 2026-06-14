@@ -16,6 +16,7 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-14 | [tasks-session-05-phase1-typescript](2026-06-14-tasks-session-05-phase1-typescript.md) | Phase 1 slice 4: gradual TypeScript foundation — `checkJs` toolchain, per-file `// @ts-check` opt-in (leaf modules), native-bridge `globals.d.ts`, `typecheck` enforced in CI |
 | 2026-06-14 | [tasks-session-06-phase2-toasts-a11y](2026-06-14-tasks-session-06-phase2-toasts-a11y.md) | Phase 2 slice 1: accessible toast system replaces all `alert()` calls + accessibility pass (skip link, aria-labels on icon-only controls, decorative-icon hiding, reduced-motion); +22 tests |
 | 2026-06-14 | [tasks-session-07-phase2-theme-motion](2026-06-14-tasks-session-07-phase2-theme-motion.md) | Phase 2 slice 2: auto/system theme (3-way light→dark→auto cycle, `prefers-color-scheme` with live OS updates) + global reduced-motion; +5 tests |
+| 2026-06-14 | [tasks-session-08-phase2-command-palette](2026-06-14-tasks-session-08-phase2-command-palette.md) | Phase 2 slice 3: command palette (Cmd/Ctrl+K, fuzzy filter, keyboard nav, ARIA combobox/listbox) + keyboard shortcut sheet (`?`); +21 tests |
 
 ## Current Status
 
@@ -44,9 +45,11 @@ replaces every `alert()`, plus a skip link, `aria-label`s on icon-only controls,
 decorative-icon hiding, and reduced-motion; (2) **auto/system theme + motion** —
 done (session 07): a 3-way light→dark→auto cycle that follows the OS via
 `prefers-color-scheme` (with live updates) and a global reduced-motion reset;
-(3) the design-token overhaul (spacing/radius/typography scales + retiring the
-stray hard-coded hexes) and the command palette (Cmd+K) + toolbar overflow +
-shortcut sheet remain.
+(3) **command palette + shortcut sheet** — done (session 08): a Cmd/Ctrl+K
+fuzzy-filtered, keyboard-navigable command palette (ARIA combobox/listbox) and a
+`?` keyboard-shortcut sheet. Remaining: toolbar consolidation/overflow and the
+broader design-token overhaul (spacing/radius/typography scales + retiring stray
+hard-coded hexes) — both want a visual-review pass.
 
 The open questions below (iOS investment, Apple Developer membership for
 signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.
