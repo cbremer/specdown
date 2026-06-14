@@ -214,16 +214,22 @@ describe('GitHub Repo Browser', () => {
   // handleRepoUrl
   // ===========================
   describe('handleRepoUrl', () => {
+    const hooks = () => ({
+      clearError: jest.fn(),
+      showError: jest.fn(),
+      onSelectFile: jest.fn(),
+    });
+
     it('returns false for a non-GitHub URL', async () => {
       global.fetch = jest.fn(); // should not be called
-      const result = await handleRepoUrl('https://example.com/not-a-repo');
+      const result = await handleRepoUrl('https://example.com/not-a-repo', hooks());
       expect(result).toBe(false);
     });
 
     it('returns false when fetchGitHubRepoFiles returns null (fetch failed)', async () => {
       global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo');
+      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
       expect(result).toBe(false);
     });
 
@@ -233,7 +239,7 @@ describe('GitHub Repo Browser', () => {
         json: async () => ({ items: [] }),
       });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo');
+      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
       expect(result).toBe(true);
     });
 
@@ -245,7 +251,7 @@ describe('GitHub Repo Browser', () => {
         }),
       });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo');
+      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
       expect(result).toBe(true);
 
       const modal = document.getElementById('repo-browser-modal');
