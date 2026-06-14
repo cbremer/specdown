@@ -13,6 +13,17 @@ import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
 
+// Internal modules (Phase 1 split — extracting cohesive units out of this entry).
+import {
+  escapeHtml,
+  normalizeMarkdownUrl,
+  getSvgNaturalDimensions,
+} from './core/utils.js';
+import {
+  downloadDiagramSvg,
+  downloadDiagramPng,
+} from './features/diagram-export.js';
+
 // ===========================
 // Constants
 // ===========================
@@ -872,28 +883,6 @@ function handleFile(file) {
 // ===========================
 // URL Loading
 // ===========================
-function normalizeMarkdownUrl(url) {
-    // Match GitHub-style blob URLs on any host (supports github.com and GitHub Enterprise)
-    // Pattern: https://<host>/<owner>/<repo>/blob/<ref>/<path>
-    const githubBlobPattern = /^(https?):\/\/([^/]+)\/([^/]+)\/([^/]+)\/blob\/(.+)$/;
-    const match = url.match(githubBlobPattern);
-    if (match) {
-        var protocol = match[1];
-        var host = match[2];
-        var owner = match[3];
-        var repo = match[4];
-        var rest = match[5];
-
-        // github.com uses a dedicated raw content host
-        if (host === 'github.com') {
-            return 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + rest;
-        }
-        // GitHub Enterprise uses /raw/ instead of /blob/ on the same host
-        return protocol + '://' + host + '/' + owner + '/' + repo + '/raw/' + rest;
-    }
-    return url;
-}
-
 function getFilenameFromUrl(url) {
     try {
         const pathname = new URL(url).pathname;
@@ -1181,33 +1170,6 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
 // ===========================
 // Diagram Fit Helpers
 // ===========================
-function getSvgNaturalDimensions(svgElement) {
-    // SVG viewBox format: "min-x min-y width height"
-    // The 3rd and 4th values ARE the width and height (not coordinates)
-    const viewBox = svgElement.getAttribute('viewBox');
-    if (viewBox) {
-        const parts = viewBox.split(/[\s,]+/);
-        if (parts.length >= 4) {
-            const w = parseFloat(parts[2]);
-            const h = parseFloat(parts[3]);
-            if (w > 0 && h > 0) {
-                return { width: w, height: h };
-            }
-        }
-    }
-    // Fall back to width/height attributes (skip percentage values like "100%")
-    const wAttr = svgElement.getAttribute('width');
-    const hAttr = svgElement.getAttribute('height');
-    if (wAttr && hAttr && !String(wAttr).includes('%') && !String(hAttr).includes('%')) {
-        const w = parseFloat(wAttr);
-        const h = parseFloat(hAttr);
-        if (w > 0 && h > 0 && !isNaN(w) && !isNaN(h)) {
-            return { width: w, height: h };
-        }
-    }
-    return null;
-}
-
 function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
     const dims = getSvgNaturalDimensions(svgElement);
     const containerWidth = wrapper.clientWidth;
@@ -1690,15 +1652,6 @@ async function reRenderMermaidDiagrams() {
 // ===========================
 // Tab Management
 // ===========================
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 function saveActiveTabState() {
     if (activeTabId === null) return;
     const tab = tabs.find(t => t.id === activeTabId);
@@ -2358,67 +2311,6 @@ function updateSplitRawPane(content) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
     splitRawContent.innerHTML = `<code>${escaped}</code>`;
-}
-
-// ===========================
-// Feature: Diagram Export (SVG / PNG)
-// ===========================
-function getSvgElementForDiagram(diagramId) {
-    const wrapper = document.getElementById('wrapper-' + diagramId);
-    if (!wrapper) return null;
-    // Try original wrapper first, then fullscreen wrapper
-    return wrapper.querySelector('svg') ||
-        fullscreenOverlay.querySelector('.fullscreen-diagram-wrapper svg');
-}
-
-function downloadDiagramSvg(diagramId) {
-    const svgEl = getSvgElementForDiagram(diagramId);
-    if (!svgEl) return;
-
-    const serializer = new XMLSerializer();
-    const svgStr = serializer.serializeToString(svgEl);
-    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-    triggerDownload(blob, (diagramId || 'diagram') + '.svg');
-}
-
-function downloadDiagramPng(diagramId) {
-    const svgEl = getSvgElementForDiagram(diagramId);
-    if (!svgEl) return;
-
-    const serializer = new XMLSerializer();
-    const svgStr = serializer.serializeToString(svgEl);
-    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        // Use natural SVG viewBox size for crisp export
-        const dims = getSvgNaturalDimensions(svgEl);
-        const scale = 2; // 2x for retina quality
-        canvas.width = (dims ? dims.width : img.naturalWidth || 800) * scale;
-        canvas.height = (dims ? dims.height : img.naturalHeight || 600) * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(scale, scale);
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((pngBlob) => {
-            triggerDownload(pngBlob, (diagramId || 'diagram') + '.png');
-        }, 'image/png');
-    };
-    img.onerror = () => URL.revokeObjectURL(url);
-    img.src = url;
-}
-
-function triggerDownload(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ===========================
