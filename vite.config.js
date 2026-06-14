@@ -31,15 +31,12 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     modulepreload: { polyfill: false },
-    rollupOptions: {
-      output: {
-        // Split the heavy Mermaid engine into its own chunk so it can be
-        // cached independently of the app shell (and lazy-loaded in a later
-        // slice). Highlight.js + DOMPurify stay with the app for now.
-        manualChunks: {
-          mermaid: ['mermaid'],
-        },
-      },
-    },
+    // The heavy Mermaid engine is loaded on demand via a dynamic import (see
+    // core/render-config.js `loadMermaid`), so Rollup automatically code-splits
+    // it — and its diagram-type sub-modules — into async chunks that the app
+    // shell never loads until a document actually contains a diagram. We do NOT
+    // force a manualChunk for mermaid: doing so pulls mermaid's *shared* deps
+    // into that chunk, which the eager entry then has to import statically,
+    // defeating the lazy-load. Highlight.js + DOMPurify stay with the app shell.
   },
 });

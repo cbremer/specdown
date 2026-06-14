@@ -1,7 +1,7 @@
-// marked + mermaid configuration. Pure setup — no callbacks back into the app.
+// marked configuration + the lazy mermaid loader. Pure setup — no callbacks
+// back into the app.
 
 import { marked } from 'marked';
-import mermaid from 'mermaid';
 import hljs from 'highlight.js';
 import { state } from './state.js';
 
@@ -49,6 +49,25 @@ export function getMermaidConfig() {
   };
 }
 
-export function configureMermaid() {
-  mermaid.initialize(getMermaidConfig());
+// Mermaid is by far the heaviest dependency and most documents contain no
+// diagrams, so it is loaded on demand the first time a diagram is rendered
+// rather than shipped in the initial bundle. The dynamic import plus the
+// one-time initialize is cached behind a single promise.
+//
+// Under the Jest harness the module graph is flattened to globals and bare
+// imports are replaced by mocks, so a global `mermaid` stands in for the real
+// dynamic import (the `import('mermaid')` branch is never taken there).
+let mermaidPromise = null;
+export function loadMermaid() {
+  if (!mermaidPromise) {
+    const source =
+      typeof globalThis.mermaid !== 'undefined'
+        ? Promise.resolve(globalThis.mermaid)
+        : import('mermaid').then((module) => module.default);
+    mermaidPromise = source.then((instance) => {
+      instance.initialize(getMermaidConfig());
+      return instance;
+    });
+  }
+  return mermaidPromise;
 }

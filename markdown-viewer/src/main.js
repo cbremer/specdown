@@ -1,15 +1,12 @@
 // SpecDown — shared viewer entry point.
 //
-// Phase 1 (modernization roadmap): the formerly-vendored browser globals are
-// now real ES-module imports bundled by Vite. They are bound to the same
-// identifiers (`marked`, `mermaid`, `Panzoom`, `hljs`, `DOMPurify`) the rest of
-// this file already used, so the app logic below is unchanged. The internal
-// split into core/features/platform modules is a subsequent slice; for now the
-// logic remains in this single module to keep the migration behavior-preserving.
+// Phase 1 (modernization roadmap): the viewer is an ES-module graph bundled by
+// Vite, split into core/features/platform modules. This entry keeps the render
+// core (`renderMarkdown`), the event-wiring hub, and the init() DI wiring; the
+// cohesive features live in their own modules. `marked` and `DOMPurify` are used
+// directly by the render core here; the heavy `mermaid` engine is loaded on
+// demand by the diagram module (see core/render-config.js `loadMermaid`).
 import { marked } from 'marked';
-import mermaid from 'mermaid';
-import Panzoom from '@panzoom/panzoom';
-import hljs from 'highlight.js';
 import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
 
@@ -21,11 +18,7 @@ import {
   getSvgNaturalDimensions,
   revealHtmlComments,
 } from './core/utils.js';
-import {
-  configureMarked,
-  configureMermaid,
-  getMermaidConfig,
-} from './core/render-config.js';
+import { configureMarked } from './core/render-config.js';
 import {
   handleFile,
   handleFileSelect,
@@ -177,7 +170,6 @@ function init() {
     setupTheme();
     setupIOSNativeUI();
     setupEventListeners();
-    configureMermaid();
     configureMarked();
     checkForUpdates();
     checkForDiagramLink();
