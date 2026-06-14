@@ -11,6 +11,8 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-13 | [brainstorm-modernization-evaluation](2026-06-13-brainstorm-modernization-evaluation.md) | PM/UX/engineering evaluation of v0.0.82, north-star vision, phased roadmap (Phases 0–4) |
 | 2026-06-13 | [tasks-session-01-phase0-hygiene](2026-06-13-tasks-session-01-phase0-hygiene.md) | Phase 0 implementation: desktop external-link fix, iOS CI honesty, lockfile + ESLint/Prettier + CI lane + Dependabot + CSP, docs reconciliation |
 | 2026-06-13 | [tasks-session-02-phase1-vite-foundation](2026-06-13-tasks-session-02-phase1-vite-foundation.md) | Phase 1 slice 1: Vite + ES-module build foundation, real npm deps replace `vendor/`, all surfaces load `dist/`, harness migrated, sync-version regression fixed |
+| 2026-06-14 | [tasks-session-03-phase1-module-split](2026-06-14-tasks-session-03-phase1-module-split.md) | Phase 1 slice 2: internal split of the ~2,800-line `src/main.js` into `core/`/`features/`/`platform/` modules (main.js → 588 lines), pure refactor, 297 tests green |
+| 2026-06-14 | [tasks-session-04-phase1-bundle-deps](2026-06-14-tasks-session-04-phase1-bundle-deps.md) | Phase 1 slice 3: heavy-dep loading — lazy-load Mermaid (~2 MB deferred, PR #119) + trim highlight.js to a curated language set (app-shell entry 1.07 MB → 261 kB) |
 
 ## Current Status
 
@@ -22,9 +24,12 @@ slice; lint + 297 tests are green and the web build is verified headlessly.
 **Desktop (Electron) and iOS load `file://` and need a manual smoke-test on the
 branch before merge** (see the session 02 verification checklist).
 
-Remaining Phase 1 work (next slices): split `src/main.js` into
-core/features/platform modules (no file > 500 lines), lazy-load the Mermaid
-engine, begin gradual TypeScript.
+The `src/main.js` monolith has since been **split** into
+core/features/platform modules (session 03, main.js → 588 lines), and the
+**heavy-dependency loading** work is substantially done (session 04): Mermaid
+is lazy-loaded (~2 MB deferred until a diagram renders, PR #119) and
+highlight.js is trimmed to a curated language set (app-shell entry 1.07 MB →
+261 kB). Remaining Phase 1 work: begin **gradual TypeScript** (`checkJs`).
 
 The open questions below (iOS investment, Apple Developer membership for
 signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.
