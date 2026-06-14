@@ -17,7 +17,6 @@ import 'highlight.js/styles/github-dark.css';
 import { isDesktop, isIOSNative } from './core/platform.js';
 import { state } from './core/state.js';
 import {
-  escapeHtml,
   normalizeMarkdownUrl,
   getSvgNaturalDimensions,
   revealHtmlComments,
@@ -93,6 +92,14 @@ import {
   checkForDiagramLink,
   configureShareLinks,
 } from './features/share-links.js';
+import {
+  createTab,
+  switchTab,
+  closeTab,
+  renderTabBar,
+  showDropZone,
+  configureTabs,
+} from './features/tabs.js';
 
 // ===========================
 // Constants
@@ -106,13 +113,8 @@ const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 // Global State
 // ===========================
 
-// Tab state
-const MAX_TABS = 10;
+// Desktop file-watch state
 const watchRefCounts = new Map(); // filePath -> number of watching tabs
-
-
-// Split view state
-
 
 // ===========================
 // DOM Elements
@@ -125,7 +127,6 @@ const openSampleMermaid = document.getElementById('open-sample-mermaid');
 const contentArea = document.getElementById('content-area');
 const markdownContent = document.getElementById('markdown-content');
 const fileName = document.getElementById('file-name');
-const tabBar = document.getElementById('tab-bar');
 const themeToggle = document.getElementById('theme-toggle');
 const fullscreenOverlay = document.getElementById('fullscreen-overlay');
 const viewToggle = document.getElementById('view-toggle');
@@ -135,8 +136,6 @@ const openUrlBtn = document.getElementById('open-url-btn');
 const urlError = document.getElementById('url-error');
 const tocToggle = document.getElementById('toc-toggle');
 const annotationToggle = document.getElementById('annotation-toggle');
-const tocSidebar = document.getElementById('toc-sidebar');
-const tocNav = document.getElementById('toc-nav');
 const splitToggle = document.getElementById('split-toggle');
 const splitRawPane = document.getElementById('split-raw-pane');
 const splitRawContent = document.getElementById('split-raw-content');
@@ -158,7 +157,6 @@ const iosPrintButton = document.getElementById('ios-print-button');
 const iosThemeButton = document.getElementById('ios-theme-button');
 const iosTocSheet = document.getElementById('ios-toc-sheet');
 const iosTocClose = document.getElementById('ios-toc-close');
-const iosTocNav = document.getElementById('ios-toc-nav');
 
 // ===========================
 // Initialization
@@ -170,6 +168,13 @@ function init() {
     configureViewMode({
         renderMarkdown: (content, title) => renderMarkdown(content, title),
         cleanupPanzoom: () => cleanupPanzoomInstances(),
+    });
+    configureTabs({
+        renderMarkdown: (content, title) => renderMarkdown(content, title),
+        updateWatchToggle: () => updateWatchToggle(),
+        saveDesktopSession: () => saveDesktopSession(),
+        startWatchingFilePath: (filePath) => startWatchingFilePath(filePath),
+        stopWatchingFilePath: (filePath) => stopWatchingFilePath(filePath),
     });
     setupVersionInfo();
     setupTheme();
@@ -573,237 +578,6 @@ async function renderMarkdown(content, filename) {
     }
 }
 
-
-function showDropZone() {
-    // Cleanup
-    cleanupPanzoomInstances();
-    closeFullscreen();
-    closeSearch();
-    closeIOSActionSheet();
-    closeIOSTocSheet();
-
-    // Clear content
-    markdownContent.innerHTML = '';
-    fileName.textContent = '';
-    fileInput.value = '';
-    state.currentRawMarkdown = '';
-    state.currentViewMode = 'preview';
-    updateViewToggleButton();
-
-    // Clear tab state
-    state.tabs = [];
-    state.activeTabId = null;
-    renderTabBar();
-
-    // Reset TOC and split view
-    if (state.tocVisible) toggleToc(false);
-    if (state.splitViewActive) toggleSplitView();
-    if (tocNav) tocNav.innerHTML = '';
-    if (iosTocNav) iosTocNav.innerHTML = '';
-    state.tocEntries = [];
-    if (tocSidebar) tocSidebar.style.display = 'none';
-
-    // Show drop zone, hide content
-    contentArea.style.display = 'none';
-    dropZone.style.display = 'flex';
-    syncIOSChrome();
-}
-
-// ===========================
-// Tab Management
-// ===========================
-function saveActiveTabState() {
-    if (state.activeTabId === null) return;
-    const tab = state.tabs.find(t => t.id === state.activeTabId);
-    if (!tab) return;
-    tab.viewMode = state.currentViewMode;
-    tab.scrollTop = markdownContent.scrollTop;
-}
-
-function renderTabBar() {
-    if (!tabBar) return;
-
-    if (state.tabs.length === 0) {
-        tabBar.style.display = 'none';
-        tabBar.innerHTML = '';
-        return;
-    }
-
-    tabBar.style.display = 'flex';
-
-    let html = '';
-    for (const tab of state.tabs) {
-        const isActive = tab.id === state.activeTabId;
-        const hasChanges = !!tab.hasUnseenChanges;
-        const classes = ['tab'];
-        if (isActive) classes.push('tab-active');
-        if (hasChanges) classes.push('tab-has-changes');
-        html += `<div class="${classes.join(' ')}" data-tab-id="${tab.id}">`;
-        if (tab.watching) {
-            const dotTitle = hasChanges ? 'File changed on disk' : 'Watching for changes';
-            html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
-        }
-        html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
-        html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab">×</button>`;
-        html += `</div>`;
-    }
-    html += `<button class="tab-new" title="Open new file">+</button>`;
-
-    tabBar.innerHTML = html;
-
-    tabBar.querySelectorAll('.tab').forEach(tabEl => {
-        tabEl.addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-close')) return;
-            const id = parseInt(tabEl.getAttribute('data-tab-id'), 10);
-            switchTab(id);
-        });
-    });
-
-    tabBar.querySelectorAll('.tab-close').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = parseInt(btn.getAttribute('data-close-id'), 10);
-            closeTab(id);
-        });
-    });
-
-    const newTabBtn = tabBar.querySelector('.tab-new');
-    if (newTabBtn) {
-        newTabBtn.addEventListener('click', () => {
-            if (requestNativeOpenIfAvailable()) return;
-            fileInput.click();
-        });
-    }
-}
-
-function createTab(filename, content, filePath) {
-    if (state.tabs.length >= MAX_TABS) {
-        alert('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.');
-        return;
-    }
-
-    // Save current tab state before switching
-    saveActiveTabState();
-
-    const id = ++state.nextTabId;
-    const tab = {
-        id,
-        filename,
-        filePath: filePath || null,
-        rawMarkdown: content,
-        viewMode: 'preview',
-        scrollTop: 0,
-        watching: !!(isDesktop && filePath),
-        hasUnseenChanges: false
-    };
-    state.tabs.push(tab);
-    state.activeTabId = id;
-
-    if (tab.watching) {
-        startWatchingFilePath(tab.filePath);
-    }
-
-    renderTabBar();
-    if (isDesktop) {
-        updateWatchToggle();
-        saveDesktopSession();
-    }
-    renderMarkdown(content, filename);
-}
-
-async function switchTab(id) {
-    if (id === state.activeTabId) return;
-
-    saveActiveTabState();
-    state.activeTabId = id;
-    const tab = state.tabs.find(t => t.id === id);
-    if (!tab) return;
-
-    // Clear the "unseen changes" flag now that the user is looking at it.
-    tab.hasUnseenChanges = false;
-
-    renderTabBar();
-    if (isDesktop) updateWatchToggle();
-    cleanupPanzoomInstances();
-
-    if (tab.viewMode === 'raw') {
-        if (state.tocVisible) {
-            toggleToc(false);
-        }
-        state.currentRawMarkdown = tab.rawMarkdown;
-        state.currentViewMode = 'raw';
-        const escaped = tab.rawMarkdown
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
-        fileName.textContent = tab.filename;
-        dropZone.style.display = 'none';
-        contentArea.style.display = 'flex';
-        updateViewToggleButton();
-        markdownContent.scrollTop = tab.scrollTop;
-        syncIOSChrome();
-    } else {
-        await renderMarkdown(tab.rawMarkdown, tab.filename);
-        markdownContent.scrollTop = tab.scrollTop;
-    }
-}
-
-async function closeTab(id) {
-    const idx = state.tabs.findIndex(t => t.id === id);
-    if (idx === -1) return;
-
-    const wasActive = (id === state.activeTabId);
-    const closedTab = state.tabs[idx];
-
-    // Stop watching before removing the tab
-    if (isDesktop && closedTab.watching && closedTab.filePath) {
-        stopWatchingFilePath(closedTab.filePath);
-    }
-
-    if (wasActive) {
-        cleanupPanzoomInstances();
-    }
-
-    state.tabs.splice(idx, 1);
-
-    if (isDesktop) saveDesktopSession();
-
-    if (state.tabs.length === 0) {
-        state.activeTabId = null;
-        renderTabBar();
-        if (isDesktop) updateWatchToggle();
-        showDropZone();
-    } else if (wasActive) {
-        const newIdx = Math.min(idx, state.tabs.length - 1);
-        const newTab = state.tabs[newIdx];
-        state.activeTabId = newTab.id;
-        renderTabBar();
-        if (isDesktop) updateWatchToggle();
-
-        if (newTab.viewMode === 'raw') {
-            if (state.tocVisible) {
-                toggleToc(false);
-            }
-            state.currentRawMarkdown = newTab.rawMarkdown;
-            state.currentViewMode = 'raw';
-            const escaped = newTab.rawMarkdown
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
-            fileName.textContent = newTab.filename;
-            dropZone.style.display = 'none';
-            contentArea.style.display = 'flex';
-            updateViewToggleButton();
-            syncIOSChrome();
-        } else {
-            await renderMarkdown(newTab.rawMarkdown, newTab.filename);
-        }
-    } else {
-        renderTabBar();
-    }
-}
 
 // ===========================
 // Desktop IPC Integration
