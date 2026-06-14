@@ -1,10 +1,9 @@
 import Panzoom from '@panzoom/panzoom';
-import mermaid from 'mermaid';
 import DOMPurify from 'dompurify';
 import { state } from '../core/state.js';
 import { isIOSNative } from '../core/platform.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
-import { getMermaidConfig } from '../core/render-config.js';
+import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
 import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
 import { shareDiagramLink } from './share-links.js';
@@ -19,6 +18,10 @@ export async function processMermaidDiagrams() {
     const codeBlocks = el('markdown-content').querySelectorAll('code.language-mermaid');
 
     if (codeBlocks.length === 0) return;
+
+    // Load the mermaid engine on demand (this is the only place — plus the theme
+    // re-render — that needs it, so documents without diagrams never pay for it).
+    const mermaid = await loadMermaid();
 
     // Process each mermaid diagram
     for (let i = 0; i < codeBlocks.length; i++) {
@@ -492,11 +495,15 @@ export function cleanupPanzoomInstances() {
 // Re-render Mermaid (for theme change)
 // ===========================
 export async function reRenderMermaidDiagrams() {
-    // Update mermaid theme
-    mermaid.initialize(getMermaidConfig());
-
     // Get all diagram containers
     const containers = el('markdown-content').querySelectorAll('.diagram-container');
+
+    // Nothing to re-theme means no need to pull in the mermaid engine.
+    if (containers.length === 0) return;
+
+    // Update mermaid theme (the engine is already loaded if diagrams exist)
+    const mermaid = await loadMermaid();
+    mermaid.initialize(getMermaidConfig());
 
     for (const container of containers) {
         const wrapper = container.querySelector('.diagram-wrapper');

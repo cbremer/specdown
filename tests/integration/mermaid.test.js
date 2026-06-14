@@ -13,14 +13,18 @@ describe('Mermaid Diagram Processing', () => {
     loadHTML(document);
     loadApp(document);
     mermaid.render.mockClear();
+    mermaid.initialize.mockClear();
     Panzoom.mockClear();
   });
 
-  describe('configureMermaid', () => {
-    it('should configure mermaid with correct theme for light mode', () => {
+  // Mermaid is loaded (and initialized once) on demand via loadMermaid rather
+  // than eagerly at startup, so these assert the lazy loader applies the right
+  // config the first time it runs.
+  describe('loadMermaid', () => {
+    it('should configure mermaid with correct theme for light mode', async () => {
       localStorage.getItem.mockReturnValue('light');
 
-      configureMermaid();
+      await loadMermaid();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -29,12 +33,12 @@ describe('Mermaid Diagram Processing', () => {
       );
     });
 
-    it('should configure mermaid with correct theme for dark mode', () => {
+    it('should configure mermaid with correct theme for dark mode', async () => {
       // Reset and configure for dark mode
       document.documentElement.setAttribute('data-theme', 'dark');
       state.currentTheme = 'dark';
 
-      configureMermaid();
+      await loadMermaid();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -43,8 +47,8 @@ describe('Mermaid Diagram Processing', () => {
       );
     });
 
-    it('should set security level to strict', () => {
-      configureMermaid();
+    it('should set security level to strict', async () => {
+      await loadMermaid();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -53,8 +57,8 @@ describe('Mermaid Diagram Processing', () => {
       );
     });
 
-    it('should configure font family', () => {
-      configureMermaid();
+    it('should configure font family', async () => {
+      await loadMermaid();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(
         expect.objectContaining({
