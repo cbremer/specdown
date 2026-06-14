@@ -48,9 +48,14 @@ Everything here is a **pure refactor** (no behavior change); the gate is
 | `features/share-links.js` | diagram deep links (DI: createTab → `openTab`) |
 | `features/file-loading.js` | local file + URL loading (DI: createTab → `openTab`) |
 | `platform/ios-chrome.js` | iOS action bar / sheets / native print bridge |
-| `features/diagrams.js` | (in progress) mermaid render + panzoom + fullscreen engine |
+| `features/diagrams.js` | mermaid render + panzoom + fullscreen engine |
+| `features/tabs.js` | tab create/switch/close + tab bar + drop-zone reset (DI: renderMarkdown + desktop watch/session) |
+| `platform/desktop.js` | Electron file-watch + watch toggle + IPC + session (imports tabs; DI: renderMarkdown) |
 
-`src/main.js`: **2,814 → ~1,540 lines** and falling.
+`src/main.js`: **2,814 → 588 lines.** What remains is the genuine entry: the
+import graph, DOM-handle constants, `init()` DI wiring, `setupEventListeners`
+(the event-wiring hub), the drag/drop handlers, and `renderMarkdown` (the
+render core the feature modules call back into).
 
 ## Patterns / gotchas (for future extractions)
 
@@ -61,21 +66,25 @@ Everything here is a **pure refactor** (no behavior change); the gate is
   modules at global scope, a module-level `let`/`const` whose name matches a
   main.js global silently shadows it. Hit twice:
   - a local `state` in `initializePanzoom` (renamed `instanceState`);
-  - a DI var `createTab` in share-links/file-loading (renamed `openTab`).
-  Rule: never name a module-top `let`/`const` after a main.js global.
+  - a DI var `createTab` in share-links/file-loading (renamed `openTab`);
+  - a render DI var that would be `renderDoc` in both tabs.js and desktop.js —
+    desktop.js's is named `reloadDoc` so the two modules don't share one global.
+  Rule: never name a module-top `let`/`const` after a main.js global **or after
+  another module's same-named DI var**.
+- **Breaking the tabs ↔ desktop cycle:** tabs and desktop call into each other
+  (tabs → watch/session; desktop → createTab/closeTab). To avoid a circular
+  import (which the depth-first harness can't order), the dependency is made
+  one-way: `desktop.js` imports `tabs.js` directly, while `tabs.js` receives the
+  desktop callbacks via `configureTabs` DI. main.js wires both in `init()`.
 - The Vite build is the guard for cross-module **state reassignment** (Rollup
   errors on reassigning an imported binding); the 297 tests guard behavior.
 
-## Remaining (the interwoven core)
+## Remaining / next
 
-- `features/diagrams.js` (mermaid render / panzoom / fullscreen) — being
-  extracted; it's import-only (no callbacks into main), so it moves cleanly.
-- **Tab management** (`createTab`/`switchTab`/`closeTab`/`renderTabBar`/…) and
-  **Desktop IPC** (`setupDesktopIPC` + file-watch) are tightly intertwined with
-  each other and with `renderMarkdown`; these need a careful, deliberate pass
-  (likely a `features/tabs.js` + `platform/desktop.js` with DI). `renderMarkdown`
-  + `revealHtmlComments` + the `setupEventListeners` wiring hub remain the
-  natural core of `main.js`.
+- The internal split is **done**: every cohesive unit is now a module and
+  `main.js` is the 588-line entry (wiring hub + render core). No file is wildly
+  oversized; `setupEventListeners` is the one dense block left and it's
+  inherently the entry's job, so further splitting is low-value.
 - After the split: lazy-load the Mermaid engine, then gradual TypeScript
   (`checkJs`).
 
