@@ -1,12 +1,18 @@
+// @ts-check
 // Diagram minimap (shown in the fullscreen overlay): a scaled-down render of
 // the diagram plus a viewport indicator reflecting the current pan/zoom.
 
 import { getSvgNaturalDimensions } from '../core/utils.js';
 
-/** Render the diagram SVG into the minimap canvas. */
+/**
+ * Render the diagram SVG into the minimap canvas.
+ * @param {SVGElement} svgElement
+ */
 export function updateMinimap(svgElement) {
   const minimapEl = document.getElementById('fullscreen-minimap');
-  const canvas = document.getElementById('minimap-canvas');
+  const canvas = /** @type {HTMLCanvasElement | null} */ (
+    document.getElementById('minimap-canvas')
+  );
   if (!minimapEl || !canvas) return;
 
   const dims = getSvgNaturalDimensions(svgElement);
@@ -32,6 +38,10 @@ export function updateMinimap(svgElement) {
   const img = new Image();
   img.onload = () => {
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      URL.revokeObjectURL(url);
+      return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
@@ -40,10 +50,16 @@ export function updateMinimap(svgElement) {
   img.src = url;
 }
 
-/** Position the minimap viewport rectangle for the current pan/zoom. */
+/**
+ * Position the minimap viewport rectangle for the current pan/zoom.
+ * @param {any} panzoomInstance
+ * @param {HTMLElement} wrapper
+ */
 export function updateMinimapViewport(panzoomInstance, wrapper) {
   const viewportEl = document.getElementById('minimap-viewport');
-  const canvas = document.getElementById('minimap-canvas');
+  const canvas = /** @type {HTMLCanvasElement | null} */ (
+    document.getElementById('minimap-canvas')
+  );
   if (!viewportEl || !canvas || !panzoomInstance) return;
 
   const pan = panzoomInstance.getPan();

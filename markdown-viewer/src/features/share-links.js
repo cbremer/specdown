@@ -1,3 +1,4 @@
+// @ts-check
 // Shareable diagram deep links: copy a link that encodes a Mermaid diagram's
 // source, and open such a link on load as a one-diagram document.
 //
@@ -6,10 +7,14 @@
 
 const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 
+/** @type {(filename: string, markdown?: string, filePath?: string | null) => void} */
 let openTab = () => {};
 
+/** @param {{ createTab?: Function }} [deps] */
 export function configureShareLinks(deps) {
-  if (deps && typeof deps.createTab === 'function') openTab = deps.createTab;
+  if (deps && typeof deps.createTab === 'function') {
+    openTab = /** @type {typeof openTab} */ (deps.createTab);
+  }
 }
 
 function showShareToast() {
@@ -21,6 +26,7 @@ function showShareToast() {
   }, 2500);
 }
 
+/** @param {string} diagramId */
 export function shareDiagramLink(diagramId) {
   const wrapper = document.getElementById('wrapper-' + diagramId);
   if (!wrapper) return;

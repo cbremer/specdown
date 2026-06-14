@@ -1,9 +1,10 @@
+// @ts-check
 // Split view: show the rendered preview alongside the raw markdown source.
 
 import { state } from '../core/state.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
 export function toggleSplitView() {
   state.splitViewActive = !state.splitViewActive;
@@ -28,6 +29,7 @@ export function toggleSplitView() {
   syncIOSChrome();
 }
 
+/** @param {string} content */
 export function updateSplitRawPane(content) {
   const splitRawContent = el('split-raw-content');
   if (!splitRawContent) return;
