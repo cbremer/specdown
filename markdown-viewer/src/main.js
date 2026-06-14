@@ -27,6 +27,12 @@ import {
   getMermaidConfig,
 } from './core/render-config.js';
 import {
+  handleFile,
+  handleFileSelect,
+  handleUrl,
+  configureFileLoading,
+} from './features/file-loading.js';
+import {
   downloadDiagramSvg,
   downloadDiagramPng,
 } from './features/diagram-export.js';
@@ -82,7 +88,6 @@ import {
 // ===========================
 // Constants
 // ===========================
-const VALID_EXTENSIONS = ['.md', '.markdown'];
 const APP_VERSION = '0.0.100';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
@@ -151,6 +156,7 @@ const iosTocNav = document.getElementById('ios-toc-nav');
 // ===========================
 function init() {
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
+    configureFileLoading({ createTab: (...a) => createTab(...a) });
     configureShareLinks({ createTab: (filename, md) => createTab(filename, md) });
     configureViewMode({
         renderMarkdown: (content, title) => renderMarkdown(content, title),
@@ -502,107 +508,6 @@ function handleDrop(e) {
     }
 }
 
-function handleFileSelect(e) {
-    const files = e.target.files;
-    for (let i = 0; i < files.length; i++) {
-        handleFile(files[i]);
-    }
-    // Reset so the same file can be re-opened in a new tab
-    if (e.target && 'value' in e.target) {
-        e.target.value = '';
-    }
-}
-
-// ===========================
-// File Processing
-// ===========================
-function handleFile(file) {
-    // Validate file type
-    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-
-    if (!VALID_EXTENSIONS.includes(fileExtension)) {
-        alert('Please select a valid Markdown file (.md or .markdown)');
-        return;
-    }
-
-    // Read file and open in a new tab
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const content = e.target.result;
-        createTab(file.name, content, file.path || null);
-    };
-    reader.onerror = () => {
-        alert('Error reading file. Please try again.');
-    };
-    reader.readAsText(file);
-}
-
-// ===========================
-// URL Loading
-// ===========================
-function getFilenameFromUrl(url) {
-    try {
-        const pathname = new URL(url).pathname;
-        const segments = pathname.split('/').filter(function(s) { return s.length > 0; });
-        if (segments.length > 0) {
-            return segments[segments.length - 1];
-        }
-    } catch (e) {
-        // ignore invalid URL
-    }
-    return 'untitled.md';
-}
-
-function showUrlError(message) {
-    if (!urlError) return;
-    urlError.textContent = message;
-    urlError.style.display = '';
-}
-
-function clearUrlError() {
-    if (!urlError) return;
-    urlError.style.display = 'none';
-    urlError.textContent = '';
-}
-
-async function handleUrl(url) {
-    clearUrlError();
-
-    if (!url || !/^https?:\/\//.test(url)) {
-        showUrlError('Please enter a valid URL starting with http:// or https://');
-        return;
-    }
-
-    // Check if this is a GitHub repo URL to show the file browser
-    const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(url);
-    if (isRepoBrowserUrl) {
-        const handled = await handleRepoUrl(url, {
-            clearError: clearUrlError,
-            showError: showUrlError,
-            onSelectFile: handleUrl,
-        });
-        if (handled) {
-            if (urlInput) urlInput.value = '';
-            return;
-        }
-    }
-
-    const fetchUrl = normalizeMarkdownUrl(url);
-    const filename = getFilenameFromUrl(url);
-
-    try {
-        const response = await fetch(fetchUrl, { credentials: 'omit' });
-        if (!response.ok) {
-            showUrlError('Failed to fetch URL: HTTP ' + response.status);
-            return;
-        }
-        const markdown = await response.text();
-        if (urlInput) urlInput.value = '';
-        createTab(filename, markdown);
-    } catch (e) {
-        showUrlError('Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.');
-    }
-}
 
 // ===========================
 // Markdown Rendering
