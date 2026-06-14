@@ -14,6 +14,8 @@ import DOMPurify from 'dompurify';
 import 'highlight.js/styles/github-dark.css';
 
 // Internal modules (Phase 1 split — extracting cohesive units out of this entry).
+import { isDesktop, isIOSNative } from './core/platform.js';
+import { state } from './core/state.js';
 import {
   escapeHtml,
   normalizeMarkdownUrl,
@@ -64,20 +66,6 @@ let nextTabId = 0;
 const MAX_TABS = 10;
 const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
-// Desktop detection
-const isDesktop = !!(typeof window !== 'undefined' && window.specdown && window.specdown.isDesktop);
-const isIOSNative = !!(
-    typeof window !== 'undefined'
-    && window.iosNative
-    && window.webkit
-    && window.webkit.messageHandlers
-    && window.webkit.messageHandlers.specdown
-);
-
-// TOC state
-let tocVisible = false;
-let tocEntries = [];
-let tocScrollSpyScheduled = false;
 
 // Split view state
 let splitViewActive = false;
@@ -213,7 +201,7 @@ function closeIOSActionSheet() {
 
 function closeIOSTocSheet() {
     setIOSSheetVisibility(iosTocSheet, false);
-    tocVisible = false;
+    state.tocVisible = false;
     if (tocToggle) tocToggle.classList.remove('active');
     syncIOSChrome();
 }
@@ -410,7 +398,7 @@ function syncIOSChrome() {
 
     const hasContent = hasLoadedContent();
     const showActionBar = (hasContent || tabs.length > 0) && iosLayoutMode !== 'pad';
-    const canShowContents = hasContent && currentViewMode === 'preview' && tocEntries.length > 0;
+    const canShowContents = hasContent && currentViewMode === 'preview' && state.tocEntries.length > 0;
 
     if (iosActionBar) {
         iosActionBar.style.display = showActionBar ? 'grid' : 'none';
@@ -418,7 +406,7 @@ function syncIOSChrome() {
 
     if (iosContentsButton) {
         iosContentsButton.disabled = !canShowContents;
-        iosContentsButton.classList.toggle('active', tocVisible);
+        iosContentsButton.classList.toggle('active', state.tocVisible);
     }
 
     if (iosViewButton) {
@@ -535,7 +523,7 @@ function toggleViewMode() {
 
     if (currentViewMode === 'preview') {
         currentViewMode = 'raw';
-        if (tocVisible) {
+        if (state.tocVisible) {
             toggleToc(false);
         }
         // Clean up panzoom before switching
@@ -1594,11 +1582,11 @@ function showDropZone() {
     renderTabBar();
 
     // Reset TOC and split view
-    if (tocVisible) toggleToc(false);
+    if (state.tocVisible) toggleToc(false);
     if (splitViewActive) toggleSplitView();
     if (tocNav) tocNav.innerHTML = '';
     if (iosTocNav) iosTocNav.innerHTML = '';
-    tocEntries = [];
+    state.tocEntries = [];
     if (tocSidebar) tocSidebar.style.display = 'none';
 
     // Show drop zone, hide content
@@ -1783,7 +1771,7 @@ async function switchTab(id) {
     cleanupPanzoomInstances();
 
     if (tab.viewMode === 'raw') {
-        if (tocVisible) {
+        if (state.tocVisible) {
             toggleToc(false);
         }
         currentRawMarkdown = tab.rawMarkdown;
@@ -1838,7 +1826,7 @@ async function closeTab(id) {
         if (isDesktop) updateWatchToggle();
 
         if (newTab.viewMode === 'raw') {
-            if (tocVisible) {
+            if (state.tocVisible) {
                 toggleToc(false);
             }
             currentRawMarkdown = newTab.rawMarkdown;
@@ -2048,7 +2036,7 @@ function saveDesktopSession() {
 function buildToc() {
     if (!tocNav && !iosTocNav) return;
     const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
-    tocEntries = [];
+    state.tocEntries = [];
 
     headings.forEach((h, i) => {
         // Ensure each heading has an id for anchor linking
@@ -2056,7 +2044,7 @@ function buildToc() {
             h.id = 'toc-heading-' + i;
         }
 
-        tocEntries.push({
+        state.tocEntries.push({
             id: h.id,
             level: parseInt(h.tagName[1], 10),
             text: h.textContent
@@ -2067,10 +2055,10 @@ function buildToc() {
     renderTocNavigation(iosTocNav);
 
     if (tocToggle) {
-        tocToggle.style.display = tocEntries.length > 0 && !isIOSNative ? '' : 'none';
+        tocToggle.style.display = state.tocEntries.length > 0 && !isIOSNative ? '' : 'none';
     }
 
-    if (tocEntries.length === 0 && tocVisible) {
+    if (state.tocEntries.length === 0 && state.tocVisible) {
         toggleToc(false);
     } else {
         scheduleTocActiveHeadingUpdate();
@@ -2083,7 +2071,7 @@ function renderTocNavigation(navElement) {
     if (!navElement) return;
     navElement.innerHTML = '';
 
-    tocEntries.forEach((entry) => {
+    state.tocEntries.forEach((entry) => {
         const link = document.createElement('a');
         link.className = 'toc-link toc-level-' + entry.level;
         link.href = '#' + entry.id;
@@ -2102,14 +2090,14 @@ function renderTocNavigation(navElement) {
 }
 
 function toggleToc(forceState) {
-    const nextVisible = typeof forceState === 'boolean' ? forceState : !tocVisible;
-    if (isIOSNative && nextVisible && (currentViewMode !== 'preview' || tocEntries.length === 0)) {
+    const nextVisible = typeof forceState === 'boolean' ? forceState : !state.tocVisible;
+    if (isIOSNative && nextVisible && (currentViewMode !== 'preview' || state.tocEntries.length === 0)) {
         return;
     }
 
-    tocVisible = nextVisible;
+    state.tocVisible = nextVisible;
     if (isIOSNative) {
-        if (tocVisible) {
+        if (state.tocVisible) {
             closeIOSActionSheet();
             setIOSSheetVisibility(iosTocSheet, true);
             updateTocActiveHeading();
@@ -2117,23 +2105,23 @@ function toggleToc(forceState) {
             setIOSSheetVisibility(iosTocSheet, false);
         }
     } else if (tocSidebar) {
-        tocSidebar.style.display = tocVisible ? '' : 'none';
+        tocSidebar.style.display = state.tocVisible ? '' : 'none';
     }
-    if (tocToggle) tocToggle.classList.toggle('active', tocVisible);
+    if (tocToggle) tocToggle.classList.toggle('active', state.tocVisible);
     syncIOSChrome();
 }
 
 function scheduleTocActiveHeadingUpdate() {
-    if (!tocVisible || tocScrollSpyScheduled) return;
-    tocScrollSpyScheduled = true;
+    if (!state.tocVisible || state.tocScrollSpyScheduled) return;
+    state.tocScrollSpyScheduled = true;
     requestAnimationFrame(() => {
-        tocScrollSpyScheduled = false;
+        state.tocScrollSpyScheduled = false;
         updateTocActiveHeading();
     });
 }
 
 function updateTocActiveHeading() {
-    if (!tocVisible) return;
+    if (!state.tocVisible) return;
     const headings = markdownContent.querySelectorAll('h1, h2, h3, h4');
     const scrollTop = markdownContent.scrollTop;
     let activeId = null;
