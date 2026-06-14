@@ -24,9 +24,17 @@ visual-review Phase 2 slices.
 | `features/file-loading.js` | typed the `openTab` DI callback + `FileReader` result; cast the file input / url input to `HTMLInputElement` |
 | `features/toc.js` | null-guards on `markdown-content`; `HTMLElement` cast for `offsetTop`; typed `activeId` |
 | `features/search.js` | typed the match/highlight node arrays; `textContent || ''` for the regex/walker paths; `HTMLInputElement` cast |
+| `features/annotations.js` | typed the localStorage record + DOM-handler params; `String(idx)` for `setAttribute`; `e.currentTarget`/`e.target` casts |
+| `features/repo-browser.js` | fixed the malformed `@returns` typedef into a `RepoFile` type; guarded/cast the modal query results |
+| `core/render-config.js` | typed the cached `loadMermaid` promise; the marked renderer's `string \| false` return type-checks cleanly |
+| `features/tabs.js` | typed the 5 DI callbacks + the `Tab` literal; null-safe `setText`/`setHtml`/`setDisplay` DOM helpers; `parseInt(... \|\| '')` |
+| `core/highlight.js` | trivial — the curated grammar registry checks as-is |
 
-That's **13 of ~25 source modules** now type-checked (core/platform, core/state,
-core/utils, toast, command-palette, shortcuts from before, plus these ten).
+That's **21 of ~25 source modules** now type-checked (core/platform, core/state,
+core/utils, toast, command-palette, shortcuts from before, plus these fifteen).
+The only holdouts are the four heaviest — `features/diagrams.js` (the
+panzoom/fullscreen engine), `platform/desktop.js`, `platform/ios-chrome.js`, and
+the `main.js` wiring hub — left for a later, careful batch.
 
 ## Patterns established for the DOM-heavy modules
 

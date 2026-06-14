@@ -1,3 +1,4 @@
+// @ts-check
 // GitHub repo file browser: accept a github.com/<owner>/<repo> URL and show a
 // list of the repo's markdown files to pick from.
 //
@@ -7,9 +8,17 @@
 import { escapeHtml } from '../core/utils.js';
 
 /**
+ * @typedef {object} RepoFile
+ * @property {string} path
+ * @property {string} url
+ * @property {string} rawUrl
+ */
+
+/**
  * Fetch the markdown files for a GitHub repo URL via the Search API.
- * @returns {Promise<Array<{path,url,rawUrl}>|null>} files, [] if none, or null
- *   when the URL isn't a recognized repo URL / the fetch failed.
+ * @param {string} repoUrl
+ * @returns {Promise<RepoFile[] | null>} files, [] if none, or null when the URL
+ *   isn't a recognized repo URL / the fetch failed.
  */
 export async function fetchGitHubRepoFiles(repoUrl) {
   // Match: https://github.com/<owner>/<repo>
@@ -31,7 +40,7 @@ export async function fetchGitHubRepoFiles(repoUrl) {
     const data = await resp.json();
     if (!data.items || data.items.length === 0) return [];
 
-    return data.items.map((item) => ({
+    return data.items.map((/** @type {any} */ item) => ({
       path: item.path,
       url: item.html_url,
       rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${item.path}`,
@@ -63,6 +72,11 @@ export async function handleRepoUrl(url, { clearError, showError, onSelectFile }
   return true;
 }
 
+/**
+ * @param {RepoFile[]} files
+ * @param {string} repoUrl
+ * @param {Function} onSelectFile
+ */
 function showRepoBrowser(files, repoUrl, onSelectFile) {
   let modal = document.getElementById('repo-browser-modal');
   if (!modal) {
@@ -71,10 +85,11 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
     modal.className = 'repo-browser-modal';
     document.body.appendChild(modal);
   }
+  const panel = modal;
 
   const repoName = repoUrl.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
 
-  modal.innerHTML = `
+  panel.innerHTML = `
         <div class="repo-browser-content">
             <div class="repo-browser-header">
                 <span class="repo-browser-title">${escapeHtml(repoName)}</span>
@@ -97,30 +112,39 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
             </ul>
         </div>
     `;
-  modal.style.display = 'flex';
+  panel.style.display = 'flex';
 
-  modal.querySelector('.repo-browser-close').addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.style.display = 'none';
-  });
-
-  const filterInput = modal.querySelector('.repo-browser-filter');
-  filterInput.addEventListener('input', () => {
-    const q = filterInput.value.toLowerCase();
-    modal.querySelectorAll('.repo-browser-item').forEach((item) => {
-      const path = item.querySelector('.repo-file-path').textContent.toLowerCase();
-      item.style.display = path.includes(q) ? '' : 'none';
+  const closeBtn = panel.querySelector('.repo-browser-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      panel.style.display = 'none';
     });
-  });
-  filterInput.focus();
+  }
 
-  modal.querySelectorAll('.repo-browser-item').forEach((item) => {
+  panel.addEventListener('click', (e) => {
+    if (e.target === panel) panel.style.display = 'none';
+  });
+
+  const filterInput = /** @type {HTMLInputElement | null} */ (
+    panel.querySelector('.repo-browser-filter')
+  );
+  if (filterInput) {
+    filterInput.addEventListener('input', () => {
+      const q = filterInput.value.toLowerCase();
+      panel.querySelectorAll('.repo-browser-item').forEach((node) => {
+        const item = /** @type {HTMLElement} */ (node);
+        const pathEl = item.querySelector('.repo-file-path');
+        const path = (pathEl?.textContent || '').toLowerCase();
+        item.style.display = path.includes(q) ? '' : 'none';
+      });
+    });
+    filterInput.focus();
+  }
+
+  panel.querySelectorAll('.repo-browser-item').forEach((item) => {
     item.addEventListener('click', () => {
       const rawUrl = item.getAttribute('data-raw-url');
-      modal.style.display = 'none';
+      panel.style.display = 'none';
       onSelectFile(rawUrl);
     });
   });
