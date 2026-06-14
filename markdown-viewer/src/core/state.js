@@ -31,7 +31,8 @@
 /**
  * @typedef {object} AppState
  * @property {any[]} currentPanzoomInstances Active panzoom instances to clean up.
- * @property {string} currentTheme 'light' or 'dark'.
+ * @property {'light' | 'dark'} currentTheme The resolved, applied theme.
+ * @property {'light' | 'dark' | 'auto'} themePreference User choice; 'auto' follows the OS.
  * @property {string} currentRawMarkdown Raw source of the active document.
  * @property {'preview' | 'raw'} currentViewMode
  * @property {Tab[]} tabs Open file tabs.
@@ -48,7 +49,13 @@
 export const state = {
   // Render / view
   currentPanzoomInstances: [],
-  currentTheme: localStorage.getItem('theme') || 'light',
+  // `themePreference` is the persisted user choice (light/dark/auto);
+  // `currentTheme` is the resolved theme that's actually applied, set by
+  // setupTheme() at init (an 'auto' preference resolves via prefers-color-scheme).
+  currentTheme: 'light',
+  themePreference: /** @type {'light' | 'dark' | 'auto'} */ (
+    localStorage.getItem('theme') || 'auto'
+  ),
   currentRawMarkdown: '',
   currentViewMode: 'preview', // 'preview' or 'raw'
 
