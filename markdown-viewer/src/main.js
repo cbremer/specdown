@@ -23,6 +23,13 @@ import {
   downloadDiagramSvg,
   downloadDiagramPng,
 } from './features/diagram-export.js';
+import {
+  openSearch,
+  closeSearch,
+  runSearch,
+  navigateSearch,
+  clearSearchHighlights,
+} from './features/search.js';
 
 // ===========================
 // Constants
@@ -69,10 +76,6 @@ let tocScrollSpyScheduled = false;
 let splitViewActive = false;
 let iosLayoutMode = 'phone';
 
-// Search state
-let searchMatches = [];
-let searchCurrentIndex = -1;
-let searchHighlightNodes = [];
 
 // ===========================
 // DOM Elements
@@ -2135,149 +2138,6 @@ function updateTocActiveHeading() {
             link.classList.toggle('toc-link-active', isActive);
         });
     });
-}
-
-// ===========================
-// Feature: In-Document Search
-// ===========================
-function openSearch() {
-    if (!searchBar) return;
-    searchBar.style.display = 'flex';
-    if (searchInput) {
-        searchInput.value = '';
-        searchInput.focus();
-    }
-    clearSearchHighlights();
-    updateSearchCount();
-}
-
-function closeSearch() {
-    if (!searchBar) return;
-    searchBar.style.display = 'none';
-    clearSearchHighlights();
-    searchMatches = [];
-    searchCurrentIndex = -1;
-    updateSearchCount();
-}
-
-function runSearch(query) {
-    clearSearchHighlights();
-    searchMatches = [];
-    searchCurrentIndex = -1;
-
-    if (!query || query.length < 1) {
-        updateSearchCount();
-        return;
-    }
-
-    // Walk text nodes in markdownContent, wrap matches with <mark>
-    const walker = document.createTreeWalker(
-        markdownContent,
-        NodeFilter.SHOW_TEXT,
-        {
-            acceptNode: (node) => {
-                // Skip script/style and diagram wrappers
-                const parent = node.parentElement;
-                if (!parent) return NodeFilter.FILTER_REJECT;
-                const tag = parent.tagName;
-                if (tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
-                if (parent.closest('.diagram-wrapper')) return NodeFilter.FILTER_REJECT;
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        }
-    );
-
-    const regex = new RegExp(escapeRegex(query), 'gi');
-    const nodesToProcess = [];
-    let node;
-    while ((node = walker.nextNode())) {
-        if (regex.test(node.textContent)) {
-            nodesToProcess.push(node);
-        }
-        regex.lastIndex = 0;
-    }
-
-    nodesToProcess.forEach((textNode) => {
-        const text = textNode.textContent;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-        regex.lastIndex = 0;
-
-        while ((match = regex.exec(text)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(document.createTextNode(text.slice(lastIndex, match.index)));
-            }
-            const mark = document.createElement('mark');
-            mark.className = 'search-highlight';
-            mark.textContent = match[0];
-            parts.push(mark);
-            searchHighlightNodes.push(mark);
-            searchMatches.push(mark);
-            lastIndex = regex.lastIndex;
-        }
-
-        if (lastIndex < text.length) {
-            parts.push(document.createTextNode(text.slice(lastIndex)));
-        }
-
-        if (parts.length > 0 && textNode.parentNode) {
-            const frag = document.createDocumentFragment();
-            parts.forEach((p) => frag.appendChild(p));
-            textNode.parentNode.replaceChild(frag, textNode);
-        }
-    });
-
-    if (searchMatches.length > 0) {
-        searchCurrentIndex = 0;
-        highlightCurrentMatch();
-    }
-    updateSearchCount();
-}
-
-function navigateSearch(direction) {
-    if (searchMatches.length === 0) return;
-    searchCurrentIndex = (searchCurrentIndex + direction + searchMatches.length) % searchMatches.length;
-    highlightCurrentMatch();
-    updateSearchCount();
-}
-
-function highlightCurrentMatch() {
-    searchMatches.forEach((m, i) => {
-        m.classList.toggle('search-highlight-current', i === searchCurrentIndex);
-    });
-    if (searchMatches[searchCurrentIndex]) {
-        searchMatches[searchCurrentIndex].scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-}
-
-function clearSearchHighlights() {
-    // Unwrap all <mark> elements
-    searchHighlightNodes.forEach((mark) => {
-        if (mark.parentNode) {
-            const text = document.createTextNode(mark.textContent);
-            mark.parentNode.replaceChild(text, mark);
-        }
-    });
-    searchHighlightNodes = [];
-    searchMatches = [];
-    searchCurrentIndex = -1;
-
-    // Normalize text nodes that were split
-    if (markdownContent) markdownContent.normalize();
-}
-
-function updateSearchCount() {
-    if (!searchCount) return;
-    if (searchMatches.length === 0) {
-        searchCount.textContent = '';
-    } else {
-        searchCount.textContent = (searchCurrentIndex + 1) + ' / ' + searchMatches.length;
-    }
-}
-
-function escapeRegex(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // ===========================
