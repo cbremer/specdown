@@ -68,6 +68,11 @@ import {
   updateViewToggleButton,
   configureViewMode,
 } from './features/view-mode.js';
+import {
+  shareDiagramLink,
+  checkForDiagramLink,
+  configureShareLinks,
+} from './features/share-links.js';
 
 // ===========================
 // Constants
@@ -78,7 +83,6 @@ const APP_VERSION = '0.0.100';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
-const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 
 // ===========================
 // Global State
@@ -143,6 +147,7 @@ const iosTocNav = document.getElementById('ios-toc-nav');
 // ===========================
 function init() {
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
+    configureShareLinks({ createTab: (filename, md) => createTab(filename, md) });
     configureViewMode({
         renderMarkdown: (content, title) => renderMarkdown(content, title),
         cleanupPanzoom: () => cleanupPanzoomInstances(),
@@ -1676,59 +1681,6 @@ function saveDesktopSession() {
 // ===========================
 // Print button wired in setupEventListeners; Cmd+P wired in keydown handler.
 // CSS print styles in styles.css hide UI chrome automatically.
-
-// ===========================
-// Feature: Shareable Diagram Links
-// ===========================
-function shareDiagramLink(diagramId) {
-    const wrapper = document.getElementById('wrapper-' + diagramId);
-    if (!wrapper) return;
-    const svgEl = wrapper.querySelector('svg');
-    if (!svgEl) return;
-    const source = svgEl.getAttribute('data-mermaid-source');
-    if (!source) return;
-
-    const encoded = btoa(unescape(encodeURIComponent(source)));
-    const shareUrl = window.location.origin + window.location.pathname + '?diagram=' + encodeURIComponent(encoded);
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(shareUrl).then(() => showShareToast());
-    } else {
-        // Fallback: select from a temporary textarea
-        const ta = document.createElement('textarea');
-        ta.value = shareUrl;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showShareToast();
-    }
-}
-
-function showShareToast() {
-    if (!shareToast) return;
-    shareToast.style.display = '';
-    setTimeout(() => { shareToast.style.display = 'none'; }, 2500);
-}
-
-function checkForDiagramLink() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const encoded = params.get('diagram');
-        if (!encoded) return;
-        if (encoded.length > MAX_DIAGRAM_URL_PARAM_LENGTH) return;
-        const source = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
-        if (!source) return;
-
-        // Synthesize a one-diagram markdown document
-        const md = '```mermaid\n' + source + '\n```\n';
-        createTab('shared-diagram.md', md);
-    } catch (e) {
-        // Silently ignore malformed deep links
-    }
-}
 
 // ===========================
 // Initialize App
