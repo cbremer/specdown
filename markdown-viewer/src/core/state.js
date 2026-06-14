@@ -7,8 +7,23 @@
 // into feature modules that need to share state.
 
 export const state = {
+  // Render / view
+  currentPanzoomInstances: [],
+  currentTheme: localStorage.getItem('theme') || 'light',
+  currentRawMarkdown: '',
+  currentViewMode: 'preview', // 'preview' or 'raw'
+
+  // Tabs (the `tabs` array itself stays in main.js for now — it appears in a
+  // user-facing string/comment and is migrated with the tabs extraction)
+  activeTabId: null,
+  nextTabId: 0,
+
   // Table of contents
   tocVisible: false,
   tocEntries: [],
   tocScrollSpyScheduled: false,
+
+  // Split view / iOS layout
+  splitViewActive: false,
+  iosLayoutMode: 'phone',
 };

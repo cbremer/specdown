@@ -32,7 +32,7 @@ describe('Mermaid Diagram Processing', () => {
     it('should configure mermaid with correct theme for dark mode', () => {
       // Reset and configure for dark mode
       document.documentElement.setAttribute('data-theme', 'dark');
-      global.currentTheme = 'dark';
+      state.currentTheme = 'dark';
 
       configureMermaid();
 
@@ -505,12 +505,12 @@ describe('Mermaid Diagram Processing', () => {
       await processMermaidDiagrams();
 
       // currentPanzoomInstances should have state.homeState
-      expect(currentPanzoomInstances.length).toBeGreaterThan(0);
-      expect(currentPanzoomInstances[0].state).toBeDefined();
-      expect(currentPanzoomInstances[0].state.homeState).toBeDefined();
-      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('scale');
-      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('x');
-      expect(currentPanzoomInstances[0].state.homeState).toHaveProperty('y');
+      expect(state.currentPanzoomInstances.length).toBeGreaterThan(0);
+      expect(state.currentPanzoomInstances[0].state).toBeDefined();
+      expect(state.currentPanzoomInstances[0].state.homeState).toBeDefined();
+      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('scale');
+      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('x');
+      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('y');
     });
   });
 
@@ -584,7 +584,7 @@ describe('Mermaid Diagram Processing', () => {
       mermaid.initialize.mockClear();
 
       // Change theme and re-render
-      global.currentTheme = 'dark';
+      state.currentTheme = 'dark';
       await reRenderMermaidDiagrams();
 
       expect(mermaid.initialize).toHaveBeenCalledWith(

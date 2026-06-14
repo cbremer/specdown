@@ -77,7 +77,7 @@ describe('iOS renderer integration', () => {
     window.loadFileContent('# Native file', 'native.md');
 
     expect(tabs).toHaveLength(1);
-    expect(activeTabId).toBe(tabs[0].id);
+    expect(state.activeTabId).toBe(tabs[0].id);
     expect(tabs[0].filename).toBe('native.md');
     expect(tabs[0].rawMarkdown).toBe('# Native file');
     expect(document.getElementById('ios-action-bar').style.display).toBe('grid');

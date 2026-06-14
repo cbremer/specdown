@@ -20,18 +20,18 @@ describe('Split View', () => {
   // ===========================
   describe('toggleSplitView', () => {
     it('starts inactive by default', () => {
-      expect(splitViewActive).toBe(false);
+      expect(state.splitViewActive).toBe(false);
     });
 
     it('sets splitViewActive to true on first toggle', () => {
       toggleSplitView();
-      expect(splitViewActive).toBe(true);
+      expect(state.splitViewActive).toBe(true);
     });
 
     it('sets splitViewActive back to false on second toggle', () => {
       toggleSplitView();
       toggleSplitView();
-      expect(splitViewActive).toBe(false);
+      expect(state.splitViewActive).toBe(false);
     });
 
     it('adds active class to the split toggle button when enabled', () => {
@@ -133,11 +133,11 @@ describe('Split View', () => {
     it('disables split view when returning to drop zone', async () => {
       await renderMarkdown('# Test', 'test.md');
       toggleSplitView();
-      expect(splitViewActive).toBe(true);
+      expect(state.splitViewActive).toBe(true);
 
       showDropZone();
 
-      expect(splitViewActive).toBe(false);
+      expect(state.splitViewActive).toBe(false);
     });
 
     it('hides the raw pane when returning to drop zone', async () => {
