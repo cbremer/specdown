@@ -1,3 +1,4 @@
+// @ts-check
 // Platform detection. The native shells inject their flags before the bundle
 // runs — the Electron preload sets window.specdown, and the iOS WKUserScript
 // sets window.iosNative at document start — so these evaluate correctly when
