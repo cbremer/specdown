@@ -63,6 +63,11 @@ import {
   toggleTheme,
   configureTheme,
 } from './features/theme.js';
+import {
+  toggleViewMode,
+  updateViewToggleButton,
+  configureViewMode,
+} from './features/view-mode.js';
 
 // ===========================
 // Constants
@@ -138,6 +143,10 @@ const iosTocNav = document.getElementById('ios-toc-nav');
 // ===========================
 function init() {
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
+    configureViewMode({
+        renderMarkdown: (content, title) => renderMarkdown(content, title),
+        cleanupPanzoom: () => cleanupPanzoomInstances(),
+    });
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
@@ -202,55 +211,6 @@ window.loadFileContent = function(content, filename) {
     createTab(filename, content);
 };
 
-// ===========================
-// View Mode Toggle
-// ===========================
-function toggleViewMode() {
-    if (!state.currentRawMarkdown) return;
-
-    if (state.currentViewMode === 'preview') {
-        state.currentViewMode = 'raw';
-        if (state.tocVisible) {
-            toggleToc(false);
-        }
-        // Clean up panzoom before switching
-        cleanupPanzoomInstances();
-        // Show raw markdown in a pre/code block
-        const escaped = state.currentRawMarkdown
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        markdownContent.innerHTML = '<pre class="raw-markdown"><code>' + escaped + '</code></pre>';
-    } else {
-        state.currentViewMode = 'preview';
-        // Re-render the preview
-        renderMarkdown(state.currentRawMarkdown, fileName.textContent);
-        return; // renderMarkdown handles the rest
-    }
-
-    // Persist view mode to active tab state
-    if (state.activeTabId !== null) {
-        const tab = state.tabs.find(t => t.id === state.activeTabId);
-        if (tab) tab.viewMode = state.currentViewMode;
-    }
-
-    updateViewToggleButton();
-    syncIOSChrome();
-}
-
-function updateViewToggleButton() {
-    const label = viewToggle.querySelector('.view-toggle-label');
-    const icon = viewToggle.querySelector('.view-toggle-icon');
-    if (state.currentViewMode === 'preview') {
-        label.textContent = 'Raw';
-        icon.innerHTML = '&lt;/&gt;';
-        viewToggle.classList.remove('active');
-    } else {
-        label.textContent = 'Preview';
-        icon.innerHTML = '&#9664;';
-        viewToggle.classList.add('active');
-    }
-}
 
 // ===========================
 // Event Listeners
