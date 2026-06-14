@@ -39,6 +39,16 @@ import {
 import { handleRepoUrl } from './features/repo-browser.js';
 import { updateMinimap, updateMinimapViewport } from './features/minimap.js';
 import { applyCustomCss } from './features/custom-css.js';
+import {
+  setupIOSNativeUI,
+  syncIOSChrome,
+  requestNativeOpenIfAvailable,
+  requestBundledSampleIfAvailable,
+  performPrint,
+  closeIOSActionSheet,
+  closeIOSTocSheet,
+  setIOSSheetVisibility,
+} from './platform/ios-chrome.js';
 
 // ===========================
 // Constants
@@ -56,7 +66,6 @@ const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 // ===========================
 
 // Tab state
-let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMode, scrollTop, watching }
 const MAX_TABS = 10;
 const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
@@ -70,7 +79,6 @@ const watchRefCounts = new Map(); // filePath -> number of watching tabs
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const browseButton = document.getElementById('browse-button');
-const iosSampleSection = document.getElementById('ios-sample-section');
 const openSampleBasic = document.getElementById('open-sample-basic');
 const openSampleMermaid = document.getElementById('open-sample-mermaid');
 const contentArea = document.getElementById('content-area');
@@ -94,12 +102,10 @@ const splitRawContent = document.getElementById('split-raw-content');
 const printButton = document.getElementById('print-button');
 const searchBar = document.getElementById('search-bar');
 const searchInput = document.getElementById('search-input');
-const searchCount = document.getElementById('search-count');
 const searchPrev = document.getElementById('search-prev');
 const searchNext = document.getElementById('search-next');
 const searchClose = document.getElementById('search-close');
 const shareToast = document.getElementById('share-toast');
-const iosActionBar = document.getElementById('ios-action-bar');
 const iosOpenButton = document.getElementById('ios-open-button');
 const iosContentsButton = document.getElementById('ios-contents-button');
 const iosViewButton = document.getElementById('ios-view-button');
@@ -128,294 +134,6 @@ function init() {
     if (isDesktop) {
         setupDesktopIPC();
     }
-}
-
-function setupIOSNativeUI() {
-    document.body.classList.toggle('ios-native', isIOSNative);
-    document.documentElement.classList.toggle('ios-native', isIOSNative);
-    if (iosSampleSection) {
-        iosSampleSection.style.display = isIOSNative ? '' : 'none';
-    }
-    document.body.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
-    document.documentElement.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
-    syncIOSChrome();
-}
-
-function requestNativeOpenIfAvailable() {
-    if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
-        window.specdown.requestFileOpen();
-        return true;
-    }
-    if (isIOSNative && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.specdown) {
-        window.webkit.messageHandlers.specdown.postMessage({ action: 'openFilePicker' });
-        return true;
-    }
-    return false;
-}
-
-function requestBundledSampleIfAvailable(sampleName) {
-    if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown) {
-        return false;
-    }
-    window.webkit.messageHandlers.specdown.postMessage({
-        action: 'openBundledSample',
-        data: { name: sampleName }
-    });
-    return true;
-}
-
-function requestNativePrintIfAvailable() {
-    if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown || !hasLoadedContent()) {
-        return false;
-    }
-    window.webkit.messageHandlers.specdown.postMessage({
-        action: 'printDocument',
-        data: {
-            title: fileName ? fileName.textContent : '',
-            html: buildPrintableDocument()
-        }
-    });
-    return true;
-}
-
-function hasLoadedContent() {
-    return !!(contentArea && contentArea.style.display !== 'none' && state.currentRawMarkdown);
-}
-
-function setIOSSheetVisibility(sheet, visible) {
-    if (!sheet) return;
-    sheet.style.display = visible ? 'flex' : 'none';
-}
-
-function closeIOSActionSheet() {
-    setIOSSheetVisibility(iosActionSheet, false);
-}
-
-function closeIOSTocSheet() {
-    setIOSSheetVisibility(iosTocSheet, false);
-    state.tocVisible = false;
-    if (tocToggle) tocToggle.classList.remove('active');
-    syncIOSChrome();
-}
-
-function updateIOSActionButtonLabel(button, label) {
-    if (!button) return;
-    const labelEl = button.querySelector('.ios-action-label');
-    if (labelEl) {
-        labelEl.textContent = label;
-    }
-}
-
-function updateIOSSheetButton(button, label, active) {
-    if (!button) return;
-    button.textContent = label;
-    button.classList.toggle('active', !!active);
-}
-
-function performPrint() {
-    if (requestNativePrintIfAvailable()) {
-        return;
-    }
-    window.print();
-}
-
-window.setIOSLayoutMode = function(mode) {
-    state.iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
-    if (isIOSNative) {
-        document.body.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
-        document.documentElement.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
-        if (state.iosLayoutMode === 'pad') {
-            closeIOSActionSheet();
-            closeIOSTocSheet();
-        }
-    }
-    syncIOSChrome();
-};
-
-function buildPrintableDocument() {
-    const title = (fileName && fileName.textContent) ? fileName.textContent : 'Specdown Document';
-    const printableContent = markdownContent.cloneNode(true);
-
-    printableContent.querySelectorAll('.diagram-controls, .annotation-popover, .search-highlight, .search-highlight-current')
-        .forEach((element) => element.remove());
-    printableContent.querySelectorAll('.annotation-badge').forEach((badge) => badge.remove());
-    printableContent.querySelectorAll('.has-annotation').forEach((element) => {
-        element.classList.remove('has-annotation');
-    });
-    printableContent.querySelectorAll('.diagram-wrapper').forEach((wrapper) => {
-        wrapper.style.height = 'auto';
-        wrapper.style.overflow = 'visible';
-    });
-    printableContent.querySelectorAll('.diagram-wrapper svg').forEach((svg) => {
-        svg.style.maxWidth = '100%';
-        svg.style.height = 'auto';
-        svg.style.position = 'static';
-        svg.style.transform = 'none';
-    });
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(title)}</title>
-    <style>
-        @page {
-            margin: 18mm 14mm;
-        }
-        html {
-            box-sizing: border-box;
-            background: #ffffff;
-        }
-        *,
-        *::before,
-        *::after {
-            box-sizing: inherit;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #111827;
-            background: #ffffff;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
-        }
-        .print-shell {
-            max-width: 100%;
-            padding: 12px 10px 16px;
-        }
-        .print-title {
-            margin: 0 0 24px;
-            font-size: 28px;
-            font-weight: 700;
-        }
-        .print-content h1,
-        .print-content h2,
-        .print-content h3,
-        .print-content h4,
-        .print-content h5,
-        .print-content h6 {
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-            line-height: 1.3;
-        }
-        .print-content h1,
-        .print-content h2 {
-            padding-bottom: 0.3em;
-            border-bottom: 1px solid #d1d5db;
-        }
-        .print-content p,
-        .print-content ul,
-        .print-content ol,
-        .print-content table,
-        .print-content blockquote,
-        .print-content pre,
-        .print-content .diagram-container {
-            margin-bottom: 1em;
-        }
-        .print-content ul,
-        .print-content ol {
-            padding-left: 2em;
-        }
-        .print-content code {
-            font-family: "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, monospace;
-            background: #f3f4f6;
-            padding: 0.15em 0.35em;
-            border-radius: 4px;
-            font-size: 0.92em;
-        }
-        .print-content pre {
-            white-space: pre-wrap;
-            word-break: break-word;
-            overflow: visible;
-            border: 1px solid #d1d5db;
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 1em;
-        }
-        .print-content pre code {
-            background: transparent;
-            padding: 0;
-        }
-        .print-content table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-        .print-content th,
-        .print-content td {
-            border: 1px solid #d1d5db;
-            padding: 0.6em;
-            text-align: left;
-            vertical-align: top;
-            word-break: break-word;
-        }
-        .print-content blockquote {
-            margin-left: 0;
-            padding-left: 1em;
-            border-left: 4px solid #60a5fa;
-            color: #4b5563;
-        }
-        .print-content img,
-        .print-content svg {
-            max-width: 100%;
-            height: auto;
-        }
-        .print-content .raw-markdown,
-        .print-content .html-comment-block,
-        .print-content .diagram-container,
-        .print-content pre,
-        .print-content table,
-        .print-content blockquote {
-            max-width: 100%;
-        }
-        .print-content .diagram-container,
-        .print-content .diagram-wrapper {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-    </style>
-</head>
-<body>
-    <main class="print-shell">
-        <h1 class="print-title">${escapeHtml(title)}</h1>
-        <section class="print-content">${printableContent.innerHTML}</section>
-    </main>
-</body>
-</html>`;
-}
-
-function syncIOSChrome() {
-    if (!isIOSNative) return;
-
-    const hasContent = hasLoadedContent();
-    const showActionBar = (hasContent || tabs.length > 0) && state.iosLayoutMode !== 'pad';
-    const canShowContents = hasContent && state.currentViewMode === 'preview' && state.tocEntries.length > 0;
-
-    if (iosActionBar) {
-        iosActionBar.style.display = showActionBar ? 'grid' : 'none';
-    }
-
-    if (iosContentsButton) {
-        iosContentsButton.disabled = !canShowContents;
-        iosContentsButton.classList.toggle('active', state.tocVisible);
-    }
-
-    if (iosViewButton) {
-        iosViewButton.disabled = !hasContent;
-        iosViewButton.classList.toggle('active', state.currentViewMode === 'raw');
-        updateIOSActionButtonLabel(iosViewButton, state.currentViewMode === 'preview' ? 'Raw' : 'Preview');
-    }
-
-    if (iosMoreButton) {
-        iosMoreButton.disabled = !hasContent;
-    }
-
-    updateIOSSheetButton(iosSplitButton, state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
-    updateIOSSheetButton(iosThemeButton, state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
-
-    if (iosSplitButton) iosSplitButton.disabled = !hasContent;
-    if (iosPrintButton) iosPrintButton.disabled = !hasContent;
 }
 
 // ===========================
@@ -535,7 +253,7 @@ function toggleViewMode() {
 
     // Persist view mode to active tab state
     if (state.activeTabId !== null) {
-        const tab = tabs.find(t => t.id === state.activeTabId);
+        const tab = state.tabs.find(t => t.id === state.activeTabId);
         if (tab) tab.viewMode = state.currentViewMode;
     }
 
@@ -799,7 +517,7 @@ function setupEventListeners() {
     // content area (when the drop zone is hidden).
     document.addEventListener('drop', (e) => {
         e.preventDefault();
-        if (tabs.length > 0 && e.dataTransfer && e.dataTransfer.files.length > 0) {
+        if (state.tabs.length > 0 && e.dataTransfer && e.dataTransfer.files.length > 0) {
             for (let i = 0; i < e.dataTransfer.files.length; i++) {
                 handleFile(e.dataTransfer.files[i]);
             }
@@ -1569,7 +1287,7 @@ function showDropZone() {
     updateViewToggleButton();
 
     // Clear tab state
-    tabs = [];
+    state.tabs = [];
     state.activeTabId = null;
     renderTabBar();
 
@@ -1650,7 +1368,7 @@ async function reRenderMermaidDiagrams() {
 // ===========================
 function saveActiveTabState() {
     if (state.activeTabId === null) return;
-    const tab = tabs.find(t => t.id === state.activeTabId);
+    const tab = state.tabs.find(t => t.id === state.activeTabId);
     if (!tab) return;
     tab.viewMode = state.currentViewMode;
     tab.scrollTop = markdownContent.scrollTop;
@@ -1659,7 +1377,7 @@ function saveActiveTabState() {
 function renderTabBar() {
     if (!tabBar) return;
 
-    if (tabs.length === 0) {
+    if (state.tabs.length === 0) {
         tabBar.style.display = 'none';
         tabBar.innerHTML = '';
         return;
@@ -1668,7 +1386,7 @@ function renderTabBar() {
     tabBar.style.display = 'flex';
 
     let html = '';
-    for (const tab of tabs) {
+    for (const tab of state.tabs) {
         const isActive = tab.id === state.activeTabId;
         const hasChanges = !!tab.hasUnseenChanges;
         const classes = ['tab'];
@@ -1713,7 +1431,7 @@ function renderTabBar() {
 }
 
 function createTab(filename, content, filePath) {
-    if (tabs.length >= MAX_TABS) {
+    if (state.tabs.length >= MAX_TABS) {
         alert('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.');
         return;
     }
@@ -1732,7 +1450,7 @@ function createTab(filename, content, filePath) {
         watching: !!(isDesktop && filePath),
         hasUnseenChanges: false
     };
-    tabs.push(tab);
+    state.tabs.push(tab);
     state.activeTabId = id;
 
     if (tab.watching) {
@@ -1752,7 +1470,7 @@ async function switchTab(id) {
 
     saveActiveTabState();
     state.activeTabId = id;
-    const tab = tabs.find(t => t.id === id);
+    const tab = state.tabs.find(t => t.id === id);
     if (!tab) return;
 
     // Clear the "unseen changes" flag now that the user is looking at it.
@@ -1786,11 +1504,11 @@ async function switchTab(id) {
 }
 
 async function closeTab(id) {
-    const idx = tabs.findIndex(t => t.id === id);
+    const idx = state.tabs.findIndex(t => t.id === id);
     if (idx === -1) return;
 
     const wasActive = (id === state.activeTabId);
-    const closedTab = tabs[idx];
+    const closedTab = state.tabs[idx];
 
     // Stop watching before removing the tab
     if (isDesktop && closedTab.watching && closedTab.filePath) {
@@ -1801,18 +1519,18 @@ async function closeTab(id) {
         cleanupPanzoomInstances();
     }
 
-    tabs.splice(idx, 1);
+    state.tabs.splice(idx, 1);
 
     if (isDesktop) saveDesktopSession();
 
-    if (tabs.length === 0) {
+    if (state.tabs.length === 0) {
         state.activeTabId = null;
         renderTabBar();
         if (isDesktop) updateWatchToggle();
         showDropZone();
     } else if (wasActive) {
-        const newIdx = Math.min(idx, tabs.length - 1);
-        const newTab = tabs[newIdx];
+        const newIdx = Math.min(idx, state.tabs.length - 1);
+        const newTab = state.tabs[newIdx];
         state.activeTabId = newTab.id;
         renderTabBar();
         if (isDesktop) updateWatchToggle();
@@ -1847,7 +1565,7 @@ async function closeTab(id) {
 function updateWatchToggle() {
     if (!watchToggle) return;
 
-    const tab = state.activeTabId !== null ? tabs.find(t => t.id === state.activeTabId) : null;
+    const tab = state.activeTabId !== null ? state.tabs.find(t => t.id === state.activeTabId) : null;
     const canWatch = !!(tab && tab.filePath);
 
     if (!canWatch) {
@@ -1914,7 +1632,7 @@ function stopWatchingFilePath(filePath) {
 
 function toggleWatching() {
     if (!isDesktop) return;
-    const tab = state.activeTabId !== null ? tabs.find(t => t.id === state.activeTabId) : null;
+    const tab = state.activeTabId !== null ? state.tabs.find(t => t.id === state.activeTabId) : null;
     if (!tab || !tab.filePath) return;
 
     tab.watching = !tab.watching;
@@ -1944,7 +1662,7 @@ function setupDesktopIPC() {
 
     // Listen for file-changed events (watched file updated on disk)
     window.specdown.onFileChanged(async function(fileData) {
-        const tab = tabs.find(t => t.filePath === fileData.filePath);
+        const tab = state.tabs.find(t => t.filePath === fileData.filePath);
         if (!tab) return;
 
         tab.rawMarkdown = fileData.content;
@@ -2010,7 +1728,7 @@ function setupDesktopIPC() {
 
 function saveDesktopSession() {
     if (!isDesktop || !window.specdown.saveSession) return;
-    window.specdown.saveSession(tabs.map(t => ({
+    window.specdown.saveSession(state.tabs.map(t => ({
         filePath: t.filePath,
         filename: t.filename
     })));

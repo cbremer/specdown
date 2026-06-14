@@ -15,6 +15,7 @@ export const state = {
 
   // Tabs (the `tabs` array itself stays in main.js for now — it appears in a
   // user-facing string/comment and is migrated with the tabs extraction)
+  tabs: [], // open file tabs: { id, filename, filePath, rawMarkdown, viewMode, scrollTop, watching }
   activeTabId: null,
   nextTabId: 0,
 

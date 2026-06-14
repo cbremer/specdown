@@ -72,14 +72,14 @@ describe('iOS renderer integration', () => {
   });
 
   it('opens native-loaded files as tabs', () => {
-    expect(tabs).toHaveLength(0);
+    expect(state.tabs).toHaveLength(0);
 
     window.loadFileContent('# Native file', 'native.md');
 
-    expect(tabs).toHaveLength(1);
-    expect(state.activeTabId).toBe(tabs[0].id);
-    expect(tabs[0].filename).toBe('native.md');
-    expect(tabs[0].rawMarkdown).toBe('# Native file');
+    expect(state.tabs).toHaveLength(1);
+    expect(state.activeTabId).toBe(state.tabs[0].id);
+    expect(state.tabs[0].filename).toBe('native.md');
+    expect(state.tabs[0].rawMarkdown).toBe('# Native file');
     expect(document.getElementById('ios-action-bar').style.display).toBe('grid');
   });
 
