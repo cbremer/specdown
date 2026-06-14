@@ -54,22 +54,14 @@ const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 // ===========================
 // Global State
 // ===========================
-let currentPanzoomInstances = [];
-let currentTheme = localStorage.getItem('theme') || 'light';
-let currentRawMarkdown = '';
-let currentViewMode = 'preview'; // 'preview' or 'raw'
 
 // Tab state
 let tabs = [];         // Array of { id, filename, filePath, rawMarkdown, viewMode, scrollTop, watching }
-let activeTabId = null;
-let nextTabId = 0;
 const MAX_TABS = 10;
 const watchRefCounts = new Map(); // filePath -> number of watching tabs
 
 
 // Split view state
-let splitViewActive = false;
-let iosLayoutMode = 'phone';
 
 
 // ===========================
@@ -144,8 +136,8 @@ function setupIOSNativeUI() {
     if (iosSampleSection) {
         iosSampleSection.style.display = isIOSNative ? '' : 'none';
     }
-    document.body.classList.toggle('ios-pad', isIOSNative && iosLayoutMode === 'pad');
-    document.documentElement.classList.toggle('ios-pad', isIOSNative && iosLayoutMode === 'pad');
+    document.body.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
+    document.documentElement.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
     syncIOSChrome();
 }
 
@@ -187,7 +179,7 @@ function requestNativePrintIfAvailable() {
 }
 
 function hasLoadedContent() {
-    return !!(contentArea && contentArea.style.display !== 'none' && currentRawMarkdown);
+    return !!(contentArea && contentArea.style.display !== 'none' && state.currentRawMarkdown);
 }
 
 function setIOSSheetVisibility(sheet, visible) {
@@ -228,11 +220,11 @@ function performPrint() {
 }
 
 window.setIOSLayoutMode = function(mode) {
-    iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
+    state.iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
     if (isIOSNative) {
-        document.body.classList.toggle('ios-pad', iosLayoutMode === 'pad');
-        document.documentElement.classList.toggle('ios-pad', iosLayoutMode === 'pad');
-        if (iosLayoutMode === 'pad') {
+        document.body.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
+        document.documentElement.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
+        if (state.iosLayoutMode === 'pad') {
             closeIOSActionSheet();
             closeIOSTocSheet();
         }
@@ -397,8 +389,8 @@ function syncIOSChrome() {
     if (!isIOSNative) return;
 
     const hasContent = hasLoadedContent();
-    const showActionBar = (hasContent || tabs.length > 0) && iosLayoutMode !== 'pad';
-    const canShowContents = hasContent && currentViewMode === 'preview' && state.tocEntries.length > 0;
+    const showActionBar = (hasContent || tabs.length > 0) && state.iosLayoutMode !== 'pad';
+    const canShowContents = hasContent && state.currentViewMode === 'preview' && state.tocEntries.length > 0;
 
     if (iosActionBar) {
         iosActionBar.style.display = showActionBar ? 'grid' : 'none';
@@ -411,16 +403,16 @@ function syncIOSChrome() {
 
     if (iosViewButton) {
         iosViewButton.disabled = !hasContent;
-        iosViewButton.classList.toggle('active', currentViewMode === 'raw');
-        updateIOSActionButtonLabel(iosViewButton, currentViewMode === 'preview' ? 'Raw' : 'Preview');
+        iosViewButton.classList.toggle('active', state.currentViewMode === 'raw');
+        updateIOSActionButtonLabel(iosViewButton, state.currentViewMode === 'preview' ? 'Raw' : 'Preview');
     }
 
     if (iosMoreButton) {
         iosMoreButton.disabled = !hasContent;
     }
 
-    updateIOSSheetButton(iosSplitButton, splitViewActive ? 'Hide Split View' : 'Show Split View', splitViewActive);
-    updateIOSSheetButton(iosThemeButton, currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
+    updateIOSSheetButton(iosSplitButton, state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
+    updateIOSSheetButton(iosThemeButton, state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
 
     if (iosSplitButton) iosSplitButton.disabled = !hasContent;
     if (iosPrintButton) iosPrintButton.disabled = !hasContent;
@@ -476,14 +468,14 @@ function checkForUpdates() {
 // Theme Management
 // ===========================
 function setupTheme() {
-    document.documentElement.setAttribute('data-theme', currentTheme);
+    document.documentElement.setAttribute('data-theme', state.currentTheme);
     updateThemeIcon();
 }
 
 function toggleTheme() {
-    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    localStorage.setItem('theme', currentTheme);
+    state.currentTheme = state.currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', state.currentTheme);
+    localStorage.setItem('theme', state.currentTheme);
     updateThemeIcon();
     syncIOSChrome();
     
@@ -495,14 +487,14 @@ function toggleTheme() {
 
 function updateThemeIcon() {
     const icon = themeToggle.querySelector('.theme-icon');
-    icon.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+    icon.textContent = state.currentTheme === 'light' ? '🌙' : '☀️';
 }
 
 // iOS API: called by Swift shell to set theme externally
 window.setTheme = function(theme) {
-    currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    localStorage.setItem('theme', currentTheme);
+    state.currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', state.currentTheme);
+    localStorage.setItem('theme', state.currentTheme);
     updateThemeIcon();
     syncIOSChrome();
     if (contentArea && contentArea.style.display !== 'none') {
@@ -519,32 +511,32 @@ window.loadFileContent = function(content, filename) {
 // View Mode Toggle
 // ===========================
 function toggleViewMode() {
-    if (!currentRawMarkdown) return;
+    if (!state.currentRawMarkdown) return;
 
-    if (currentViewMode === 'preview') {
-        currentViewMode = 'raw';
+    if (state.currentViewMode === 'preview') {
+        state.currentViewMode = 'raw';
         if (state.tocVisible) {
             toggleToc(false);
         }
         // Clean up panzoom before switching
         cleanupPanzoomInstances();
         // Show raw markdown in a pre/code block
-        const escaped = currentRawMarkdown
+        const escaped = state.currentRawMarkdown
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         markdownContent.innerHTML = '<pre class="raw-markdown"><code>' + escaped + '</code></pre>';
     } else {
-        currentViewMode = 'preview';
+        state.currentViewMode = 'preview';
         // Re-render the preview
-        renderMarkdown(currentRawMarkdown, fileName.textContent);
+        renderMarkdown(state.currentRawMarkdown, fileName.textContent);
         return; // renderMarkdown handles the rest
     }
 
     // Persist view mode to active tab state
-    if (activeTabId !== null) {
-        const tab = tabs.find(t => t.id === activeTabId);
-        if (tab) tab.viewMode = currentViewMode;
+    if (state.activeTabId !== null) {
+        const tab = tabs.find(t => t.id === state.activeTabId);
+        if (tab) tab.viewMode = state.currentViewMode;
     }
 
     updateViewToggleButton();
@@ -554,7 +546,7 @@ function toggleViewMode() {
 function updateViewToggleButton() {
     const label = viewToggle.querySelector('.view-toggle-label');
     const icon = viewToggle.querySelector('.view-toggle-icon');
-    if (currentViewMode === 'preview') {
+    if (state.currentViewMode === 'preview') {
         label.textContent = 'Raw';
         icon.innerHTML = '&lt;/&gt;';
         viewToggle.classList.remove('active');
@@ -985,7 +977,7 @@ function configureMarked() {
 function getMermaidConfig() {
     return {
         startOnLoad: false,
-        theme: currentTheme === 'dark' ? 'dark' : 'default',
+        theme: state.currentTheme === 'dark' ? 'dark' : 'default',
         securityLevel: 'strict',
         fontFamily: FONT_FAMILY,
         // Render node labels as SVG <text> rather than <foreignObject> HTML.
@@ -1010,8 +1002,8 @@ async function renderMarkdown(content, filename) {
         cleanupPanzoomInstances();
 
         // Store raw markdown for toggle
-        currentRawMarkdown = content;
-        currentViewMode = 'preview';
+        state.currentRawMarkdown = content;
+        state.currentViewMode = 'preview';
         updateViewToggleButton();
 
         // Parse markdown to HTML
@@ -1036,7 +1028,7 @@ async function renderMarkdown(content, filename) {
         buildToc();
 
         // Update split raw pane if active
-        if (splitViewActive) {
+        if (state.splitViewActive) {
             updateSplitRawPane(content);
         }
 
@@ -1248,19 +1240,19 @@ function initializePanzoom(diagramId) {
     // Initial fit runs immediately; a deferred fit via requestAnimationFrame
     // recalculates after the browser has laid out the container (in case
     // clientWidth/Height weren't available synchronously).
-    const state = {
+    const instanceState = {
         homeState: fitDiagramToContainer(wrapper, svgElement, panzoomInstance)
     };
     requestAnimationFrame(() => {
-        state.homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
+        instanceState.homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
     });
 
     // Store instance for cleanup
-    currentPanzoomInstances.push({
+    state.currentPanzoomInstances.push({
         id: diagramId,
         instance: panzoomInstance,
         element: svgElement,
-        state: state
+        state: instanceState
     });
 
     // Get controls
@@ -1301,7 +1293,7 @@ function initializePanzoom(diagramId) {
 
     resetBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, state.homeState);
+        resetToFit(panzoomInstance, instanceState.homeState);
         updateZoomUI(panzoomInstance, controls);
     });
 
@@ -1340,7 +1332,7 @@ function initializePanzoom(diagramId) {
 
     // Double click to reset to fit
     wrapper.addEventListener('dblclick', () => {
-        resetToFit(panzoomInstance, state.homeState);
+        resetToFit(panzoomInstance, instanceState.homeState);
         updateZoomUI(panzoomInstance, controls);
     });
     updateZoomUI(panzoomInstance, controls);
@@ -1550,14 +1542,14 @@ function closeFullscreen() {
 // Cleanup
 // ===========================
 function cleanupPanzoomInstances() {
-    currentPanzoomInstances.forEach(({ instance }) => {
+    state.currentPanzoomInstances.forEach(({ instance }) => {
         try {
             instance.destroy();
         } catch (error) {
             console.error('Error destroying panzoom instance:', error);
         }
     });
-    currentPanzoomInstances = [];
+    state.currentPanzoomInstances = [];
 }
 
 function showDropZone() {
@@ -1572,18 +1564,18 @@ function showDropZone() {
     markdownContent.innerHTML = '';
     fileName.textContent = '';
     fileInput.value = '';
-    currentRawMarkdown = '';
-    currentViewMode = 'preview';
+    state.currentRawMarkdown = '';
+    state.currentViewMode = 'preview';
     updateViewToggleButton();
 
     // Clear tab state
     tabs = [];
-    activeTabId = null;
+    state.activeTabId = null;
     renderTabBar();
 
     // Reset TOC and split view
     if (state.tocVisible) toggleToc(false);
-    if (splitViewActive) toggleSplitView();
+    if (state.splitViewActive) toggleSplitView();
     if (tocNav) tocNav.innerHTML = '';
     if (iosTocNav) iosTocNav.innerHTML = '';
     state.tocEntries = [];
@@ -1624,10 +1616,10 @@ async function reRenderMermaidDiagrams() {
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
 
             // Clean up old panzoom
-            const oldInstance = currentPanzoomInstances.find(p => p.id === diagramId);
+            const oldInstance = state.currentPanzoomInstances.find(p => p.id === diagramId);
             if (oldInstance) {
                 oldInstance.instance.destroy();
-                currentPanzoomInstances = currentPanzoomInstances.filter(p => p.id !== diagramId);
+                state.currentPanzoomInstances = state.currentPanzoomInstances.filter(p => p.id !== diagramId);
             }
 
             // Update wrapper content
@@ -1657,10 +1649,10 @@ async function reRenderMermaidDiagrams() {
 // Tab Management
 // ===========================
 function saveActiveTabState() {
-    if (activeTabId === null) return;
-    const tab = tabs.find(t => t.id === activeTabId);
+    if (state.activeTabId === null) return;
+    const tab = tabs.find(t => t.id === state.activeTabId);
     if (!tab) return;
-    tab.viewMode = currentViewMode;
+    tab.viewMode = state.currentViewMode;
     tab.scrollTop = markdownContent.scrollTop;
 }
 
@@ -1677,7 +1669,7 @@ function renderTabBar() {
 
     let html = '';
     for (const tab of tabs) {
-        const isActive = tab.id === activeTabId;
+        const isActive = tab.id === state.activeTabId;
         const hasChanges = !!tab.hasUnseenChanges;
         const classes = ['tab'];
         if (isActive) classes.push('tab-active');
@@ -1729,7 +1721,7 @@ function createTab(filename, content, filePath) {
     // Save current tab state before switching
     saveActiveTabState();
 
-    const id = ++nextTabId;
+    const id = ++state.nextTabId;
     const tab = {
         id,
         filename,
@@ -1741,7 +1733,7 @@ function createTab(filename, content, filePath) {
         hasUnseenChanges: false
     };
     tabs.push(tab);
-    activeTabId = id;
+    state.activeTabId = id;
 
     if (tab.watching) {
         startWatchingFilePath(tab.filePath);
@@ -1756,10 +1748,10 @@ function createTab(filename, content, filePath) {
 }
 
 async function switchTab(id) {
-    if (id === activeTabId) return;
+    if (id === state.activeTabId) return;
 
     saveActiveTabState();
-    activeTabId = id;
+    state.activeTabId = id;
     const tab = tabs.find(t => t.id === id);
     if (!tab) return;
 
@@ -1774,8 +1766,8 @@ async function switchTab(id) {
         if (state.tocVisible) {
             toggleToc(false);
         }
-        currentRawMarkdown = tab.rawMarkdown;
-        currentViewMode = 'raw';
+        state.currentRawMarkdown = tab.rawMarkdown;
+        state.currentViewMode = 'raw';
         const escaped = tab.rawMarkdown
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -1797,7 +1789,7 @@ async function closeTab(id) {
     const idx = tabs.findIndex(t => t.id === id);
     if (idx === -1) return;
 
-    const wasActive = (id === activeTabId);
+    const wasActive = (id === state.activeTabId);
     const closedTab = tabs[idx];
 
     // Stop watching before removing the tab
@@ -1814,14 +1806,14 @@ async function closeTab(id) {
     if (isDesktop) saveDesktopSession();
 
     if (tabs.length === 0) {
-        activeTabId = null;
+        state.activeTabId = null;
         renderTabBar();
         if (isDesktop) updateWatchToggle();
         showDropZone();
     } else if (wasActive) {
         const newIdx = Math.min(idx, tabs.length - 1);
         const newTab = tabs[newIdx];
-        activeTabId = newTab.id;
+        state.activeTabId = newTab.id;
         renderTabBar();
         if (isDesktop) updateWatchToggle();
 
@@ -1829,8 +1821,8 @@ async function closeTab(id) {
             if (state.tocVisible) {
                 toggleToc(false);
             }
-            currentRawMarkdown = newTab.rawMarkdown;
-            currentViewMode = 'raw';
+            state.currentRawMarkdown = newTab.rawMarkdown;
+            state.currentViewMode = 'raw';
             const escaped = newTab.rawMarkdown
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -1855,7 +1847,7 @@ async function closeTab(id) {
 function updateWatchToggle() {
     if (!watchToggle) return;
 
-    const tab = activeTabId !== null ? tabs.find(t => t.id === activeTabId) : null;
+    const tab = state.activeTabId !== null ? tabs.find(t => t.id === state.activeTabId) : null;
     const canWatch = !!(tab && tab.filePath);
 
     if (!canWatch) {
@@ -1922,7 +1914,7 @@ function stopWatchingFilePath(filePath) {
 
 function toggleWatching() {
     if (!isDesktop) return;
-    const tab = activeTabId !== null ? tabs.find(t => t.id === activeTabId) : null;
+    const tab = state.activeTabId !== null ? tabs.find(t => t.id === state.activeTabId) : null;
     if (!tab || !tab.filePath) return;
 
     tab.watching = !tab.watching;
@@ -1945,8 +1937,8 @@ function setupDesktopIPC() {
 
     // Listen for close-tab command from native menu (Cmd+W)
     window.specdown.onCloseTab(function() {
-        if (activeTabId !== null) {
-            closeTab(activeTabId);
+        if (state.activeTabId !== null) {
+            closeTab(state.activeTabId);
         }
     });
 
@@ -1958,13 +1950,13 @@ function setupDesktopIPC() {
         tab.rawMarkdown = fileData.content;
         tab.filename = fileData.filename;
 
-        if (tab.id === activeTabId) {
+        if (tab.id === state.activeTabId) {
             // Preserve scroll position across the re-render so an
             // auto-reload doesn't yank the user back to the top.
             const savedScrollTop = markdownContent.scrollTop;
 
             if (tab.viewMode === 'raw') {
-                currentRawMarkdown = fileData.content;
+                state.currentRawMarkdown = fileData.content;
                 const escaped = fileData.content
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
@@ -2091,7 +2083,7 @@ function renderTocNavigation(navElement) {
 
 function toggleToc(forceState) {
     const nextVisible = typeof forceState === 'boolean' ? forceState : !state.tocVisible;
-    if (isIOSNative && nextVisible && (currentViewMode !== 'preview' || state.tocEntries.length === 0)) {
+    if (isIOSNative && nextVisible && (state.currentViewMode !== 'preview' || state.tocEntries.length === 0)) {
         return;
     }
 
@@ -2145,21 +2137,21 @@ function updateTocActiveHeading() {
 // Feature: Split View
 // ===========================
 function toggleSplitView() {
-    splitViewActive = !splitViewActive;
+    state.splitViewActive = !state.splitViewActive;
 
-    if (splitToggle) splitToggle.classList.toggle('active', splitViewActive);
+    if (splitToggle) splitToggle.classList.toggle('active', state.splitViewActive);
 
     const contentMain = document.getElementById('content-main');
     if (contentMain) {
-        contentMain.classList.toggle('split-active', splitViewActive);
+        contentMain.classList.toggle('split-active', state.splitViewActive);
     }
 
     if (splitRawPane) {
-        splitRawPane.style.display = splitViewActive ? '' : 'none';
+        splitRawPane.style.display = state.splitViewActive ? '' : 'none';
     }
 
-    if (splitViewActive && currentRawMarkdown) {
-        updateSplitRawPane(currentRawMarkdown);
+    if (state.splitViewActive && state.currentRawMarkdown) {
+        updateSplitRawPane(state.currentRawMarkdown);
     }
 
     syncIOSChrome();

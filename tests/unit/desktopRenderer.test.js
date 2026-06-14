@@ -75,7 +75,7 @@ describe('Desktop renderer integration', () => {
     // Tab b is now active; deliver a file-changed event for tab a.
     const backgroundTab = tabs.find(t => t.filePath === '/tmp/a.md');
     const activeTab = tabs.find(t => t.filePath === '/tmp/b.md');
-    expect(activeTabId).toBe(activeTab.id);
+    expect(state.activeTabId).toBe(activeTab.id);
 
     await fileChangedCallback({
       filename: 'a.md',

@@ -17,11 +17,11 @@ describe('View Toggle', () => {
 
   describe('initial state', () => {
     it('should default to preview mode', () => {
-      expect(currentViewMode).toBe('preview');
+      expect(state.currentViewMode).toBe('preview');
     });
 
     it('should have empty raw markdown initially', () => {
-      expect(currentRawMarkdown).toBe('');
+      expect(state.currentRawMarkdown).toBe('');
     });
 
     it('should render toggle button with Raw label', () => {
@@ -37,9 +37,9 @@ describe('View Toggle', () => {
 
   describe('toggleViewMode', () => {
     it('should do nothing when no markdown is loaded', () => {
-      currentRawMarkdown = '';
+      state.currentRawMarkdown = '';
       toggleViewMode();
-      expect(currentViewMode).toBe('preview');
+      expect(state.currentViewMode).toBe('preview');
     });
 
     it('should switch to raw mode and display escaped markdown', async () => {
@@ -48,7 +48,7 @@ describe('View Toggle', () => {
 
       toggleViewMode();
 
-      expect(currentViewMode).toBe('raw');
+      expect(state.currentViewMode).toBe('raw');
       const pre = document.querySelector('.raw-markdown');
       expect(pre).not.toBeNull();
       // HTML should be escaped
@@ -77,7 +77,7 @@ describe('View Toggle', () => {
       toggleViewMode(); // -> raw
       toggleViewMode(); // -> preview
 
-      expect(currentViewMode).toBe('preview');
+      expect(state.currentViewMode).toBe('preview');
       const btn = document.getElementById('view-toggle');
       expect(btn.classList.contains('active')).toBe(false);
     });
@@ -96,14 +96,14 @@ describe('View Toggle', () => {
     it('should store the raw markdown content', async () => {
       const md = '# Title\n\nParagraph';
       await renderMarkdown(md, 'doc.md');
-      expect(currentRawMarkdown).toBe(md);
+      expect(state.currentRawMarkdown).toBe(md);
     });
 
     it('should reset view mode to preview on new render', async () => {
       await renderMarkdown('# First', 'first.md');
       toggleViewMode(); // -> raw
       await renderMarkdown('# Second', 'second.md');
-      expect(currentViewMode).toBe('preview');
+      expect(state.currentViewMode).toBe('preview');
     });
   });
 
@@ -114,8 +114,8 @@ describe('View Toggle', () => {
 
       showDropZone();
 
-      expect(currentRawMarkdown).toBe('');
-      expect(currentViewMode).toBe('preview');
+      expect(state.currentRawMarkdown).toBe('');
+      expect(state.currentViewMode).toBe('preview');
     });
   });
 });
