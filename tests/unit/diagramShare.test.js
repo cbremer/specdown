@@ -159,9 +159,9 @@ describe('Shareable Diagram Links', () => {
   describe('checkForDiagramLink', () => {
     it('does nothing when there is no ?diagram= param', () => {
       // window.location.search is '' in jsdom by default
-      const initialTabs = tabs.length;
+      const initialTabs = state.tabs.length;
       checkForDiagramLink();
-      expect(tabs.length).toBe(initialTabs);
+      expect(state.tabs.length).toBe(initialTabs);
     });
 
     it('creates a tab when a valid encoded diagram is in the URL', () => {
@@ -175,8 +175,8 @@ describe('Shareable Diagram Links', () => {
 
       checkForDiagramLink();
 
-      expect(tabs.length).toBeGreaterThan(0);
-      const tab = tabs[tabs.length - 1];
+      expect(state.tabs.length).toBeGreaterThan(0);
+      const tab = state.tabs[state.tabs.length - 1];
       expect(tab.filename).toBe('shared-diagram.md');
       expect(tab.rawMarkdown).toContain(source);
 
