@@ -2,7 +2,7 @@
 // back into the app.
 
 import { marked } from 'marked';
-import hljs from 'highlight.js';
+import hljs from './highlight.js';
 import { state } from './state.js';
 
 const FONT_FAMILY =

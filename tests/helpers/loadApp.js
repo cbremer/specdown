@@ -47,6 +47,13 @@ function inlineModule(filePath, visited, chunks) {
   const deps = [];
   while ((match = RELATIVE_IMPORT_RE.exec(code)) !== null) {
     if (match[1].endsWith('.css')) continue;
+    // core/highlight.js configures the real highlight.js engine by importing the
+    // core build plus individual language grammars. Those are bare imports that
+    // get stripped, so inlining the module would leave the language bindings
+    // dangling. Under test the engine is provided as a global `hljs` mock, so we
+    // treat this module like the bare `highlight.js` dependency it replaces and
+    // skip it — the `import hljs from './highlight.js'` line is stripped below.
+    if (/(^|\/)highlight\.js$/.test(match[1])) continue;
     deps.push(path.resolve(dir, match[1]));
   }
   for (const dep of deps) inlineModule(dep, visited, chunks);
