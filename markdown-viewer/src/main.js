@@ -20,6 +20,7 @@ import {
   escapeHtml,
   normalizeMarkdownUrl,
   getSvgNaturalDimensions,
+  revealHtmlComments,
 } from './core/utils.js';
 import {
   configureMarked,
@@ -572,32 +573,6 @@ async function renderMarkdown(content, filename) {
     }
 }
 
-// ===========================
-// HTML Comment Reveal
-// ===========================
-function revealHtmlComments(container) {
-    // Walk the DOM and replace comment nodes with visible styled blocks
-    const walker = document.createTreeWalker(
-        container,
-        NodeFilter.SHOW_COMMENT,
-        null
-    );
-
-    const commentNodes = [];
-    while (walker.nextNode()) {
-        commentNodes.push(walker.currentNode);
-    }
-
-    commentNodes.forEach((node) => {
-        const text = node.nodeValue.trim();
-        if (!text) return;
-
-        const block = document.createElement('div');
-        block.className = 'html-comment-block';
-        block.textContent = text;
-        node.parentNode.replaceChild(block, node);
-    });
-}
 
 function showDropZone() {
     // Cleanup

@@ -69,3 +69,28 @@ export function getSvgNaturalDimensions(svgElement) {
   }
   return null;
 }
+
+/**
+ * Replace HTML comment nodes in a container with visible styled blocks, so
+ * authored comments are shown rather than hidden.
+ * @param {Node} container
+ */
+export function revealHtmlComments(container) {
+  // Walk the DOM and replace comment nodes with visible styled blocks
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_COMMENT, null);
+
+  const commentNodes = [];
+  while (walker.nextNode()) {
+    commentNodes.push(walker.currentNode);
+  }
+
+  commentNodes.forEach((node) => {
+    const text = node.nodeValue.trim();
+    if (!text) return;
+
+    const block = document.createElement('div');
+    block.className = 'html-comment-block';
+    block.textContent = text;
+    node.parentNode.replaceChild(block, node);
+  });
+}
