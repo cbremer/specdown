@@ -58,6 +58,11 @@ import {
   toggleSplitView,
   updateSplitRawPane,
 } from './features/split-view.js';
+import {
+  setupTheme,
+  toggleTheme,
+  configureTheme,
+} from './features/theme.js';
 
 // ===========================
 // Constants
@@ -132,6 +137,7 @@ const iosTocNav = document.getElementById('ios-toc-nav');
 // Initialization
 // ===========================
 function init() {
+    configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
@@ -190,44 +196,6 @@ function checkForUpdates() {
             // Version check is non-critical; silently ignore failures
         });
 }
-
-// ===========================
-// Theme Management
-// ===========================
-function setupTheme() {
-    document.documentElement.setAttribute('data-theme', state.currentTheme);
-    updateThemeIcon();
-}
-
-function toggleTheme() {
-    state.currentTheme = state.currentTheme === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', state.currentTheme);
-    localStorage.setItem('theme', state.currentTheme);
-    updateThemeIcon();
-    syncIOSChrome();
-    
-    // Re-render mermaid diagrams with new theme
-    if (contentArea.style.display !== 'none') {
-        reRenderMermaidDiagrams();
-    }
-}
-
-function updateThemeIcon() {
-    const icon = themeToggle.querySelector('.theme-icon');
-    icon.textContent = state.currentTheme === 'light' ? '🌙' : '☀️';
-}
-
-// iOS API: called by Swift shell to set theme externally
-window.setTheme = function(theme) {
-    state.currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', state.currentTheme);
-    localStorage.setItem('theme', state.currentTheme);
-    updateThemeIcon();
-    syncIOSChrome();
-    if (contentArea && contentArea.style.display !== 'none') {
-        reRenderMermaidDiagrams();
-    }
-};
 
 // iOS API: called by Swift shell to load a file (Session 2+)
 window.loadFileContent = function(content, filename) {
