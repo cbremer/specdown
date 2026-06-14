@@ -1,3 +1,4 @@
+// @ts-check
 // Pure, dependency-free helpers shared across the viewer.
 
 /**
@@ -85,12 +86,14 @@ export function revealHtmlComments(container) {
   }
 
   commentNodes.forEach((node) => {
-    const text = node.nodeValue.trim();
+    // Comment nodes always have a string value and a parent here (they came
+    // from a TreeWalker over `container`), but guard for the type-checker.
+    const text = (node.nodeValue || '').trim();
     if (!text) return;
 
     const block = document.createElement('div');
     block.className = 'html-comment-block';
     block.textContent = text;
-    node.parentNode.replaceChild(block, node);
+    node.parentNode?.replaceChild(block, node);
   });
 }

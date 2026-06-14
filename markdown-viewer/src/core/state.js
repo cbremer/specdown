@@ -1,3 +1,4 @@
+// @ts-check
 // Shared mutable app state.
 //
 // Modules import this object and read/mutate its fields. ESM forbids
@@ -6,6 +7,44 @@
 // bare module-level `let`s. This object grows as the entry module is split
 // into feature modules that need to share state.
 
+/**
+ * An open file tab.
+ * @typedef {object} Tab
+ * @property {number} id
+ * @property {string} filename
+ * @property {string | null} filePath
+ * @property {string} rawMarkdown
+ * @property {'preview' | 'raw'} viewMode
+ * @property {number} scrollTop
+ * @property {boolean} watching
+ * @property {boolean} hasUnseenChanges
+ */
+
+/**
+ * A table-of-contents entry derived from a rendered heading.
+ * @typedef {object} TocEntry
+ * @property {string} id
+ * @property {number} level
+ * @property {string | null} text
+ */
+
+/**
+ * @typedef {object} AppState
+ * @property {any[]} currentPanzoomInstances Active panzoom instances to clean up.
+ * @property {string} currentTheme 'light' or 'dark'.
+ * @property {string} currentRawMarkdown Raw source of the active document.
+ * @property {'preview' | 'raw'} currentViewMode
+ * @property {Tab[]} tabs Open file tabs.
+ * @property {number | null} activeTabId
+ * @property {number} nextTabId Monotonic id source for new tabs.
+ * @property {boolean} tocVisible
+ * @property {TocEntry[]} tocEntries
+ * @property {boolean} tocScrollSpyScheduled
+ * @property {boolean} splitViewActive
+ * @property {string} iosLayoutMode
+ */
+
+/** @type {AppState} */
 export const state = {
   // Render / view
   currentPanzoomInstances: [],

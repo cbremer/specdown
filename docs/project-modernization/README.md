@@ -13,6 +13,7 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-13 | [tasks-session-02-phase1-vite-foundation](2026-06-13-tasks-session-02-phase1-vite-foundation.md) | Phase 1 slice 1: Vite + ES-module build foundation, real npm deps replace `vendor/`, all surfaces load `dist/`, harness migrated, sync-version regression fixed |
 | 2026-06-14 | [tasks-session-03-phase1-module-split](2026-06-14-tasks-session-03-phase1-module-split.md) | Phase 1 slice 2: internal split of the ~2,800-line `src/main.js` into `core/`/`features/`/`platform/` modules (main.js → 588 lines), pure refactor, 297 tests green |
 | 2026-06-14 | [tasks-session-04-phase1-bundle-deps](2026-06-14-tasks-session-04-phase1-bundle-deps.md) | Phase 1 slice 3: heavy-dep loading — lazy-load Mermaid (~2 MB deferred, PR #119) + trim highlight.js to a curated language set (app-shell entry 1.07 MB → 261 kB) |
+| 2026-06-14 | [tasks-session-05-phase1-typescript](2026-06-14-tasks-session-05-phase1-typescript.md) | Phase 1 slice 4: gradual TypeScript foundation — `checkJs` toolchain, per-file `// @ts-check` opt-in (leaf modules), native-bridge `globals.d.ts`, `typecheck` enforced in CI |
 
 ## Current Status
 
@@ -29,7 +30,11 @@ core/features/platform modules (session 03, main.js → 588 lines), and the
 **heavy-dependency loading** work is substantially done (session 04): Mermaid
 is lazy-loaded (~2 MB deferred until a diagram renders, PR #119) and
 highlight.js is trimmed to a curated language set (app-shell entry 1.07 MB →
-261 kB). Remaining Phase 1 work: begin **gradual TypeScript** (`checkJs`).
+261 kB). The **gradual-TypeScript foundation** is now in place too (session 05):
+a `checkJs` toolchain with per-file `// @ts-check` opt-in, a native-bridge
+`globals.d.ts`, and a `typecheck` gate enforced in CI — the first leaf modules
+are checked and the rest opt in incrementally. **Phase 1 (Architecture) is
+functionally complete**; next is **Phase 2** (design system / accessibility).
 
 The open questions below (iOS investment, Apple Developer membership for
 signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.

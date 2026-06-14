@@ -108,6 +108,7 @@ npm run preview           # serve the production build locally
 npm test                  # run full Jest suite (required before committing)
 npm run test:coverage     # coverage report
 npm run lint              # ESLint (flat config) — must be clean before committing
+npm run typecheck         # tsc --noEmit (checkJs) — must be clean before committing
 npm run format            # Prettier — write
 npm run desktop           # build the web app, then launch Electron (macOS)
 npm run desktop:build     # build the web app + .dmg locally (macOS only)
@@ -118,9 +119,17 @@ iOS) load the build output in `markdown-viewer/dist/`, so `npm run build` must
 run before packaging the desktop or iOS app (the `desktop`/`desktop:build`
 scripts and the CI workflows do this for you).
 
-Tests and lint must pass before committing; both run in CI on every PR
-(`.github/workflows/ci.yml`). Coverage is reported by `npm run test:coverage`
-but no hard `coverageThreshold` is configured in `package.json` yet.
+Tests, lint, and typecheck must pass before committing; all three run in CI on
+every PR (`.github/workflows/ci.yml`). Coverage is reported by
+`npm run test:coverage` but no hard `coverageThreshold` is configured in
+`package.json` yet.
+
+**Gradual TypeScript:** the viewer is plain ESM JS, type-checked via
+`checkJs`. `tsconfig.json` keeps `checkJs` off globally; modules opt in one at a
+time with a `// @ts-check` pragma at the top (leaf modules first) plus JSDoc
+types. `npm run typecheck` only checks opted-in files, so the gate stays green
+while coverage grows. Native-bridge globals (`window.specdown`, `window.webkit`,
+…) are declared in `markdown-viewer/src/types/globals.d.ts`.
 
 ---
 
