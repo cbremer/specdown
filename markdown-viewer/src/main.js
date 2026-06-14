@@ -55,7 +55,7 @@ import {
 // ===========================
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const APP_VERSION = '0.0.98';
+const APP_VERSION = '0.0.99';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
