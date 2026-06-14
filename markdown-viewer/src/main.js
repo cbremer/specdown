@@ -85,6 +85,7 @@ import {
   configureShareLinks,
 } from './features/share-links.js';
 import { createTab, configureTabs } from './features/tabs.js';
+import { showToast } from './features/toast.js';
 import {
   setupDesktopIPC,
   updateWatchToggle,
@@ -563,7 +564,7 @@ async function renderMarkdown(content, filename) {
 
     } catch (error) {
         console.error('Error rendering markdown:', error);
-        alert('Error rendering markdown content. Please check the file format.');
+        showToast('Error rendering markdown content. Please check the file format.', { type: 'error' });
     }
 }
 

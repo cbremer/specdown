@@ -1364,6 +1364,92 @@ mark.search-highlight-current {
 }
 
 /* ===========================
+   Toast Notifications
+   =========================== */
+.toast-region {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: min(90vw, 32rem);
+    z-index: 10000;
+    /* The region itself doesn't intercept clicks; individual toasts do. */
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    cursor: pointer;
+    /* Dark chip in both themes (matches the existing share toast) for a
+       consistent, high-contrast notification surface. */
+    background-color: #323232;
+    color: #fff;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 0.2s ease;
+}
+
+.toast-success {
+    border-left-color: var(--success-color);
+}
+
+.toast-info {
+    border-left-color: var(--accent-color);
+}
+
+.toast-warning {
+    border-left-color: #e0a800;
+}
+
+.toast-error {
+    border-left-color: #e0533f;
+}
+
+/* ===========================
+   Skip Link (accessibility)
+   =========================== */
+.skip-link {
+    position: absolute;
+    left: 0.5rem;
+    top: -3rem;
+    z-index: 10001;
+    padding: 0.5rem 1rem;
+    background-color: var(--accent-color);
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+    top: 0.5rem;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Respect users who prefer reduced motion: drop the non-essential entrance
+   and skip-link slide animations. */
+@media (prefers-reduced-motion: reduce) {
+    .toast,
+    .share-toast {
+        animation: none;
+    }
+    .skip-link {
+        transition: none;
+    }
+}
+
+/* ===========================
    iOS Native Shell
    =========================== */
 .ios-native {

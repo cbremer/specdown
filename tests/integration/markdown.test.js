@@ -106,16 +106,20 @@ describe('Markdown Rendering', () => {
       expect(processSpy).toHaveBeenCalled();
     });
 
-    it('should handle parsing errors with alert', async () => {
+    it('should handle parsing errors with an error toast', async () => {
       marked.parse.mockImplementation(() => {
         throw new Error('Parse error');
       });
 
       await renderMarkdown('# Test', 'test.md');
 
-      expect(global.alert).toHaveBeenCalledWith(
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      expect(toast.textContent).toBe(
         'Error rendering markdown content. Please check the file format.'
       );
+      expect(toast.classList.contains('toast-error')).toBe(true);
+      expect(toast.getAttribute('role')).toBe('alert');
     });
 
     it('should reset scroll position', async () => {

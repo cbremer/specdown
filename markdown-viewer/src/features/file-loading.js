@@ -4,6 +4,7 @@
 
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
+import { showToast } from './toast.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (id) => document.getElementById(id);
@@ -30,7 +31,7 @@ export function handleFile(file) {
   const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
   if (!VALID_EXTENSIONS.includes(fileExtension)) {
-    alert('Please select a valid Markdown file (.md or .markdown)');
+    showToast('Please select a valid Markdown file (.md or .markdown)', { type: 'warning' });
     return;
   }
 
@@ -41,7 +42,7 @@ export function handleFile(file) {
     openTab(file.name, content, file.path || null);
   };
   reader.onerror = () => {
-    alert('Error reading file. Please try again.');
+    showToast('Error reading file. Please try again.', { type: 'error' });
   };
   reader.readAsText(file);
 }
