@@ -1,3 +1,4 @@
+// @ts-check
 // marked configuration + the lazy mermaid loader. Pure setup — no callbacks
 // back into the app.
 
@@ -57,9 +58,11 @@ export function getMermaidConfig() {
 // Under the Jest harness the module graph is flattened to globals and bare
 // imports are replaced by mocks, so a global `mermaid` stands in for the real
 // dynamic import (the `import('mermaid')` branch is never taken there).
+/** @type {Promise<any> | null} */
 let mermaidPromise = null;
 export function loadMermaid() {
   if (!mermaidPromise) {
+    /** @type {Promise<any>} */
     const source =
       typeof globalThis.mermaid !== 'undefined'
         ? Promise.resolve(globalThis.mermaid)

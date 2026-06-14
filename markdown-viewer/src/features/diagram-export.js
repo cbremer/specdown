@@ -1,3 +1,4 @@
+// @ts-check
 // Diagram export: download a rendered Mermaid diagram as SVG or PNG.
 
 import { getSvgNaturalDimensions } from '../core/utils.js';
@@ -16,7 +17,9 @@ function getSvgElementForDiagram(diagramId) {
     if (inWrapper) return inWrapper;
   }
   return fullscreenOverlay
-    ? fullscreenOverlay.querySelector('.fullscreen-diagram-wrapper svg')
+    ? /** @type {SVGElement | null} */ (
+        fullscreenOverlay.querySelector('.fullscreen-diagram-wrapper svg')
+      )
     : null;
 }
 
@@ -36,7 +39,10 @@ function triggerDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Download the diagram as an SVG file. */
+/**
+ * Download the diagram as an SVG file.
+ * @param {string} diagramId
+ */
 export function downloadDiagramSvg(diagramId) {
   const svgEl = getSvgElementForDiagram(diagramId);
   if (!svgEl) return;
@@ -47,7 +53,10 @@ export function downloadDiagramSvg(diagramId) {
   triggerDownload(blob, (diagramId || 'diagram') + '.svg');
 }
 
-/** Download the diagram as a 2x (retina) PNG file. */
+/**
+ * Download the diagram as a 2x (retina) PNG file.
+ * @param {string} diagramId
+ */
 export function downloadDiagramPng(diagramId) {
   const svgEl = getSvgElementForDiagram(diagramId);
   if (!svgEl) return;
@@ -66,11 +75,15 @@ export function downloadDiagramPng(diagramId) {
     canvas.width = (dims ? dims.width : img.naturalWidth || 800) * scale;
     canvas.height = (dims ? dims.height : img.naturalHeight || 600) * scale;
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      URL.revokeObjectURL(url);
+      return;
+    }
     ctx.scale(scale, scale);
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
     canvas.toBlob((pngBlob) => {
-      triggerDownload(pngBlob, (diagramId || 'diagram') + '.png');
+      if (pngBlob) triggerDownload(pngBlob, (diagramId || 'diagram') + '.png');
     }, 'image/png');
   };
   img.onerror = () => URL.revokeObjectURL(url);

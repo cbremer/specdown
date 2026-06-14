@@ -1,3 +1,4 @@
+// @ts-check
 // Tab management: the open-document model (create / switch / close), the tab
 // bar UI, and the empty-state drop zone reset.
 //
@@ -24,23 +25,54 @@ import {
   closeIOSTocSheet,
 } from '../platform/ios-chrome.js';
 
+/** @typedef {import('../core/state.js').Tab} Tab */
+
 const MAX_TABS = 10;
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
+
+// Small null-safe DOM setters (every getElementById is `HTMLElement | null`).
+const setText = (/** @type {string} */ id, /** @type {string} */ text) => {
+  const e = el(id);
+  if (e) e.textContent = text;
+};
+const setHtml = (/** @type {string} */ id, /** @type {string} */ html) => {
+  const e = el(id);
+  if (e) e.innerHTML = html;
+};
+const setDisplay = (/** @type {string} */ id, /** @type {string} */ value) => {
+  const e = el(id);
+  if (e) e.style.display = value;
+};
 
 // Render-core / desktop callbacks, wired by configureTabs in init().
+/** @type {(content: string, filename: string) => any} */
 let renderDoc = () => {};
+/** @type {() => void} */
 let refreshWatchUI = () => {};
+/** @type {() => void} */
 let persistSession = () => {};
+/** @type {(filePath?: string | null) => void} */
 let beginWatch = () => {};
+/** @type {(filePath?: string | null) => void} */
 let endWatch = () => {};
 
+/**
+ * @param {{ renderMarkdown?: Function, updateWatchToggle?: Function,
+ *   saveDesktopSession?: Function, startWatchingFilePath?: Function,
+ *   stopWatchingFilePath?: Function }} [deps]
+ */
 export function configureTabs(deps) {
   if (!deps) return;
-  if (typeof deps.renderMarkdown === 'function') renderDoc = deps.renderMarkdown;
-  if (typeof deps.updateWatchToggle === 'function') refreshWatchUI = deps.updateWatchToggle;
-  if (typeof deps.saveDesktopSession === 'function') persistSession = deps.saveDesktopSession;
-  if (typeof deps.startWatchingFilePath === 'function') beginWatch = deps.startWatchingFilePath;
-  if (typeof deps.stopWatchingFilePath === 'function') endWatch = deps.stopWatchingFilePath;
+  if (typeof deps.renderMarkdown === 'function')
+    renderDoc = /** @type {typeof renderDoc} */ (deps.renderMarkdown);
+  if (typeof deps.updateWatchToggle === 'function')
+    refreshWatchUI = /** @type {typeof refreshWatchUI} */ (deps.updateWatchToggle);
+  if (typeof deps.saveDesktopSession === 'function')
+    persistSession = /** @type {typeof persistSession} */ (deps.saveDesktopSession);
+  if (typeof deps.startWatchingFilePath === 'function')
+    beginWatch = /** @type {typeof beginWatch} */ (deps.startWatchingFilePath);
+  if (typeof deps.stopWatchingFilePath === 'function')
+    endWatch = /** @type {typeof endWatch} */ (deps.stopWatchingFilePath);
 }
 
 function saveActiveTabState() {
@@ -86,8 +118,9 @@ export function renderTabBar() {
 
   tabBar.querySelectorAll('.tab').forEach((tabEl) => {
     tabEl.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tab-close')) return;
-      const id = parseInt(tabEl.getAttribute('data-tab-id'), 10);
+      const target = /** @type {HTMLElement} */ (e.target);
+      if (target.classList.contains('tab-close')) return;
+      const id = parseInt(tabEl.getAttribute('data-tab-id') || '', 10);
       switchTab(id);
     });
   });
@@ -95,7 +128,7 @@ export function renderTabBar() {
   tabBar.querySelectorAll('.tab-close').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = parseInt(btn.getAttribute('data-close-id'), 10);
+      const id = parseInt(btn.getAttribute('data-close-id') || '', 10);
       closeTab(id);
     });
   });
@@ -110,6 +143,11 @@ export function renderTabBar() {
   }
 }
 
+/**
+ * @param {string} filename
+ * @param {string} content
+ * @param {string | null} [filePath]
+ */
 export function createTab(filename, content, filePath) {
   if (state.tabs.length >= MAX_TABS) {
     showToast('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.', {
@@ -122,6 +160,7 @@ export function createTab(filename, content, filePath) {
   saveActiveTabState();
 
   const id = ++state.nextTabId;
+  /** @type {Tab} */
   const tab = {
     id,
     filename,
@@ -147,6 +186,7 @@ export function createTab(filename, content, filePath) {
   renderDoc(content, filename);
 }
 
+/** @param {number} id */
 export async function switchTab(id) {
   if (id === state.activeTabId) return;
 
@@ -163,6 +203,7 @@ export async function switchTab(id) {
   cleanupPanzoomInstances();
 
   const markdownContent = el('markdown-content');
+  if (!markdownContent) return;
 
   if (tab.viewMode === 'raw') {
     if (state.tocVisible) {
@@ -175,9 +216,9 @@ export async function switchTab(id) {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
     markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
-    el('file-name').textContent = tab.filename;
-    el('drop-zone').style.display = 'none';
-    el('content-area').style.display = 'flex';
+    setText('file-name', tab.filename);
+    setDisplay('drop-zone', 'none');
+    setDisplay('content-area', 'flex');
     updateViewToggleButton();
     markdownContent.scrollTop = tab.scrollTop;
     syncIOSChrome();
@@ -187,6 +228,7 @@ export async function switchTab(id) {
   }
 }
 
+/** @param {number} id */
 export async function closeTab(id) {
   const idx = state.tabs.findIndex((t) => t.id === id);
   if (idx === -1) return;
@@ -229,10 +271,10 @@ export async function closeTab(id) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-      el('markdown-content').innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
-      el('file-name').textContent = newTab.filename;
-      el('drop-zone').style.display = 'none';
-      el('content-area').style.display = 'flex';
+      setHtml('markdown-content', `<pre class="raw-markdown"><code>${escaped}</code></pre>`);
+      setText('file-name', newTab.filename);
+      setDisplay('drop-zone', 'none');
+      setDisplay('content-area', 'flex');
       updateViewToggleButton();
       syncIOSChrome();
     } else {
@@ -252,9 +294,10 @@ export function showDropZone() {
   closeIOSTocSheet();
 
   // Clear content
-  el('markdown-content').innerHTML = '';
-  el('file-name').textContent = '';
-  el('file-input').value = '';
+  setHtml('markdown-content', '');
+  setText('file-name', '');
+  const fileInput = /** @type {HTMLInputElement | null} */ (el('file-input'));
+  if (fileInput) fileInput.value = '';
   state.currentRawMarkdown = '';
   state.currentViewMode = 'preview';
   updateViewToggleButton();
@@ -276,7 +319,7 @@ export function showDropZone() {
   if (tocSidebar) tocSidebar.style.display = 'none';
 
   // Show drop zone, hide content
-  el('content-area').style.display = 'none';
-  el('drop-zone').style.display = 'flex';
+  setDisplay('content-area', 'none');
+  setDisplay('drop-zone', 'flex');
   syncIOSChrome();
 }

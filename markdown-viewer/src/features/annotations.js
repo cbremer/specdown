@@ -1,3 +1,4 @@
+// @ts-check
 // Lightweight sticky-note annotations stored in localStorage, keyed by
 // filename. Users can double-click any paragraph or heading to add/edit one.
 // State is private to this module.
@@ -9,6 +10,10 @@ let annotationKey = '';
 
 const content = () => document.getElementById('markdown-content');
 
+/**
+ * @param {string} key
+ * @returns {Record<string, string>}
+ */
 function loadAnnotations(key) {
   try {
     const raw = localStorage.getItem(ANNOTATIONS_KEY);
@@ -19,6 +24,10 @@ function loadAnnotations(key) {
   }
 }
 
+/**
+ * @param {string} key
+ * @param {Record<string, string>} annotations
+ */
 function saveAnnotations(key, annotations) {
   try {
     const raw = localStorage.getItem(ANNOTATIONS_KEY);
@@ -50,10 +59,14 @@ export function toggleAnnotationMode() {
   }
 }
 
-/** Render saved annotation badges for a document, keyed by filename. */
+/**
+ * Render saved annotation badges for a document, keyed by filename.
+ * @param {string} key
+ */
 export function renderAnnotations(key) {
   const markdownContent = content();
   annotationKey = key;
+  if (!markdownContent) return;
   // Remove old annotation badges
   markdownContent.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
 
@@ -68,28 +81,31 @@ export function renderAnnotations(key) {
 }
 
 function attachAnnotationHandlers() {
+  const root = content();
+  if (!root) return;
   // Index all annotatable elements
-  const els = content().querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
+  const els = root.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
   els.forEach((el, idx) => {
-    el.setAttribute('data-annot-idx', idx);
+    el.setAttribute('data-annot-idx', String(idx));
     el.classList.add('annotatable');
     el.addEventListener('dblclick', handleAnnotationDblClick);
   });
 }
 
 function detachAnnotationHandlers() {
-  content()
-    .querySelectorAll('.annotatable')
-    .forEach((el) => {
-      el.removeEventListener('dblclick', handleAnnotationDblClick);
-      el.classList.remove('annotatable');
-    });
+  const root = content();
+  if (!root) return;
+  root.querySelectorAll('.annotatable').forEach((el) => {
+    el.removeEventListener('dblclick', handleAnnotationDblClick);
+    el.classList.remove('annotatable');
+  });
 }
 
+/** @param {Event} e */
 function handleAnnotationDblClick(e) {
   if (!annotationMode) return;
-  const el = e.currentTarget;
-  const idx = parseInt(el.getAttribute('data-annot-idx'), 10);
+  const el = /** @type {HTMLElement} */ (e.currentTarget);
+  const idx = parseInt(el.getAttribute('data-annot-idx') || '', 10);
   const annotations = loadAnnotations(annotationKey);
   const existing = annotations[idx] || '';
 
@@ -107,12 +123,17 @@ function handleAnnotationDblClick(e) {
   saveAnnotations(annotationKey, annotations);
 }
 
+/**
+ * @param {Element} el
+ * @param {number} idx
+ * @param {string} text
+ */
 function attachAnnotationBadge(el, idx, text) {
   // Remove existing badge first
   const existing = el.querySelector('.annotation-badge');
   if (existing) existing.remove();
 
-  el.setAttribute('data-annot-idx', idx);
+  el.setAttribute('data-annot-idx', String(idx));
   el.classList.add('has-annotation');
 
   const badge = document.createElement('span');
@@ -126,6 +147,10 @@ function attachAnnotationBadge(el, idx, text) {
   el.appendChild(badge);
 }
 
+/**
+ * @param {HTMLElement} anchor
+ * @param {string} text
+ */
 function showAnnotationPopover(anchor, text) {
   let popover = document.getElementById('annotation-popover');
   if (!popover) {
@@ -134,15 +159,18 @@ function showAnnotationPopover(anchor, text) {
     popover.className = 'annotation-popover';
     document.body.appendChild(popover);
   }
-  popover.textContent = text;
+  const box = popover;
+  box.textContent = text;
   const rect = anchor.getBoundingClientRect();
-  popover.style.top = rect.bottom + window.scrollY + 4 + 'px';
-  popover.style.left = rect.left + window.scrollX + 'px';
-  popover.style.display = '';
+  box.style.top = rect.bottom + window.scrollY + 4 + 'px';
+  box.style.left = rect.left + window.scrollX + 'px';
+  box.style.display = '';
 
+  /** @param {Event} e */
   const hide = (e) => {
-    if (!popover.contains(e.target) && e.target !== anchor) {
-      popover.style.display = 'none';
+    const target = /** @type {Node} */ (e.target);
+    if (!box.contains(target) && e.target !== anchor) {
+      box.style.display = 'none';
       document.removeEventListener('click', hide);
     }
   };

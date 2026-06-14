@@ -1,3 +1,4 @@
+// @ts-check
 // Curated highlight.js build.
 //
 // The full `highlight.js` package bundles ~190 language grammars (~900 kB) and

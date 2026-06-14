@@ -1,3 +1,4 @@
+// @ts-check
 // Loading markdown from local files (browse / drop) and from URLs (incl. the
 // GitHub repo browser). Opening content creates a tab (tabs core, main.js),
 // supplied via configureFileLoading.
@@ -7,25 +8,32 @@ import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
+/** @type {(filename: string, content?: string, filePath?: string | null) => void} */
 let openTab = () => {};
 
+/** @param {{ createTab?: Function }} [deps] */
 export function configureFileLoading(deps) {
-  if (deps && typeof deps.createTab === 'function') openTab = deps.createTab;
+  if (deps && typeof deps.createTab === 'function') {
+    openTab = /** @type {typeof openTab} */ (deps.createTab);
+  }
 }
 
+/** @param {Event} e */
 export function handleFileSelect(e) {
-  const files = e.target.files;
-  for (let i = 0; i < files.length; i++) {
-    handleFile(files[i]);
+  const input = /** @type {HTMLInputElement} */ (e.target);
+  const files = input.files;
+  if (files) {
+    for (let i = 0; i < files.length; i++) {
+      handleFile(files[i]);
+    }
   }
   // Reset so the same file can be re-opened in a new tab
-  if (e.target && 'value' in e.target) {
-    e.target.value = '';
-  }
+  input.value = '';
 }
 
+/** @param {File & { path?: string }} file */
 export function handleFile(file) {
   // Validate file type
   const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -37,8 +45,8 @@ export function handleFile(file) {
 
   // Read file and open in a new tab
   const reader = new FileReader();
-  reader.onload = (e) => {
-    const content = e.target.result;
+  reader.onload = () => {
+    const content = /** @type {string} */ (reader.result);
     openTab(file.name, content, file.path || null);
   };
   reader.onerror = () => {
@@ -47,6 +55,7 @@ export function handleFile(file) {
   reader.readAsText(file);
 }
 
+/** @param {string} url */
 function getFilenameFromUrl(url) {
   try {
     const pathname = new URL(url).pathname;
@@ -60,6 +69,7 @@ function getFilenameFromUrl(url) {
   return 'untitled.md';
 }
 
+/** @param {string} message */
 function showUrlError(message) {
   const urlError = el('url-error');
   if (!urlError) return;
@@ -74,6 +84,7 @@ function clearUrlError() {
   urlError.textContent = '';
 }
 
+/** @param {string} url */
 export async function handleUrl(url) {
   clearUrlError();
 
@@ -82,7 +93,7 @@ export async function handleUrl(url) {
     return;
   }
 
-  const urlInput = el('url-input');
+  const urlInput = /** @type {HTMLInputElement | null} */ (el('url-input'));
 
   // Check if this is a GitHub repo URL to show the file browser
   const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(url);

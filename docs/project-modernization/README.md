@@ -17,6 +17,7 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-14 | [tasks-session-06-phase2-toasts-a11y](2026-06-14-tasks-session-06-phase2-toasts-a11y.md) | Phase 2 slice 1: accessible toast system replaces all `alert()` calls + accessibility pass (skip link, aria-labels on icon-only controls, decorative-icon hiding, reduced-motion); +22 tests |
 | 2026-06-14 | [tasks-session-07-phase2-theme-motion](2026-06-14-tasks-session-07-phase2-theme-motion.md) | Phase 2 slice 2: auto/system theme (3-way light→dark→auto cycle, `prefers-color-scheme` with live OS updates) + global reduced-motion; +5 tests |
 | 2026-06-14 | [tasks-session-08-phase2-command-palette](2026-06-14-tasks-session-08-phase2-command-palette.md) | Phase 2 slice 3: command palette (Cmd/Ctrl+K, fuzzy filter, keyboard nav, ARIA combobox/listbox) + keyboard shortcut sheet (`?`); +21 tests |
+| 2026-06-14 | [tasks-session-09-typescript-batch2](2026-06-14-tasks-session-09-typescript-batch2.md) | Gradual TypeScript batch 2: `// @ts-check` opt-in for 15 more modules (custom-css, split-view, share-links, view-mode, diagram-export, minimap, theme, file-loading, toc, search, annotations, repo-browser, render-config, tabs, highlight) — 21/~25 checked; no behavior change |
 
 ## Current Status
 

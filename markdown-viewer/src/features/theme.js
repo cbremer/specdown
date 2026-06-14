@@ -1,3 +1,4 @@
+// @ts-check
 // Theme: light / dark / auto (system). The mermaid re-render on theme change
 // lives in the render core (main.js), so it's supplied via configureTheme to
 // avoid a back-import.
@@ -10,17 +11,22 @@
 import { state } from '../core/state.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
 // Click order for the toggle button: light → dark → auto → light.
+/** @type {Array<'light' | 'dark' | 'auto'>} */
 const THEME_ORDER = ['light', 'dark', 'auto'];
 
+/** @type {() => void} */
 let reRenderDiagrams = () => {};
 
-/** Wire the render-core callback used when the theme changes. */
+/**
+ * Wire the render-core callback used when the theme changes.
+ * @param {{ reRenderDiagrams?: Function }} [deps]
+ */
 export function configureTheme(deps) {
   if (deps && typeof deps.reRenderDiagrams === 'function') {
-    reRenderDiagrams = deps.reRenderDiagrams;
+    reRenderDiagrams = /** @type {() => void} */ (deps.reRenderDiagrams);
   }
 }
 
@@ -30,7 +36,11 @@ function systemPrefersDark() {
   );
 }
 
-/** Resolve a preference to the concrete theme to apply. */
+/**
+ * Resolve a preference to the concrete theme to apply.
+ * @param {'light' | 'dark' | 'auto'} preference
+ * @returns {'light' | 'dark'}
+ */
 function resolveTheme(preference) {
   if (preference === 'auto') return systemPrefersDark() ? 'dark' : 'light';
   return preference === 'dark' ? 'dark' : 'light';
@@ -103,6 +113,6 @@ export function toggleTheme() {
 
 // iOS API: called by the Swift shell to set the theme externally.
 window.setTheme = function (theme) {
-  state.themePreference = THEME_ORDER.includes(theme) ? theme : 'light';
+  state.themePreference = THEME_ORDER.find((t) => t === theme) || 'light';
   applyTheme(true);
 };
