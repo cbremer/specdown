@@ -26,6 +26,7 @@
     <script type="module" src="/src/main.js"></script>
 </head>
 <body>
+    <a class="skip-link" href="#markdown-content">Skip to content</a>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
@@ -42,8 +43,8 @@
                 </div>
             </div>
             <div class="header-controls">
-                <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
-                    <span class="theme-icon">🌙</span>
+                <button id="theme-toggle" class="theme-toggle" title="Toggle theme" aria-label="Toggle light/dark theme">
+                    <span class="theme-icon" aria-hidden="true">🌙</span>
                 </button>
             </div>
         </header>
@@ -93,28 +94,28 @@
                     <span id="file-name" class="file-name"></span>
                 </div>
                 <div class="content-header-actions">
-                    <button id="watch-toggle" class="watch-toggle-button" title="Auto-reload when file changes on disk" style="display: none;">
-                        <span class="watch-toggle-icon">⟳</span>
+                    <button id="watch-toggle" class="watch-toggle-button" title="Auto-reload when file changes on disk" aria-label="Watch file for changes" style="display: none;">
+                        <span class="watch-toggle-icon" aria-hidden="true">⟳</span>
                         <span class="watch-toggle-label">Watch</span>
                     </button>
-                    <button id="toc-toggle" class="toc-toggle-button" title="Toggle table of contents">
-                        <span class="toc-toggle-icon">☰</span>
+                    <button id="toc-toggle" class="toc-toggle-button" title="Toggle table of contents" aria-label="Toggle contents">
+                        <span class="toc-toggle-icon" aria-hidden="true">☰</span>
                         <span class="toc-toggle-label">Contents</span>
                     </button>
-                    <button id="split-toggle" class="split-toggle-button" title="Toggle split view (preview + raw)">
-                        <span class="split-toggle-icon">⊟</span>
+                    <button id="split-toggle" class="split-toggle-button" title="Toggle split view (preview + raw)" aria-label="Toggle split view">
+                        <span class="split-toggle-icon" aria-hidden="true">⊟</span>
                         <span class="split-toggle-label">Split</span>
                     </button>
-                    <button id="annotation-toggle" class="annotation-toggle-button" title="Toggle annotation mode (double-click text to add notes)">
-                        <span class="annotation-toggle-icon">✎</span>
+                    <button id="annotation-toggle" class="annotation-toggle-button" title="Toggle annotation mode (double-click text to add notes)" aria-label="Toggle annotate mode">
+                        <span class="annotation-toggle-icon" aria-hidden="true">✎</span>
                         <span class="annotation-toggle-label">Annotate</span>
                     </button>
-                    <button id="print-button" class="print-button" title="Print / Save as PDF (Cmd+P)">
-                        <span class="print-button-icon">⎙</span>
+                    <button id="print-button" class="print-button" title="Print / Save as PDF (Cmd+P)" aria-label="Print or save as PDF">
+                        <span class="print-button-icon" aria-hidden="true">⎙</span>
                         <span class="print-button-label">Print</span>
                     </button>
-                    <button id="view-toggle" class="view-toggle-button" title="Toggle between preview and raw markdown">
-                        <span class="view-toggle-icon">&lt;/&gt;</span>
+                    <button id="view-toggle" class="view-toggle-button" title="Toggle between preview and raw markdown" aria-label="Toggle raw markdown view">
+                        <span class="view-toggle-icon" aria-hidden="true">&lt;/&gt;</span>
                         <span class="view-toggle-label">Raw</span>
                     </button>
                 </div>
@@ -124,9 +125,9 @@
             <div id="search-bar" class="search-bar" style="display: none;">
                 <input type="text" id="search-input" class="search-input" placeholder="Search..." autocomplete="off" spellcheck="false">
                 <span id="search-count" class="search-count"></span>
-                <button id="search-prev" class="search-nav-btn" title="Previous match">&#8593;</button>
-                <button id="search-next" class="search-nav-btn" title="Next match">&#8595;</button>
-                <button id="search-close" class="search-close-btn" title="Close search (Esc)">&#10005;</button>
+                <button id="search-prev" class="search-nav-btn" title="Previous match" aria-label="Previous match">&#8593;</button>
+                <button id="search-next" class="search-nav-btn" title="Next match" aria-label="Next match">&#8595;</button>
+                <button id="search-close" class="search-close-btn" title="Close search (Esc)" aria-label="Close search">&#10005;</button>
             </div>
 
             <!-- Body with TOC sidebar + main content -->
@@ -139,7 +140,7 @@
 
                 <!-- Main content pane (preview + optional raw split) -->
                 <div id="content-main" class="content-main">
-                    <div id="markdown-content" class="markdown-content"></div>
+                    <div id="markdown-content" class="markdown-content" tabindex="-1" role="main"></div>
                     <div id="split-raw-pane" class="split-raw-pane" style="display: none;">
                         <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
                     </div>

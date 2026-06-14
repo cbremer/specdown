@@ -74,14 +74,19 @@ describe('File Handling', () => {
       }, 10);
     });
 
-    it('should reject .txt files with alert', () => {
+    it('should reject .txt files with a warning toast', () => {
       const file = new File(['Test content'], 'test.txt', { type: 'text/plain' });
 
       handleFile(file);
 
-      expect(global.alert).toHaveBeenCalledWith(
+      expect(global.alert).not.toHaveBeenCalled();
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      expect(toast.textContent).toBe(
         'Please select a valid Markdown file (.md or .markdown)'
       );
+      expect(toast.classList.contains('toast-warning')).toBe(true);
+      expect(toast.getAttribute('role')).toBe('status');
     });
 
     it('should reject files without extensions', () => {
@@ -89,12 +94,14 @@ describe('File Handling', () => {
 
       handleFile(file);
 
-      expect(global.alert).toHaveBeenCalledWith(
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      expect(toast.textContent).toBe(
         'Please select a valid Markdown file (.md or .markdown)'
       );
     });
 
-    it('should handle file read errors with alert', (done) => {
+    it('should handle file read errors with an error toast', (done) => {
       const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
 
       const originalFileReader = global.FileReader;
@@ -107,9 +114,11 @@ describe('File Handling', () => {
                 this.onerror(new Error('Read failed'));
               }
 
-              expect(global.alert).toHaveBeenCalledWith(
-                'Error reading file. Please try again.'
-              );
+              const toast = document.querySelector('.toast');
+              expect(toast).not.toBeNull();
+              expect(toast.textContent).toBe('Error reading file. Please try again.');
+              expect(toast.classList.contains('toast-error')).toBe(true);
+              expect(toast.getAttribute('role')).toBe('alert');
               done();
             }, 0);
           });

@@ -16,6 +16,7 @@ import { closeSearch } from './search.js';
 import { toggleToc } from './toc.js';
 import { toggleSplitView } from './split-view.js';
 import { updateViewToggleButton } from './view-mode.js';
+import { showToast } from './toast.js';
 import {
   requestNativeOpenIfAvailable,
   syncIOSChrome,
@@ -76,10 +77,10 @@ export function renderTabBar() {
       html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
     }
     html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
-    html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab">×</button>`;
+    html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab" aria-label="Close ${escapeHtml(tab.filename)}">×</button>`;
     html += `</div>`;
   }
-  html += `<button class="tab-new" title="Open new file">+</button>`;
+  html += `<button class="tab-new" title="Open new file" aria-label="Open new file">+</button>`;
 
   tabBar.innerHTML = html;
 
@@ -111,7 +112,9 @@ export function renderTabBar() {
 
 export function createTab(filename, content, filePath) {
   if (state.tabs.length >= MAX_TABS) {
-    alert('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.');
+    showToast('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.', {
+      type: 'warning',
+    });
     return;
   }
 
