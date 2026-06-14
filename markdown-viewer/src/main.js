@@ -54,6 +54,10 @@ import {
   toggleToc,
   scheduleTocActiveHeadingUpdate,
 } from './features/toc.js';
+import {
+  toggleSplitView,
+  updateSplitRawPane,
+} from './features/split-view.js';
 
 // ===========================
 // Constants
@@ -1744,39 +1748,6 @@ function saveDesktopSession() {
 // ===========================
 // Print button wired in setupEventListeners; Cmd+P wired in keydown handler.
 // CSS print styles in styles.css hide UI chrome automatically.
-
-// ===========================
-// Feature: Split View
-// ===========================
-function toggleSplitView() {
-    state.splitViewActive = !state.splitViewActive;
-
-    if (splitToggle) splitToggle.classList.toggle('active', state.splitViewActive);
-
-    const contentMain = document.getElementById('content-main');
-    if (contentMain) {
-        contentMain.classList.toggle('split-active', state.splitViewActive);
-    }
-
-    if (splitRawPane) {
-        splitRawPane.style.display = state.splitViewActive ? '' : 'none';
-    }
-
-    if (state.splitViewActive && state.currentRawMarkdown) {
-        updateSplitRawPane(state.currentRawMarkdown);
-    }
-
-    syncIOSChrome();
-}
-
-function updateSplitRawPane(content) {
-    if (!splitRawContent) return;
-    const escaped = content
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    splitRawContent.innerHTML = `<code>${escaped}</code>`;
-}
 
 // ===========================
 // Feature: Shareable Diagram Links
