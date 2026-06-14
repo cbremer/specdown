@@ -46,6 +46,20 @@
     box-sizing: border-box;
 }
 
+/* Respect users who ask the OS to minimize motion: neutralize animations,
+   transitions, and smooth scrolling app-wide. Individual components may still
+   opt into essential motion, but the default is near-instant. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-secondary);
@@ -1435,18 +1449,6 @@ mark.search-highlight-current {
     top: 0.5rem;
     outline: 2px solid #fff;
     outline-offset: 2px;
-}
-
-/* Respect users who prefer reduced motion: drop the non-essential entrance
-   and skip-link slide animations. */
-@media (prefers-reduced-motion: reduce) {
-    .toast,
-    .share-toast {
-        animation: none;
-    }
-    .skip-link {
-        transition: none;
-    }
 }
 
 /* ===========================
