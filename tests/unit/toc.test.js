@@ -140,11 +140,11 @@ describe('Table of Contents', () => {
     });
 
     it('updates tocVisible state correctly', () => {
-      expect(tocVisible).toBe(false);
+      expect(state.tocVisible).toBe(false);
       toggleToc();
-      expect(tocVisible).toBe(true);
+      expect(state.tocVisible).toBe(true);
       toggleToc();
-      expect(tocVisible).toBe(false);
+      expect(state.tocVisible).toBe(false);
     });
   });
 
@@ -181,11 +181,11 @@ describe('Table of Contents', () => {
     it('resets tocVisible to false', async () => {
       await renderMarkdown('# Title', 'test.md');
       toggleToc();
-      expect(tocVisible).toBe(true);
+      expect(state.tocVisible).toBe(true);
 
       showDropZone();
 
-      expect(tocVisible).toBe(false);
+      expect(state.tocVisible).toBe(false);
     });
   });
 });
