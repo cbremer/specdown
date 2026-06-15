@@ -70,6 +70,17 @@ export function clearRecentFiles() {
   persistRecent();
 }
 
+/**
+ * Session restore: re-open the most recently opened document via the configured
+ * `onSelect`. No-op when there's nothing to restore. Callers gate this to the
+ * web surface (the native shells have their own session handling).
+ */
+export function restoreLastSession() {
+  if (recentEntries.length > 0) {
+    selectRecent(recentEntries[0]);
+  }
+}
+
 /** Render the recents into the drop-zone section, hiding it when empty. */
 export function renderRecentFiles() {
   const section = el('recent-files-section');

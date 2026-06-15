@@ -26,6 +26,7 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-15 | [tasks-session-14-recent-files](2026-06-15-tasks-session-14-recent-files.md) | Phase 4: recent files — remembers recently-opened URLs (localStorage), one-click re-open list on the drop zone with a Clear button; +9 tests |
 | 2026-06-15 | [tasks-session-15-code-copy](2026-06-15-tasks-session-15-code-copy.md) | UX polish: hover "Copy" button on rendered code blocks (clipboard + execCommand fallback, "Copied" flash, excluded from print); +4 tests |
 | 2026-06-15 | [tasks-session-16-presentation-enhancements](2026-06-15-tasks-session-16-presentation-enhancements.md) | Phase 4: presentation mode enhancements — pan/zoom inside a slide (Panzoom: −/⤢/+ buttons, wheel, +/-/0 keys) + a discoverable "Present" toolbar button (overflow-aware); +4 tests |
+| 2026-06-15 | [tasks-session-17-session-restore](2026-06-15-tasks-session-17-session-restore.md) | Phase 4: session restore — reopen the last-opened document on launch (web only, URL re-fetch; skipped in native shells / when a diagram link opened something); +4 tests |
 | 2026-06-14 | [handoff-next-wave](2026-06-14-handoff-next-wave.md) | **Resume point** — aggregated status, the remaining Phase 3/4 options, and the project gotchas. Start here after a break. |
 
 > **Resuming after a break?** Read **[handoff-next-wave](2026-06-14-handoff-next-wave.md)** first — it's the durable index of what's done, what's next, and the gotchas.

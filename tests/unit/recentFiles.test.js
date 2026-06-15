@@ -94,4 +94,53 @@ describe('Recent files', () => {
       expect(onSelect.mock.calls[0][0].ref).toBe('https://a/one.md');
     });
   });
+
+  describe('session restore', () => {
+    it('does nothing when there is no last session', () => {
+      const onSelect = jest.fn();
+      configureRecentFiles({ onSelect });
+      restoreLastSession();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('re-opens the most recent document via onSelect', () => {
+      const onSelect = jest.fn();
+      recordRecentFile({ ref: 'https://a/old.md', title: 'old.md' });
+      recordRecentFile({ ref: 'https://a/last.md', title: 'last.md' });
+      configureRecentFiles({ onSelect });
+
+      restoreLastSession();
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect.mock.calls[0][0].ref).toBe('https://a/last.md');
+    });
+  });
+});
+
+describe('Session restore on launch', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('reopens the stored last document when the app starts', () => {
+    localStorage.setItem(
+      'specdown-recent-files',
+      JSON.stringify([{ type: 'url', ref: 'https://example.com/a.md', title: 'a.md' }])
+    );
+    loadHTML(document);
+    loadApp(document);
+
+    // init() should have kicked off a fetch for the restored URL.
+    expect(global.fetch).toHaveBeenCalledWith('https://example.com/a.md', expect.anything());
+  });
+
+  it('does not reopen anything when there is no stored session', () => {
+    loadHTML(document);
+    loadApp(document);
+
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      'https://example.com/a.md',
+      expect.anything()
+    );
+  });
 });
