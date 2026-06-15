@@ -1,3 +1,4 @@
+// @ts-check
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
 import { state } from '../core/state.js';
@@ -8,14 +9,44 @@ import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
 import { shareDiagramLink } from './share-links.js';
 
-const el = (id) => document.getElementById(id);
+/** @typedef {import('@panzoom/panzoom').PanzoomObject} PanzoomObject */
+/** @typedef {{ scale: number, x: number, y: number }} HomeState */
+/**
+ * The fullscreen overlay carries expando properties set by this module.
+ * @typedef {HTMLElement & {
+ *   panzoomInstance?: any,
+ *   diagramId?: string | null,
+ *   fullscreenState?: { homeState: HomeState },
+ *   wheelHandler?: EventListener | null,
+ *   dblClickHandler?: EventListener | null,
+ * }} FullscreenOverlay
+ */
+
+const el = (/** @type {string} */ id) => document.getElementById(id);
+const getFsOverlay = () => /** @type {FullscreenOverlay | null} */ (el('fullscreen-overlay'));
+
+/**
+ * Null-safe addEventListener.
+ * @param {Element | Node | null} target
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {boolean | AddEventListenerOptions} [opts]
+ */
+const on = (target, type, handler, opts) => {
+  if (target) target.addEventListener(type, handler, opts);
+};
+
+/** @param {unknown} error */
+const errMessage = (error) => (error instanceof Error ? error.message : String(error));
 
 // ===========================
 // Mermaid Diagram Processing
 // ===========================
 export async function processMermaidDiagrams() {
+    const root = el('markdown-content');
+    if (!root) return;
     // Find all code blocks with mermaid language
-    const codeBlocks = el('markdown-content').querySelectorAll('code.language-mermaid');
+    const codeBlocks = root.querySelectorAll('code.language-mermaid');
 
     if (codeBlocks.length === 0) return;
 
@@ -26,7 +57,7 @@ export async function processMermaidDiagrams() {
     // Process each mermaid diagram
     for (let i = 0; i < codeBlocks.length; i++) {
         const codeBlock = codeBlocks[i];
-        const mermaidCode = codeBlock.textContent;
+        const mermaidCode = codeBlock.textContent || '';
         const preElement = codeBlock.parentElement;
 
         try {
@@ -40,7 +71,7 @@ export async function processMermaidDiagrams() {
             const container = createDiagramContainer(svg, diagramId, mermaidCode);
 
             // Replace pre/code block with diagram container
-            preElement.replaceWith(container);
+            if (preElement) preElement.replaceWith(container);
 
             // Initialize panzoom for this diagram
             initializePanzoom(diagramId);
@@ -51,12 +82,19 @@ export async function processMermaidDiagrams() {
             const errorDiv = document.createElement('div');
             errorDiv.className = 'mermaid-error';
             errorDiv.style.cssText = 'color: red; padding: 1rem; border: 1px solid red; border-radius: 4px; margin: 1rem 0;';
-            errorDiv.textContent = `Error rendering diagram: ${error.message}`;
-            preElement.parentElement.insertBefore(errorDiv, preElement);
+            errorDiv.textContent = `Error rendering diagram: ${errMessage(error)}`;
+            if (preElement && preElement.parentElement) {
+                preElement.parentElement.insertBefore(errorDiv, preElement);
+            }
         }
     }
 }
 
+/**
+ * @param {string} svg
+ * @param {string} diagramId
+ * @param {string | null} mermaidSource
+ */
 function createDiagramContainer(svg, diagramId, mermaidSource) {
     const container = document.createElement('div');
     container.className = 'diagram-container';
@@ -105,6 +143,12 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
 // ===========================
 // Diagram Fit Helpers
 // ===========================
+/**
+ * @param {HTMLElement} wrapper
+ * @param {SVGElement} svgElement
+ * @param {PanzoomObject} panzoomInstance
+ * @returns {HomeState}
+ */
 function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
     const dims = getSvgNaturalDimensions(svgElement);
     const containerWidth = wrapper.clientWidth;
@@ -142,15 +186,23 @@ function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
     return { scale: fitScale, x: x, y: y };
 }
 
+/**
+ * @param {PanzoomObject} panzoomInstance
+ * @param {HomeState} homeState
+ */
 export function resetToFit(panzoomInstance, homeState) {
     panzoomInstance.zoom(homeState.scale, { animate: true });
     panzoomInstance.pan(homeState.x, homeState.y, { animate: true });
 }
 
+/**
+ * @param {PanzoomObject | null} panzoomInstance
+ * @param {Element | null} controlsRoot
+ */
 export function updateZoomUI(panzoomInstance, controlsRoot) {
     if (!panzoomInstance || !controlsRoot) return;
     const percentEl = controlsRoot.querySelector('.zoom-percent');
-    const rangeEl = controlsRoot.querySelector('.zoom-range');
+    const rangeEl = /** @type {HTMLInputElement | null} */ (controlsRoot.querySelector('.zoom-range'));
     if (!percentEl || !rangeEl) return;
     const zoomPercent = Math.max(25, Math.min(400, Math.round(panzoomInstance.getScale() * 100)));
     percentEl.textContent = `${zoomPercent}%`;
@@ -160,6 +212,7 @@ export function updateZoomUI(panzoomInstance, controlsRoot) {
 // ===========================
 // Panzoom Initialization
 // ===========================
+/** @param {string} diagramId */
 function initializePanzoom(diagramId) {
     const wrapper = document.getElementById(`wrapper-${diagramId}`);
     if (!wrapper) return;
@@ -196,7 +249,9 @@ function initializePanzoom(diagramId) {
 
     // Get controls
     const container = wrapper.closest('.diagram-container');
+    if (!container) return;
     const controls = container.querySelector('.diagram-controls');
+    if (!controls) return;
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const zoomRange = controls.querySelector('.zoom-range');
@@ -207,57 +262,50 @@ function initializePanzoom(diagramId) {
     const fullscreenBtn = controls.querySelector('.fullscreen');
 
     // Bind control events
-    zoomInBtn.addEventListener('click', (e) => {
+    on(zoomInBtn, 'click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
         updateZoomUI(panzoomInstance, controls);
     });
 
-    zoomOutBtn.addEventListener('click', (e) => {
+    on(zoomOutBtn, 'click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
         updateZoomUI(panzoomInstance, controls);
     });
 
-    if (zoomRange) {
-        zoomRange.addEventListener('input', (e) => {
-            e.stopPropagation();
-            const targetPercent = Number(e.target.value);
-            if (!isNaN(targetPercent)) {
-                panzoomInstance.zoom(targetPercent / 100);
-                updateZoomUI(panzoomInstance, controls);
-            }
-        });
-    }
+    on(zoomRange, 'input', (e) => {
+        e.stopPropagation();
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        const targetPercent = Number(target.value);
+        if (!isNaN(targetPercent)) {
+            panzoomInstance.zoom(targetPercent / 100);
+            updateZoomUI(panzoomInstance, controls);
+        }
+    });
 
-    resetBtn.addEventListener('click', (e) => {
+    on(resetBtn, 'click', (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, instanceState.homeState);
         updateZoomUI(panzoomInstance, controls);
     });
 
-    if (exportSvgBtn) {
-        exportSvgBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadDiagramSvg(diagramId);
-        });
-    }
+    on(exportSvgBtn, 'click', (e) => {
+        e.stopPropagation();
+        downloadDiagramSvg(diagramId);
+    });
 
-    if (exportPngBtn) {
-        exportPngBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadDiagramPng(diagramId);
-        });
-    }
+    on(exportPngBtn, 'click', (e) => {
+        e.stopPropagation();
+        downloadDiagramPng(diagramId);
+    });
 
-    if (shareBtn) {
-        shareBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            shareDiagramLink(diagramId);
-        });
-    }
+    on(shareBtn, 'click', (e) => {
+        e.stopPropagation();
+        shareDiagramLink(diagramId);
+    });
 
-    fullscreenBtn.addEventListener('click', (e) => {
+    on(fullscreenBtn, 'click', (e) => {
         e.stopPropagation();
         openFullscreen(diagramId);
     });
@@ -280,6 +328,7 @@ function initializePanzoom(diagramId) {
 // ===========================
 // Fullscreen Management
 // ===========================
+/** @param {string} diagramId */
 function openFullscreen(diagramId) {
     const wrapper = document.getElementById(`wrapper-${diagramId}`);
     if (!wrapper) {
@@ -293,16 +342,22 @@ function openFullscreen(diagramId) {
         return;
     }
 
+    const fsOverlay = getFsOverlay();
+    if (!fsOverlay) return;
+
     // Clone SVG for fullscreen - use original mermaid source SVG attributes
-    const svgClone = svgElement.cloneNode(true);
+    const svgClone = /** @type {SVGSVGElement} */ (svgElement.cloneNode(true));
 
     // Setup fullscreen wrapper
-    const fullscreenWrapper = el('fullscreen-overlay').querySelector('.fullscreen-diagram-wrapper');
+    const fullscreenWrapper = /** @type {HTMLElement | null} */ (
+        fsOverlay.querySelector('.fullscreen-diagram-wrapper')
+    );
+    if (!fullscreenWrapper) return;
     fullscreenWrapper.innerHTML = '';
     fullscreenWrapper.appendChild(svgClone);
 
     // Show fullscreen first so container dimensions are available for fit calculation
-    el('fullscreen-overlay').style.display = 'flex';
+    fsOverlay.style.display = 'flex';
 
     // Initialize panzoom for fullscreen with wide scale range
     const fullscreenPanzoom = Panzoom(svgClone, {
@@ -321,9 +376,9 @@ function openFullscreen(diagramId) {
     });
 
     // Store for cleanup
-    el('fullscreen-overlay').panzoomInstance = fullscreenPanzoom;
-    el('fullscreen-overlay').diagramId = diagramId;
-    el('fullscreen-overlay').fullscreenState = fullscreenState;
+    fsOverlay.panzoomInstance = fullscreenPanzoom;
+    fsOverlay.diagramId = diagramId;
+    fsOverlay.fullscreenState = fullscreenState;
 
     // Setup fullscreen controls with fresh event listeners
     setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, fullscreenState);
@@ -342,11 +397,19 @@ function openFullscreen(diagramId) {
     }
 
     // Focus for keyboard events
-    el('fullscreen-overlay').focus();
+    fsOverlay.focus();
 }
 
+/**
+ * @param {PanzoomObject} panzoomInstance
+ * @param {HTMLElement} wrapper
+ * @param {{ homeState: HomeState }} fullscreenState
+ */
 function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
-    const controls = el('fullscreen-overlay').querySelector('.fullscreen-controls');
+    const fsOverlay = getFsOverlay();
+    if (!fsOverlay) return;
+    const controls = fsOverlay.querySelector('.fullscreen-controls');
+    if (!controls) return;
     const zoomInBtn = controls.querySelector('.zoom-in');
     const zoomOutBtn = controls.querySelector('.zoom-out');
     const zoomRange = controls.querySelector('.zoom-range');
@@ -354,12 +417,14 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const exportSvgBtn = controls.querySelector('.export-svg');
     const exportPngBtn = controls.querySelector('.export-png');
     const closeBtn = controls.querySelector('.close-fullscreen');
+    if (!zoomInBtn || !zoomOutBtn || !resetBtn || !closeBtn) return;
 
     // Remove old listeners by cloning
     const newZoomIn = zoomInBtn.cloneNode(true);
     const newZoomOut = zoomOutBtn.cloneNode(true);
     const newReset = resetBtn.cloneNode(true);
-    const newZoomRangeLabel = zoomRange ? zoomRange.closest('.zoom-range-label').cloneNode(true) : null;
+    const zoomRangeLabel = zoomRange ? zoomRange.closest('.zoom-range-label') : null;
+    const newZoomRangeLabel = zoomRangeLabel ? zoomRangeLabel.cloneNode(true) : null;
     const newExportSvg = exportSvgBtn ? exportSvgBtn.cloneNode(true) : null;
     const newExportPng = exportPngBtn ? exportPngBtn.cloneNode(true) : null;
     const newClose = closeBtn.cloneNode(true);
@@ -367,73 +432,70 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     zoomInBtn.replaceWith(newZoomIn);
     zoomOutBtn.replaceWith(newZoomOut);
     resetBtn.replaceWith(newReset);
-    if (zoomRange && newZoomRangeLabel) zoomRange.closest('.zoom-range-label').replaceWith(newZoomRangeLabel);
+    if (zoomRangeLabel && newZoomRangeLabel) zoomRangeLabel.replaceWith(newZoomRangeLabel);
     if (exportSvgBtn && newExportSvg) exportSvgBtn.replaceWith(newExportSvg);
     if (exportPngBtn && newExportPng) exportPngBtn.replaceWith(newExportPng);
     closeBtn.replaceWith(newClose);
 
     // Add new listeners
-    newZoomIn.addEventListener('click', (e) => {
+    on(newZoomIn, 'click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomIn();
         updateZoomUI(panzoomInstance, controls);
     });
 
-    newZoomOut.addEventListener('click', (e) => {
+    on(newZoomOut, 'click', (e) => {
         e.stopPropagation();
         panzoomInstance.zoomOut();
         updateZoomUI(panzoomInstance, controls);
     });
 
-    newReset.addEventListener('click', (e) => {
+    on(newReset, 'click', (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, fullscreenState.homeState);
         updateZoomUI(panzoomInstance, controls);
     });
 
     const newZoomRange = controls.querySelector('.zoom-range');
-    if (newZoomRange) {
-        newZoomRange.addEventListener('input', (e) => {
-            e.stopPropagation();
-            const targetPercent = Number(e.target.value);
-            if (!isNaN(targetPercent)) {
-                panzoomInstance.zoom(targetPercent / 100);
-                updateZoomUI(panzoomInstance, controls);
-            }
-        });
-    }
+    on(newZoomRange, 'input', (e) => {
+        e.stopPropagation();
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        const targetPercent = Number(target.value);
+        if (!isNaN(targetPercent)) {
+            panzoomInstance.zoom(targetPercent / 100);
+            updateZoomUI(panzoomInstance, controls);
+        }
+    });
 
-    if (newExportSvg) {
-        newExportSvg.addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadDiagramSvg(el('fullscreen-overlay').diagramId);
-        });
-    }
+    on(newExportSvg, 'click', (e) => {
+        e.stopPropagation();
+        downloadDiagramSvg(fsOverlay.diagramId || '');
+    });
 
-    if (newExportPng) {
-        newExportPng.addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadDiagramPng(el('fullscreen-overlay').diagramId);
-        });
-    }
+    on(newExportPng, 'click', (e) => {
+        e.stopPropagation();
+        downloadDiagramPng(fsOverlay.diagramId || '');
+    });
 
-    newClose.addEventListener('click', (e) => {
+    on(newClose, 'click', (e) => {
         e.stopPropagation();
         closeFullscreen();
     });
 
     // Mouse wheel zoom - use passive: false to allow preventDefault
+    /** @type {EventListener} */
     const wheelHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        panzoomInstance.zoomWithWheel(e);
+        panzoomInstance.zoomWithWheel(/** @type {WheelEvent} */ (e));
         updateZoomUI(panzoomInstance, controls);
     };
 
     wrapper.addEventListener('wheel', wheelHandler, { passive: false });
-    el('fullscreen-overlay').wheelHandler = wheelHandler;
+    fsOverlay.wheelHandler = wheelHandler;
 
     // Double click to reset to fit
+    /** @type {EventListener} */
     const dblClickHandler = (e) => {
         e.stopPropagation();
         resetToFit(panzoomInstance, fullscreenState.homeState);
@@ -441,40 +503,43 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     };
 
     wrapper.addEventListener('dblclick', dblClickHandler);
-    el('fullscreen-overlay').dblClickHandler = dblClickHandler;
+    fsOverlay.dblClickHandler = dblClickHandler;
     updateZoomUI(panzoomInstance, controls);
 }
 
 export function closeFullscreen() {
+    const fsOverlay = getFsOverlay();
+    if (!fsOverlay) return;
+
     // Cleanup panzoom instance
-    if (el('fullscreen-overlay').panzoomInstance) {
+    if (fsOverlay.panzoomInstance) {
         try {
-            el('fullscreen-overlay').panzoomInstance.destroy();
+            fsOverlay.panzoomInstance.destroy();
         } catch (error) {
             console.error('Error destroying fullscreen panzoom:', error);
         }
-        el('fullscreen-overlay').panzoomInstance = null;
+        fsOverlay.panzoomInstance = null;
     }
 
     // Remove event handlers
-    const fullscreenWrapper = el('fullscreen-overlay').querySelector('.fullscreen-diagram-wrapper');
+    const fullscreenWrapper = fsOverlay.querySelector('.fullscreen-diagram-wrapper');
 
-    if (el('fullscreen-overlay').wheelHandler) {
-        fullscreenWrapper.removeEventListener('wheel', el('fullscreen-overlay').wheelHandler, { passive: false });
-        el('fullscreen-overlay').wheelHandler = null;
+    if (fullscreenWrapper && fsOverlay.wheelHandler) {
+        fullscreenWrapper.removeEventListener('wheel', fsOverlay.wheelHandler);
+        fsOverlay.wheelHandler = null;
     }
 
-    if (el('fullscreen-overlay').dblClickHandler) {
-        fullscreenWrapper.removeEventListener('dblclick', el('fullscreen-overlay').dblClickHandler);
-        el('fullscreen-overlay').dblClickHandler = null;
+    if (fullscreenWrapper && fsOverlay.dblClickHandler) {
+        fullscreenWrapper.removeEventListener('dblclick', fsOverlay.dblClickHandler);
+        fsOverlay.dblClickHandler = null;
     }
 
     // Hide fullscreen
-    el('fullscreen-overlay').style.display = 'none';
+    fsOverlay.style.display = 'none';
 
     // Clear content
-    fullscreenWrapper.innerHTML = '';
-    el('fullscreen-overlay').diagramId = null;
+    if (fullscreenWrapper) fullscreenWrapper.innerHTML = '';
+    fsOverlay.diagramId = null;
 }
 
 // ===========================
@@ -495,8 +560,10 @@ export function cleanupPanzoomInstances() {
 // Re-render Mermaid (for theme change)
 // ===========================
 export async function reRenderMermaidDiagrams() {
+    const root = el('markdown-content');
+    if (!root) return;
     // Get all diagram containers
-    const containers = el('markdown-content').querySelectorAll('.diagram-container');
+    const containers = root.querySelectorAll('.diagram-container');
 
     // Nothing to re-theme means no need to pull in the mermaid engine.
     if (containers.length === 0) return;
@@ -524,19 +591,19 @@ export async function reRenderMermaidDiagrams() {
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
 
             // Clean up old panzoom
-            const oldInstance = state.currentPanzoomInstances.find(p => p.id === diagramId);
+            const oldInstance = state.currentPanzoomInstances.find((p) => p.id === diagramId);
             if (oldInstance) {
                 oldInstance.instance.destroy();
-                state.currentPanzoomInstances = state.currentPanzoomInstances.filter(p => p.id !== diagramId);
+                state.currentPanzoomInstances = state.currentPanzoomInstances.filter((p) => p.id !== diagramId);
             }
 
             // Update wrapper content
             // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
-    // diagram types that use them) so DOMPurify does not strip the text.
-    wrapper.innerHTML = DOMPurify.sanitize(svg, {
-        ADD_TAGS: ['foreignObject'],
-        ADD_ATTR: ['xmlns'],
-    });
+            // diagram types that use them) so DOMPurify does not strip the text.
+            wrapper.innerHTML = DOMPurify.sanitize(svg, {
+                ADD_TAGS: ['foreignObject'],
+                ADD_ATTR: ['xmlns'],
+            });
 
             // Store mermaid source on new SVG element
             const newSvgElement = wrapper.querySelector('svg');
