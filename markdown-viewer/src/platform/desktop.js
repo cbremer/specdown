@@ -1,3 +1,4 @@
+// @ts-check
 // Desktop (Electron) integration: the file-watch model, the watch-toggle UI,
 // session persistence, and the IPC wiring to the main process (native menus,
 // file-open / file-changed / close-tab events, custom CSS).
@@ -15,15 +16,20 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { performPrint } from './ios-chrome.js';
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
 
-const watchRefCounts = new Map(); // filePath -> number of watching tabs
+/** @type {Map<string, number>} filePath -> number of watching tabs */
+const watchRefCounts = new Map();
 
 // Render core (main.js), supplied via configureDesktop.
+/** @type {(content: string, filename: string) => any} */
 let reloadDoc = () => {};
 
+/** @param {{ renderMarkdown?: Function }} [deps] */
 export function configureDesktop(deps) {
-  if (deps && typeof deps.renderMarkdown === 'function') reloadDoc = deps.renderMarkdown;
+  if (deps && typeof deps.renderMarkdown === 'function') {
+    reloadDoc = /** @type {typeof reloadDoc} */ (deps.renderMarkdown);
+  }
 }
 
 export function updateWatchToggle() {
@@ -31,9 +37,8 @@ export function updateWatchToggle() {
   if (!watchToggle) return;
 
   const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
-  const canWatch = !!(tab && tab.filePath);
 
-  if (!canWatch) {
+  if (!tab || !tab.filePath) {
     watchToggle.style.display = 'none';
     return;
   }
@@ -51,6 +56,7 @@ export function updateWatchToggle() {
 // Briefly animate the watch toggle to signal that an auto-reload just
 // happened. Without this, the reload is invisible if the user happens
 // not to be looking at the content area when the disk write lands.
+/** @type {ReturnType<typeof setTimeout> | null} */
 let watchTogglePulseTimer = null;
 function pulseWatchToggle() {
   const watchToggle = el('watch-toggle');
@@ -72,24 +78,28 @@ function pulseWatchToggle() {
   }, 1200);
 }
 
+/** @param {string | null} [filePath] */
 export function startWatchingFilePath(filePath) {
-  if (!isDesktop || !filePath || !window.specdown || !window.specdown.watchFile) return;
+  const bridge = window.specdown;
+  if (!isDesktop || !filePath || !bridge || !bridge.watchFile) return;
 
   const currentCount = watchRefCounts.get(filePath) || 0;
   watchRefCounts.set(filePath, currentCount + 1);
 
   if (currentCount === 0) {
-    window.specdown.watchFile(filePath);
+    bridge.watchFile(filePath);
   }
 }
 
+/** @param {string | null} [filePath] */
 export function stopWatchingFilePath(filePath) {
-  if (!isDesktop || !filePath || !window.specdown || !window.specdown.unwatchFile) return;
+  const bridge = window.specdown;
+  if (!isDesktop || !filePath || !bridge || !bridge.unwatchFile) return;
 
   const currentCount = watchRefCounts.get(filePath) || 0;
   if (currentCount <= 1) {
     watchRefCounts.delete(filePath);
-    window.specdown.unwatchFile(filePath);
+    bridge.unwatchFile(filePath);
     return;
   }
 
@@ -114,20 +124,23 @@ function toggleWatching() {
 }
 
 export function setupDesktopIPC() {
+  const bridge = window.specdown;
+  if (!bridge) return;
+
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
-  window.specdown.onFileOpened(function (fileData) {
+  bridge.onFileOpened?.(function (fileData) {
     createTab(fileData.filename, fileData.content, fileData.filePath);
   });
 
   // Listen for close-tab command from native menu (Cmd+W)
-  window.specdown.onCloseTab(function () {
+  bridge.onCloseTab?.(function () {
     if (state.activeTabId !== null) {
       closeTab(state.activeTabId);
     }
   });
 
   // Listen for file-changed events (watched file updated on disk)
-  window.specdown.onFileChanged(async function (fileData) {
+  bridge.onFileChanged?.(async function (fileData) {
     const tab = state.tabs.find((t) => t.filePath === fileData.filePath);
     if (!tab) return;
 
@@ -138,6 +151,7 @@ export function setupDesktopIPC() {
       // Preserve scroll position across the re-render so an
       // auto-reload doesn't yank the user back to the top.
       const markdownContent = el('markdown-content');
+      if (!markdownContent) return;
       const savedScrollTop = markdownContent.scrollTop;
 
       if (tab.viewMode === 'raw') {
@@ -171,32 +185,28 @@ export function setupDesktopIPC() {
   }
 
   // Native menu: File > Print
-  if (window.specdown.onTriggerPrint) {
-    window.specdown.onTriggerPrint(function () {
-      performPrint();
-    });
-  }
+  bridge.onTriggerPrint?.(function () {
+    performPrint();
+  });
 
   // Native menu: Edit > Find
-  if (window.specdown.onTriggerSearch) {
-    window.specdown.onTriggerSearch(function () {
-      if (el('content-area').style.display !== 'none') {
-        openSearch();
-      }
-    });
-  }
+  bridge.onTriggerSearch?.(function () {
+    const contentArea = el('content-area');
+    if (contentArea && contentArea.style.display !== 'none') {
+      openSearch();
+    }
+  });
 
   // Appearance menu: apply custom CSS theme
-  if (window.specdown.onApplyCustomCss) {
-    window.specdown.onApplyCustomCss(function (cssContent) {
-      applyCustomCss(cssContent);
-    });
-  }
+  bridge.onApplyCustomCss?.(function (cssContent) {
+    applyCustomCss(cssContent);
+  });
 }
 
 export function saveDesktopSession() {
-  if (!isDesktop || !window.specdown.saveSession) return;
-  window.specdown.saveSession(
+  const bridge = window.specdown;
+  if (!isDesktop || !bridge || !bridge.saveSession) return;
+  bridge.saveSession(
     state.tabs.map((t) => ({
       filePath: t.filePath,
       filename: t.filename,
