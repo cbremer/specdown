@@ -35,6 +35,9 @@ jobs:
         if: github.event_name == 'push'
         with:
           token: ${{ secrets.ADMIN_PAT }}
+          # Full history + tags so the changelog can diff against the previous
+          # release tag (git describe needs them).
+          fetch-depth: 0
 
       - uses: actions/setup-node@v6
         if: github.event_name == 'push'
@@ -51,11 +54,15 @@ jobs:
         if: github.event_name == 'push'
         run: npm version patch --no-git-tag-version
 
+      - name: Update changelog
+        if: github.event_name == 'push'
+        run: node scripts/generate-changelog.js
+
       - name: Commit and push version bump to main
         if: github.event_name == 'push'
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          git add package.json markdown-viewer/src/main.js
+          git add package.json markdown-viewer/src/main.js CHANGELOG.md
           git commit -m "Bump version to v${VERSION} [version bump]"
           git push origin main
 
@@ -102,6 +109,25 @@ jobs:
 
           git tag -a "${TAG}" -m "${TAG}"
           git push origin "${TAG}"
+
+      # Create the GitHub Release up front with the changelog notes as its body,
+      # so the platform build jobs (which attach the DMG/EXE/AppImage to this
+      # same tag via softprops/action-gh-release) leave the notes intact. If the
+      # release already exists, just update its body.
+      - name: Publish release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          NOTES=$(node scripts/generate-changelog.js --latest)
+          if [ -z "${NOTES}" ]; then
+            NOTES="Release ${TAG}"
+          fi
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release edit "${TAG}" --title "${TAG}" --notes "${NOTES}"
+          else
+            gh release create "${TAG}" --title "${TAG}" --notes "${NOTES}"
+          fi
 
       - name: Trigger desktop build
         env:
