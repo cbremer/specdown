@@ -49,6 +49,12 @@ export function handleFile(file) {
   reader.onload = () => {
     const content = /** @type {string} */ (reader.result);
     openTab(file.name, content, file.path || null);
+    // On desktop, dropped files carry a real path the main process can re-read,
+    // so record them for one-click re-open. Browser File objects have no path.
+    if (file.path) {
+      recordRecentFile({ type: 'path', ref: file.path, title: file.name });
+      renderRecentFiles();
+    }
   };
   reader.onerror = () => {
     showToast('Error reading file. Please try again.', { type: 'error' });

@@ -202,6 +202,18 @@ describe('desktop/main.js', () => {
       expect(registeredChannels).toContain('watch-file');
       expect(registeredChannels).toContain('unwatch-file');
     });
+
+    it('registers a request-open-path handler that ignores non-string paths', () => {
+      const { ipcMain } = require('electron');
+      const call = ipcMain.on.mock.calls.find(c => c[0] === 'request-open-path');
+      expect(call).toBeDefined();
+      const handler = call[1];
+      // No window is open in this test harness, so a valid path is a safe
+      // no-op; the contract we assert is that bad input never throws.
+      expect(() => handler({}, undefined)).not.toThrow();
+      expect(() => handler({}, '')).not.toThrow();
+      expect(() => handler({}, '/tmp/does-not-exist.md')).not.toThrow();
+    });
   });
 
   describe('file watching', () => {

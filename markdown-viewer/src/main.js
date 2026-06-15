@@ -217,7 +217,7 @@ function init() {
     configureDesktop({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
     });
-    configureRecentFiles({ onSelect: (entry) => handleUrl(entry.ref) });
+    configureRecentFiles({ onSelect: (entry) => openRecentEntry(entry) });
     registerAppCommands();
     setupVersionInfo();
     setupTheme();
@@ -344,6 +344,20 @@ function registerAppCommands() {
 // ===========================
 // Recent Files
 // ===========================
+// Re-open a recents entry: URLs re-fetch via handleUrl; desktop file paths are
+// re-read by the Electron main process over the requestOpenPath bridge.
+/** @param {import('./features/recent-files.js').RecentEntry} entry */
+function openRecentEntry(entry) {
+    if (entry.type === 'path') {
+        const bridge = window.specdown;
+        if (bridge && typeof bridge.requestOpenPath === 'function') {
+            bridge.requestOpenPath(entry.ref);
+        }
+        return;
+    }
+    handleUrl(entry.ref);
+}
+
 function setupRecentFiles() {
     renderRecentFiles();
     const clearBtn = $('recent-files-clear');

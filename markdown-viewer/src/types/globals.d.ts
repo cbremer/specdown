@@ -25,6 +25,7 @@ interface SpecdownSessionTab {
 interface SpecdownDesktopBridge {
   isDesktop?: boolean;
   requestFileOpen?: () => void;
+  requestOpenPath?: (filePath: string) => void;
   watchFile?: (filePath: string) => void;
   unwatchFile?: (filePath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;

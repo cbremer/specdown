@@ -14,6 +14,7 @@ import { isDesktop } from '../core/platform.js';
 import { createTab, closeTab, renderTabBar } from '../features/tabs.js';
 import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
+import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { performPrint } from './ios-chrome.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -130,6 +131,11 @@ export function setupDesktopIPC() {
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
   bridge.onFileOpened?.(function (fileData) {
     createTab(fileData.filename, fileData.content, fileData.filePath);
+    // Remember the path so the in-app recent-files list can reopen it later.
+    if (fileData.filePath) {
+      recordRecentFile({ type: 'path', ref: fileData.filePath, title: fileData.filename });
+      renderRecentFiles();
+    }
   });
 
   // Listen for close-tab command from native menu (Cmd+W)
