@@ -103,6 +103,7 @@ import {
   closeOverflowMenu,
   isOverflowMenuOpen,
 } from './features/toolbar-overflow.js';
+import { registerServiceWorker } from './features/pwa.js';
 import {
   setupDesktopIPC,
   updateWatchToggle,
@@ -209,6 +210,7 @@ function init() {
     configureMarked();
     checkForUpdates();
     checkForDiagramLink();
+    registerServiceWorker();
     if (isDesktop) {
         setupDesktopIPC();
     }
