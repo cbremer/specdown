@@ -87,10 +87,11 @@ Or just: download → open → it launches without the "damaged" dialog.
   config follows electron-builder 26's documented signing/notarization patterns;
   please do one release and confirm with the checks above.
 - The signed path uses the **apple-id + app-specific-password** notarization
-  method (simplest). If you'd rather use an **App Store Connect API key**, swap the
-  `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD` env for `APPLE_API_KEY` (path to the
-  `.p8`), `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` and drop the `notarize.teamId`
-  override — say the word and I'll switch it.
+  method (simplest): the workflow passes `-c.mac.notarize=true` and notarytool
+  reads `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID` from the env.
+  If you'd rather use an **App Store Connect API key**, swap those env vars for
+  `APPLE_API_KEY` (path to the `.p8`), `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` —
+  say the word and I'll switch it.
 - Apple's **arm64 + x64**: this builds a single-arch DMG for the runner's arch
   (Apple Silicon on `macos-latest`). If you want a universal DMG, add
   `"target": { "target": "dmg", "arch": ["universal"] }` — separate change.
