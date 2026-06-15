@@ -105,6 +105,12 @@ import {
 } from './features/toolbar-overflow.js';
 import { registerServiceWorker } from './features/pwa.js';
 import {
+  startPresentation,
+  exitPresentation,
+  isPresentationOpen,
+  hasPresentableDiagrams,
+} from './features/presentation.js';
+import {
   setupDesktopIPC,
   updateWatchToggle,
   saveDesktopSession,
@@ -287,6 +293,13 @@ function registerAppCommands() {
             keywords: ['pdf', 'export', 'save'],
             run: () => performPrint(),
             isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'present-diagrams',
+            title: 'Present diagrams',
+            keywords: ['presentation', 'slideshow', 'fullscreen', 'mermaid', 'diagram'],
+            run: () => startPresentation(),
+            isAvailable: () => isDocumentOpen() && hasPresentableDiagrams(),
         },
         {
             id: 'shortcuts',
@@ -542,6 +555,8 @@ function setupEventListeners() {
                 closeCommandPalette();
             } else if (isShortcutsSheetOpen()) {
                 closeShortcutsSheet();
+            } else if (isPresentationOpen()) {
+                exitPresentation();
             } else if (isOverflowMenuOpen()) {
                 closeOverflowMenu();
             } else if (fullscreenOverlay.style.display !== 'none') {
