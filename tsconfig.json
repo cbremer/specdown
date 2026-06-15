@@ -5,11 +5,11 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowJs": true,
-    // Gradual adoption: type-checking is opt-in per file via a `// @ts-check`
-    // pragma at the top of the module. checkJs stays false so unannotated
-    // modules are parsed (for import resolution) but not yet type-checked.
-    // Modules are migrated to checked status one at a time, leaf-first.
-    "checkJs": false,
+    // The gradual adoption is complete: every module under markdown-viewer/src
+    // is type-checked. checkJs is now on globally so new files are checked by
+    // default (no `// @ts-check` pragma needed — the existing per-file pragmas
+    // are kept as harmless documentation of the migration).
+    "checkJs": true,
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,

@@ -1,3 +1,4 @@
+// @ts-check
 // iOS native chrome + print.
 //
 // The iOS shell talks to the web app through window.webkit.messageHandlers and
@@ -10,7 +11,11 @@ import { state } from '../core/state.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 
-const el = (id) => document.getElementById(id);
+const el = (/** @type {string} */ id) => document.getElementById(id);
+
+// The iOS WKScriptMessage bridge, present only inside the native shell.
+const iosHandler = () =>
+  window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.specdown;
 
 export function setupIOSNativeUI() {
   document.body.classList.toggle('ios-native', isIOSNative);
@@ -25,22 +30,26 @@ export function setupIOSNativeUI() {
 }
 
 export function requestNativeOpenIfAvailable() {
-  if (isDesktop && window.specdown && window.specdown.requestFileOpen) {
-    window.specdown.requestFileOpen();
+  const desktopBridge = window.specdown;
+  if (isDesktop && desktopBridge && desktopBridge.requestFileOpen) {
+    desktopBridge.requestFileOpen();
     return true;
   }
-  if (isIOSNative && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.specdown) {
-    window.webkit.messageHandlers.specdown.postMessage({ action: 'openFilePicker' });
+  const handler = iosHandler();
+  if (isIOSNative && handler) {
+    handler.postMessage({ action: 'openFilePicker' });
     return true;
   }
   return false;
 }
 
+/** @param {string} sampleName */
 export function requestBundledSampleIfAvailable(sampleName) {
-  if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown) {
+  const handler = iosHandler();
+  if (!isIOSNative || !handler) {
     return false;
   }
-  window.webkit.messageHandlers.specdown.postMessage({
+  handler.postMessage({
     action: 'openBundledSample',
     data: { name: sampleName },
   });
@@ -48,11 +57,12 @@ export function requestBundledSampleIfAvailable(sampleName) {
 }
 
 function requestNativePrintIfAvailable() {
-  if (!isIOSNative || !window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.specdown || !hasLoadedContent()) {
+  const handler = iosHandler();
+  if (!isIOSNative || !handler || !hasLoadedContent()) {
     return false;
   }
   const fileName = el('file-name');
-  window.webkit.messageHandlers.specdown.postMessage({
+  handler.postMessage({
     action: 'printDocument',
     data: {
       title: fileName ? fileName.textContent : '',
@@ -67,6 +77,10 @@ export function hasLoadedContent() {
   return !!(contentArea && contentArea.style.display !== 'none' && state.currentRawMarkdown);
 }
 
+/**
+ * @param {HTMLElement | null} sheet
+ * @param {boolean} visible
+ */
 export function setIOSSheetVisibility(sheet, visible) {
   if (!sheet) return;
   sheet.style.display = visible ? 'flex' : 'none';
@@ -84,6 +98,10 @@ export function closeIOSTocSheet() {
   syncIOSChrome();
 }
 
+/**
+ * @param {HTMLElement | null} button
+ * @param {string} label
+ */
 function updateIOSActionButtonLabel(button, label) {
   if (!button) return;
   const labelEl = button.querySelector('.ios-action-label');
@@ -92,6 +110,11 @@ function updateIOSActionButtonLabel(button, label) {
   }
 }
 
+/**
+ * @param {HTMLElement | null} button
+ * @param {string} label
+ * @param {boolean} active
+ */
 function updateIOSSheetButton(button, label, active) {
   if (!button) return;
   button.textContent = label;
@@ -105,7 +128,7 @@ export function performPrint() {
   window.print();
 }
 
-window.setIOSLayoutMode = function (mode) {
+window.setIOSLayoutMode = function (/** @type {string} */ mode) {
   state.iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
   if (isIOSNative) {
     document.body.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
@@ -122,7 +145,8 @@ function buildPrintableDocument() {
   const fileName = el('file-name');
   const markdownContent = el('markdown-content');
   const title = fileName && fileName.textContent ? fileName.textContent : 'Specdown Document';
-  const printableContent = markdownContent.cloneNode(true);
+  if (!markdownContent) return '';
+  const printableContent = /** @type {HTMLElement} */ (markdownContent.cloneNode(true));
 
   printableContent
     .querySelectorAll('.diagram-controls, .annotation-popover, .search-highlight, .search-highlight-current')
@@ -131,11 +155,13 @@ function buildPrintableDocument() {
   printableContent.querySelectorAll('.has-annotation').forEach((element) => {
     element.classList.remove('has-annotation');
   });
-  printableContent.querySelectorAll('.diagram-wrapper').forEach((wrapper) => {
+  printableContent.querySelectorAll('.diagram-wrapper').forEach((node) => {
+    const wrapper = /** @type {HTMLElement} */ (node);
     wrapper.style.height = 'auto';
     wrapper.style.overflow = 'visible';
   });
-  printableContent.querySelectorAll('.diagram-wrapper svg').forEach((svg) => {
+  printableContent.querySelectorAll('.diagram-wrapper svg').forEach((node) => {
+    const svg = /** @type {SVGElement} */ (node);
     svg.style.maxWidth = '100%';
     svg.style.height = 'auto';
     svg.style.position = 'static';
@@ -286,20 +312,20 @@ export function syncIOSChrome() {
     iosActionBar.style.display = showActionBar ? 'grid' : 'none';
   }
 
-  const iosContentsButton = el('ios-contents-button');
+  const iosContentsButton = /** @type {HTMLButtonElement | null} */ (el('ios-contents-button'));
   if (iosContentsButton) {
     iosContentsButton.disabled = !canShowContents;
     iosContentsButton.classList.toggle('active', state.tocVisible);
   }
 
-  const iosViewButton = el('ios-view-button');
+  const iosViewButton = /** @type {HTMLButtonElement | null} */ (el('ios-view-button'));
   if (iosViewButton) {
     iosViewButton.disabled = !hasContent;
     iosViewButton.classList.toggle('active', state.currentViewMode === 'raw');
     updateIOSActionButtonLabel(iosViewButton, state.currentViewMode === 'preview' ? 'Raw' : 'Preview');
   }
 
-  const iosMoreButton = el('ios-more-button');
+  const iosMoreButton = /** @type {HTMLButtonElement | null} */ (el('ios-more-button'));
   if (iosMoreButton) {
     iosMoreButton.disabled = !hasContent;
   }
@@ -307,8 +333,8 @@ export function syncIOSChrome() {
   updateIOSSheetButton(el('ios-split-button'), state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
   updateIOSSheetButton(el('ios-theme-button'), state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
 
-  const iosSplitButton = el('ios-split-button');
-  const iosPrintButton = el('ios-print-button');
+  const iosSplitButton = /** @type {HTMLButtonElement | null} */ (el('ios-split-button'));
+  const iosPrintButton = /** @type {HTMLButtonElement | null} */ (el('ios-print-button'));
   if (iosSplitButton) iosSplitButton.disabled = !hasContent;
   if (iosPrintButton) iosPrintButton.disabled = !hasContent;
 }
