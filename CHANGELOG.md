@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.126 — 2026-06-15
+
+- Consolidate the window.specdown bridge into one seam
+
 ## v0.0.125 — 2026-06-15
 
 ### Documentation
