@@ -36,6 +36,24 @@ describe('Toolbar overflow menu', () => {
     expect(menu.closest('.content-header-actions')).not.toBeNull();
   });
 
+  it('skips inline-hidden targets (e.g. Present with no diagrams)', () => {
+    const present = document.getElementById('present-button');
+    // Hidden by default (no diagrams) → not offered in the menu.
+    expect(present.style.display).toBe('none');
+    openOverflowMenu();
+    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).not.toContain('Present diagrams');
+    closeOverflowMenu();
+
+    // Once visible (diagrams present), it appears.
+    present.style.display = '';
+    openOverflowMenu();
+    labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map((i) => i.textContent);
+    expect(labels).toContain('Present diagrams');
+  });
+
   it('opens via the overflow toggle button and syncs aria-expanded', () => {
     const toggle = document.getElementById('overflow-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');

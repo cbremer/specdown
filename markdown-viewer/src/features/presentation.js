@@ -1,10 +1,13 @@
 // @ts-check
 // Diagram presentation mode: a focused, full-screen step-through of every
 // Mermaid diagram in the current document. Each diagram's already-rendered SVG
-// is cloned into a fit-to-screen stage; prev/next (buttons or keyboard) walk the
-// set. Self-contained — it doesn't touch the panzoom/fullscreen engine.
+// is cloned into a stage with pan/zoom (via the bundled Panzoom); prev/next
+// (buttons or keyboard) walk the set.
 
+import Panzoom from '@panzoom/panzoom';
 import { showToast } from './toast.js';
+
+/** @typedef {import('@panzoom/panzoom').PanzoomObject} PanzoomObject */
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -15,6 +18,8 @@ let diagrams = [];
 let slideIndex = 0;
 /** @type {Element | null} */
 let presentationPrevFocus = null;
+/** @type {PanzoomObject | null} */
+let slidePanzoom = null;
 
 /** Collect the rendered diagram SVGs in document order. */
 function collectDiagrams() {
@@ -51,6 +56,26 @@ export function startPresentation() {
   renderSlide();
 }
 
+/**
+ * @param {string} className
+ * @param {string} label
+ * @param {string} ariaLabel
+ * @param {() => void} onClick
+ * @returns {HTMLButtonElement}
+ */
+function navButton(className, label, ariaLabel, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.textContent = label;
+  button.setAttribute('aria-label', ariaLabel);
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onClick();
+  });
+  return button;
+}
+
 function buildPresentationOverlay() {
   presentationOverlay = document.createElement('div');
   presentationOverlay.className = 'presentation-overlay';
@@ -62,43 +87,61 @@ function buildPresentationOverlay() {
 
   const stage = document.createElement('div');
   stage.className = 'presentation-stage';
+  // Wheel zoom on the stage drives the current slide's panzoom.
+  stage.addEventListener(
+    'wheel',
+    (e) => {
+      if (slidePanzoom) {
+        e.preventDefault();
+        slidePanzoom.zoomWithWheel(e);
+      }
+    },
+    { passive: false }
+  );
 
   const nav = document.createElement('div');
   nav.className = 'presentation-nav';
 
-  const prev = document.createElement('button');
-  prev.className = 'presentation-prev';
-  prev.type = 'button';
-  prev.setAttribute('aria-label', 'Previous diagram');
-  prev.textContent = '‹';
-  prev.addEventListener('click', presentPrev);
-
+  const prev = navButton('presentation-prev', '‹', 'Previous diagram', presentPrev);
   const counter = document.createElement('span');
   counter.className = 'presentation-counter';
+  const next = navButton('presentation-next', '›', 'Next diagram', presentNext);
 
-  const next = document.createElement('button');
-  next.className = 'presentation-next';
-  next.type = 'button';
-  next.setAttribute('aria-label', 'Next diagram');
-  next.textContent = '›';
-  next.addEventListener('click', presentNext);
+  const zoomOut = navButton('presentation-zoom-out', '−', 'Zoom out', () => {
+    if (slidePanzoom) slidePanzoom.zoomOut();
+  });
+  const zoomFit = navButton('presentation-zoom-fit', '⤢', 'Reset zoom', () => {
+    if (slidePanzoom) slidePanzoom.reset();
+  });
+  const zoomIn = navButton('presentation-zoom-in', '+', 'Zoom in', () => {
+    if (slidePanzoom) slidePanzoom.zoomIn();
+  });
 
-  const close = document.createElement('button');
-  close.className = 'presentation-close';
-  close.type = 'button';
-  close.setAttribute('aria-label', 'Exit presentation');
-  close.textContent = '✕';
-  close.addEventListener('click', exitPresentation);
+  const close = navButton('presentation-close', '✕', 'Exit presentation', exitPresentation);
 
   nav.appendChild(prev);
   nav.appendChild(counter);
   nav.appendChild(next);
+  nav.appendChild(zoomOut);
+  nav.appendChild(zoomFit);
+  nav.appendChild(zoomIn);
   nav.appendChild(close);
 
   presentationOverlay.appendChild(stage);
   presentationOverlay.appendChild(nav);
   document.body.appendChild(presentationOverlay);
   presentationOverlay.focus();
+}
+
+function destroySlidePanzoom() {
+  if (slidePanzoom) {
+    try {
+      slidePanzoom.destroy();
+    } catch (err) {
+      // ignore
+    }
+    slidePanzoom = null;
+  }
 }
 
 function renderSlide() {
@@ -109,6 +152,7 @@ function renderSlide() {
   const next = /** @type {HTMLButtonElement | null} */ (presentationOverlay.querySelector('.presentation-next'));
   if (!stage) return;
 
+  destroySlidePanzoom();
   stage.innerHTML = '';
   const svg = diagrams[slideIndex];
   if (svg) {
@@ -118,6 +162,12 @@ function renderSlide() {
     clone.removeAttribute('height');
     clone.removeAttribute('style');
     stage.appendChild(clone);
+    slidePanzoom = Panzoom(clone, {
+      maxScale: 8,
+      minScale: 0.5,
+      step: 0.3,
+      cursor: 'grab',
+    });
   }
 
   if (counter) counter.textContent = `${slideIndex + 1} / ${diagrams.length}`;
@@ -141,6 +191,7 @@ export function presentPrev() {
 
 export function exitPresentation() {
   if (!presentationOverlay) return;
+  destroySlidePanzoom();
   if (presentationOverlay.parentNode) presentationOverlay.parentNode.removeChild(presentationOverlay);
   presentationOverlay = null;
   diagrams = [];
@@ -159,6 +210,15 @@ function onPresentationKeydown(e) {
   } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
     e.preventDefault();
     presentPrev();
+  } else if (e.key === '+' || e.key === '=') {
+    e.preventDefault();
+    if (slidePanzoom) slidePanzoom.zoomIn();
+  } else if (e.key === '-') {
+    e.preventDefault();
+    if (slidePanzoom) slidePanzoom.zoomOut();
+  } else if (e.key === '0') {
+    e.preventDefault();
+    if (slidePanzoom) slidePanzoom.reset();
   } else if (e.key === 'Escape') {
     e.preventDefault();
     exitPresentation();

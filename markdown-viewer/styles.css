@@ -643,7 +643,8 @@ body {
     50%      { opacity: 0.45; transform: scale(1.35); }
 }
 
-.view-toggle-button {
+.view-toggle-button,
+.present-button {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
@@ -655,6 +656,12 @@ body {
     display: flex;
     align-items: center;
     gap: 0.4rem;
+}
+
+.present-button:hover {
+    background-color: var(--accent-color);
+    color: var(--text-on-accent);
+    border-color: var(--accent-color);
 }
 
 .view-toggle-button:hover {
@@ -2328,6 +2335,7 @@ mark.search-highlight-current {
     .content-header-actions #toc-toggle,
     .content-header-actions #split-toggle,
     .content-header-actions #annotation-toggle,
+    .content-header-actions #present-button,
     .content-header-actions #print-button {
         display: none;
     }

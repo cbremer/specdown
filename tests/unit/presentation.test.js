@@ -118,4 +118,51 @@ describe('Diagram presentation mode', () => {
     expect(isPresentationOpen()).toBe(false);
     expect(document.querySelector('.presentation-overlay')).toBeNull();
   });
+
+  describe('zoom', () => {
+    function currentPanzoom() {
+      const results = Panzoom.mock.results;
+      return results[results.length - 1].value;
+    }
+
+    it('drives the slide panzoom from the zoom buttons', () => {
+      Panzoom.mockClear();
+      addDiagrams(1);
+      startPresentation();
+      const pz = currentPanzoom();
+      expect(pz.getScale()).toBe(1);
+
+      document
+        .querySelector('.presentation-zoom-in')
+        .dispatchEvent(new Event('click', { bubbles: true }));
+      expect(pz.getScale()).toBeGreaterThan(1);
+
+      document
+        .querySelector('.presentation-zoom-fit')
+        .dispatchEvent(new Event('click', { bubbles: true }));
+      expect(pz.getScale()).toBe(1);
+    });
+
+    it('zooms with the keyboard (+ / - / 0)', () => {
+      Panzoom.mockClear();
+      addDiagrams(1);
+      startPresentation();
+      const pz = currentPanzoom();
+      const overlay = document.querySelector('.presentation-overlay');
+
+      overlay.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true }));
+      expect(pz.getScale()).toBeGreaterThan(1);
+      overlay.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true }));
+      expect(pz.getScale()).toBe(1);
+    });
+
+    it('destroys the panzoom instance on exit', () => {
+      Panzoom.mockClear();
+      addDiagrams(1);
+      startPresentation();
+      const pz = currentPanzoom();
+      exitPresentation();
+      expect(pz.destroyed).toBe(true);
+    });
+  });
 });
