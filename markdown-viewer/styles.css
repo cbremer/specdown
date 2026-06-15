@@ -396,6 +396,67 @@ body {
     opacity: 0.75;
 }
 
+/* ===========================
+   Recent Files (drop zone)
+   =========================== */
+.recent-files-section {
+    margin-top: 1.25rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.recent-files-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.recent-files-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    border-radius: var(--radius-sm);
+}
+
+.recent-files-clear:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.recent-files-list {
+    list-style: none;
+    margin: 0.4rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.recent-file-item {
+    width: 100%;
+    text-align: left;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: var(--transition-fast);
+}
+
+.recent-file-item:hover {
+    border-color: var(--accent-color);
+    background-color: var(--bg-secondary);
+}
+
 .drop-zone-overlay {
     display: none;
     position: absolute;

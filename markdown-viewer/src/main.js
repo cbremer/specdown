@@ -111,6 +111,11 @@ import {
   hasPresentableDiagrams,
 } from './features/presentation.js';
 import {
+  configureRecentFiles,
+  renderRecentFiles,
+  clearRecentFiles,
+} from './features/recent-files.js';
+import {
   setupDesktopIPC,
   updateWatchToggle,
   saveDesktopSession,
@@ -207,11 +212,13 @@ function init() {
     configureDesktop({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
     });
+    configureRecentFiles({ onSelect: (entry) => handleUrl(entry.ref) });
     registerAppCommands();
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
     setupToolbarOverflow();
+    setupRecentFiles();
     setupEventListeners();
     configureMarked();
     checkForUpdates();
@@ -309,6 +316,21 @@ function registerAppCommands() {
             run: () => openShortcutsSheet(),
         },
     ]);
+}
+
+// ===========================
+// Recent Files
+// ===========================
+function setupRecentFiles() {
+    renderRecentFiles();
+    const clearBtn = $('recent-files-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearRecentFiles();
+            renderRecentFiles();
+        });
+    }
 }
 
 // ===========================
