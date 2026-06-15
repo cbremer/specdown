@@ -11,6 +11,7 @@ const OVERFLOW_ACTIONS = [
   { targetId: 'toc-toggle', label: 'Table of contents' },
   { targetId: 'split-toggle', label: 'Split view' },
   { targetId: 'annotation-toggle', label: 'Annotate' },
+  { targetId: 'present-button', label: 'Present diagrams' },
   { targetId: 'print-button', label: 'Print / Save as PDF' },
   { targetId: 'view-toggle', label: 'Toggle raw / preview' },
 ];
@@ -34,6 +35,8 @@ export function openOverflowMenu() {
   for (const action of OVERFLOW_ACTIONS) {
     const target = el(action.targetId);
     if (!target) continue;
+    // Skip actions whose button is inline-hidden (e.g. Present with no diagrams).
+    if (target.style.display === 'none') continue;
     const item = document.createElement('button');
     item.className = 'overflow-menu-item';
     item.setAttribute('role', 'menuitem');

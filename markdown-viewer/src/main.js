@@ -169,6 +169,7 @@ const splitToggle = $('split-toggle');
 const splitRawPane = $('split-raw-pane');
 const splitRawContent = $('split-raw-content');
 const printButton = $('print-button');
+const presentButton = $('present-button');
 const searchBar = $('search-bar');
 const searchInput = /** @type {HTMLInputElement | null} */ ($('search-input'));
 const searchPrev = $('search-prev');
@@ -458,6 +459,11 @@ function setupEventListeners() {
         printButton.addEventListener('click', performPrint);
     }
 
+    // Present button (shown only when the document has diagrams)
+    if (presentButton) {
+        presentButton.addEventListener('click', () => startPresentation());
+    }
+
     if (iosOpenButton) {
         iosOpenButton.addEventListener('click', () => {
             closeIOSActionSheet();
@@ -740,6 +746,11 @@ async function renderMarkdown(content, filename) {
 
         // Process mermaid diagrams
         await processMermaidDiagrams();
+
+        // Reveal the Present button only when there are diagrams to present
+        if (presentButton) {
+            presentButton.style.display = hasPresentableDiagrams() ? '' : 'none';
+        }
 
         // Refresh TOC
         buildToc();
