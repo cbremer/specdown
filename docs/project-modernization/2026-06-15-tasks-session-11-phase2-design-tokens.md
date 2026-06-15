@@ -45,11 +45,24 @@ keyboard focus rings.
 - CSS isn't exercised by the jsdom suite, so the **visual check is the focus
   rings** + confirming light/dark is unchanged (it is — value-preserving).
 
+## Toolbar overflow menu (slice 4b, same PR)
+
+On narrow viewports the secondary content-header actions (Contents / Split /
+Annotate / Print) now collapse behind a single **"⋮" overflow button** instead
+of just dropping their labels. `view-toggle` and `watch-toggle` stay inline.
+
+- New **`features/toolbar-overflow.js`** (`// @ts-check`): builds a `role="menu"`
+  dropdown on open; each `menuitem` is a **thin proxy** that `.click()`s the real
+  toolbar button — so there's **no duplicated action logic** (whatever a button
+  does, the menu does). Open/close/toggle, outside-click + Esc close, and
+  `aria-expanded` sync on the toggle.
+- CSS uses the new radius/shadow/transition tokens; the `max-width: 768px` block
+  now hides those four buttons and reveals `#overflow-toggle`.
+- Tests: `tests/unit/toolbarOverflow.test.js` (menu/ARIA, open-via-toggle,
+  **proxy-to-real-button** effect, close/toggle, outside-click). **+6 tests.**
+
 ## Deliberately out of scope (left for a visual pass)
 
 - Consolidating the remaining scattered colors (annotation status hexes, the
   GitHub code-block theme `#0d1117`/`#30363d`/`#e6edf3`) into tokens would change
   values if unified, so it's deferred — not worth a contrast regression.
-- The **toolbar consolidation / overflow menu** is the other half of slice 4;
-  the command palette (Cmd/Ctrl+K) already covers action discovery, so the
-  overflow menu is lower priority.
