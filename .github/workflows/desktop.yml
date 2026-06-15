@@ -50,11 +50,12 @@ jobs:
         run: npm install
 
       # Signed + notarized build (Developer ID). electron-builder imports the
-      # cert from CSC_LINK/CSC_KEY_PASSWORD; `-c.mac.notarize.teamId` enables
-      # notarization via notarytool using the APPLE_ID app-specific password.
+      # cert from CSC_LINK/CSC_KEY_PASSWORD; `-c.mac.notarize=true` enables
+      # notarization via notarytool, which reads the APPLE_ID app-specific
+      # password and APPLE_TEAM_ID from the env below.
       - name: Build DMG (signed + notarized)
         if: env.HAS_SIGNING == 'true'
-        run: npm run desktop:build -- --mac dmg -c.mac.notarize.teamId=${{ secrets.APPLE_TEAM_ID }}
+        run: npm run desktop:build -- --mac dmg -c.mac.notarize=true
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
