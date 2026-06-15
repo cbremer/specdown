@@ -247,3 +247,53 @@ describe('Annotation Mode', () => {
     });
   });
 });
+
+describe('Annotation export / import', () => {
+  const KEY = 'specdown-annotations';
+
+  beforeEach(() => {
+    localStorage.clear();
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  it('exports the full store as pretty JSON', () => {
+    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'note' } }));
+    const parsed = JSON.parse(getAnnotationsJSON());
+    expect(parsed).toEqual({ 'a.md': { 0: 'note' } });
+  });
+
+  it('returns an empty object JSON when there are no annotations', () => {
+    expect(JSON.parse(getAnnotationsJSON())).toEqual({});
+  });
+
+  it('merges imported annotations across files', () => {
+    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'keep' } }));
+    const ok = importAnnotations(JSON.stringify({ 'a.md': { 1: 'add' }, 'b.md': { 0: 'new' } }));
+
+    expect(ok).toBe(true);
+    const store = JSON.parse(localStorage.getItem(KEY));
+    expect(store).toEqual({
+      'a.md': { 0: 'keep', 1: 'add' },
+      'b.md': { 0: 'new' },
+    });
+  });
+
+  it('lets incoming notes win on a key conflict', () => {
+    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'old' } }));
+    importAnnotations(JSON.stringify({ 'a.md': { 0: 'new' } }));
+    expect(JSON.parse(localStorage.getItem(KEY))['a.md']['0']).toBe('new');
+  });
+
+  it('rejects invalid JSON with an error toast', () => {
+    const ok = importAnnotations('{ not json');
+    expect(ok).toBe(false);
+    const toast = document.querySelector('.toast');
+    expect(toast).not.toBeNull();
+    expect(toast.classList.contains('toast-error')).toBe(true);
+  });
+
+  it('rejects a non-object payload', () => {
+    expect(importAnnotations(JSON.stringify([1, 2, 3]))).toBe(false);
+  });
+});
