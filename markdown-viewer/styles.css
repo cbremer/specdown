@@ -764,6 +764,51 @@ body {
     padding: 1em;
     overflow-x: auto;
     margin-bottom: 1em;
+    position: relative;
+}
+
+/* ===========================
+   Code Block Copy Button
+   =========================== */
+.code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-family: var(--font-sans);
+    color: #e6edf3;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid #30363d;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease, background-color 0.12s ease;
+}
+
+.markdown-content pre:hover .code-copy-btn,
+.markdown-content pre:focus-within .code-copy-btn {
+    opacity: 1;
+}
+
+.code-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.code-copy-btn:focus-visible {
+    opacity: 1;
+}
+
+.code-copy-btn.is-copied {
+    color: #fff;
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+@media print {
+    .code-copy-btn {
+        display: none;
+    }
 }
 
 .markdown-content pre code {

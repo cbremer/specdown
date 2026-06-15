@@ -115,6 +115,7 @@ import {
   renderRecentFiles,
   clearRecentFiles,
 } from './features/recent-files.js';
+import { enhanceCodeBlocks } from './features/code-copy.js';
 import {
   setupDesktopIPC,
   updateWatchToggle,
@@ -728,6 +729,9 @@ async function renderMarkdown(content, filename) {
 
         // Make HTML comments visible
         revealHtmlComments(markdownContent);
+
+        // Add copy buttons to code blocks
+        enhanceCodeBlocks(markdownContent);
 
         // Show content area, hide drop zone
         dropZone.style.display = 'none';
