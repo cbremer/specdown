@@ -10,6 +10,12 @@
 
 import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
+import {
+  bridgeRequestOpenPath,
+  bridgeRequestOpenFolder,
+  bridgeRequestOpenRelative,
+  bridgeOnWorkspaceOpened,
+} from '../platform/bridge.js';
 
 const wsEl = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -36,7 +42,7 @@ let workspaceSidebarVisible = false;
 
 /** @type {(filePath: string) => void} */
 let workspaceOpenPath = (filePath) => {
-  window.specdown?.requestOpenPath?.(filePath);
+  bridgeRequestOpenPath(filePath);
 };
 
 /** @param {{ openPath?: (filePath: string) => void }} [deps] */
@@ -48,7 +54,7 @@ export function configureWorkspace(deps) {
 
 /** Ask the desktop shell to show its folder picker. No-op off desktop. */
 export function openWorkspaceFolder() {
-  window.specdown?.requestOpenFolder?.();
+  bridgeRequestOpenFolder();
 }
 
 /**
@@ -148,7 +154,7 @@ export function handleWorkspaceLinkClick(e) {
   if (!fromPath) return;
 
   e.preventDefault();
-  window.specdown?.requestOpenRelative?.(fromPath, href);
+  bridgeRequestOpenRelative(fromPath, href);
 }
 
 /** Wire the open-folder entry points, the IPC listener, and relative links. */
@@ -170,7 +176,7 @@ export function setupWorkspace() {
   }
 
   // Receive scanned folders from the desktop shell.
-  window.specdown?.onWorkspaceOpened?.((workspace) => applyWorkspace(workspace));
+  bridgeOnWorkspaceOpened((workspace) => applyWorkspace(workspace));
 
   // Follow relative markdown links between workspace documents.
   const content = wsEl('markdown-content');

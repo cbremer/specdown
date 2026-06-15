@@ -10,6 +10,7 @@
 import { state } from '../core/state.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
+import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -30,9 +31,8 @@ export function setupIOSNativeUI() {
 }
 
 export function requestNativeOpenIfAvailable() {
-  const desktopBridge = window.specdown;
-  if (isDesktop && desktopBridge && desktopBridge.requestFileOpen) {
-    desktopBridge.requestFileOpen();
+  if (isDesktop && hasDesktopBridge()) {
+    bridgeRequestFileOpen();
     return true;
   }
   const handler = iosHandler();

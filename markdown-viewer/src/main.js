@@ -133,6 +133,7 @@ import {
   stopWatchingFilePath,
   configureDesktop,
 } from './platform/desktop.js';
+import { bridgeRequestOpenPath } from './platform/bridge.js';
 
 // ===========================
 // Constants
@@ -364,10 +365,7 @@ function registerAppCommands() {
 /** @param {import('./features/recent-files.js').RecentEntry} entry */
 function openRecentEntry(entry) {
     if (entry.type === 'path') {
-        const bridge = window.specdown;
-        if (bridge && typeof bridge.requestOpenPath === 'function') {
-            bridge.requestOpenPath(entry.ref);
-        }
+        bridgeRequestOpenPath(entry.ref);
         return;
     }
     handleUrl(entry.ref);

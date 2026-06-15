@@ -16,6 +16,18 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { performPrint } from './ios-chrome.js';
+import {
+  hasDesktopBridge,
+  bridgeWatchFile,
+  bridgeUnwatchFile,
+  bridgeSaveSession,
+  bridgeOnFileOpened,
+  bridgeOnFileChanged,
+  bridgeOnCloseTab,
+  bridgeOnTriggerPrint,
+  bridgeOnTriggerSearch,
+  bridgeOnApplyCustomCss,
+} from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -81,26 +93,24 @@ function pulseWatchToggle() {
 
 /** @param {string | null} [filePath] */
 export function startWatchingFilePath(filePath) {
-  const bridge = window.specdown;
-  if (!isDesktop || !filePath || !bridge || !bridge.watchFile) return;
+  if (!isDesktop || !filePath || !hasDesktopBridge()) return;
 
   const currentCount = watchRefCounts.get(filePath) || 0;
   watchRefCounts.set(filePath, currentCount + 1);
 
   if (currentCount === 0) {
-    bridge.watchFile(filePath);
+    bridgeWatchFile(filePath);
   }
 }
 
 /** @param {string | null} [filePath] */
 export function stopWatchingFilePath(filePath) {
-  const bridge = window.specdown;
-  if (!isDesktop || !filePath || !bridge || !bridge.unwatchFile) return;
+  if (!isDesktop || !filePath || !hasDesktopBridge()) return;
 
   const currentCount = watchRefCounts.get(filePath) || 0;
   if (currentCount <= 1) {
     watchRefCounts.delete(filePath);
-    bridge.unwatchFile(filePath);
+    bridgeUnwatchFile(filePath);
     return;
   }
 
@@ -125,11 +135,10 @@ function toggleWatching() {
 }
 
 export function setupDesktopIPC() {
-  const bridge = window.specdown;
-  if (!bridge) return;
+  if (!hasDesktopBridge()) return;
 
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
-  bridge.onFileOpened?.(function (fileData) {
+  bridgeOnFileOpened(function (fileData) {
     createTab(fileData.filename, fileData.content, fileData.filePath);
     // Remember the path so the in-app recent-files list can reopen it later.
     if (fileData.filePath) {
@@ -139,14 +148,14 @@ export function setupDesktopIPC() {
   });
 
   // Listen for close-tab command from native menu (Cmd+W)
-  bridge.onCloseTab?.(function () {
+  bridgeOnCloseTab(function () {
     if (state.activeTabId !== null) {
       closeTab(state.activeTabId);
     }
   });
 
   // Listen for file-changed events (watched file updated on disk)
-  bridge.onFileChanged?.(async function (fileData) {
+  bridgeOnFileChanged(async function (fileData) {
     const tab = state.tabs.find((t) => t.filePath === fileData.filePath);
     if (!tab) return;
 
@@ -191,12 +200,12 @@ export function setupDesktopIPC() {
   }
 
   // Native menu: File > Print
-  bridge.onTriggerPrint?.(function () {
+  bridgeOnTriggerPrint(function () {
     performPrint();
   });
 
   // Native menu: Edit > Find
-  bridge.onTriggerSearch?.(function () {
+  bridgeOnTriggerSearch(function () {
     const contentArea = el('content-area');
     if (contentArea && contentArea.style.display !== 'none') {
       openSearch();
@@ -204,15 +213,14 @@ export function setupDesktopIPC() {
   });
 
   // Appearance menu: apply custom CSS theme
-  bridge.onApplyCustomCss?.(function (cssContent) {
+  bridgeOnApplyCustomCss(function (cssContent) {
     applyCustomCss(cssContent);
   });
 }
 
 export function saveDesktopSession() {
-  const bridge = window.specdown;
-  if (!isDesktop || !bridge || !bridge.saveSession) return;
-  bridge.saveSession(
+  if (!isDesktop || !hasDesktopBridge()) return;
+  bridgeSaveSession(
     state.tabs.map((t) => ({
       filePath: t.filePath,
       filename: t.filename,
