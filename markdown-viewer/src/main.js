@@ -40,6 +40,8 @@ import {
 import {
   toggleAnnotationMode,
   renderAnnotations,
+  exportAnnotations,
+  importAnnotationsFromFile,
 } from './features/annotations.js';
 import { handleRepoUrl } from './features/repo-browser.js';
 import { updateMinimap, updateMinimapViewport } from './features/minimap.js';
@@ -316,6 +318,18 @@ function registerAppCommands() {
             keywords: ['presentation', 'slideshow', 'fullscreen', 'mermaid', 'diagram'],
             run: () => startPresentation(),
             isAvailable: () => isDocumentOpen() && hasPresentableDiagrams(),
+        },
+        {
+            id: 'export-annotations',
+            title: 'Export annotations',
+            keywords: ['annotations', 'notes', 'download', 'backup', 'json'],
+            run: () => exportAnnotations(),
+        },
+        {
+            id: 'import-annotations',
+            title: 'Import annotations',
+            keywords: ['annotations', 'notes', 'upload', 'restore', 'json'],
+            run: () => importAnnotationsFromFile(),
         },
         {
             id: 'shortcuts',

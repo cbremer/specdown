@@ -3,6 +3,8 @@
 // filename. Users can double-click any paragraph or heading to add/edit one.
 // State is private to this module.
 
+import { showToast } from './toast.js';
+
 const ANNOTATIONS_KEY = 'specdown-annotations';
 
 let annotationMode = false;
@@ -41,6 +43,97 @@ function saveAnnotations(key, annotations) {
   } catch (e) {
     // localStorage quota exceeded — silently ignore
   }
+}
+
+/**
+ * The full annotation store: filename → { elementIndex → note }.
+ * @returns {Record<string, Record<string, string>>}
+ */
+function getAllAnnotations() {
+  try {
+    const raw = localStorage.getItem(ANNOTATIONS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/**
+ * Pretty-printed JSON of the entire annotation store (for export / inspection).
+ * @returns {string}
+ */
+export function getAnnotationsJSON() {
+  return JSON.stringify(getAllAnnotations(), null, 2);
+}
+
+/** Download all annotations as a JSON file. */
+export function exportAnnotations() {
+  const json = getAnnotationsJSON();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'specdown-annotations.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Merge imported annotations into the store. Per file, incoming notes win on a
+ * key (element-index) conflict; other files/notes are preserved. Re-renders the
+ * current document's badges. Returns whether the import succeeded.
+ * @param {string} jsonText
+ * @returns {boolean}
+ */
+export function importAnnotations(jsonText) {
+  let incoming;
+  try {
+    incoming = JSON.parse(jsonText);
+  } catch (e) {
+    showToast('Import failed: the file is not valid JSON.', { type: 'error' });
+    return false;
+  }
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    showToast('Import failed: unexpected annotations format.', { type: 'error' });
+    return false;
+  }
+
+  const existing = getAllAnnotations();
+  let fileCount = 0;
+  for (const [file, notes] of Object.entries(incoming)) {
+    if (!notes || typeof notes !== 'object') continue;
+    existing[file] = Object.assign({}, existing[file] || {}, notes);
+    fileCount += 1;
+  }
+
+  try {
+    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(existing));
+  } catch (e) {
+    showToast('Import failed: could not save (storage full?).', { type: 'error' });
+    return false;
+  }
+
+  if (annotationKey) renderAnnotations(annotationKey);
+  showToast(`Imported annotations for ${fileCount} document(s).`, { type: 'success' });
+  return true;
+}
+
+/** Open a file picker and import the chosen annotations JSON. */
+export function importAnnotationsFromFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => importAnnotations(String(reader.result || ''));
+    reader.onerror = () => showToast('Could not read the file.', { type: 'error' });
+    reader.readAsText(file);
+  });
+  input.click();
 }
 
 /**
