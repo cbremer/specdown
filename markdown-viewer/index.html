@@ -18,6 +18,12 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
 
+    <!-- PWA: installable + offline on the web surface (ignored by the Electron /
+         iOS shells). The service worker is registered web-only from main.js. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1f6bb8">
+    <link rel="apple-touch-icon" href="icons/icon-512.png">
+
     <!--
       Dependencies (marked, mermaid, panzoom, highlight.js, DOMPurify) and the
       highlight.js theme are imported as ES modules from src/main.js and bundled
