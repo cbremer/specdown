@@ -99,6 +99,11 @@ import {
   isShortcutsSheetOpen,
 } from './features/shortcuts.js';
 import {
+  setupToolbarOverflow,
+  closeOverflowMenu,
+  isOverflowMenuOpen,
+} from './features/toolbar-overflow.js';
+import {
   setupDesktopIPC,
   updateWatchToggle,
   saveDesktopSession,
@@ -199,6 +204,7 @@ function init() {
     setupVersionInfo();
     setupTheme();
     setupIOSNativeUI();
+    setupToolbarOverflow();
     setupEventListeners();
     configureMarked();
     checkForUpdates();
@@ -534,6 +540,8 @@ function setupEventListeners() {
                 closeCommandPalette();
             } else if (isShortcutsSheetOpen()) {
                 closeShortcutsSheet();
+            } else if (isOverflowMenuOpen()) {
+                closeOverflowMenu();
             } else if (fullscreenOverlay.style.display !== 'none') {
                 closeFullscreen();
             } else if (searchBar && searchBar.style.display !== 'none') {

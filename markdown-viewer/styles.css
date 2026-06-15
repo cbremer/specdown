@@ -455,6 +455,59 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    position: relative; /* anchor for the overflow menu */
+}
+
+/* ===========================
+   Toolbar Overflow Menu
+   =========================== */
+.overflow-toggle-button {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.4rem 0.6rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.overflow-toggle-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--text-on-accent);
+}
+
+.overflow-menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 200;
+    min-width: 12rem;
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.overflow-menu-item {
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font: inherit;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.overflow-menu-item:hover {
+    background-color: var(--accent-color);
+    color: var(--text-on-accent);
 }
 
 .watch-toggle-button {
@@ -2090,10 +2143,17 @@ mark.search-highlight-current {
         border-bottom: 1px solid var(--border-color);
     }
 
-    .toc-toggle-button .toc-toggle-label,
-    .split-toggle-button .split-toggle-label,
-    .print-button .print-button-label,
-    .annotation-toggle-button .annotation-toggle-label {
+    /* Collapse the secondary content-header actions behind the overflow "⋮"
+       menu on narrow viewports; the overflow menu proxies to these buttons.
+       view-toggle and watch-toggle stay inline as primary/contextual actions. */
+    .content-header-actions #toc-toggle,
+    .content-header-actions #split-toggle,
+    .content-header-actions #annotation-toggle,
+    .content-header-actions #print-button {
         display: none;
+    }
+
+    #overflow-toggle {
+        display: inline-flex !important;
     }
 }
