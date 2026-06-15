@@ -114,6 +114,7 @@ import {
   configureRecentFiles,
   renderRecentFiles,
   clearRecentFiles,
+  restoreLastSession,
 } from './features/recent-files.js';
 import { enhanceCodeBlocks } from './features/code-copy.js';
 import {
@@ -226,6 +227,12 @@ function init() {
     checkForUpdates();
     checkForDiagramLink();
     registerServiceWorker();
+    // Session restore (web only): reopen the last document on launch, unless a
+    // shared diagram link already opened something. The native shells manage
+    // their own session, so they're excluded.
+    if (!isDesktop && !isIOSNative && state.tabs.length === 0) {
+        restoreLastSession();
+    }
     if (isDesktop) {
         setupDesktopIPC();
     }
