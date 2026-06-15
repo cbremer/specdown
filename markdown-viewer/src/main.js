@@ -1,3 +1,4 @@
+// @ts-check
 // SpecDown — shared viewer entry point.
 //
 // Phase 1 (modernization roadmap): the viewer is an ES-module graph bundled by
@@ -121,63 +122,79 @@ const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 // ===========================
 // DOM Elements
 // ===========================
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const browseButton = document.getElementById('browse-button');
-const openSampleBasic = document.getElementById('open-sample-basic');
-const openSampleMermaid = document.getElementById('open-sample-mermaid');
-const contentArea = document.getElementById('content-area');
-const markdownContent = document.getElementById('markdown-content');
-const fileName = document.getElementById('file-name');
-const themeToggle = document.getElementById('theme-toggle');
-const fullscreenOverlay = document.getElementById('fullscreen-overlay');
-const viewToggle = document.getElementById('view-toggle');
-const urlInput = document.getElementById('url-input');
-const openUrlBtn = document.getElementById('open-url-btn');
-const urlError = document.getElementById('url-error');
-const tocToggle = document.getElementById('toc-toggle');
-const annotationToggle = document.getElementById('annotation-toggle');
-const splitToggle = document.getElementById('split-toggle');
-const splitRawPane = document.getElementById('split-raw-pane');
-const splitRawContent = document.getElementById('split-raw-content');
-const printButton = document.getElementById('print-button');
-const searchBar = document.getElementById('search-bar');
-const searchInput = document.getElementById('search-input');
-const searchPrev = document.getElementById('search-prev');
-const searchNext = document.getElementById('search-next');
-const searchClose = document.getElementById('search-close');
-const shareToast = document.getElementById('share-toast');
-const iosOpenButton = document.getElementById('ios-open-button');
-const iosContentsButton = document.getElementById('ios-contents-button');
-const iosViewButton = document.getElementById('ios-view-button');
-const iosMoreButton = document.getElementById('ios-more-button');
-const iosActionSheet = document.getElementById('ios-action-sheet');
-const iosActionSheetClose = document.getElementById('ios-action-sheet-close');
-const iosSplitButton = document.getElementById('ios-split-button');
-const iosPrintButton = document.getElementById('ios-print-button');
-const iosThemeButton = document.getElementById('ios-theme-button');
-const iosTocSheet = document.getElementById('ios-toc-sheet');
-const iosTocClose = document.getElementById('ios-toc-close');
+const $ = (/** @type {string} */ id) => document.getElementById(id);
+// `req` is for elements the app assumes always exist (used unguarded below); it
+// casts the null away. At runtime a missing element throws on first use, exactly
+// as before this typing pass.
+const req = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
+
+const dropZone = req('drop-zone');
+const fileInput = req('file-input');
+const browseButton = req('browse-button');
+const openSampleBasic = $('open-sample-basic');
+const openSampleMermaid = $('open-sample-mermaid');
+const contentArea = req('content-area');
+const markdownContent = req('markdown-content');
+const fileName = req('file-name');
+const themeToggle = req('theme-toggle');
+// The fullscreen overlay carries expando properties set by features/diagrams.js.
+const fullscreenOverlay = /** @type {HTMLElement & { panzoomInstance?: any, fullscreenState?: { homeState: { scale: number, x: number, y: number } } }} */ (
+    document.getElementById('fullscreen-overlay')
+);
+const viewToggle = req('view-toggle');
+const urlInput = /** @type {HTMLInputElement | null} */ ($('url-input'));
+const openUrlBtn = $('open-url-btn');
+const urlError = $('url-error');
+const tocToggle = $('toc-toggle');
+const annotationToggle = $('annotation-toggle');
+const splitToggle = $('split-toggle');
+const splitRawPane = $('split-raw-pane');
+const splitRawContent = $('split-raw-content');
+const printButton = $('print-button');
+const searchBar = $('search-bar');
+const searchInput = /** @type {HTMLInputElement | null} */ ($('search-input'));
+const searchPrev = $('search-prev');
+const searchNext = $('search-next');
+const searchClose = $('search-close');
+const shareToast = $('share-toast');
+const iosOpenButton = $('ios-open-button');
+const iosContentsButton = /** @type {HTMLButtonElement | null} */ ($('ios-contents-button'));
+const iosViewButton = /** @type {HTMLButtonElement | null} */ ($('ios-view-button'));
+const iosMoreButton = /** @type {HTMLButtonElement | null} */ ($('ios-more-button'));
+const iosActionSheet = $('ios-action-sheet');
+const iosActionSheetClose = $('ios-action-sheet-close');
+const iosSplitButton = /** @type {HTMLButtonElement | null} */ ($('ios-split-button'));
+const iosPrintButton = /** @type {HTMLButtonElement | null} */ ($('ios-print-button'));
+const iosThemeButton = $('ios-theme-button');
+const iosTocSheet = $('ios-toc-sheet');
+const iosTocClose = $('ios-toc-close');
 
 // ===========================
 // Initialization
 // ===========================
 function init() {
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
-    configureFileLoading({ createTab: (...a) => createTab(...a) });
-    configureShareLinks({ createTab: (filename, md) => createTab(filename, md) });
+    configureFileLoading({
+        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath) =>
+            createTab(filename, content, filePath),
+    });
+    configureShareLinks({
+        createTab: (/** @type {string} */ filename, /** @type {string} */ md) => createTab(filename, md),
+    });
     configureViewMode({
-        renderMarkdown: (content, title) => renderMarkdown(content, title),
+        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
         cleanupPanzoom: () => cleanupPanzoomInstances(),
     });
     configureTabs({
-        renderMarkdown: (content, title) => renderMarkdown(content, title),
+        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
         updateWatchToggle: () => updateWatchToggle(),
         saveDesktopSession: () => saveDesktopSession(),
-        startWatchingFilePath: (filePath) => startWatchingFilePath(filePath),
-        stopWatchingFilePath: (filePath) => stopWatchingFilePath(filePath),
+        startWatchingFilePath: (/** @type {string | null} */ filePath) => startWatchingFilePath(filePath),
+        stopWatchingFilePath: (/** @type {string | null} */ filePath) => stopWatchingFilePath(filePath),
     });
-    configureDesktop({ renderMarkdown: (content, title) => renderMarkdown(content, title) });
+    configureDesktop({
+        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
+    });
     registerAppCommands();
     setupVersionInfo();
     setupTheme();
@@ -356,8 +373,9 @@ function setupEventListeners() {
 
     // Drag and drop
     dropZone.addEventListener('click', (e) => {
-        if (e.target.closest && e.target.closest('.url-section')) return;
-        if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
+        const target = /** @type {HTMLElement | null} */ (e.target);
+        if (target && target.closest('.url-section')) return;
+        if (e.target === dropZone || (target && target.closest('.drop-zone-content'))) {
             if (requestNativeOpenIfAvailable()) return;
             fileInput.click();
         }
@@ -375,7 +393,7 @@ function setupEventListeners() {
 
     // TOC toggle
     if (tocToggle) {
-        tocToggle.addEventListener('click', toggleToc);
+        tocToggle.addEventListener('click', () => toggleToc());
     }
 
     // Annotation toggle (sync iOS chrome after toggling)
@@ -596,34 +614,40 @@ function setupEventListeners() {
 
 // True when the event target is a text-entry element, so global single-key
 // shortcuts (like "?") don't fire while the user is typing.
+/** @param {EventTarget | null} target */
 function isTypingTarget(target) {
     if (!target) return false;
-    const tag = target.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable === true;
+    const element = /** @type {HTMLElement} */ (target);
+    const tag = element.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || element.isContentEditable === true;
 }
 
 // ===========================
 // Drag and Drop Handlers
 // ===========================
+/** @param {DragEvent} e */
 function handleDragOver(e) {
     e.preventDefault();
     e.stopPropagation();
     dropZone.classList.add('drag-over');
 }
 
+/** @param {DragEvent} e */
 function handleDragLeave(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (!dropZone.contains(e.relatedTarget)) {
+    if (!dropZone.contains(/** @type {Node | null} */ (e.relatedTarget))) {
         dropZone.classList.remove('drag-over');
     }
 }
 
+/** @param {DragEvent} e */
 function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
     dropZone.classList.remove('drag-over');
 
+    if (!e.dataTransfer) return;
     const files = e.dataTransfer.files;
     for (let i = 0; i < files.length; i++) {
         handleFile(files[i]);
@@ -634,6 +658,10 @@ function handleDrop(e) {
 // ===========================
 // Markdown Rendering
 // ===========================
+/**
+ * @param {string} content
+ * @param {string} filename
+ */
 async function renderMarkdown(content, filename) {
     try {
         // Clean up existing panzoom instances
@@ -644,8 +672,8 @@ async function renderMarkdown(content, filename) {
         state.currentViewMode = 'preview';
         updateViewToggleButton();
 
-        // Parse markdown to HTML
-        const htmlContent = marked.parse(content);
+        // Parse markdown to HTML (synchronous: marked.parse returns a string here)
+        const htmlContent = /** @type {string} */ (marked.parse(content));
 
         // Update UI
         fileName.textContent = filename;
