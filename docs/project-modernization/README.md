@@ -19,6 +19,7 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-14 | [tasks-session-08-phase2-command-palette](2026-06-14-tasks-session-08-phase2-command-palette.md) | Phase 2 slice 3: command palette (Cmd/Ctrl+K, fuzzy filter, keyboard nav, ARIA combobox/listbox) + keyboard shortcut sheet (`?`); +21 tests |
 | 2026-06-14 | [tasks-session-09-typescript-batch2](2026-06-14-tasks-session-09-typescript-batch2.md) | Gradual TypeScript batch 2: `// @ts-check` opt-in for 15 more modules (custom-css, split-view, share-links, view-mode, diagram-export, minimap, theme, file-loading, toc, search, annotations, repo-browser, render-config, tabs, highlight) — 21/~25 checked; no behavior change |
 | 2026-06-15 | [tasks-session-10-typescript-complete](2026-06-15-tasks-session-10-typescript-complete.md) | Gradual TypeScript **complete**: final 4 modules (desktop, ios-chrome, diagrams, main) — **25/25 checked**, `checkJs: true` flipped on globally; no behavior change |
+| 2026-06-15 | [tasks-session-11-phase2-design-tokens](2026-06-15-tasks-session-11-phase2-design-tokens.md) | Phase 2 slice 4a: design-token system (radius/spacing/motion/type scales + semantic status palette, value-preserving) + global `:focus-visible` keyboard focus rings |
 
 ## Current Status
 

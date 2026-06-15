@@ -17,6 +17,35 @@
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
     --transition: all 0.3s ease;
+    --transition-fast: all 0.15s ease;
+
+    /* Semantic status palette (the toast/badge/status colors). Defined once so
+       components reference intent, not raw hex. Values match the prior inline
+       colors, so light/dark output is unchanged. */
+    --color-success: var(--success-color);
+    --color-info: var(--accent-color);
+    --color-warning: #e0a800;
+    --color-danger: #e0533f;
+    --text-on-accent: #ffffff;
+
+    /* Radius scale */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-pill: 999px;
+
+    /* Spacing scale (4px base rhythm) */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
 }
 
 [data-theme="dark"] {
@@ -60,8 +89,16 @@
     }
 }
 
+/* Keyboard focus indicator: a consistent accent outline for keyboard users.
+   :focus-visible only matches keyboard (not mouse) focus, so clicks stay clean.
+   Components with their own :focus treatment keep it via higher specificity. */
+:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -170,7 +207,7 @@ body {
 .theme-toggle {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 0.5rem 1rem;
     cursor: pointer;
     font-size: 1.2rem;
@@ -240,7 +277,7 @@ body {
     color: white;
     border: none;
     padding: 0.75rem 2rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
@@ -273,7 +310,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.7rem 1.1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
@@ -315,7 +352,7 @@ body {
     flex: 1;
     padding: 0.55rem 0.85rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-size: 0.9rem;
@@ -332,7 +369,7 @@ body {
     background-color: var(--accent-color);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -425,7 +462,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -497,7 +534,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -529,7 +566,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -609,7 +646,7 @@ body {
        readable in both app themes. */
     background-color: #0d1117;
     border: 1px solid #30363d;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 1em;
     overflow-x: auto;
     margin-bottom: 1em;
@@ -671,7 +708,7 @@ body {
 .raw-markdown {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 1.5em;
     margin: 0;
     overflow-x: auto;
@@ -697,7 +734,7 @@ body {
     position: relative;
     margin: 2em 0;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background-color: var(--bg-secondary);
     overflow: hidden;
     box-shadow: var(--shadow-md);
@@ -712,7 +749,7 @@ body {
     z-index: 10;
     background-color: var(--bg-primary);
     padding: 5px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
 }
 
@@ -721,7 +758,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 0.75rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 1rem;
     cursor: pointer;
     transition: var(--transition);
@@ -796,7 +833,7 @@ body {
     background-color: var(--bg-primary);
     border: 2px solid var(--border-color);
     padding: 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
 }
 
@@ -805,7 +842,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.75rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 1.2rem;
     cursor: pointer;
     transition: var(--transition);
@@ -820,7 +857,7 @@ body {
     gap: 0.4rem;
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 0.2rem 0.5rem;
 }
 
@@ -858,7 +895,7 @@ body {
     overflow: hidden;
     cursor: grab;
     background-color: var(--bg-primary);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     position: relative;
 }
 
@@ -1026,7 +1063,7 @@ body {
     cursor: pointer;
     font-size: 1.2rem;
     padding: 0.35rem 0.65rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     margin-left: 0.25rem;
     transition: background-color 0.15s ease, color 0.15s ease;
@@ -1156,7 +1193,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -1220,7 +1257,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -1249,7 +1286,7 @@ body {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -1282,7 +1319,7 @@ body {
     max-width: 320px;
     padding: 0.4rem 0.75rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     font-size: 0.9rem;
@@ -1304,7 +1341,7 @@ body {
 .search-nav-btn {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 0.3rem 0.6rem;
     cursor: pointer;
     color: var(--text-primary);
@@ -1325,7 +1362,7 @@ body {
     cursor: pointer;
     font-size: 1rem;
     padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -1369,7 +1406,7 @@ mark.search-highlight-current {
     background-color: #323232;
     color: #fff;
     padding: 0.6rem 1.4rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.9rem;
     z-index: 9999;
     box-shadow: var(--shadow-lg);
@@ -1403,7 +1440,7 @@ mark.search-highlight-current {
     background-color: #323232;
     color: #fff;
     padding: 0.6rem 1.4rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 4px solid transparent;
     font-size: 0.9rem;
     line-height: 1.4;
@@ -1413,19 +1450,19 @@ mark.search-highlight-current {
 }
 
 .toast-success {
-    border-left-color: var(--success-color);
+    border-left-color: var(--color-success);
 }
 
 .toast-info {
-    border-left-color: var(--accent-color);
+    border-left-color: var(--color-info);
 }
 
 .toast-warning {
-    border-left-color: #e0a800;
+    border-left-color: var(--color-warning);
 }
 
 .toast-error {
-    border-left-color: #e0533f;
+    border-left-color: var(--color-danger);
 }
 
 /* ===========================
@@ -1439,7 +1476,7 @@ mark.search-highlight-current {
     padding: 0.5rem 1rem;
     background-color: var(--accent-color);
     color: #fff;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     text-decoration: none;
     box-shadow: var(--shadow-md);
     transition: top 0.15s ease;
@@ -1473,7 +1510,7 @@ mark.search-highlight-current {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
 }
@@ -1502,7 +1539,7 @@ mark.search-highlight-current {
     align-items: center;
     gap: 1rem;
     padding: 0.55rem 0.85rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
 }
 
@@ -1545,7 +1582,7 @@ mark.search-highlight-current {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     padding: 1.25rem 1.5rem;
     outline: none;
@@ -1581,7 +1618,7 @@ mark.search-highlight-current {
     padding: 0.15rem 0.5rem;
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 0.85rem;
 }
@@ -1690,7 +1727,7 @@ mark.search-highlight-current {
     gap: 0.2rem;
     min-height: 52px;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     background: var(--bg-primary);
     color: var(--text-primary);
     font-size: 0.78rem;
@@ -1751,7 +1788,7 @@ mark.search-highlight-current {
     border: 1px solid var(--border-color);
     background: var(--bg-secondary);
     color: var(--text-primary);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     width: 34px;
     height: 34px;
     font-size: 0.95rem;
@@ -1768,7 +1805,7 @@ mark.search-highlight-current {
     min-height: 48px;
     padding: 0.85rem 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     background: var(--bg-secondary);
     color: var(--text-primary);
     font-size: 0.95rem;
@@ -1805,7 +1842,7 @@ mark.search-highlight-current {
     left: 20px;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 4px;
     box-shadow: var(--shadow-md);
     z-index: 1002;
@@ -1814,7 +1851,7 @@ mark.search-highlight-current {
 
 .minimap-canvas {
     display: block;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     opacity: 0.85;
 }
 
@@ -1835,7 +1872,7 @@ mark.search-highlight-current {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
@@ -1898,7 +1935,7 @@ mark.search-highlight-current {
     position: fixed;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 0.6rem 0.9rem;
     font-size: 0.85rem;
     color: var(--text-primary);
@@ -1929,7 +1966,7 @@ mark.search-highlight-current {
 .repo-browser-content {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     width: 520px;
     max-width: 95vw;
     max-height: 70vh;
@@ -1964,7 +2001,7 @@ mark.search-highlight-current {
     cursor: pointer;
     font-size: 1rem;
     padding: 0.2rem 0.4rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     transition: color 0.15s ease, background-color 0.15s ease;
 }
@@ -1984,7 +2021,7 @@ mark.search-highlight-current {
     width: 100%;
     padding: 0.45rem 0.75rem;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     font-size: 0.9rem;
