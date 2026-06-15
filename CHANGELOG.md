@@ -4,3 +4,9 @@
      scripts/generate-changelog.js (wired into .github/workflows/version-bump.yml).
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
+
+## v0.0.125 — 2026-06-15
+
+### Documentation
+
+- Electron-vs-Tauri spike (Phase 3 decision)
