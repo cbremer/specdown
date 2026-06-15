@@ -19,7 +19,10 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-14 | [tasks-session-08-phase2-command-palette](2026-06-14-tasks-session-08-phase2-command-palette.md) | Phase 2 slice 3: command palette (Cmd/Ctrl+K, fuzzy filter, keyboard nav, ARIA combobox/listbox) + keyboard shortcut sheet (`?`); +21 tests |
 | 2026-06-14 | [tasks-session-09-typescript-batch2](2026-06-14-tasks-session-09-typescript-batch2.md) | Gradual TypeScript batch 2: `// @ts-check` opt-in for 15 more modules (custom-css, split-view, share-links, view-mode, diagram-export, minimap, theme, file-loading, toc, search, annotations, repo-browser, render-config, tabs, highlight) — 21/~25 checked; no behavior change |
 | 2026-06-15 | [tasks-session-10-typescript-complete](2026-06-15-tasks-session-10-typescript-complete.md) | Gradual TypeScript **complete**: final 4 modules (desktop, ios-chrome, diagrams, main) — **25/25 checked**, `checkJs: true` flipped on globally; no behavior change |
-| 2026-06-15 | [tasks-session-11-phase2-design-tokens](2026-06-15-tasks-session-11-phase2-design-tokens.md) | Phase 2 slice 4a: design-token system (radius/spacing/motion/type scales + semantic status palette, value-preserving) + global `:focus-visible` keyboard focus rings |
+| 2026-06-15 | [tasks-session-11-phase2-design-tokens](2026-06-15-tasks-session-11-phase2-design-tokens.md) | Phase 2 slice 4: design-token system (radius/spacing/motion/type scales + semantic status palette, value-preserving) + global `:focus-visible` focus rings + toolbar overflow "⋮" menu |
+| 2026-06-14 | [handoff-next-wave](2026-06-14-handoff-next-wave.md) | **Resume point** — aggregated status, the remaining Phase 3/4 options, and the project gotchas. Start here after a break. |
+
+> **Resuming after a break?** Read **[handoff-next-wave](2026-06-14-handoff-next-wave.md)** first — it's the durable index of what's done, what's next, and the gotchas.
 
 ## Current Status
 
@@ -42,20 +45,20 @@ a `checkJs` toolchain with per-file `// @ts-check` opt-in, a native-bridge
 are checked and the rest opt in incrementally. **Phase 1 (Architecture) is
 functionally complete.**
 
-**Phase 2 (Design system & UX) is underway**, sliced into reviewable PRs:
-(1) **toasts + accessibility** — done (session 06): an accessible toast system
-replaces every `alert()`, plus a skip link, `aria-label`s on icon-only controls,
-decorative-icon hiding, and reduced-motion; (2) **auto/system theme + motion** —
-done (session 07): a 3-way light→dark→auto cycle that follows the OS via
-`prefers-color-scheme` (with live updates) and a global reduced-motion reset;
-(3) **command palette + shortcut sheet** — done (session 08): a Cmd/Ctrl+K
-fuzzy-filtered, keyboard-navigable command palette (ARIA combobox/listbox) and a
-`?` keyboard-shortcut sheet. Remaining: toolbar consolidation/overflow and the
-broader design-token overhaul (spacing/radius/typography scales + retiring stray
-hard-coded hexes) — both want a visual-review pass.
+**Phase 1 (Architecture) and Phase 2 (Design system & UX) are both complete.**
+Phase 1 finished with the gradual-TypeScript migration (sessions 05/09/10):
+**25/25 modules** type-checked over JSDoc and `checkJs: true` global. Phase 2
+shipped four slices: (1) accessible toasts + a11y pass; (2) auto/system theme +
+reduced-motion; (3) command palette (Cmd/Ctrl+K) + shortcut sheet (`?`); (4) the
+design-token system (radius/spacing/motion/type scales + semantic status
+palette) + `:focus-visible` focus rings + the toolbar overflow "⋮" menu.
 
-The open questions below (iOS investment, Apple Developer membership for
-signing, Electron vs Tauri spike) still gate **Phases 2–4**, not Phase 1.
+**Next is Phase 3 (distribution) and Phase 4 (differentiators)** — see the
+[handoff brief](2026-06-14-handoff-next-wave.md) §6 for the breakdown. The
+headline Phase 3 item, macOS **signing/notarization** (the desktop "damaged"
+Gatekeeper fix), is gated on Apple Developer membership + CI secrets; the
+Windows (`.exe`) and Linux (AppImage) release lanes already exist in
+`.github/workflows/desktop.yml`.
 
 Phase summary:
 
