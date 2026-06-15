@@ -6,6 +6,7 @@
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
+import { recordRecentFile, renderRecentFiles } from './recent-files.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -121,6 +122,9 @@ export async function handleUrl(url) {
     const markdown = await response.text();
     if (urlInput) urlInput.value = '';
     openTab(filename, markdown);
+    // Remember this URL for one-click re-open from the drop zone.
+    recordRecentFile({ ref: url, title: filename });
+    renderRecentFiles();
   } catch (e) {
     showUrlError(
       'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
