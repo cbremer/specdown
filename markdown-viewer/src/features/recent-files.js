@@ -2,9 +2,12 @@
 // Recent files: remember recently-opened documents and offer one-click re-open
 // from the empty-state drop zone. Persisted in localStorage.
 //
-// Scope: URLs only. Browser-picked local files can't be reopened by path (the
-// File System Access security model), so they're intentionally not recorded —
-// only things the app can actually re-fetch (URLs, incl. GitHub raw links).
+// Scope: things the app can actually re-open without a fresh user pick:
+//   - 'url'  — any fetchable URL (incl. GitHub raw links).
+//   - 'path' — a local file path, only on the desktop (Electron) shell, where
+//     the main process can re-read it by path. Browser-picked local files
+//     can't be reopened by path (the File System Access security model), so on
+//     the web they are intentionally not recorded.
 
 const RECENT_KEY = 'specdown-recent-files';
 const RECENT_MAX = 8;
@@ -12,8 +15,8 @@ const el = (/** @type {string} */ id) => document.getElementById(id);
 
 /**
  * @typedef {object} RecentEntry
- * @property {'url'} type
- * @property {string} ref The re-openable reference (the URL).
+ * @property {'url' | 'path'} type
+ * @property {string} ref The re-openable reference (a URL or a local file path).
  * @property {string} title Display label.
  */
 
@@ -52,13 +55,15 @@ export function getRecentFiles() {
 
 /**
  * Record a freshly-opened document at the top of the recents (most-recent-first,
- * de-duplicated by ref, capped).
- * @param {{ type?: 'url', ref: string, title?: string }} entry
+ * de-duplicated by ref, capped). Defaults to a URL entry for backward
+ * compatibility; desktop file opens pass `type: 'path'`.
+ * @param {{ type?: 'url' | 'path', ref: string, title?: string }} entry
  */
 export function recordRecentFile(entry) {
   if (!entry || !entry.ref) return;
+  const type = entry.type === 'path' ? 'path' : 'url';
   recentEntries = recentEntries.filter((e) => e.ref !== entry.ref);
-  recentEntries.unshift({ type: 'url', ref: entry.ref, title: entry.title || entry.ref });
+  recentEntries.unshift({ type, ref: entry.ref, title: entry.title || entry.ref });
   if (recentEntries.length > RECENT_MAX) {
     recentEntries = recentEntries.slice(0, RECENT_MAX);
   }
@@ -99,6 +104,7 @@ export function renderRecentFiles() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'recent-file-item';
+    btn.dataset.type = entry.type;
     btn.textContent = entry.title;
     btn.title = entry.ref;
     btn.addEventListener('click', (e) => {

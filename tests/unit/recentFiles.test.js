@@ -58,6 +58,18 @@ describe('Recent files', () => {
       clearRecentFiles();
       expect(getRecentFiles()).toEqual([]);
     });
+
+    it('defaults entries to the url type', () => {
+      recordRecentFile({ ref: 'https://a/one.md', title: 'one.md' });
+      expect(getRecentFiles()[0].type).toBe('url');
+    });
+
+    it('records desktop file paths with the path type', () => {
+      recordRecentFile({ type: 'path', ref: '/tmp/a.md', title: 'a.md' });
+      const entry = getRecentFiles()[0];
+      expect(entry.type).toBe('path');
+      expect(entry.ref).toBe('/tmp/a.md');
+    });
   });
 
   describe('drop-zone rendering', () => {
@@ -92,6 +104,44 @@ describe('Recent files', () => {
 
       expect(onSelect).toHaveBeenCalledTimes(1);
       expect(onSelect.mock.calls[0][0].ref).toBe('https://a/one.md');
+    });
+
+    it('tags each item with its entry type for styling', () => {
+      recordRecentFile({ ref: 'https://a/one.md', title: 'one.md' });
+      recordRecentFile({ type: 'path', ref: '/tmp/a.md', title: 'a.md' });
+      renderRecentFiles();
+
+      const items = document.querySelectorAll('.recent-file-item');
+      // Most-recent-first: the path entry is on top.
+      expect(items[0].dataset.type).toBe('path');
+      expect(items[1].dataset.type).toBe('url');
+    });
+  });
+
+  describe('desktop path re-open', () => {
+    afterEach(() => {
+      delete window.specdown;
+    });
+
+    it('re-opens a recorded path through the desktop bridge', () => {
+      window.specdown = { isDesktop: true, requestOpenPath: jest.fn() };
+
+      recordRecentFile({ type: 'path', ref: '/tmp/a.md', title: 'a.md' });
+      renderRecentFiles();
+
+      const item = document.querySelector('.recent-file-item');
+      item.dispatchEvent(new Event('click', { bubbles: true }));
+
+      expect(window.specdown.requestOpenPath).toHaveBeenCalledTimes(1);
+      expect(window.specdown.requestOpenPath).toHaveBeenCalledWith('/tmp/a.md');
+    });
+
+    it('does not throw when a path entry is clicked without a desktop bridge', () => {
+      recordRecentFile({ type: 'path', ref: '/tmp/a.md', title: 'a.md' });
+      renderRecentFiles();
+
+      const item = document.querySelector('.recent-file-item');
+      expect(() => item.dispatchEvent(new Event('click', { bubbles: true }))).not.toThrow();
     });
   });
 

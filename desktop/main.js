@@ -459,6 +459,15 @@ ipcMain.on('request-file-open', () => {
   showOpenDialog();
 });
 
+// Re-open a recent file by path (from the renderer's in-app recent-files list).
+// openFileByPath validates the extension and handles read errors, so a stale
+// or moved path is a safe no-op.
+ipcMain.on('request-open-path', (_event, filePath) => {
+  if (typeof filePath === 'string' && filePath) {
+    openFileByPath(filePath);
+  }
+});
+
 ipcMain.on('close-active-tab', () => {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('close-tab');

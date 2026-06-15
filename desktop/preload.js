@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('request-file-open');
   },
 
+  // Re-open a known local file by its path (used by the in-app recent-files
+  // list, which records desktop opens so they can be reopened with one click).
+  requestOpenPath: (filePath) => {
+    ipcRenderer.send('request-open-path', filePath);
+  },
+
   // Register a callback for when a file is opened from the main process
   // (via Cmd+O dialog, Finder double-click, drag-to-dock, etc.)
   onFileOpened: (callback) => {
