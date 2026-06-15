@@ -19,6 +19,11 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+    # Sign + notarize only when the signing secrets are configured; otherwise
+    # fall back to an unsigned build so the pipeline never hard-fails (e.g. on a
+    # fork or a quick manual dispatch). See docs/project-modernization for setup.
+    env:
+      HAS_SIGNING: ${{ secrets.MAC_CERT_P12 != '' }}
 
     steps:
       - name: Checkout
@@ -44,7 +49,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build DMG
+      # Signed + notarized build (Developer ID). electron-builder imports the
+      # cert from CSC_LINK/CSC_KEY_PASSWORD; `-c.mac.notarize.teamId` enables
+      # notarization via notarytool using the APPLE_ID app-specific password.
+      - name: Build DMG (signed + notarized)
+        if: env.HAS_SIGNING == 'true'
+        run: npm run desktop:build -- --mac dmg -c.mac.notarize.teamId=${{ secrets.APPLE_TEAM_ID }}
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Unsigned fallback (no secrets configured). Produces a working DMG that
+      # macOS Gatekeeper will quarantine ("damaged") — the signed path above is
+      # the real distribution build.
+      - name: Build DMG (unsigned fallback)
+        if: env.HAS_SIGNING != 'true'
         run: npm run desktop:build -- --mac dmg
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
