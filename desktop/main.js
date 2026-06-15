@@ -295,6 +295,101 @@ async function showOpenDialog() {
 }
 
 // ===========================
+// Workspace (folder) mode
+// ===========================
+// Open a folder and browse its markdown files from an in-app sidebar. The scan
+// is bounded (depth + count) and skips noisy directories so a large repo can't
+// hang the main process or flood the renderer.
+const WORKSPACE_IGNORE_DIRS = new Set([
+  'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
+  'coverage', '.next', '.cache', '.vite', '.idea', '.vscode',
+]);
+const WORKSPACE_MAX_DEPTH = 8;
+const WORKSPACE_MAX_FILES = 2000;
+
+/**
+ * Recursively collect markdown files under `rootDir`. Returns entries with the
+ * absolute path, the path relative to the root (for display), and the basename,
+ * sorted by relative path. Bounded by depth, file count, and an ignore list.
+ */
+function scanWorkspace(rootDir) {
+  const out = [];
+
+  const walk = (dir, depth) => {
+    if (depth > WORKSPACE_MAX_DEPTH || out.length >= WORKSPACE_MAX_FILES) return;
+
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch (err) {
+      logError(`Failed to read workspace directory: ${dir}`, err);
+      return;
+    }
+
+    for (const entry of entries) {
+      if (out.length >= WORKSPACE_MAX_FILES) return;
+      const name = entry.name;
+      if (name.startsWith('.') && entry.isDirectory()) continue;
+      const full = path.join(dir, name);
+
+      if (entry.isDirectory()) {
+        if (WORKSPACE_IGNORE_DIRS.has(name)) continue;
+        walk(full, depth + 1);
+      } else if (entry.isFile() && isValidMarkdownFile(name)) {
+        out.push({
+          path: full,
+          relPath: path.relative(rootDir, full),
+          name,
+        });
+      }
+    }
+  };
+
+  walk(rootDir, 0);
+  out.sort((a, b) => a.relPath.localeCompare(b.relPath));
+  return out;
+}
+
+async function showOpenFolderDialog() {
+  if (!mainWindow) return;
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Folder',
+    properties: ['openDirectory'],
+  });
+
+  if (result.canceled || !result.filePaths.length) return;
+
+  const root = result.filePaths[0];
+  const files = scanWorkspace(root);
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('workspace-opened', { root, files });
+  }
+}
+
+// Resolve a relative link (clicked inside a workspace document) against the
+// directory of the document it came from, then open it. Used for in-workspace
+// navigation via relative `.md` links. The resolved path is validated by
+// openFileByPath, so a broken link is a safe no-op.
+function openRelativeFromFile(fromPath, href) {
+  if (typeof fromPath !== 'string' || !fromPath) return;
+  if (typeof href !== 'string' || !href) return;
+
+  // Strip any query/hash and percent-decode so links like `./b.md#section`
+  // or `../my%20doc.md` resolve to the real file on disk.
+  let cleaned = href.split('#')[0].split('?')[0];
+  try {
+    cleaned = decodeURIComponent(cleaned);
+  } catch (_) {
+    // Leave as-is if it isn't valid percent-encoding.
+  }
+  if (!cleaned) return;
+
+  const target = path.resolve(path.dirname(fromPath), cleaned);
+  openFileByPath(target);
+}
+
+// ===========================
 // File Watching
 // ===========================
 
@@ -468,6 +563,18 @@ ipcMain.on('request-open-path', (_event, filePath) => {
   }
 });
 
+// Workspace: open a folder picker and scan it for markdown files.
+ipcMain.on('request-open-folder', () => {
+  showOpenFolderDialog();
+});
+
+// Workspace: open a relative link clicked inside a workspace document.
+ipcMain.on('request-open-relative', (_event, payload) => {
+  if (payload && typeof payload === 'object') {
+    openRelativeFromFile(payload.fromPath, payload.href);
+  }
+});
+
 ipcMain.on('close-active-tab', () => {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('close-tab');
@@ -536,6 +643,11 @@ function buildMenu() {
           label: 'Open...',
           accelerator: 'CmdOrCtrl+O',
           click: () => showOpenDialog(),
+        },
+        {
+          label: 'Open Folder...',
+          accelerator: 'CmdOrCtrl+Shift+O',
+          click: () => showOpenFolderDialog(),
         },
         {
           label: 'Open Recent',
@@ -772,5 +884,6 @@ module.exports = {
   watchFile,
   unwatchFile,
   watchers,
+  scanWorkspace,
   VALID_EXTENSIONS,
 };

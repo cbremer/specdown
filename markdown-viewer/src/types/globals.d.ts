@@ -21,11 +21,27 @@ interface SpecdownSessionTab {
   filename: string;
 }
 
+/** A single markdown file discovered when scanning a workspace folder. */
+interface SpecdownWorkspaceFile {
+  path: string;
+  relPath: string;
+  name: string;
+}
+
+/** The scanned workspace folder delivered by the desktop shell. */
+interface SpecdownWorkspace {
+  root: string;
+  files: SpecdownWorkspaceFile[];
+}
+
 /** The desktop (Electron) bridge exposed on `window.specdown` by the preload. */
 interface SpecdownDesktopBridge {
   isDesktop?: boolean;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
+  requestOpenFolder?: () => void;
+  requestOpenRelative?: (fromPath: string, href: string) => void;
+  onWorkspaceOpened?: (cb: (workspace: SpecdownWorkspace) => void) => void;
   watchFile?: (filePath: string) => void;
   unwatchFile?: (filePath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;

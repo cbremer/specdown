@@ -18,6 +18,25 @@ contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('request-open-path', filePath);
   },
 
+  // Workspace mode: open a folder picker; the main process scans it and replies
+  // via onWorkspaceOpened with the file list.
+  requestOpenFolder: () => {
+    ipcRenderer.send('request-open-folder');
+  },
+
+  // Workspace mode: open a relative link clicked inside a workspace document,
+  // resolved by the main process against the source document's directory.
+  requestOpenRelative: (fromPath, href) => {
+    ipcRenderer.send('request-open-relative', { fromPath, href });
+  },
+
+  // Workspace mode: receive the scanned folder ({ root, files }).
+  onWorkspaceOpened: (callback) => {
+    ipcRenderer.on('workspace-opened', (_event, workspace) => {
+      callback(workspace);
+    });
+  },
+
   // Register a callback for when a file is opened from the main process
   // (via Cmd+O dialog, Finder double-click, drag-to-dock, etc.)
   onFileOpened: (callback) => {
