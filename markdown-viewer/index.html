@@ -69,7 +69,10 @@
                 <h2>Drop Markdown File Here</h2>
                 <p>or click to browse</p>
                 <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
-                <button id="browse-button" class="browse-button">Browse Files</button>
+                <div class="drop-zone-buttons">
+                    <button id="browse-button" class="browse-button">Browse Files</button>
+                    <button id="open-folder-button" class="browse-button browse-button-secondary" style="display: none;">Open Folder</button>
+                </div>
                 <div id="ios-sample-section" class="sample-section" style="display: none;">
                     <span class="url-separator">or open a bundled sample</span>
                     <div class="sample-button-row">
@@ -110,6 +113,10 @@
                     <button id="watch-toggle" class="watch-toggle-button" title="Auto-reload when file changes on disk" aria-label="Watch file for changes" style="display: none;">
                         <span class="watch-toggle-icon" aria-hidden="true">⟳</span>
                         <span class="watch-toggle-label">Watch</span>
+                    </button>
+                    <button id="workspace-toggle" class="workspace-toggle-button" title="Toggle workspace files" aria-label="Toggle workspace files" style="display: none;">
+                        <span class="workspace-toggle-icon" aria-hidden="true">🗂</span>
+                        <span class="workspace-toggle-label">Files</span>
                     </button>
                     <button id="toc-toggle" class="toc-toggle-button" title="Toggle table of contents" aria-label="Toggle contents">
                         <span class="toc-toggle-icon" aria-hidden="true">☰</span>
@@ -152,6 +159,12 @@
 
             <!-- Body with TOC sidebar + main content -->
             <div class="content-body">
+                <!-- Workspace (folder) Sidebar -->
+                <aside id="workspace-sidebar" class="workspace-sidebar" style="display: none;">
+                    <div class="workspace-header">Workspace</div>
+                    <ul id="workspace-file-list" class="workspace-file-list"></ul>
+                </aside>
+
                 <!-- Table of Contents Sidebar -->
                 <aside id="toc-sidebar" class="toc-sidebar" style="display: none;">
                     <div class="toc-header">Contents</div>

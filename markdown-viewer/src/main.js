@@ -120,6 +120,12 @@ import {
 } from './features/recent-files.js';
 import { enhanceCodeBlocks } from './features/code-copy.js';
 import {
+  setupWorkspace,
+  renderWorkspaceSidebar,
+  openWorkspaceFolder,
+  hasWorkspace,
+} from './features/workspace.js';
+import {
   setupDesktopIPC,
   updateWatchToggle,
   saveDesktopSession,
@@ -173,6 +179,7 @@ const splitRawPane = $('split-raw-pane');
 const splitRawContent = $('split-raw-content');
 const printButton = $('print-button');
 const presentButton = $('present-button');
+const workspaceToggle = $('workspace-toggle');
 const searchBar = $('search-bar');
 const searchInput = /** @type {HTMLInputElement | null} */ ($('search-input'));
 const searchPrev = $('search-prev');
@@ -224,6 +231,7 @@ function init() {
     setupIOSNativeUI();
     setupToolbarOverflow();
     setupRecentFiles();
+    setupWorkspace();
     setupEventListeners();
     configureMarked();
     checkForUpdates();
@@ -258,6 +266,13 @@ function registerAppCommands() {
             run: () => {
                 if (!requestNativeOpenIfAvailable()) fileInput.click();
             },
+        },
+        {
+            id: 'open-folder',
+            title: 'Open folder…',
+            keywords: ['workspace', 'directory', 'browse', 'files', 'sidebar'],
+            run: () => openWorkspaceFolder(),
+            isAvailable: () => isDesktop,
         },
         {
             id: 'toggle-theme',
@@ -786,6 +801,13 @@ async function renderMarkdown(content, filename) {
         if (presentButton) {
             presentButton.style.display = hasPresentableDiagrams() ? '' : 'none';
         }
+
+        // Reveal the workspace Files toggle when a folder is loaded, and refresh
+        // the sidebar so the active file is highlighted.
+        if (workspaceToggle) {
+            workspaceToggle.style.display = hasWorkspace() ? '' : 'none';
+        }
+        renderWorkspaceSidebar();
 
         // Refresh TOC
         buildToc();

@@ -60,7 +60,9 @@ jest.mock('electron', () => ({
   },
 }));
 
-const { isValidMarkdownFile, readMarkdownFile, buildMenu, watchFile, unwatchFile, watchers, VALID_EXTENSIONS } = require('../../desktop/main');
+const os = require('os');
+
+const { isValidMarkdownFile, readMarkdownFile, buildMenu, watchFile, unwatchFile, watchers, scanWorkspace, VALID_EXTENSIONS } = require('../../desktop/main');
 
 describe('desktop/main.js', () => {
   describe('VALID_EXTENSIONS', () => {
@@ -213,6 +215,58 @@ describe('desktop/main.js', () => {
       expect(() => handler({}, undefined)).not.toThrow();
       expect(() => handler({}, '')).not.toThrow();
       expect(() => handler({}, '/tmp/does-not-exist.md')).not.toThrow();
+    });
+
+    it('registers request-open-folder and request-open-relative handlers', () => {
+      const { ipcMain } = require('electron');
+      const channels = ipcMain.on.mock.calls.map(c => c[0]);
+      expect(channels).toContain('request-open-folder');
+      expect(channels).toContain('request-open-relative');
+    });
+
+    it('request-open-relative tolerates malformed payloads', () => {
+      const { ipcMain } = require('electron');
+      const handler = ipcMain.on.mock.calls.find(c => c[0] === 'request-open-relative')[1];
+      expect(() => handler({}, undefined)).not.toThrow();
+      expect(() => handler({}, {})).not.toThrow();
+      expect(() => handler({}, { fromPath: '', href: '' })).not.toThrow();
+      expect(() => handler({}, { fromPath: '/a/b.md', href: '../c.md' })).not.toThrow();
+    });
+  });
+
+  describe('scanWorkspace', () => {
+    let root;
+
+    beforeEach(() => {
+      root = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-ws-'));
+    });
+
+    afterEach(() => {
+      fs.rmSync(root, { recursive: true, force: true });
+    });
+
+    it('collects markdown files recursively with relative paths, sorted', () => {
+      fs.writeFileSync(path.join(root, 'b.md'), 'b');
+      fs.mkdirSync(path.join(root, 'docs'));
+      fs.writeFileSync(path.join(root, 'docs', 'a.md'), 'a');
+      fs.writeFileSync(path.join(root, 'note.txt'), 'ignored');
+
+      const files = scanWorkspace(root);
+      expect(files.map(f => f.relPath)).toEqual(['b.md', path.join('docs', 'a.md')]);
+
+      const b = files.find(f => f.name === 'b.md');
+      expect(b.path).toBe(path.join(root, 'b.md'));
+    });
+
+    it('skips noisy directories like node_modules, .git, and dist', () => {
+      for (const dir of ['node_modules', '.git', 'dist']) {
+        fs.mkdirSync(path.join(root, dir));
+        fs.writeFileSync(path.join(root, dir, 'x.md'), 'x');
+      }
+      fs.writeFileSync(path.join(root, 'keep.md'), 'k');
+
+      const files = scanWorkspace(root);
+      expect(files.map(f => f.name)).toEqual(['keep.md']);
     });
   });
 
