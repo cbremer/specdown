@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.131 — 2026-06-16
+
+- Fix annotations: render saved badges + make the mode discoverable
+
 ## v0.0.130 — 2026-06-16
 
 ### Documentation
