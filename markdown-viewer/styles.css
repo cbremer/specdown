@@ -2335,6 +2335,241 @@ mark.search-highlight-current {
     word-break: break-word;
 }
 
+/* Briefly highlight a block jumped-to from the annotations panel. */
+.annotation-flash {
+    animation: annotation-flash 1.2s ease;
+}
+
+@keyframes annotation-flash {
+    0% { background-color: rgba(243, 156, 18, 0.35); }
+    100% { background-color: transparent; }
+}
+
+/* Notes toggle button (mirrors the other toolbar buttons) */
+.annotation-list-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.annotation-list-toggle-button:hover,
+.annotation-list-toggle-button.active {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.annotation-list-count {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: var(--radius-pill);
+    padding: 0 0.4em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 1.2em;
+    text-align: center;
+}
+
+.annotation-list-toggle-button.active .annotation-list-count {
+    background-color: white;
+    color: var(--accent-color);
+}
+
+/* Annotations side panel */
+.annotation-panel {
+    width: 280px;
+    min-width: 240px;
+    flex-shrink: 0;
+    background-color: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.annotation-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    padding: 0.6rem 0.75rem 0.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.annotation-panel-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.2rem 0.35rem;
+    border-radius: var(--radius-sm);
+}
+
+.annotation-panel-close:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.annotation-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.annotation-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+}
+
+.annotation-list-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.annotation-list-jump {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 2px solid var(--accent-color);
+    padding: 0.1rem 0 0.1rem 0.5rem;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.annotation-list-note {
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.annotation-list-context {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.annotation-list-edit,
+.annotation-list-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1;
+    padding: 0.15rem 0.3rem;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.annotation-list-edit:hover {
+    color: var(--accent-color);
+    background-color: var(--bg-primary);
+}
+
+.annotation-list-delete:hover {
+    color: var(--color-danger);
+    background-color: var(--bg-primary);
+}
+
+/* Note editor modal */
+.annotation-editor-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.annotation-editor {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: min(440px, 100%);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.annotation-editor-input {
+    width: 100%;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.7rem;
+}
+
+.annotation-editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.annotation-editor-spacer {
+    flex: 1;
+}
+
+.annotation-editor-actions button {
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.annotation-editor-save {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: white !important;
+}
+
+.annotation-editor-save:hover {
+    background-color: var(--accent-hover) !important;
+}
+
+.annotation-editor-delete {
+    color: var(--color-danger) !important;
+}
+
 /* ===========================
    GitHub Repo Browser Modal
    =========================== */

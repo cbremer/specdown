@@ -316,3 +316,80 @@ describe('Annotation export / import', () => {
     expect(importAnnotations(JSON.stringify([1, 2, 3]))).toBe(false);
   });
 });
+
+describe('Annotation editor + panel', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  it('adds a note via the in-app editor (no window.prompt needed)', () => {
+    const mc = document.getElementById('markdown-content');
+    mc.innerHTML = '<p>Block zero</p>';
+    renderAnnotations('doc.md');
+    toggleAnnotationMode(); // arms double-click handlers
+
+    mc.querySelector('p').dispatchEvent(new Event('dblclick', { bubbles: true }));
+
+    const backdrop = document.getElementById('annotation-editor-backdrop');
+    expect(backdrop).not.toBeNull();
+    expect(backdrop.style.display).toBe('flex');
+
+    backdrop.querySelector('.annotation-editor-input').value = 'My note';
+    backdrop.querySelector('.annotation-editor-save').dispatchEvent(new Event('click', { bubbles: true }));
+
+    expect(mc.querySelector('p').querySelector('.annotation-badge')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('specdown-annotations'))['doc.md']['0']).toBe('My note');
+    expect(backdrop.style.display).toBe('none');
+  });
+
+  it('renders the panel rows + toolbar count', () => {
+    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'note A', 1: 'note B' } }));
+    const mc = document.getElementById('markdown-content');
+    mc.innerHTML = '<p>Zero</p><p>One</p>';
+    renderAnnotations('doc.md');
+
+    const toggle = document.getElementById('annotation-list-toggle');
+    expect(toggle.style.display).not.toBe('none');
+    expect(toggle.querySelector('.annotation-list-count').textContent).toBe('2');
+
+    const items = document.querySelectorAll('.annotation-list-item');
+    expect(items.length).toBe(2);
+    expect(items[0].querySelector('.annotation-list-note').textContent).toBe('note A');
+    expect(items[0].querySelector('.annotation-list-context').textContent).toBe('Zero');
+  });
+
+  it('hides the toggle when there are no notes', () => {
+    const mc = document.getElementById('markdown-content');
+    mc.innerHTML = '<p>Zero</p>';
+    renderAnnotations('doc.md');
+    expect(document.getElementById('annotation-list-toggle').style.display).toBe('none');
+  });
+
+  it('opens and closes the panel', () => {
+    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
+    const mc = document.getElementById('markdown-content');
+    mc.innerHTML = '<p>Zero</p>';
+    renderAnnotations('doc.md');
+
+    const panel = document.getElementById('annotation-panel');
+    openAnnotationPanel();
+    expect(panel.classList.contains('open')).toBe(true);
+    toggleAnnotationPanel();
+    expect(panel.classList.contains('open')).toBe(false);
+  });
+
+  it('deleting the last note from the panel hides the toggle and closes the panel', () => {
+    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
+    const mc = document.getElementById('markdown-content');
+    mc.innerHTML = '<p>Zero</p>';
+    renderAnnotations('doc.md');
+    openAnnotationPanel();
+
+    document.querySelector('.annotation-list-delete').dispatchEvent(new Event('click', { bubbles: true }));
+
+    expect(document.getElementById('annotation-list-toggle').style.display).toBe('none');
+    expect(document.getElementById('annotation-panel').classList.contains('open')).toBe(false);
+  });
+});
