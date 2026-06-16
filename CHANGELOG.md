@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.129 — 2026-06-16
+
+- build a universal (Intel + Apple Silicon) macOS DMG
+
 ## v0.0.128 — 2026-06-16
 
 - add app icon for mac/win/linux builds
