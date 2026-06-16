@@ -42,6 +42,8 @@ import {
   renderAnnotations,
   exportAnnotations,
   importAnnotationsFromFile,
+  toggleAnnotationPanel,
+  openAnnotationPanel,
 } from './features/annotations.js';
 import { handleRepoUrl } from './features/repo-browser.js';
 import { updateMinimap, updateMinimapViewport } from './features/minimap.js';
@@ -175,6 +177,8 @@ const openUrlBtn = $('open-url-btn');
 const urlError = $('url-error');
 const tocToggle = $('toc-toggle');
 const annotationToggle = $('annotation-toggle');
+const annotationListToggle = $('annotation-list-toggle');
+const annotationPanelClose = $('annotation-panel-close');
 const splitToggle = $('split-toggle');
 const splitRawPane = $('split-raw-pane');
 const splitRawContent = $('split-raw-content');
@@ -310,6 +314,13 @@ function registerAppCommands() {
                 toggleAnnotationMode();
                 syncIOSChrome();
             },
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'show-annotations',
+            title: 'Show annotations list',
+            keywords: ['notes', 'annotations', 'panel', 'comments'],
+            run: () => openAnnotationPanel(),
             isAvailable: isDocumentOpen,
         },
         {
@@ -495,6 +506,14 @@ function setupEventListeners() {
             toggleAnnotationMode();
             syncIOSChrome();
         });
+    }
+
+    // Annotations list panel (toggle button + close button)
+    if (annotationListToggle) {
+        annotationListToggle.addEventListener('click', () => toggleAnnotationPanel());
+    }
+    if (annotationPanelClose) {
+        annotationPanelClose.addEventListener('click', () => toggleAnnotationPanel());
     }
 
     // Split view toggle
