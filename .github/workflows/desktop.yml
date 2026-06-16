@@ -55,7 +55,7 @@ jobs:
       # password and APPLE_TEAM_ID from the env below.
       - name: Build DMG (signed + notarized)
         if: env.HAS_SIGNING == 'true'
-        run: npm run desktop:build -- --mac dmg -c.mac.notarize=true
+        run: npm run desktop:build -- --mac dmg --universal -c.mac.notarize=true
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
@@ -69,7 +69,7 @@ jobs:
       # the real distribution build.
       - name: Build DMG (unsigned fallback)
         if: env.HAS_SIGNING != 'true'
-        run: npm run desktop:build -- --mac dmg
+        run: npm run desktop:build -- --mac dmg --universal
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
