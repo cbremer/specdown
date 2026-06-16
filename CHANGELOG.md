@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.134 — 2026-06-16
+
+- collapsible tree + web folder support (File System Access)
+
 ## v0.0.133 — 2026-06-16
 
 ### Documentation
