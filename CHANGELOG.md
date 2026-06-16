@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.133 — 2026-06-16
+
+### Documentation
+
+- scope iOS/iPadOS distribution (TestFlight + App Store)
+
+### Other Changes
+
+- macOS squircle app icon (rounded + padded)
+
 ## v0.0.132 — 2026-06-16
 
 ### Documentation
