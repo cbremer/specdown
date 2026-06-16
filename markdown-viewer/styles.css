@@ -1442,6 +1442,51 @@ body {
     font-weight: 500;
 }
 
+/* Nested tree: each level of <ul> indents under its folder row. */
+.workspace-tree {
+    list-style: none;
+    margin: 0;
+    padding-left: 0.85rem;
+}
+
+.workspace-dir-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 2px solid transparent;
+    padding: 0.3rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.workspace-dir-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.workspace-caret {
+    display: inline-block;
+    width: 0.8em;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+}
+
+.workspace-dir-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Workspace toggle button (mirrors the TOC toggle) */
 .workspace-toggle-button {
     background-color: var(--bg-tertiary);
