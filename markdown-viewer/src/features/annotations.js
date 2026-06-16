@@ -147,9 +147,31 @@ export function toggleAnnotationMode() {
 
   if (annotationMode && annotationKey) {
     attachAnnotationHandlers();
+    // The interaction (double-click a block) isn't discoverable on its own, so
+    // tell the user how to use the mode they just turned on.
+    showToast('Annotation mode on — double-click any paragraph or heading to add a note.', {
+      type: 'info',
+    });
   } else {
     detachAnnotationHandlers();
   }
+}
+
+// All block types a note can attach to. Both rendering and the double-click
+// handlers index by this exact selector, so element positions line up.
+const ANNOTATABLE_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, blockquote';
+
+/**
+ * Assign a stable positional `data-annot-idx` to every annotatable block. Done
+ * on every render (not just in annotation mode) so saved badges can resolve
+ * their anchor element even when the user isn't actively annotating.
+ * @param {Element} root
+ * @returns {NodeListOf<Element>}
+ */
+function indexAnnotatableElements(root) {
+  const els = root.querySelectorAll(ANNOTATABLE_SELECTOR);
+  els.forEach((el, idx) => el.setAttribute('data-annot-idx', String(idx)));
+  return els;
 }
 
 /**
@@ -162,6 +184,10 @@ export function renderAnnotations(key) {
   if (!markdownContent) return;
   // Remove old annotation badges
   markdownContent.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
+
+  // Index the blocks first so badges render whether or not annotation mode is
+  // on (previously badges only appeared while actively annotating).
+  indexAnnotatableElements(markdownContent);
 
   const annotations = loadAnnotations(key);
   Object.entries(annotations).forEach(([idx, text]) => {
@@ -176,10 +202,9 @@ export function renderAnnotations(key) {
 function attachAnnotationHandlers() {
   const root = content();
   if (!root) return;
-  // Index all annotatable elements
-  const els = root.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
-  els.forEach((el, idx) => {
-    el.setAttribute('data-annot-idx', String(idx));
+  // Index (idempotent) then make each block interactive.
+  const els = indexAnnotatableElements(root);
+  els.forEach((el) => {
     el.classList.add('annotatable');
     el.addEventListener('dblclick', handleAnnotationDblClick);
   });

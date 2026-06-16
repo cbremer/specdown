@@ -2238,11 +2238,12 @@ mark.search-highlight-current {
 
 .annotatable {
     position: relative;
-    cursor: text;
+    cursor: pointer;
 }
 
 .annotatable:hover {
-    background-color: rgba(243, 156, 18, 0.05);
+    background-color: rgba(243, 156, 18, 0.12);
+    outline: 1px dashed rgba(243, 156, 18, 0.6);
     border-radius: 3px;
 }
 
