@@ -197,6 +197,9 @@ export function renderAnnotations(key) {
 
   // Re-arm double-click handlers if the user is currently annotating.
   if (annotationMode) attachAnnotationHandlers();
+
+  // Refresh the side panel + toolbar toggle for this document.
+  renderAnnotationPanel();
 }
 
 function attachAnnotationHandlers() {
@@ -224,21 +227,260 @@ function handleAnnotationDblClick(e) {
   if (!annotationMode) return;
   const el = /** @type {HTMLElement} */ (e.currentTarget);
   const idx = parseInt(el.getAttribute('data-annot-idx') || '', 10);
+  if (!Number.isNaN(idx)) openAnnotationEditor(idx);
+}
+
+/**
+ * The annotatable block at a given positional index, or null.
+ * @param {number} idx
+ */
+function annotatedElement(idx) {
+  const root = content();
+  if (!root) return null;
+  const el = root.querySelectorAll('[data-annot-idx]')[idx];
+  return el || null;
+}
+
+/**
+ * Add / edit / remove the note at `idx` and refresh the badge + panel.
+ * @param {number} idx
+ * @param {string} rawText
+ */
+function commitAnnotation(idx, rawText) {
+  const text = String(rawText || '').trim();
+  const el = annotatedElement(idx);
   const annotations = loadAnnotations(annotationKey);
-  const existing = annotations[idx] || '';
 
-  const note = prompt('Add annotation (leave blank to remove):', existing);
-  if (note === null) return; // cancelled
-
-  if (note.trim() === '') {
+  if (!text) {
     delete annotations[idx];
-    const badge = el.querySelector('.annotation-badge');
-    if (badge) badge.remove();
+    if (el) {
+      const badge = el.querySelector('.annotation-badge');
+      if (badge) badge.remove();
+      el.classList.remove('has-annotation');
+    }
   } else {
-    annotations[idx] = note.trim();
-    attachAnnotationBadge(el, idx, note.trim());
+    annotations[idx] = text;
+    if (el) attachAnnotationBadge(el, idx, text);
   }
   saveAnnotations(annotationKey, annotations);
+  renderAnnotationPanel();
+}
+
+// ===========================
+// In-app note editor
+// ===========================
+// Replaces window.prompt(), which Electron does not implement (so desktop
+// annotation editing silently did nothing). A small modal works on every
+// surface and is nicer than a native prompt.
+
+/** @type {(() => void) | null} */
+let editorCleanup = null;
+
+function ensureEditor() {
+  let backdrop = document.getElementById('annotation-editor-backdrop');
+  if (backdrop) return backdrop;
+
+  backdrop = document.createElement('div');
+  backdrop.id = 'annotation-editor-backdrop';
+  backdrop.className = 'annotation-editor-backdrop';
+  backdrop.innerHTML =
+    '<div class="annotation-editor" role="dialog" aria-modal="true" aria-label="Edit note">' +
+    '<textarea class="annotation-editor-input" rows="4" placeholder="Write a note…"></textarea>' +
+    '<div class="annotation-editor-actions">' +
+    '<button type="button" class="annotation-editor-delete">Delete</button>' +
+    '<span class="annotation-editor-spacer"></span>' +
+    '<button type="button" class="annotation-editor-cancel">Cancel</button>' +
+    '<button type="button" class="annotation-editor-save">Save</button>' +
+    '</div></div>';
+  document.body.appendChild(backdrop);
+  return backdrop;
+}
+
+/**
+ * Open the note editor for the block at `idx`.
+ * @param {number} idx
+ */
+function openAnnotationEditor(idx) {
+  const backdrop = ensureEditor();
+  const textarea = /** @type {HTMLTextAreaElement} */ (backdrop.querySelector('.annotation-editor-input'));
+  const deleteBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-delete'));
+  const saveBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-save'));
+  const cancelBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-cancel'));
+
+  const existing = loadAnnotations(annotationKey)[idx] || '';
+  textarea.value = existing;
+  deleteBtn.style.display = existing ? '' : 'none';
+  backdrop.style.display = 'flex';
+  setTimeout(() => textarea.focus(), 0);
+
+  const close = () => {
+    backdrop.style.display = 'none';
+    if (editorCleanup) editorCleanup();
+    editorCleanup = null;
+  };
+  const save = () => {
+    commitAnnotation(idx, textarea.value);
+    close();
+  };
+  const remove = () => {
+    commitAnnotation(idx, '');
+    close();
+  };
+  /** @param {KeyboardEvent} e */
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      save();
+    }
+  };
+  /** @param {Event} e */
+  const onBackdrop = (e) => {
+    if (e.target === backdrop) close();
+  };
+
+  saveBtn.addEventListener('click', save);
+  deleteBtn.addEventListener('click', remove);
+  cancelBtn.addEventListener('click', close);
+  backdrop.addEventListener('mousedown', onBackdrop);
+  document.addEventListener('keydown', onKey);
+
+  editorCleanup = () => {
+    saveBtn.removeEventListener('click', save);
+    deleteBtn.removeEventListener('click', remove);
+    cancelBtn.removeEventListener('click', close);
+    backdrop.removeEventListener('mousedown', onBackdrop);
+    document.removeEventListener('keydown', onKey);
+  };
+}
+
+// ===========================
+// Annotations panel (list)
+// ===========================
+
+/**
+ * Scroll to the annotated block and briefly flash it.
+ * @param {number} idx
+ */
+function jumpToAnnotation(idx) {
+  const el = /** @type {HTMLElement | null} */ (annotatedElement(idx));
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('annotation-flash');
+  setTimeout(() => el.classList.remove('annotation-flash'), 1200);
+}
+
+/**
+ * Render the annotations side panel (one row per note, in document order) and
+ * sync the toolbar toggle's visibility + count.
+ */
+export function renderAnnotationPanel() {
+  const list = document.getElementById('annotation-list');
+  const toggle = document.getElementById('annotation-list-toggle');
+  const annotations = loadAnnotations(annotationKey);
+  const indexes = Object.keys(annotations)
+    .map((k) => parseInt(k, 10))
+    .filter((n) => !Number.isNaN(n))
+    .sort((a, b) => a - b);
+
+  if (toggle) {
+    toggle.style.display = indexes.length ? '' : 'none';
+    const count = toggle.querySelector('.annotation-list-count');
+    if (count) count.textContent = String(indexes.length);
+  }
+
+  // An open-but-now-empty panel should close itself.
+  if (indexes.length === 0) {
+    const panel = document.getElementById('annotation-panel');
+    if (panel) {
+      panel.style.display = 'none';
+      panel.classList.remove('open');
+    }
+    if (toggle) toggle.classList.remove('active');
+  }
+
+  if (!list) return;
+  list.innerHTML = '';
+  for (const idx of indexes) {
+    const el = annotatedElement(idx);
+    let snippet = '';
+    if (el) {
+      // Read the block's text without the appended ✎ badge.
+      const clone = /** @type {HTMLElement} */ (el.cloneNode(true));
+      clone.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
+      snippet = (clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    }
+
+    const li = document.createElement('li');
+    li.className = 'annotation-list-item';
+
+    const jump = document.createElement('button');
+    jump.type = 'button';
+    jump.className = 'annotation-list-jump';
+    const note = document.createElement('span');
+    note.className = 'annotation-list-note';
+    note.textContent = annotations[idx];
+    const ctx = document.createElement('span');
+    ctx.className = 'annotation-list-context';
+    ctx.textContent = snippet || '(text not found)';
+    jump.append(note, ctx);
+    jump.addEventListener('click', () => jumpToAnnotation(idx));
+
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'annotation-list-edit';
+    edit.title = 'Edit note';
+    edit.setAttribute('aria-label', 'Edit note');
+    edit.textContent = '✎';
+    edit.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAnnotationEditor(idx);
+    });
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'annotation-list-delete';
+    del.title = 'Delete note';
+    del.setAttribute('aria-label', 'Delete note');
+    del.textContent = '✕';
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      commitAnnotation(idx, '');
+    });
+
+    li.append(jump, edit, del);
+    list.appendChild(li);
+  }
+}
+
+/** Show/hide the annotations panel. */
+export function toggleAnnotationPanel() {
+  const panel = document.getElementById('annotation-panel');
+  if (!panel) return;
+  const toggle = document.getElementById('annotation-list-toggle');
+  if (panel.classList.contains('open')) {
+    panel.classList.remove('open');
+    panel.style.display = 'none';
+    if (toggle) toggle.classList.remove('active');
+  } else {
+    renderAnnotationPanel();
+    panel.classList.add('open');
+    panel.style.display = '';
+    if (toggle) toggle.classList.add('active');
+  }
+}
+
+/** Open the annotations panel (idempotent). */
+export function openAnnotationPanel() {
+  const panel = document.getElementById('annotation-panel');
+  if (!panel) return;
+  renderAnnotationPanel();
+  panel.classList.add('open');
+  panel.style.display = '';
+  const toggle = document.getElementById('annotation-list-toggle');
+  if (toggle) toggle.classList.add('active');
 }
 
 /**

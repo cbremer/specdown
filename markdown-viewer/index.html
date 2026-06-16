@@ -130,6 +130,11 @@
                         <span class="annotation-toggle-icon" aria-hidden="true">✎</span>
                         <span class="annotation-toggle-label">Annotate</span>
                     </button>
+                    <button id="annotation-list-toggle" class="annotation-list-toggle-button" title="Show annotations list" aria-label="Show annotations list" style="display: none;">
+                        <span class="annotation-list-icon" aria-hidden="true">🗒</span>
+                        <span class="annotation-list-label">Notes</span>
+                        <span class="annotation-list-count">0</span>
+                    </button>
                     <button id="print-button" class="print-button" title="Print / Save as PDF (Cmd+P)" aria-label="Print or save as PDF">
                         <span class="print-button-icon" aria-hidden="true">⎙</span>
                         <span class="print-button-label">Print</span>
@@ -178,6 +183,15 @@
                         <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
                     </div>
                 </div>
+
+                <!-- Annotations panel (list of the current doc's notes) -->
+                <aside id="annotation-panel" class="annotation-panel" style="display: none;">
+                    <div class="annotation-panel-header">
+                        <span>Annotations</span>
+                        <button id="annotation-panel-close" class="annotation-panel-close" title="Close annotations" aria-label="Close annotations">✕</button>
+                    </div>
+                    <ul id="annotation-list" class="annotation-list"></ul>
+                </aside>
             </div>
         </div>
 
