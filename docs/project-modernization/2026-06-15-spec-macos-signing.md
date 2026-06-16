@@ -4,6 +4,13 @@
 **Type:** spec (setup guide + what the code change does)
 **Phase:** 3 — distribution
 
+> **Status (2026-06-16): signing secrets configured.** All five secrets
+> (`MAC_CERT_P12`, `MAC_CERT_PASSWORD`, `APPLE_ID`,
+> `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`) are set in the repo, using a
+> **Developer ID Application** certificate. The next release after this doc lands
+> is the first to take the **signed + notarized** path — verify it with the
+> checks in [How to verify it worked](#how-to-verify-it-worked).
+
 The real fix for the desktop **"Specdown Desktop is damaged and can't be opened"**
 Gatekeeper error. That error is *not* corruption — it's macOS quarantining an
 **unsigned, un-notarized** app downloaded from the internet. The fix is to sign
@@ -83,9 +90,13 @@ xcrun stapler validate /Applications/Specdown\ Desktop.app      # => "The valida
 Or just: download → open → it launches without the "damaged" dialog.
 
 ## Notes / gotchas
-- **I could not test this end-to-end** — it needs your cert + a macOS runner. The
-  config follows electron-builder 26's documented signing/notarization patterns;
-  please do one release and confirm with the checks above.
+- **First signed release is the real test** — the config follows electron-builder
+  26's documented signing/notarization patterns, but the secrets/cert can only be
+  exercised on a macOS runner. If the `build-macos` job fails, the usual first-run
+  culprits are: a `.p12` that's missing its **private key** (export *both* items),
+  a `MAC_CERT_PASSWORD` mismatch, a wrong cert **type** (must be *Developer ID
+  Application*, not *Apple Development* / *Installer*), or notarization creds
+  (`APPLE_ID` email vs. the **app-specific** password vs. the 10-char `APPLE_TEAM_ID`).
 - The signed path uses the **apple-id + app-specific-password** notarization
   method (simplest): the workflow passes `-c.mac.notarize=true` and notarytool
   reads `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID` from the env.
