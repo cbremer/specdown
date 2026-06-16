@@ -124,6 +124,7 @@ import {
   renderWorkspaceSidebar,
   openWorkspaceFolder,
   hasWorkspace,
+  configureWorkspace,
 } from './features/workspace.js';
 import {
   setupDesktopIPC,
@@ -226,6 +227,9 @@ function init() {
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
     });
     configureRecentFiles({ onSelect: (entry) => openRecentEntry(entry) });
+    configureWorkspace({
+        openFile: (/** @type {string} */ name, /** @type {string} */ content) => createTab(name, content, null),
+    });
     registerAppCommands();
     setupVersionInfo();
     setupTheme();
