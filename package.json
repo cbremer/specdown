@@ -98,7 +98,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.png"
+      "icon": "build/icon-square.png"
     },
     "nsis": {
       "oneClick": false,
@@ -107,7 +107,7 @@
     "linux": {
       "target": "AppImage",
       "category": "Development",
-      "icon": "build/icon.png"
+      "icon": "build/icon-square.png"
     }
   },
   "dependencies": {
