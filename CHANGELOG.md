@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.130 — 2026-06-16
+
+### Documentation
+
+- rewrite README for the current multi-surface app
+
 ## v0.0.129 — 2026-06-16
 
 - build a universal (Intel + Apple Silicon) macOS DMG
