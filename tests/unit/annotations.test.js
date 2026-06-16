@@ -153,6 +153,25 @@ describe('Annotation Mode', () => {
       const badges = document.querySelectorAll('.annotation-badge');
       expect(badges.length).toBeGreaterThanOrEqual(1);
     });
+
+    it('renders saved badges when annotation mode is OFF (indexes blocks itself)', () => {
+      // Regression: previously badges only resolved their anchor while
+      // annotation mode was active, so saved notes were invisible on load.
+      const data = { 'doc.md': { 1: 'second-block note' } };
+      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(data));
+
+      const mc = document.getElementById('markdown-content');
+      // No data-annot-idx attributes, not in annotation mode.
+      mc.innerHTML = '<p>Block zero</p><p>Block one</p>';
+
+      renderAnnotations('doc.md');
+
+      const badges = mc.querySelectorAll('.annotation-badge');
+      expect(badges.length).toBe(1);
+      // The badge attaches to the second paragraph (index 1).
+      expect(mc.querySelectorAll('p')[1].querySelector('.annotation-badge')).not.toBeNull();
+      expect(mc.querySelectorAll('p')[0].querySelector('.annotation-badge')).toBeNull();
+    });
   });
 
   // ===========================
