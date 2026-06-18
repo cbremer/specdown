@@ -122,6 +122,11 @@ import {
 } from './features/recent-files.js';
 import { enhanceCodeBlocks } from './features/code-copy.js';
 import {
+  setupComments,
+  refreshCommentsUI,
+  toggleComments,
+} from './features/comments.js';
+import {
   setupWorkspace,
   renderWorkspaceSidebar,
   openWorkspaceFolder,
@@ -241,6 +246,7 @@ function init() {
     setupToolbarOverflow();
     setupRecentFiles();
     setupWorkspace();
+    setupComments();
     setupEventListeners();
     configureMarked();
     checkForUpdates();
@@ -301,6 +307,13 @@ function registerAppCommands() {
             title: 'Toggle table of contents',
             keywords: ['outline', 'headings', 'contents'],
             run: () => toggleToc(),
+            isAvailable: isDocumentOpen,
+        },
+        {
+            id: 'toggle-comments',
+            title: 'Show / hide HTML comments',
+            keywords: ['comments', 'hidden', 'html', 'reveal'],
+            run: () => toggleComments(),
             isAvailable: isDocumentOpen,
         },
         {
@@ -802,10 +815,14 @@ async function renderMarkdown(content, filename) {
 
         // Update UI
         fileName.textContent = filename;
-        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent);
+        // Keep HTML comment nodes through sanitization (`#comment`) so they can
+        // be revealed below — DOMPurify strips them by default, which silently
+        // dropped authored `<!-- … -->` content from the preview.
+        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent, { ADD_TAGS: ['#comment'] });
 
-        // Make HTML comments visible
+        // Reveal authored HTML comments as styled blocks, then sync the toggle.
         revealHtmlComments(markdownContent);
+        refreshCommentsUI();
 
         // Add copy buttons to code blocks
         enhanceCodeBlocks(markdownContent);

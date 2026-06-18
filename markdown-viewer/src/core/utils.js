@@ -93,7 +93,17 @@ export function revealHtmlComments(container) {
 
     const block = document.createElement('div');
     block.className = 'html-comment-block';
-    block.textContent = text;
+
+    // A small label so the block reads as an authored comment, not body copy.
+    const label = document.createElement('span');
+    label.className = 'html-comment-label';
+    label.textContent = 'comment';
+
+    const body = document.createElement('span');
+    body.className = 'html-comment-body';
+    body.textContent = text;
+
+    block.append(label, body);
     node.parentNode?.replaceChild(block, node);
   });
 }

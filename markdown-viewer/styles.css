@@ -859,13 +859,68 @@ body {
 
 .markdown-content .html-comment-block {
     background-color: var(--bg-secondary);
-    border-left: 3px solid var(--text-secondary);
-    padding: 0.75em 1em;
+    border-left: 3px solid var(--color-warning);
+    padding: 0.6em 1em;
     margin-bottom: 1em;
     color: var(--text-secondary);
     font-size: 0.9em;
     white-space: pre-wrap;
     border-radius: 0 4px 4px 0;
+}
+
+.markdown-content .html-comment-label {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-warning);
+    margin-right: 0.6em;
+    vertical-align: 0.1em;
+    user-select: none;
+}
+
+/* Hidden reading view: the toggle collapses comment blocks out of the preview. */
+.markdown-content.comments-hidden .html-comment-block {
+    display: none;
+}
+
+/* Comments toggle button (mirrors the other toolbar toggles) */
+.comments-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.comments-toggle-button:hover,
+.comments-toggle-button.active {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.comments-toggle-count {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: var(--radius-pill);
+    padding: 0 0.4em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 1.2em;
+    text-align: center;
+}
+
+.comments-toggle-button.active .comments-toggle-count {
+    background-color: white;
+    color: var(--accent-color);
 }
 
 /* ===========================
