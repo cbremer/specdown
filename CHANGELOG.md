@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.136 — 2026-06-18
+
+- Reveal HTML comments in the preview (fix) + a show/hide toggle
+
 ## v0.0.135 — 2026-06-16
 
 - in-app editor (fixes desktop) + annotations list panel
