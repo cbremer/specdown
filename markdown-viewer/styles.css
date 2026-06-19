@@ -702,6 +702,11 @@ body {
 .markdown-content {
     flex: 1;
     overflow-y: auto;
+    /* Constrain the horizontal axis: without this, a too-wide child (a long
+       unbreakable URL, a wide table) lets the whole pane rubber-band sideways
+       while scrolling on iOS. Wide diagrams/images/code already self-constrain. */
+    overflow-x: hidden;
+    overflow-wrap: break-word;
     padding: 2rem;
     background-color: var(--bg-primary);
 }
@@ -830,6 +835,11 @@ body {
     border-collapse: collapse;
     width: 100%;
     margin-bottom: 1em;
+    /* A wide table scrolls within itself rather than overflowing the page
+       (which would be clipped now that the content pane hides overflow-x). */
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 .markdown-content th,
