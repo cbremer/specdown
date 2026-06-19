@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.137 — 2026-06-19
+
+- Bump dompurify from 3.4.10 to 3.4.11
+
 ## v0.0.136 — 2026-06-18
 
 - Reveal HTML comments in the preview (fix) + a show/hide toggle
