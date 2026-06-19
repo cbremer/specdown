@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.139 — 2026-06-19
+
+- surface Comments + Annotations in the More sheet (iPhone parity)
+
 ## v0.0.138 — 2026-06-19
 
 - Bump undici from 6.26.0 to 6.27.0
