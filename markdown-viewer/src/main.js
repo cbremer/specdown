@@ -204,6 +204,8 @@ const iosMoreButton = /** @type {HTMLButtonElement | null} */ ($('ios-more-butto
 const iosActionSheet = $('ios-action-sheet');
 const iosActionSheetClose = $('ios-action-sheet-close');
 const iosSplitButton = /** @type {HTMLButtonElement | null} */ ($('ios-split-button'));
+const iosCommentsButton = /** @type {HTMLButtonElement | null} */ ($('ios-comments-button'));
+const iosAnnotationsButton = /** @type {HTMLButtonElement | null} */ ($('ios-annotations-button'));
 const iosPrintButton = /** @type {HTMLButtonElement | null} */ ($('ios-print-button'));
 const iosThemeButton = $('ios-theme-button');
 const iosTocSheet = $('ios-toc-sheet');
@@ -608,6 +610,20 @@ function setupEventListeners() {
             if (iosSplitButton.disabled) return;
             closeIOSActionSheet();
             toggleSplitView();
+        });
+    }
+
+    if (iosCommentsButton) {
+        iosCommentsButton.addEventListener('click', () => {
+            closeIOSActionSheet();
+            toggleComments();
+        });
+    }
+
+    if (iosAnnotationsButton) {
+        iosAnnotationsButton.addEventListener('click', () => {
+            closeIOSActionSheet();
+            openAnnotationPanel();
         });
     }
 

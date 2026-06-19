@@ -77,4 +77,26 @@ describe('HTML comments', () => {
     expect(block.textContent).toContain('hidden body');
     expect(document.getElementById('comments-toggle').style.display).not.toBe('none');
   });
+
+  describe('iOS More-sheet controls', () => {
+    it('Toggle Comments button flips comment visibility', () => {
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML = '<div class="html-comment-block">a</div>';
+      refreshCommentsUI();
+      expect(mc.classList.contains('comments-hidden')).toBe(false);
+
+      document.getElementById('ios-comments-button').dispatchEvent(new Event('click', { bubbles: true }));
+      expect(mc.classList.contains('comments-hidden')).toBe(true);
+    });
+
+    it('Annotations button opens the annotations panel', () => {
+      localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML = '<p>Zero</p>';
+      renderAnnotations('doc.md');
+
+      document.getElementById('ios-annotations-button').dispatchEvent(new Event('click', { bubbles: true }));
+      expect(document.getElementById('annotation-panel').classList.contains('open')).toBe(true);
+    });
+  });
 });

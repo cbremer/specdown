@@ -2450,6 +2450,21 @@ mark.search-highlight-current {
     overflow: hidden;
 }
 
+/* On narrow screens (iPhone, small browser windows) a fixed side column would
+   crush the content, so the annotations panel overlays from the right instead. */
+@media (max-width: 700px) {
+    .annotation-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 360px;
+        z-index: 600;
+        box-shadow: var(--shadow-lg);
+    }
+}
+
 .annotation-panel-header {
     display: flex;
     align-items: center;
