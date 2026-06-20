@@ -237,7 +237,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             print("[Bridge] Missing printable content for printDocument")
             return
         }
-        controller.present(animated: true) { _, completed, error in
+        // Present from the top view controller's view so the print sheet anchors
+        // correctly on iPad (where `present(animated:)` alone is a no-op — it needs
+        // an anchor for the popover). On iPhone the anchor is ignored and it shows
+        // full-screen as before. This also uses `presenter`, which was otherwise
+        // unused.
+        let anchorView = presenter.view ?? webView ?? UIView()
+        let anchorRect = CGRect(x: anchorView.bounds.midX, y: anchorView.bounds.midY, width: 0, height: 0)
+        controller.present(from: anchorRect, in: anchorView, animated: true) { _, completed, error in
             if let error {
                 print("[Bridge] Print controller error: \(error)")
                 return
