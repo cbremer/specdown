@@ -34,11 +34,23 @@ three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 | 2026-06-15 | [brainstorm-electron-vs-tauri](2026-06-15-brainstorm-electron-vs-tauri.md) | Phase 3: Electron-vs-Tauri spike — decision doc grounded in the actual desktop shell. **Recommendation: stay on Electron** (signing already fixed the distribution pain; the cost is a 3-engine WebView QA tax on our Mermaid/`unsafe-eval` rendering). Keep the 15-method `window.specdown` bridge as the portability seam; revisit only on a concrete trigger (mobile unification, real size/memory complaints) |
 | 2026-06-15 | [tasks-session-22-bridge-seam](2026-06-15-tasks-session-22-bridge-seam.md) | Phase 3: consolidate the `window.specdown` bridge — new `platform/bridge.js` is the single invocation seam (typed wrappers + `hasDesktopBridge`); desktop/workspace/iOS/main call sites routed through it, so the global is now read only in `platform.js` (detection) + `bridge.js`. Pure refactor; +4 tests |
 | 2026-06-16 | [spec-ios-distribution](2026-06-16-spec-ios-distribution.md) | Phase 3: iOS/iPadOS distribution scope — today the app is Xcode-build-only (CI is simulator-only, unsigned). **Recommendation: TestFlight first** via an App Store Connect API key, then App Store. Covers the channel comparison (no iOS "Developer ID" direct-install), the one-time Apple setup + GitHub secrets, a tag-triggered `ios-release.yml` sketch, and a phased plan |
+| 2026-06-16 | [spec-ios-distribution](2026-06-16-spec-ios-distribution.md) | Phase 3: iOS/iPadOS distribution scope — TestFlight (via App Store Connect API key) → App Store; the one genuinely unbuilt item. |
+| 2026-06-19 | [retrospective-handoff](2026-06-19-retrospective-handoff.md) | **Closing doc** — learnings (the stranded-commit trap, forgiving mocks, per-surface surfacing, native shells ignoring `prompt()`), skills/CI to build, and next features (iOS TestFlight, desktop auto-update, "Open in SpecDown" share-sheet, annotation-anchor robustness). Read after the handoff brief. |
 | 2026-06-14 | [handoff-next-wave](2026-06-14-handoff-next-wave.md) | **Resume point** — aggregated status, the remaining Phase 3/4 options, and the project gotchas. Start here after a break. |
 
 > **Resuming after a break?** Read **[handoff-next-wave](2026-06-14-handoff-next-wave.md)** first — it's the durable index of what's done, what's next, and the gotchas.
 
 ## Current Status
+
+> **✅ Modernization complete (Phases 0–4), as of v0.0.141.** The phased roadmap
+> shipped: Vite/ESM build, full module split, 100% gradual TypeScript, design
+> tokens + a11y, command palette, PWA, signed+notarized **universal** macOS DMG +
+> Windows/Linux lanes, automated changelog/release, and the Phase-4
+> differentiators (presentation, recent files, session restore, annotations 2.0,
+> workspace/folder mode). The one genuinely unbuilt item is **iOS/iPadOS
+> distribution** ([spec](2026-06-16-spec-ios-distribution.md)). See the
+> **[retrospective](2026-06-19-retrospective-handoff.md)** for learnings + what's
+> next. The detailed phase-by-phase narrative below is kept for the record.
 
 **Phase 0 implemented and merged** (PR #92). **Phase 1 slice 1 (Vite + ESM build
 foundation) implemented** — see the session 02 tasks doc. The shared viewer is

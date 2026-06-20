@@ -153,3 +153,47 @@ Do not manually push version tags. Let the pipeline handle it.
 - Write clear, descriptive commit messages
 - Never push directly to `main` or `master`
 - Never use `--no-verify` to skip hooks
+
+**Merge discipline (learned the hard way):** a multi-commit PR merged with
+**"Squash and merge"** — or merged before a follow-up commit finishes pushing —
+**strands the trailing commit** (it never lands on `main`). Prefer **one logical
+change = one commit per PR**; if a PR has multiple commits, use **"Rebase and
+merge"** and **wait for "all checks passed" before merging**. Don't push new
+commits to a branch whose PR is already merged — open a fresh PR off `main` and
+cherry-pick the orphan.
+
+## Hard-won learnings & gotchas
+
+Read these before touching the render path, tests, or the native shells. Full
+context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and the
+`2026-06-14-handoff-next-wave.md` brief.
+
+- **Eval test harness** (`tests/helpers/loadApp.js`) inlines the relative-import
+  module graph and evals at global scope. A module-top `let`/`const`/`function`
+  whose name matches another module's silently collides — **name module-private
+  identifiers uniquely**. Bare imports (marked, mermaid, panzoom, hljs,
+  DOMPurify) are stripped and provided as global mocks.
+- **The DOMPurify + marked test mocks are passthroughs** — they strip/transform
+  nothing. So green tests do **not** prove the production sanitize path works
+  (this masked the bug where real DOMPurify drops HTML comments; the fix was
+  `DOMPurify.sanitize(html, { ADD_TAGS: ['#comment'] })`). Verify
+  library-behavior-dependent features against the real library.
+- **Native shells ignore `window.prompt()`/`alert()`** — both Electron and iOS
+  WKWebView. Use in-app modals/toasts for any cross-surface UI, never native
+  dialogs.
+- **One shared app, per-surface surfacing.** `markdown-viewer/` loads on web,
+  desktop, and iOS, so shared fixes reach all three — but the **iPhone layout
+  hides the desktop toolbar** (`.content-header-actions`), so new toolbar
+  controls must also be wired into the **iOS action sheet** to be reachable on
+  iPhone (iPad keeps the toolbar).
+- **iOS has no auto-update channel** (build-from-source only) and **no
+  distribution lane yet** (TestFlight/App Store is scoped but unbuilt). Agents
+  can see source + CI output but **not** Xcode IDE prompts or device runtime
+  logs; CI also pipes the iOS build through `xcpretty`, which hides Swift
+  warnings.
+- **The `window.specdown` bridge (`platform/bridge.js`) is the only shell
+  coupling** — keep new desktop integration behind it (the portability seam).
+- **Packaging:** macOS needs a **Developer ID Application** cert; `mac.notarize`
+  is a boolean; the notarization wait is Apple-side/variable (a long wait isn't a
+  failure); a universal mac build needs the `--universal` CLI flag in
+  `desktop.yml` (a config `arch` alone is overridden).

@@ -5,6 +5,11 @@ When working with this repo, read and follow `CLAUDE.md` for:
 - Project overview and goals
 - Commands and scripts
 - Coding, testing, and documentation conventions
+- **Merge discipline** and the **"Hard-won learnings & gotchas"** section — read
+  these before opening PRs or touching the render path / tests / native shells.
+  (One logical change = one commit per PR; "Rebase and merge", not squash, to
+  avoid stranding trailing commits.) Deeper context:
+  `docs/project-modernization/2026-06-19-retrospective-handoff.md`.
 
 ## Cursor Cloud specific instructions
 
