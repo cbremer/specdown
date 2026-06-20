@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.141 — 2026-06-20
+
+- fix iPad print presentation + silence Xcode warnings
+
 ## v0.0.140 — 2026-06-19
 
 - Fix iOS horizontal drift while scrolling a document
