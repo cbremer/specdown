@@ -9,6 +9,10 @@ options:
 
 settings:
   SWIFT_VERSION: "5.9"
+  # Apple-recommended hardening (Xcode's "validate settings" prompt). Safe here:
+  # there are no shell-script build phases for the sandbox to constrain. Setting
+  # it in project.yml makes it persist across `xcodegen generate`.
+  ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 
 targets:
   SpecDown:
