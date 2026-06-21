@@ -11,6 +11,7 @@ folder tracks the smaller fixes that follow.
 |---|---|---|
 | 2026-06-21 | [tasks-session-01](2026-06-21-tasks-session-01-diagram-controls-overlap.md) | Diagram control toolbar overlapped/covered the diagram on phones (iOS + mobile web) |
 | 2026-06-21 | [tasks-session-02](2026-06-21-tasks-session-02-diagram-double-tap-zoom.md) | Double-tap on a diagram zoom button zoomed the whole page instead of the diagram |
+| 2026-06-21 | [tasks-session-03](2026-06-21-tasks-session-03-jsyaml-dos-advisory.md) | Cleared the js-yaml DoS Dependabot advisory (dev-only transitive) via a scoped override |
 
 ## Status
 

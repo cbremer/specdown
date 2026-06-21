@@ -110,6 +110,11 @@
       "icon": "build/icon-square.png"
     }
   },
+  "overrides": {
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "^4.2.0"
+    }
+  },
   "dependencies": {
     "@panzoom/panzoom": "4.6.2",
     "chokidar": "^5.0.0",
