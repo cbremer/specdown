@@ -996,6 +996,11 @@ body {
     font-weight: 600;
     min-width: 44px;
     min-height: 44px;
+    /* A fast double-tap on a zoom button (e.g. +) was being read by mobile
+       Safari/WKWebView as the page's double-tap-to-zoom gesture, zooming the
+       whole interface. `manipulation` keeps tap/pan/pinch but drops double-tap
+       zoom on the control itself. */
+    touch-action: manipulation;
 }
 
 .diagram-controls button:hover {
@@ -1080,6 +1085,8 @@ body {
     font-weight: 600;
     min-width: 44px;
     min-height: 44px;
+    /* See .diagram-controls button — avoid double-tap-to-zoom on the page. */
+    touch-action: manipulation;
 }
 
 .zoom-range-label {
