@@ -1,0 +1,22 @@
+# project-bugfix-wave
+
+A rolling wave of post-modernization bug fixes and small UX polish across the
+three SpecDown surfaces (web, desktop, iOS). The phased modernization roadmap is
+complete (see [`../project-modernization/`](../project-modernization/)); this
+folder tracks the smaller fixes that follow.
+
+## Timeline
+
+| Date | Doc | Summary |
+|---|---|---|
+| 2026-06-21 | [tasks-session-01](2026-06-21-tasks-session-01-diagram-controls-overlap.md) | Diagram control toolbar overlapped/covered the diagram on phones (iOS + mobile web) |
+
+## Status
+
+Active.
+
+## Naming Conventions
+
+Files follow the repo-wide pattern `YYYY-MM-DD-<type>-<detail>.md` with types
+`brainstorm` / `spec` / `tasks` (numbered, one per working session). See
+[`../README.md`](../README.md).
