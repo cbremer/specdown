@@ -9,6 +9,10 @@
 // demand by the diagram module (see core/render-config.js `loadMermaid`).
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+// Side-effect import of a highlight.js theme; Vite resolves it at build time.
+// TypeScript 6+ reports TS2882 for an untyped side-effect import (the .css file
+// resolves physically but has no type declaration), so suppress it here.
+// @ts-expect-error -- no type declaration for the CSS module
 import 'highlight.js/styles/github-dark.css';
 
 // Internal modules (Phase 1 split — extracting cohesive units out of this entry).
