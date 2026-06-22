@@ -16,9 +16,13 @@
  *                                                 # body).
  *
  * Commit subjects are grouped by Conventional-Commit type when present
- * (`feat:`, `fix:`, `docs(scope):`, `feat!:` …); when none of the commits use
- * that convention the section is just a flat bullet list of the subjects, which
- * suits this repo's descriptive commit style.
+ * (`feat:`, `fix:`, `docs(scope):`, `feat!:` …). This repo writes *descriptive*
+ * subjects ("Fix diagram controls…", "Add desktop auto-update"), so when a
+ * subject isn't a conventional commit its leading verb is mapped to a type via
+ * `inferType` — so the grouped changelog lights up without anyone having to
+ * adopt the `type:` prefix. Subjects whose verb is ambiguous fall to "Other
+ * Changes"; only when nothing can be categorized at all does the section fall
+ * back to a flat bullet list.
  */
 
 const CC_TYPE_LABELS = {
@@ -55,6 +59,35 @@ function parseCommitSubject(subject) {
     breaking: Boolean(m[3]),
     description: m[4].trim(),
   };
+}
+
+// High-confidence leading-verb → type mappings for descriptive subjects. Kept
+// conservative on purpose: an ambiguous verb (e.g. "Update", "Remove", "Tweak")
+// is left uncategorized so it lands in "Other Changes" rather than being
+// mislabeled. Each pattern is anchored to the start of the subject.
+const INFERENCE_RULES = [
+  [/^(add|adds|added|introduce[sd]?|implement[sed]*|support[sed]*|enable[sd]?|new)\b/i, 'feat'],
+  [/^(fix|fixe[sd]|resolve[sd]?|correct[sed]*|prevent[sed]*|stop[sed]*|repair[sed]*|patch(e[sd])?)\b/i, 'fix'],
+  [/^(refactor(e[sd])?|simplif(y|ies|ied)|rename[sd]?|reorganize[sd]?|extract[sed]*|consolidate[sd]?)\b/i, 'refactor'],
+  [/^(doc|docs|document[sed]*)\b/i, 'docs'],
+  [/^(test|tests|spec)\b/i, 'test'],
+  [/^(optimi[sz]e[sd]?|perf)\b/i, 'perf'],
+  [/^(bump|upgrade[sd]?|pin(ned|s)?)\b/i, 'build'],
+  [/^(ci|workflow|pipeline)\b/i, 'ci'],
+  [/^(style|format[sed]*|lint|prettier)\b/i, 'style'],
+];
+
+/**
+ * Infer a Conventional-Commit type from a descriptive subject's leading verb.
+ * @param {string} subject
+ * @returns {string} a CC type key, or '' when none matches confidently.
+ */
+function inferType(subject) {
+  const s = String(subject || '').trim();
+  for (const [re, type] of INFERENCE_RULES) {
+    if (re.test(s)) return type;
+  }
+  return '';
 }
 
 /**
@@ -97,17 +130,23 @@ function formatSection(commits, version, date) {
     return lines.join('\n');
   }
 
-  const entries = clean.map((subject) => ({ subject, cc: parseCommitSubject(subject) }));
-  const anyConventional = entries.some((e) => e.cc && CC_TYPE_LABELS[e.cc.type]);
+  // Each entry's type is its explicit Conventional-Commit type when present,
+  // otherwise an inferred type from the descriptive subject's leading verb.
+  const entries = clean.map((subject) => {
+    const cc = parseCommitSubject(subject);
+    const type = cc && CC_TYPE_LABELS[cc.type] ? cc.type : inferType(subject);
+    return { subject, cc, type };
+  });
+  const anyCategorized = entries.some((e) => CC_TYPE_LABELS[e.type]);
 
-  // Descriptive (non-conventional) history: a flat list reads best.
-  if (!anyConventional) {
+  // Nothing could be categorized (explicit or inferred): a flat list reads best.
+  if (!anyCategorized) {
     for (const e of entries) lines.push(renderEntry(e));
     lines.push('');
     return lines.join('\n');
   }
 
-  // Conventional history: group by type, breaking changes first.
+  // Group by type, breaking changes (explicit `!`) first.
   const breaking = entries.filter((e) => e.cc && e.cc.breaking);
   if (breaking.length) {
     lines.push('### ⚠ Breaking Changes', '');
@@ -119,8 +158,8 @@ function formatSection(commits, version, date) {
   const groups = {};
   const other = [];
   for (const e of entries) {
-    if (e.cc && CC_TYPE_LABELS[e.cc.type]) {
-      (groups[e.cc.type] = groups[e.cc.type] || []).push(e);
+    if (CC_TYPE_LABELS[e.type]) {
+      (groups[e.type] = groups[e.type] || []).push(e);
     } else {
       other.push(e);
     }
@@ -190,6 +229,7 @@ function extractLatestSection(changelog) {
 
 module.exports = {
   parseCommitSubject,
+  inferType,
   isReleaseNoise,
   formatSection,
   prependSection,
