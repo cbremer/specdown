@@ -6,6 +6,7 @@
 
 const {
   parseCommitSubject,
+  inferType,
   isReleaseNoise,
   formatSection,
   prependSection,
@@ -41,13 +42,47 @@ describe('isReleaseNoise', () => {
   });
 });
 
+describe('inferType', () => {
+  it('maps high-confidence leading verbs to types', () => {
+    expect(inferType('Add desktop auto-update')).toBe('feat');
+    expect(inferType('Fix diagram controls covering the diagram')).toBe('fix');
+    expect(inferType('Refactor the bridge seam')).toBe('refactor');
+    expect(inferType('Document the release pipeline')).toBe('docs');
+    expect(inferType('Bump dompurify from 3.4.10 to 3.4.11')).toBe('build');
+  });
+
+  it('leaves ambiguous verbs uncategorized', () => {
+    expect(inferType('Update the thing')).toBe('');
+    expect(inferType('Remove dead code')).toBe('');
+    expect(inferType('Tweak spacing')).toBe('');
+  });
+});
+
 describe('formatSection', () => {
-  it('renders a flat list for descriptive (non-conventional) commits', () => {
+  it('groups descriptive commits by inferred type (Add→Features, Fix→Bug Fixes)', () => {
     const out = formatSection(['Add workspace mode', 'Fix a crash'], '0.1.0', '2026-06-15');
     expect(out).toContain('## v0.1.0 — 2026-06-15');
+    expect(out).toContain('### Features');
     expect(out).toContain('- Add workspace mode');
+    expect(out).toContain('### Bug Fixes');
     expect(out).toContain('- Fix a crash');
-    expect(out).not.toContain('###'); // no type headers
+    // Inferred entries keep their full subject (no type prefix to strip).
+    expect(out.indexOf('### Features')).toBeLessThan(out.indexOf('### Bug Fixes'));
+  });
+
+  it('puts uncategorizable descriptive commits under Other Changes', () => {
+    const out = formatSection(['Add a feature', 'Tweak some spacing'], '0.1.0', '2026-06-15');
+    expect(out).toContain('### Features');
+    expect(out).toContain('- Add a feature');
+    expect(out).toContain('### Other Changes');
+    expect(out).toContain('- Tweak some spacing');
+  });
+
+  it('falls back to a flat list when nothing can be categorized', () => {
+    const out = formatSection(['Tweak spacing', 'Whatever happened here'], '0.1.0', '2026-06-15');
+    expect(out).toContain('- Tweak spacing');
+    expect(out).toContain('- Whatever happened here');
+    expect(out).not.toContain('###');
   });
 
   it('groups conventional commits by type, with scopes', () => {
