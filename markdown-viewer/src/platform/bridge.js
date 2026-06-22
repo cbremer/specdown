@@ -100,3 +100,13 @@ export function bridgeOnTriggerSearch(cb) {
 export function bridgeOnApplyCustomCss(cb) {
   nativeBridge()?.onApplyCustomCss?.(cb);
 }
+
+/** @param {Parameters<NonNullable<DesktopBridge['onUpdateDownloaded']>>[0]} cb */
+export function bridgeOnUpdateDownloaded(cb) {
+  nativeBridge()?.onUpdateDownloaded?.(cb);
+}
+
+/** Ask the shell to quit and install a downloaded update. */
+export function bridgeRestartToUpdate() {
+  nativeBridge()?.restartToUpdate?.();
+}

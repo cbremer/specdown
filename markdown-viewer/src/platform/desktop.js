@@ -15,6 +15,7 @@ import { createTab, closeTab, renderTabBar } from '../features/tabs.js';
 import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
+import { showToast } from '../features/toast.js';
 import { performPrint } from './ios-chrome.js';
 import {
   hasDesktopBridge,
@@ -27,6 +28,8 @@ import {
   bridgeOnTriggerPrint,
   bridgeOnTriggerSearch,
   bridgeOnApplyCustomCss,
+  bridgeOnUpdateDownloaded,
+  bridgeRestartToUpdate,
 } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -215,6 +218,16 @@ export function setupDesktopIPC() {
   // Appearance menu: apply custom CSS theme
   bridgeOnApplyCustomCss(function (cssContent) {
     applyCustomCss(cssContent);
+  });
+
+  // Auto-update: a downloaded update is ready — offer a one-click restart.
+  bridgeOnUpdateDownloaded(function (info) {
+    const version = info && info.version ? ` (v${info.version})` : '';
+    showToast(`An update${version} is ready to install.`, {
+      type: 'success',
+      duration: 0, // persist until the user acts
+      action: { label: 'Restart now', onClick: () => bridgeRestartToUpdate() },
+    });
   });
 }
 

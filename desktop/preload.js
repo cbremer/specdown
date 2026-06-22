@@ -94,4 +94,16 @@ contextBridge.exposeInMainWorld('specdown', {
       callback(cssContent);
     });
   },
+
+  // Auto-update: notified when a downloaded update is ready to install.
+  onUpdateDownloaded: (callback) => {
+    ipcRenderer.on('update-downloaded', (_event, info) => {
+      callback(info);
+    });
+  },
+
+  // Auto-update: ask the main process to quit and install the downloaded update.
+  restartToUpdate: () => {
+    ipcRenderer.send('restart-to-update');
+  },
 });

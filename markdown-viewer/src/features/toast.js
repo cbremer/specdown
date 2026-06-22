@@ -35,7 +35,7 @@ function getRegion() {
 /**
  * Show a toast notification.
  * @param {string} message
- * @param {{ type?: ToastType, duration?: number }} [options]
+ * @param {{ type?: ToastType, duration?: number, action?: { label: string, onClick: () => void } }} [options]
  * @returns {HTMLElement} the created toast element
  */
 export function showToast(message, options = {}) {
@@ -47,7 +47,28 @@ export function showToast(message, options = {}) {
   // role="alert" is assertive (interrupts); role="status" is polite. Errors
   // warrant an immediate announcement, everything else stays polite.
   toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
-  toast.textContent = message;
+
+  const action = options.action;
+  if (action) {
+    // An actionable toast (e.g. "Update ready · Restart now") keeps the label in
+    // its own span so the button is a distinct, clickable target.
+    toast.classList.add('toast-has-action');
+    const text = document.createElement('span');
+    text.className = 'toast-message';
+    text.textContent = message;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      action.onClick();
+      dismissToast(toast);
+    });
+    toast.append(text, button);
+  } else {
+    toast.textContent = message;
+  }
   toast.addEventListener('click', () => dismissToast(toast));
   region.appendChild(toast);
 
