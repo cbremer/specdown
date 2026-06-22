@@ -20,5 +20,13 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "text/markdown": [".md", ".markdown"]
+      }
+    }
   ]
 }

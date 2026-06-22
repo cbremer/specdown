@@ -111,7 +111,7 @@ import {
   closeOverflowMenu,
   isOverflowMenuOpen,
 } from './features/toolbar-overflow.js';
-import { registerServiceWorker } from './features/pwa.js';
+import { registerServiceWorker, registerFileHandlerLaunchConsumer } from './features/pwa.js';
 import {
   startPresentation,
   exitPresentation,
@@ -258,6 +258,8 @@ function init() {
     checkForUpdates();
     checkForDiagramLink();
     registerServiceWorker();
+    // Open .md/.markdown files launched via the OS "Open with" on an installed PWA.
+    registerFileHandlerLaunchConsumer((/** @type {File} */ file) => handleFile(file));
     // Session restore (web only): reopen the last document on launch, unless a
     // shared diagram link already opened something. The native shells manage
     // their own session, so they're excluded.

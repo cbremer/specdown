@@ -91,6 +91,18 @@
         "repo": "specdown"
       }
     ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "md",
+          "markdown"
+        ],
+        "name": "Markdown Document",
+        "description": "Markdown Document",
+        "role": "Viewer",
+        "mimeType": "text/markdown"
+      }
+    ],
     "mac": {
       "target": [
         "dmg",

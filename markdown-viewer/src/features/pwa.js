@@ -19,6 +19,34 @@ export function shouldRegisterServiceWorker() {
   return protocol === 'http:' || protocol === 'https:';
 }
 
+/**
+ * Wire the File Handling API so an installed PWA can be the "Open with" target
+ * for .md/.markdown files (Chromium desktop). The manifest's `file_handlers`
+ * advertises the association; this consumer receives the launched files and
+ * hands each one to `onFile`. Web-only and capability-gated, like the SW.
+ * @param {(file: File) => void} onFile
+ */
+export function registerFileHandlerLaunchConsumer(onFile) {
+  if (isDesktop || isIOSNative) return;
+  if (typeof window === 'undefined' || !('launchQueue' in window)) return;
+
+  try {
+    /** @type {any} */ (window).launchQueue.setConsumer(async (/** @type {any} */ launchParams) => {
+      if (!launchParams || !launchParams.files || launchParams.files.length === 0) return;
+      for (const handle of launchParams.files) {
+        try {
+          const file = await handle.getFile();
+          onFile(file);
+        } catch (err) {
+          console.warn('Failed to open launched file:', err);
+        }
+      }
+    });
+  } catch (err) {
+    console.warn('launchQueue consumer registration failed:', err);
+  }
+}
+
 /** Register the service worker (once the page has loaded), web surface only. */
 export function registerServiceWorker() {
   if (!shouldRegisterServiceWorker()) return;

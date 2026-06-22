@@ -51,6 +51,54 @@ describe('PWA service worker', () => {
   });
 });
 
+describe('PWA file handler (launchQueue)', () => {
+  beforeEach(() => {
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  afterEach(() => {
+    try {
+      delete window.launchQueue;
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  it('is a harmless no-op when launchQueue is unavailable', () => {
+    expect('launchQueue' in window).toBe(false);
+    expect(() => registerFileHandlerLaunchConsumer(jest.fn())).not.toThrow();
+  });
+
+  it('registers a consumer and forwards launched files to the callback', async () => {
+    let consumer;
+    window.launchQueue = { setConsumer: (fn) => { consumer = fn; } };
+
+    const onFile = jest.fn();
+    registerFileHandlerLaunchConsumer(onFile);
+    expect(typeof consumer).toBe('function');
+
+    const file = { name: 'doc.md' };
+    const handle = { getFile: jest.fn(() => Promise.resolve(file)) };
+    await consumer({ files: [handle] });
+
+    expect(handle.getFile).toHaveBeenCalled();
+    expect(onFile).toHaveBeenCalledWith(file);
+  });
+
+  it('ignores an empty launch with no files', async () => {
+    let consumer;
+    window.launchQueue = { setConsumer: (fn) => { consumer = fn; } };
+    const onFile = jest.fn();
+    registerFileHandlerLaunchConsumer(onFile);
+
+    await consumer({ files: [] });
+    await consumer({});
+
+    expect(onFile).not.toHaveBeenCalled();
+  });
+});
+
 describe('PWA static assets', () => {
   const root = path.join(__dirname, '../../markdown-viewer');
 
@@ -69,6 +117,17 @@ describe('PWA static assets', () => {
     expect(manifest.display).toBe('standalone');
     expect(Array.isArray(manifest.icons)).toBe(true);
     expect(manifest.icons.length).toBeGreaterThan(0);
+  });
+
+  it('declares a file handler for .md/.markdown', () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, 'public/manifest.webmanifest'), 'utf8')
+    );
+    expect(Array.isArray(manifest.file_handlers)).toBe(true);
+    const handler = manifest.file_handlers[0];
+    expect(handler.action).toBe('./');
+    const exts = handler.accept['text/markdown'];
+    expect(exts).toEqual(expect.arrayContaining(['.md', '.markdown']));
   });
 
   it('ships the service worker and icon assets', () => {

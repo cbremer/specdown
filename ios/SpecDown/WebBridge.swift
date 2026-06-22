@@ -145,6 +145,30 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         presentDocumentPicker()
     }
 
+    /// Read a markdown file URL (security-scoped) and hand its content to the
+    /// web layer. Shared by the document picker and by external opens — Files
+    /// "Open in place", the share sheet, and "Open With… Specdown" — routed here
+    /// via SwiftUI's `.onOpenURL`.
+    func openDocument(at url: URL) {
+        let granted = url.startAccessingSecurityScopedResource()
+        defer {
+            if granted {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        do {
+            let data = try Data(contentsOf: url)
+            guard let content = String(data: data, encoding: .utf8) else {
+                print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
+                return
+            }
+            loadFile(name: url.lastPathComponent, content: content)
+        } catch {
+            print("[Bridge] Failed to read file: \(error)")
+        }
+    }
+
     func openBundledSampleFromSidebar(named fileName: String) {
         loadBundledSample(named: fileName)
     }
@@ -294,22 +318,6 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 extension WebBridge: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
-        let granted = url.startAccessingSecurityScopedResource()
-        defer {
-            if granted {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        do {
-            let data = try Data(contentsOf: url)
-            guard let content = String(data: data, encoding: .utf8) else {
-                print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
-                return
-            }
-            loadFile(name: url.lastPathComponent, content: content)
-        } catch {
-            print("[Bridge] Failed to read file: \(error)")
-        }
+        openDocument(at: url)
     }
 }
