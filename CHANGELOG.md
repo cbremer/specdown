@@ -5,6 +5,11 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.149 — 2026-06-22
+
+- Fix TS2882 from the TypeScript 6 bump on the CSS side-effect import
+- Bump the dev-dependencies group across 1 directory with 4 updates
+
 ## v0.0.148 — 2026-06-22
 
 - Bump actions/checkout from 6 to 7
