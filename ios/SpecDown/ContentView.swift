@@ -34,6 +34,11 @@ struct ContentView: View {
             .onChange(of: horizontalSizeClass) { _ in
                 bridge.applyLayoutMode(usesPadShell ? "pad" : "phone")
             }
+            // Markdown files opened from outside the app — Files "Open in place",
+            // the share sheet, or "Open With… Specdown" — arrive here.
+            .onOpenURL { url in
+                bridge.openDocument(at: url)
+            }
     }
 
     private var viewerSurface: some View {

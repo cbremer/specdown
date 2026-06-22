@@ -63,3 +63,25 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
           NSAllowsArbitraryLoadsInWebContent: true
+        # Register SpecDown as a viewer for Markdown files so it appears in the
+        # share sheet and "Open With…", and can open files in place from the
+        # Files app. Incoming URLs are handled in ContentView via .onOpenURL.
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Markdown Document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - net.daringfireball.markdown
+              - public.plain-text
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: net.daringfireball.markdown
+            UTTypeDescription: Markdown Document
+            UTTypeConformsTo:
+              - public.plain-text
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - md
+                - markdown
+              public.mime-type:
+                - text/markdown
