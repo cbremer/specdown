@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.143 — 2026-06-22
+
+- Resolve js-yaml DoS advisory via scoped override
+- Stop diagram zoom buttons triggering page double-tap zoom
+- Fix diagram controls covering the diagram on phones
+
 ## v0.0.142 — 2026-06-20
 
 ### Documentation
