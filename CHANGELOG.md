@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.147 — 2026-06-22
+
+- Bump actions/setup-node from 4 to 6
+
 ## v0.0.146 — 2026-06-22
 
 - Add desktop auto-update via electron-updater
