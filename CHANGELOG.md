@@ -5,6 +5,11 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.148 — 2026-06-22
+
+- Bump actions/checkout from 6 to 7
+- Bump actions/setup-node from 4 to 6
+
 ## v0.0.147 — 2026-06-22
 
 - Bump actions/setup-node from 4 to 6
