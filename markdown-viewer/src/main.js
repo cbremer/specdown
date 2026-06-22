@@ -136,6 +136,8 @@ import {
   openWorkspaceFolder,
   hasWorkspace,
   configureWorkspace,
+  tryOpenDroppedFolder,
+  isFolderDragDropSupported,
 } from './features/workspace.js';
 import {
   setupDesktopIPC,
@@ -761,10 +763,22 @@ function setupEventListeners() {
     // content area (when the drop zone is hidden).
     document.addEventListener('drop', (e) => {
         e.preventDefault();
-        if (state.tabs.length > 0 && e.dataTransfer && e.dataTransfer.files.length > 0) {
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                handleFile(e.dataTransfer.files[i]);
+        if (!e.dataTransfer) return;
+        // Capture files synchronously — the FileList is invalidated after the event.
+        const droppedFiles = Array.from(e.dataTransfer.files || []);
+        const openDroppedFiles = () => {
+            if (state.tabs.length > 0) {
+                for (const file of droppedFiles) handleFile(file);
             }
+        };
+        // Folder drag-and-drop is Chromium-only and async; elsewhere open files
+        // directly (keeps the synchronous drop path on other browsers).
+        if (isFolderDragDropSupported()) {
+            tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
+                if (!handled) openDroppedFiles();
+            });
+        } else {
+            openDroppedFiles();
         }
     });
 
@@ -808,9 +822,19 @@ function handleDrop(e) {
     dropZone.classList.remove('drag-over');
 
     if (!e.dataTransfer) return;
-    const files = e.dataTransfer.files;
-    for (let i = 0; i < files.length; i++) {
-        handleFile(files[i]);
+    // Capture files synchronously — the FileList is invalidated after the event.
+    const droppedFiles = Array.from(e.dataTransfer.files || []);
+    const openDroppedFiles = () => {
+        for (const file of droppedFiles) handleFile(file);
+    };
+    // A dropped folder opens as a workspace (Chromium, async); otherwise — and on
+    // browsers without the API — fall back to opening the dropped files directly.
+    if (isFolderDragDropSupported()) {
+        tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
+            if (!handled) openDroppedFiles();
+        });
+    } else {
+        openDroppedFiles();
     }
 }
 
