@@ -1,0 +1,146 @@
+name: iOS Release (TestFlight)
+
+# Tag-triggered TestFlight lane. Mirrors desktop.yml: the signing/upload steps
+# run only when the App Store Connect API-key secrets are configured. Until then
+# the job still validates that the Release configuration archives-cleanly for the
+# simulator, so the workflow is wired up and green before any secrets exist.
+#
+# Required secrets (see docs/project-ios/2026-06-21-spec-ios-distribution-setup.md):
+#   APPSTORE_API_KEY_ID     - App Store Connect API Key ID
+#   APPSTORE_API_ISSUER_ID  - App Store Connect API Issuer ID
+#   APPSTORE_API_KEY_P8     - base64 of the AuthKey_XXXX.p8
+#   APPLE_TEAM_ID           - Apple Developer Team ID (reused from the macOS lane)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    name: Archive + upload to TestFlight
+    runs-on: macos-latest
+    env:
+      # True only when the API key secret is present. Gates the device archive
+      # + upload; a fork or a pre-secrets repo falls back to a Release-config
+      # simulator validation build instead of hard-failing.
+      HAS_IOS_SIGNING: ${{ secrets.APPSTORE_API_KEY_P8 != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)"
+          fi
+          # Marketing version is the tag without the leading "v" (e.g. 0.0.143).
+          echo "marketing=${TAG#v}" >> "$GITHUB_OUTPUT"
+          # Build number must increase on every upload; the run number is
+          # monotonic and unique per workflow.
+          echo "build=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      # ----------------------------------------------------------------
+      # No signing secrets: validate the Release config compiles, then stop.
+      # ----------------------------------------------------------------
+      - name: Validate Release build (no signing secrets)
+        if: env.HAS_IOS_SIGNING != 'true'
+        run: |
+          echo "::notice::App Store Connect API-key secrets not configured; skipping device archive + TestFlight upload. Running a Release-configuration simulator validation build instead. See docs/project-ios/2026-06-21-spec-ios-distribution-setup.md to enable uploads."
+          xcodebuild \
+            -project ios/SpecDown.xcodeproj \
+            -scheme SpecDown \
+            -sdk iphonesimulator \
+            -configuration Release \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION="${{ steps.version.outputs.marketing }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.version.outputs.build }}" \
+            build | xcpretty
+
+      # ----------------------------------------------------------------
+      # Signing secrets present: archive, export, and upload to TestFlight.
+      # ----------------------------------------------------------------
+      - name: Install App Store Connect API key
+        if: env.HAS_IOS_SIGNING == 'true'
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPSTORE_API_KEY_P8 }}" | base64 --decode \
+            > ~/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
+
+      - name: Inject Team ID into ExportOptions.plist
+        if: env.HAS_IOS_SIGNING == 'true'
+        run: |
+          /usr/libexec/PlistBuddy -c \
+            "Set :teamID ${{ secrets.APPLE_TEAM_ID }}" ios/ExportOptions.plist
+
+      - name: Archive (Release, device)
+        if: env.HAS_IOS_SIGNING == 'true'
+        run: |
+          xcodebuild \
+            -project ios/SpecDown.xcodeproj \
+            -scheme SpecDown \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/SpecDown.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "${{ secrets.APPSTORE_API_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8 \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="${{ steps.version.outputs.marketing }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.version.outputs.build }}" \
+            archive
+
+      - name: Export .ipa
+        if: env.HAS_IOS_SIGNING == 'true'
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/SpecDown.xcarchive" \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "${{ secrets.APPSTORE_API_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_API_ISSUER_ID }}" \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APPSTORE_API_KEY_ID }}.p8
+
+      - name: Upload to TestFlight
+        if: env.HAS_IOS_SIGNING == 'true'
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$(ls "$RUNNER_TEMP"/export/*.ipa | head -n1)" \
+            --apiKey "${{ secrets.APPSTORE_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPSTORE_API_ISSUER_ID }}"
+
+      - name: Clean up API key
+        if: always()
+        run: rm -f ~/private_keys/AuthKey_*.p8
