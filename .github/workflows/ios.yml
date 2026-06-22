@@ -51,6 +51,12 @@ jobs:
 
       - name: Build for iOS Simulator
         run: |
+          # Tee the full xcodebuild output to a log before xcpretty prettifies
+          # it. xcpretty collapses Swift compiler warnings, which previously hid
+          # issues (e.g. an unused-binding warning) until they showed up in a
+          # local Xcode build. pipefail keeps a real build failure failing the
+          # step; the raw log is mined for warnings in the next step.
+          set -o pipefail
           xcodebuild \
             -project ios/SpecDown.xcodeproj \
             -scheme SpecDown \
@@ -58,7 +64,24 @@ jobs:
             -configuration Debug \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
-            build | xcpretty
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | xcpretty
+
+      - name: Surface Swift warnings
+        if: always()
+        run: |
+          log="$RUNNER_TEMP/xcodebuild.log"
+          if [ ! -f "$log" ]; then
+            echo "No xcodebuild log found; skipping warning scan."
+            exit 0
+          fi
+          # Match the compiler's "file:line:col: warning: message" format.
+          if grep -nE '^[^[:space:]].*: warning: ' "$log" > "$RUNNER_TEMP/warnings.txt"; then
+            count=$(wc -l < "$RUNNER_TEMP/warnings.txt" | tr -d ' ')
+            echo "::warning::$count Swift/compiler warning(s) in the iOS build (xcpretty hides these):"
+            sort -u "$RUNNER_TEMP/warnings.txt"
+          else
+            echo "No Swift/compiler warnings."
+          fi
 
       - name: Build (raw output on failure)
         if: failure()
