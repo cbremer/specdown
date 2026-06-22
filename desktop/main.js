@@ -59,6 +59,59 @@ function logInfo(msg) {
 }
 
 // ===========================
+// Auto-update (electron-updater)
+// ===========================
+// Checks GitHub Releases for a newer version; if found, downloads it in the
+// background and installs on the next quit, with a native OS notification when
+// the download is ready (checkForUpdatesAndNotify). Only meaningful in a
+// packaged, code-signed build: skipped in dev (electron-updater has no update
+// feed) and when SPECDOWN_DISABLE_UPDATER=1. electron-updater is lazy-required
+// so it never loads during unit tests (which mock electron but not the updater)
+// or when updates are disabled.
+function initAutoUpdater() {
+  if (!app.isPackaged) {
+    logInfo('Auto-update skipped (not a packaged build).');
+    return;
+  }
+  if (process.env.SPECDOWN_DISABLE_UPDATER === '1') {
+    logInfo('Auto-update disabled via SPECDOWN_DISABLE_UPDATER.');
+    return;
+  }
+
+  let autoUpdater;
+  try {
+    ({ autoUpdater } = require('electron-updater'));
+  } catch (err) {
+    logError('electron-updater unavailable; skipping auto-update', err);
+    return;
+  }
+
+  // Route updater logs into our user-accessible log file so update failures in
+  // shipped builds are recoverable.
+  autoUpdater.logger = {
+    info: (m) => logInfo(`updater: ${m}`),
+    warn: (m) => logInfo(`updater WARN: ${m}`),
+    error: (m) => logError('updater', m),
+    debug: () => {},
+  };
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('error', (err) => logError('Auto-update error', err));
+  autoUpdater.on('update-available', (info) =>
+    logInfo(`Update available: ${info && info.version}`)
+  );
+  autoUpdater.on('update-not-available', () => logInfo('No update available.'));
+  autoUpdater.on('update-downloaded', (info) =>
+    logInfo(`Update downloaded: ${info && info.version} (installs on quit)`)
+  );
+
+  autoUpdater
+    .checkForUpdatesAndNotify()
+    .catch((err) => logError('checkForUpdatesAndNotify failed', err));
+}
+
+// ===========================
 // Store (simple JSON persistence)
 // ===========================
 // Replaces electron-store v11, which is ESM-only and has a history of
@@ -825,6 +878,7 @@ process.on('unhandledRejection', (reason) => {
     initStore();
     buildMenu();
     createWindow();
+    initAutoUpdater();
 
     // Global shortcut: Cmd+Shift+M brings SpecDown to front and prompts open
     globalShortcut.register('CommandOrControl+Shift+M', () => {

@@ -84,8 +84,18 @@
       "node_modules/chokidar/**",
       "**/*.node"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "cbremer",
+        "repo": "specdown"
+      }
+    ],
     "mac": {
-      "target": "dmg",
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.developer-tools",
       "icon": "build/icon.png",
       "hardenedRuntime": true,
@@ -119,6 +129,7 @@
     "@panzoom/panzoom": "4.6.2",
     "chokidar": "^5.0.0",
     "dompurify": "3.4.11",
+    "electron-updater": "^6.8.9",
     "highlight.js": "11.11.1",
     "marked": "18.0.5",
     "mermaid": "11.15.0"

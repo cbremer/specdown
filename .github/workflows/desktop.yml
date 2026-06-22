@@ -55,7 +55,11 @@ jobs:
       # password and APPLE_TEAM_ID from the env below.
       - name: Build DMG (signed + notarized)
         if: env.HAS_SIGNING == 'true'
-        run: npm run desktop:build -- --mac dmg --universal -c.mac.notarize=true
+        # `zip` is built alongside `dmg` because electron-updater downloads the
+        # zip (not the dmg) for macOS auto-updates. `--publish never` keeps
+        # electron-builder from uploading: it still generates the latest-mac.yml
+        # update feed locally, and the softprops step below uploads everything.
+        run: npm run desktop:build -- --mac dmg zip --universal -c.mac.notarize=true --publish never
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
@@ -69,15 +73,22 @@ jobs:
       # the real distribution build.
       - name: Build DMG (unsigned fallback)
         if: env.HAS_SIGNING != 'true'
-        run: npm run desktop:build -- --mac dmg --universal
+        run: npm run desktop:build -- --mac dmg zip --universal --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload DMG to GitHub Release
+      # Upload the installer (dmg), the auto-update artifact (zip), their
+      # blockmaps, and the latest-mac.yml update feed so electron-updater can
+      # discover and download new versions.
+      - name: Upload macOS artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: dist/*.dmg
+          files: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.blockmap
+            dist/latest-mac.yml
 
   # -------------------------------------------------------
   # Windows: NSIS installer (.exe)
@@ -114,15 +125,20 @@ jobs:
         run: npm install
 
       - name: Build Windows installer
-        run: npm run desktop:build -- --win nsis
+        run: npm run desktop:build -- --win nsis --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload installer to GitHub Release
+      # Upload the NSIS installer, its blockmap, and the latest.yml update feed
+      # for electron-updater on Windows.
+      - name: Upload Windows artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
 
   # -------------------------------------------------------
   # Linux: AppImage
@@ -161,12 +177,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgbm-dev
 
       - name: Build AppImage
-        run: npm run desktop:build -- --linux AppImage
+        run: npm run desktop:build -- --linux AppImage --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload AppImage to GitHub Release
+      # Upload the AppImage and the latest-linux.yml update feed for
+      # electron-updater on Linux.
+      - name: Upload Linux artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: dist/*.AppImage
+          files: |
+            dist/*.AppImage
+            dist/latest-linux.yml
