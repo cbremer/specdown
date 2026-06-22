@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.152 — 2026-06-22
+
+### Features
+
+- Add visible desktop update UX: check + restart
+
+### Other Changes
+
+- Group the changelog from descriptive commit subjects
+
 ## v0.0.151 — 2026-06-22
 
 - Open a folder dragged onto the web app as a workspace
