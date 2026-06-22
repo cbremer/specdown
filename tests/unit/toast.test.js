@@ -78,4 +78,19 @@ describe('Toast notifications', () => {
     toast.dispatchEvent(new Event('click', { bubbles: true }));
     expect(document.querySelector('.toast')).toBeNull();
   });
+
+  it('renders an action button that runs its handler and dismisses', () => {
+    const onClick = jest.fn();
+    showToast('Update ready', { duration: 0, action: { label: 'Restart now', onClick } });
+
+    const toast = document.querySelector('.toast');
+    expect(toast.querySelector('.toast-message').textContent).toBe('Update ready');
+    const button = toast.querySelector('.toast-action');
+    expect(button).not.toBeNull();
+    expect(button.textContent).toBe('Restart now');
+
+    button.dispatchEvent(new Event('click', { bubbles: true }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('.toast')).toBeNull();
+  });
 });

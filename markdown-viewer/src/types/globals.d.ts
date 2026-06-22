@@ -53,6 +53,8 @@ interface SpecdownDesktopBridge {
   onTriggerSearch?: (cb: () => void) => void;
   onApplyCustomCss?: (cb: (cssContent: string) => void) => void;
   saveSession?: (tabs: SpecdownSessionTab[]) => void;
+  onUpdateDownloaded?: (cb: (info: { version?: string }) => void) => void;
+  restartToUpdate?: () => void;
 }
 
 /** A single WKScriptMessageHandler bridge on the iOS side. */

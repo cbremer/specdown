@@ -1881,6 +1881,31 @@ mark.search-highlight-current {
     border-left-color: var(--color-danger);
 }
 
+/* An actionable toast lays its message and button out in a row. */
+.toast-has-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.toast-action {
+    flex-shrink: 0;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.toast-action:hover {
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
 /* ===========================
    Skip Link (accessibility)
    =========================== */

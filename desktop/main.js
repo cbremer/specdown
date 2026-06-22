@@ -9,6 +9,11 @@ const MAX_RECENT_FILES = 15;
 let mainWindow = null;
 let store = null;
 let logFilePath = null;
+// electron-updater instance (set in packaged builds only) + a flag marking a
+// user-initiated "Check for Updates…" so its result is surfaced (a silent
+// background check stays silent).
+let autoUpdaterRef = null;
+let manualUpdateCheck = false;
 
 // Queue files requested before the window is ready (e.g. Finder double-click on launch)
 let pendingFilePaths = [];
@@ -85,6 +90,7 @@ function initAutoUpdater() {
     logError('electron-updater unavailable; skipping auto-update', err);
     return;
   }
+  autoUpdaterRef = autoUpdater;
 
   // Route updater logs into our user-accessible log file so update failures in
   // shipped builds are recoverable.
@@ -97,18 +103,69 @@ function initAutoUpdater() {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on('error', (err) => logError('Auto-update error', err));
+  autoUpdater.on('error', (err) => {
+    logError('Auto-update error', err);
+    if (manualUpdateCheck) {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'error',
+        message: 'Could not check for updates',
+        detail: err && err.message ? err.message : String(err),
+      });
+    }
+  });
   autoUpdater.on('update-available', (info) =>
     logInfo(`Update available: ${info && info.version}`)
   );
-  autoUpdater.on('update-not-available', () => logInfo('No update available.'));
-  autoUpdater.on('update-downloaded', (info) =>
-    logInfo(`Update downloaded: ${info && info.version} (installs on quit)`)
-  );
+  autoUpdater.on('update-not-available', () => {
+    logInfo('No update available.');
+    if (manualUpdateCheck) {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'info',
+        message: "You're up to date",
+        detail: `SpecDown ${app.getVersion()} is the latest version.`,
+      });
+    }
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    logInfo(`Update downloaded: ${info && info.version} (installs on quit)`);
+    manualUpdateCheck = false;
+    // Surface an in-app "Restart now" toast (the renderer wires the button to
+    // restart-to-update). The native OS notification from checkForUpdatesAndNotify
+    // still fires as a fallback when the window isn't focused.
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('update-downloaded', { version: info && info.version });
+    }
+  });
 
   autoUpdater
     .checkForUpdatesAndNotify()
     .catch((err) => logError('checkForUpdatesAndNotify failed', err));
+}
+
+// Menu-triggered update check. Result surfaces via the handlers above: a native
+// "you're up to date" / error dialog (guarded by manualUpdateCheck), or the
+// update-downloaded toast. In an unpackaged/dev build there is no updater.
+function checkForUpdatesManually() {
+  if (!autoUpdaterRef) {
+    dialog.showMessageBox({
+      type: 'info',
+      message: 'Updates are unavailable in this build',
+      detail: 'Automatic updates only run in the installed SpecDown app.',
+    });
+    return;
+  }
+  manualUpdateCheck = true;
+  autoUpdaterRef.checkForUpdates().catch((err) => {
+    manualUpdateCheck = false;
+    logError('Manual update check failed', err);
+    dialog.showMessageBox({
+      type: 'error',
+      message: 'Could not check for updates',
+      detail: err && err.message ? err.message : String(err),
+    });
+  });
 }
 
 // ===========================
@@ -647,6 +704,13 @@ ipcMain.on('save-session', (_event, tabs) => {
   saveSession(tabs);
 });
 
+// Renderer's "Restart now" toast asks the shell to install the downloaded update.
+ipcMain.on('restart-to-update', () => {
+  if (autoUpdaterRef) {
+    autoUpdaterRef.quitAndInstall();
+  }
+});
+
 // ===========================
 // Native Menu
 // ===========================
@@ -802,6 +866,11 @@ function buildMenu() {
     {
       label: 'Help',
       submenu: [
+        {
+          label: 'Check for Updates...',
+          click: () => checkForUpdatesManually(),
+        },
+        { type: 'separator' },
         {
           label: 'Open Log File',
           click: () => {
