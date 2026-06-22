@@ -211,6 +211,38 @@ describe('Workspace (folder) mode — web', () => {
     expect(handleA.getFile).toHaveBeenCalled();
   });
 
+  it('opens a folder dragged onto the page as a workspace', async () => {
+    const dropped = dirHandle('dragged', [
+      fileHandle('a.md', '# A'),
+      dirHandle('docs', [fileHandle('b.md', '# B')]),
+      fileHandle('notes.txt', 'ignored'),
+    ]);
+    const dataTransfer = {
+      files: [],
+      items: [{ kind: 'file', getAsFileSystemHandle: jest.fn(async () => dropped) }],
+    };
+
+    const handled = await tryOpenDroppedFolder(dataTransfer);
+    expect(handled).toBe(true);
+    await flush();
+
+    const files = [...document.querySelectorAll('.workspace-file-item')].map((b) => b.textContent).sort();
+    expect(files).toEqual(['a.md', 'b.md']);
+  });
+
+  it('does not treat a dropped file as a folder', async () => {
+    const dataTransfer = {
+      files: [],
+      items: [{ kind: 'file', getAsFileSystemHandle: jest.fn(async () => fileHandle('a.md', '# A')) }],
+    };
+    expect(await tryOpenDroppedFolder(dataTransfer)).toBe(false);
+  });
+
+  it('returns false for a drop with no items', async () => {
+    expect(await tryOpenDroppedFolder({ files: [], items: [] })).toBe(false);
+    expect(await tryOpenDroppedFolder(null)).toBe(false);
+  });
+
   it('follows a relative link within the loaded web workspace', async () => {
     const handleA = fileHandle('a.md', '# A');
     const handleB = fileHandle('b.md', '# B');

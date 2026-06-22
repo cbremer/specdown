@@ -80,6 +80,16 @@ function isWebFolderSupported() {
     typeof /** @type {any} */ (window).showDirectoryPicker === 'function';
 }
 
+/**
+ * Whether dragging a folder onto the page can open it (Chromium File System
+ * Access). Lets callers keep a synchronous file-drop path on browsers without
+ * the API instead of always deferring through the async folder check.
+ * @returns {boolean}
+ */
+export function isFolderDragDropSupported() {
+  return isWebFolderSupported();
+}
+
 /** Open a folder: native picker on desktop, File System Access on the web. */
 export function openWorkspaceFolder() {
   if (isDesktop) {
@@ -131,6 +141,61 @@ async function pickWebFolder() {
     showToast('No markdown files found in that folder.', { type: 'warning' });
   }
   applyWorkspace({ root: dirHandle.name || '', files });
+}
+
+/**
+ * Open a folder dragged onto the web app as a workspace. Uses the File System
+ * Access drag-and-drop entry point (`DataTransferItem.getAsFileSystemHandle`,
+ * Chromium): the handle promises must be captured *synchronously* within the
+ * drop event (the items are invalidated after the event tick), which is why the
+ * sync portion of this async function pulls them before the first `await`.
+ * Resolves to `true` when a directory was found and adopted (so the caller skips
+ * its normal file-drop handling), `false` otherwise.
+ * @param {DataTransfer | null} dataTransfer
+ * @returns {Promise<boolean>}
+ */
+export async function tryOpenDroppedFolder(dataTransfer) {
+  if (!isWebFolderSupported() || !dataTransfer) return false;
+  const items = dataTransfer.items;
+  if (!items || items.length === 0) return false;
+
+  // Synchronous: grab the handle promises before the event is consumed.
+  const handlePromises = [];
+  for (const item of items) {
+    if (item.kind === 'file' && typeof (/** @type {any} */ (item).getAsFileSystemHandle) === 'function') {
+      handlePromises.push(/** @type {any} */ (item).getAsFileSystemHandle());
+    }
+  }
+  if (handlePromises.length === 0) return false;
+
+  let dirHandle = null;
+  for (const p of handlePromises) {
+    try {
+      const h = await p;
+      if (h && h.kind === 'directory') {
+        dirHandle = h;
+        break;
+      }
+    } catch (e) {
+      // ignore an unreadable item; keep checking the rest
+    }
+  }
+  if (!dirHandle) return false;
+
+  /** @type {WorkspaceFile[]} */
+  const files = [];
+  try {
+    await scanDirectoryHandle(dirHandle, '', files, 0);
+  } catch (e) {
+    showToast('Could not read the folder.', { type: 'error' });
+    return true; // it was a folder — handled, albeit with an error
+  }
+  files.sort((a, b) => a.relPath.localeCompare(b.relPath));
+  if (files.length === 0) {
+    showToast('No markdown files found in that folder.', { type: 'warning' });
+  }
+  applyWorkspace({ root: dirHandle.name || '', files });
+  return true;
 }
 
 /**
