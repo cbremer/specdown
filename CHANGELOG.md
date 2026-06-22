@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.144 — 2026-06-22
+
+- Scaffold iOS TestFlight release lane (inert until secrets added)
+
 ## v0.0.143 — 2026-06-22
 
 - Resolve js-yaml DoS advisory via scoped override
