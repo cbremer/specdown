@@ -35,6 +35,7 @@ The web version works in mobile Safari but isn't optimized for touch. The deskto
 | Mar 16, 2026 | Tasks | [2026-03-16-tasks-session-01-project-setup.md](2026-03-16-tasks-session-01-project-setup.md) | Session 1 checklist — Xcode project, WKWebView shell, web assets bundled, JS bridge skeleton, CI workflow |
 | May 15, 2026 | Spec | [2026-05-15-spec-ios-v2.md](2026-05-15-spec-ios-v2.md) | Adaptive shell revision for iPadOS: native split layout, layout-mode bridge, shared viewer retained in detail pane |
 | May 15, 2026 | Tasks | [2026-05-15-tasks-session-02-ipados-shell.md](2026-05-15-tasks-session-02-ipados-shell.md) | Session 2 checklist — iPad regular-width split shell, sidebar actions, shared viewer layout-mode switching |
+| Jun 21, 2026 | Spec | [2026-06-21-spec-ios-distribution-setup.md](2026-06-21-spec-ios-distribution-setup.md) | TestFlight lane scaffolded (workflow + ExportOptions); one-time App Store Connect setup checklist to activate it |
 
 ---
 

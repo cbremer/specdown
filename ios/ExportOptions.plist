@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Export options for the App Store / TestFlight archive (used by
+  `xcodebuild -exportArchive` in .github/workflows/ios-release.yml).
+
+  The <teamID> below is a placeholder; CI overwrites it with the
+  APPLE_TEAM_ID secret via PlistBuddy before exporting, so the real team id is
+  never committed. With automatic cloud signing + an App Store Connect API key,
+  no provisioning profiles need to be checked in.
+-->
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <key>teamID</key>
+    <string>REPLACE_WITH_APPLE_TEAM_ID</string>
+
+    <!-- Upload the build's symbols so App Store Connect can symbolicate crashes. -->
+    <key>uploadSymbols</key>
+    <true/>
+
+    <!-- We upload to TestFlight as a separate altool step, not from export. -->
+    <key>destination</key>
+    <string>export</string>
+
+    <!-- Let App Store Connect manage the app's build version automatically is
+         off; CI stamps CFBundleVersion explicitly so uploads stay monotonic. -->
+    <key>manageAppVersionAndBuildNumber</key>
+    <false/>
+</dict>
+</plist>

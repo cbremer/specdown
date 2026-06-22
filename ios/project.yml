@@ -42,6 +42,10 @@ targets:
         CFBundleDisplayName: Specdown
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
+        # SpecDown uses only standard HTTPS/TLS, so it is exempt from U.S. export
+        # compliance. Declaring this skips the per-upload encryption question in
+        # App Store Connect / TestFlight.
+        ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
