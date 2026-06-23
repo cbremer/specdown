@@ -1,69 +1,278 @@
 // @ts-check
-// Lightweight sticky-note annotations stored in localStorage, keyed by
-// filename. Users can double-click any paragraph or heading to add/edit one.
-// State is private to this module.
+// Sticky-note annotations stored in localStorage, keyed by filename. Users
+// double-click any paragraph/heading to add a note. State is private to this
+// module.
+//
+// Durable anchoring (store schema v2): each note records a content
+// *fingerprint* (hash of the block's normalized text) plus a heading-path hash
+// and an occurrence ordinal, with the positional block index kept only as a
+// last-resort fallback. So a note follows its block when the document is edited
+// or reordered, instead of drifting with a raw index. Legacy v1 stores
+// (`{ file: { idx: text } }`) are read transparently and upgraded in place the
+// first time their blocks resolve.
 
 import { showToast } from './toast.js';
 
 const ANNOTATIONS_KEY = 'specdown-annotations';
+const STORE_VERSION = 2;
+
+/** @typedef {{ fp: string, path: string, ordinal: number }} Anchor */
+/** @typedef {{ id: string, text: string, anchor: Anchor | null, legacyIdx: number }} Note */
+/** @typedef {{ version: number, files: Record<string, Note[]> }} Store */
+/** @typedef {{ root: HTMLElement, blocks: Element[], fps: string[], byFp: Map<string, number[]> }} BlockContext */
 
 let annotationMode = false;
 let annotationKey = '';
+let annNoteSeq = 0;
 
 const content = () => document.getElementById('markdown-content');
 
+// All block types a note can attach to. Rendering and the double-click handlers
+// index by this exact selector, so element positions line up.
+const ANNOTATABLE_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, blockquote';
+
+// ===========================
+// Hashing + ids
+// ===========================
 /**
- * @param {string} key
- * @returns {Record<string, string>}
+ * FNV-1a 32-bit hash → base36. Small + stable; collisions are tolerable because
+ * the heading-path + ordinal disambiguate and the index is a final fallback.
+ * @param {string} str
  */
-function loadAnnotations(key) {
-  try {
-    const raw = localStorage.getItem(ANNOTATIONS_KEY);
-    const all = raw ? JSON.parse(raw) : {};
-    return all[key] || {};
-  } catch (e) {
-    return {};
+function annHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
   }
+  return (h >>> 0).toString(36);
+}
+
+function annNoteId() {
+  annNoteSeq += 1;
+  return `an-${Date.now().toString(36)}-${annNoteSeq}`;
 }
 
 /**
- * @param {string} key
- * @param {Record<string, string>} annotations
+ * A block's text with whitespace collapsed and any appended badge removed —
+ * the basis for its content fingerprint.
+ * @param {Element} element
  */
-function saveAnnotations(key, annotations) {
-  try {
-    const raw = localStorage.getItem(ANNOTATIONS_KEY);
-    const all = raw ? JSON.parse(raw) : {};
-    if (Object.keys(annotations).length === 0) {
-      delete all[key];
-    } else {
-      all[key] = annotations;
+function annBlockText(element) {
+  const clone = /** @type {Element} */ (element.cloneNode(true));
+  clone.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
+  return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * The trail of enclosing headings above an element (e.g. "Intro / Setup"),
+ * hashed by the caller. Disambiguates blocks that share identical text.
+ * @param {Element} target
+ * @param {Element} root
+ */
+function annHeadingTrail(target, root) {
+  const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  /** @type {{ level: number, text: string }[]} */
+  const stack = [];
+  for (const h of headings) {
+    if (h === target) break;
+    // Only headings positioned before the target contribute to its path.
+    if (!(target.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
+    const level = Number(h.tagName.charAt(1));
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    stack.push({ level, text: annBlockText(h) });
+  }
+  return stack.map((s) => s.text).join(' / ');
+}
+
+// ===========================
+// Block context + anchoring
+// ===========================
+/**
+ * Snapshot the annotatable blocks once per operation: assign positional
+ * `data-annot-idx`, fingerprint each, and bucket indices by fingerprint.
+ * @param {Element} root
+ * @returns {BlockContext}
+ */
+function annContext(root) {
+  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR));
+  /** @type {string[]} */
+  const fps = [];
+  /** @type {Map<string, number[]>} */
+  const byFp = new Map();
+  blocks.forEach((element, idx) => {
+    element.setAttribute('data-annot-idx', String(idx));
+    const fp = annHash(annBlockText(element));
+    fps[idx] = fp;
+    const bucket = byFp.get(fp);
+    if (bucket) bucket.push(idx);
+    else byFp.set(fp, [idx]);
+  });
+  return { root: /** @type {HTMLElement} */ (root), blocks, fps, byFp };
+}
+
+/**
+ * Build the durable anchor for the block at `idx`.
+ * @param {BlockContext} ctx
+ * @param {number} idx
+ * @returns {Anchor}
+ */
+function annAnchorFor(ctx, idx) {
+  const fp = ctx.fps[idx];
+  const bucket = ctx.byFp.get(fp) || [idx];
+  return {
+    fp,
+    path: annHash(annHeadingTrail(ctx.blocks[idx], ctx.root)),
+    ordinal: Math.max(0, bucket.indexOf(idx)),
+  };
+}
+
+/**
+ * Resolve a note to a block index using its anchor, degrading gracefully:
+ *  - 'fp'       matched by fingerprint (durable hit)
+ *  - 'legacy'   no anchor yet (v1 note) → positioned by stored index
+ *  - 'fallback' had an anchor but the text changed → best-guess by index
+ *  - 'missing'  could not resolve to any block
+ * @param {BlockContext} ctx
+ * @param {Note} note
+ * @returns {{ idx: number, reason: 'fp' | 'legacy' | 'fallback' | 'missing' }}
+ */
+function annResolve(ctx, note) {
+  const a = note.anchor;
+  if (a && a.fp) {
+    const bucket = ctx.byFp.get(a.fp);
+    if (bucket && bucket.length) {
+      if (bucket.length === 1) return { idx: bucket[0], reason: 'fp' };
+      // Several blocks share the text — narrow by heading path, then ordinal.
+      const pathMatches = bucket.filter(
+        (i) => annHash(annHeadingTrail(ctx.blocks[i], ctx.root)) === a.path
+      );
+      const pool = pathMatches.length ? pathMatches : bucket;
+      if (typeof a.ordinal === 'number' && a.ordinal >= 0 && a.ordinal < pool.length) {
+        return { idx: pool[a.ordinal], reason: 'fp' };
+      }
+      return { idx: pool[0], reason: 'fp' };
     }
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(all));
-  } catch (e) {
-    // localStorage quota exceeded — silently ignore
+    // Anchor existed but the fingerprint is gone — the block's text was edited.
+    if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'fallback' };
+    return { idx: -1, reason: 'missing' };
   }
+  // v1 note (no anchor): position it, then renderAnnotations upgrades it.
+  if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'legacy' };
+  return { idx: -1, reason: 'missing' };
 }
 
 /**
- * The full annotation store: filename → { elementIndex → note }.
- * @returns {Record<string, Record<string, string>>}
+ * @param {BlockContext} ctx
+ * @param {number} idx
  */
-function getAllAnnotations() {
+function annValidIdx(ctx, idx) {
+  return typeof idx === 'number' && idx >= 0 && idx < ctx.blocks.length;
+}
+
+// ===========================
+// Storage (schema v2 + v1 migration)
+// ===========================
+/**
+ * Read the whole annotation store, transparently migrating a legacy v1 map to
+ * the v2 shape in memory (persisted on the next write).
+ * @returns {Store}
+ */
+function annReadStore() {
+  let raw;
   try {
-    const raw = localStorage.getItem(ANNOTATIONS_KEY);
-    return raw ? JSON.parse(raw) : {};
+    raw = localStorage.getItem(ANNOTATIONS_KEY);
   } catch (e) {
-    return {};
+    return { version: STORE_VERSION, files: {} };
+  }
+  if (!raw) return { version: STORE_VERSION, files: {} };
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    return { version: STORE_VERSION, files: {} };
+  }
+  if (parsed && parsed.version === STORE_VERSION && parsed.files && typeof parsed.files === 'object') {
+    return /** @type {Store} */ (parsed);
+  }
+  return annMigrate(parsed);
+}
+
+/**
+ * Convert a legacy v1 store (`{ file: { idx: text } }`) to v2.
+ * @param {any} parsed
+ * @returns {Store}
+ */
+function annMigrate(parsed) {
+  /** @type {Store} */
+  const store = { version: STORE_VERSION, files: {} };
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    for (const [file, notes] of Object.entries(parsed)) {
+      if (!notes || typeof notes !== 'object') continue;
+      const arr = annLegacyToNotes(/** @type {Record<string, string>} */ (notes));
+      if (arr.length) store.files[file] = arr;
+    }
+  }
+  return store;
+}
+
+/**
+ * @param {Record<string, string>} obj v1 `{ idx: text }`
+ * @returns {Note[]}
+ */
+function annLegacyToNotes(obj) {
+  /** @type {Note[]} */
+  const out = [];
+  for (const [idx, text] of Object.entries(obj)) {
+    const n = Number(idx);
+    const t = String(text || '');
+    if (Number.isNaN(n) || !t) continue;
+    out.push({ id: annNoteId(), text: t, anchor: null, legacyIdx: n });
+  }
+  out.sort((a, b) => a.legacyIdx - b.legacyIdx);
+  return out;
+}
+
+/** @param {Store} store */
+function annWriteStore(store) {
+  try {
+    /** @type {Record<string, Note[]>} */
+    const files = {};
+    for (const [file, notes] of Object.entries(store.files || {})) {
+      if (Array.isArray(notes) && notes.length) files[file] = notes;
+    }
+    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ version: STORE_VERSION, files }));
+  } catch (e) {
+    // localStorage quota exceeded — silently ignore.
   }
 }
 
 /**
- * Pretty-printed JSON of the entire annotation store (for export / inspection).
- * @returns {string}
+ * @param {string} key
+ * @returns {Note[]}
  */
+function annFileNotes(key) {
+  const store = annReadStore();
+  return Array.isArray(store.files[key]) ? store.files[key] : [];
+}
+
+/**
+ * @param {string} key
+ * @param {Note[]} notes
+ */
+function annPutFileNotes(key, notes) {
+  const store = annReadStore();
+  if (!notes || notes.length === 0) delete store.files[key];
+  else store.files[key] = notes;
+  annWriteStore(store);
+}
+
+// ===========================
+// Export / import
+// ===========================
+/** Pretty-printed JSON of the entire annotation store (v2). */
 export function getAnnotationsJSON() {
-  return JSON.stringify(getAllAnnotations(), null, 2);
+  return JSON.stringify(annReadStore(), null, 2);
 }
 
 /** Download all annotations as a JSON file. */
@@ -81,9 +290,41 @@ export function exportAnnotations() {
 }
 
 /**
- * Merge imported annotations into the store. Per file, incoming notes win on a
- * key (element-index) conflict; other files/notes are preserved. Re-renders the
- * current document's badges. Returns whether the import succeeded.
+ * @param {any} raw
+ * @returns {Note | null}
+ */
+function annNormalizeImportedNote(raw) {
+  if (!raw || typeof raw.text !== 'string' || !raw.text) return null;
+  const anchor =
+    raw.anchor && typeof raw.anchor.fp === 'string'
+      ? {
+          fp: String(raw.anchor.fp),
+          path: String(raw.anchor.path || ''),
+          ordinal: Number(raw.anchor.ordinal) || 0,
+        }
+      : null;
+  return {
+    id: typeof raw.id === 'string' ? raw.id : annNoteId(),
+    text: raw.text,
+    anchor,
+    legacyIdx: Number.isFinite(raw.legacyIdx) ? Number(raw.legacyIdx) : -1,
+  };
+}
+
+/**
+ * @param {Note} a
+ * @param {Note} b
+ */
+function annSameNote(a, b) {
+  if (a.text !== b.text) return false;
+  if (a.anchor && b.anchor) return a.anchor.fp === b.anchor.fp && a.anchor.ordinal === b.anchor.ordinal;
+  return a.legacyIdx === b.legacyIdx;
+}
+
+/**
+ * Merge imported annotations into the store. Accepts both v2 (`{ version, files }`)
+ * and legacy v1 (`{ file: { idx: text } }`) payloads. Existing notes are kept;
+ * incoming notes are appended unless an exact duplicate already exists.
  * @param {string} jsonText
  * @returns {boolean}
  */
@@ -100,16 +341,27 @@ export function importAnnotations(jsonText) {
     return false;
   }
 
-  const existing = getAllAnnotations();
+  const incomingFiles =
+    incoming.version === STORE_VERSION && incoming.files && typeof incoming.files === 'object'
+      ? incoming.files
+      : annMigrate(incoming).files;
+
+  const store = annReadStore();
   let fileCount = 0;
-  for (const [file, notes] of Object.entries(incoming)) {
-    if (!notes || typeof notes !== 'object') continue;
-    existing[file] = Object.assign({}, existing[file] || {}, notes);
+  for (const [file, notes] of Object.entries(incomingFiles)) {
+    if (!Array.isArray(notes)) continue;
+    const merged = Array.isArray(store.files[file]) ? store.files[file].slice() : [];
+    for (const candidate of notes) {
+      const note = annNormalizeImportedNote(candidate);
+      if (!note) continue;
+      if (!merged.some((m) => annSameNote(m, note))) merged.push(note);
+    }
+    store.files[file] = merged;
     fileCount += 1;
   }
 
   try {
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(existing));
+    annWriteStore(store);
   } catch (e) {
     showToast('Import failed: could not save (storage full?).', { type: 'error' });
     return false;
@@ -136,9 +388,12 @@ export function importAnnotationsFromFile() {
   input.click();
 }
 
+// ===========================
+// Mode toggle + handlers
+// ===========================
 /**
- * Toggle annotation mode. Callers are responsible for any platform chrome
- * sync (e.g. the iOS action bar) after toggling.
+ * Toggle annotation mode. Callers handle any platform chrome sync (e.g. the iOS
+ * action bar) after toggling.
  */
 export function toggleAnnotationMode() {
   annotationMode = !annotationMode;
@@ -147,8 +402,6 @@ export function toggleAnnotationMode() {
 
   if (annotationMode && annotationKey) {
     attachAnnotationHandlers();
-    // The interaction (double-click a block) isn't discoverable on its own, so
-    // tell the user how to use the mode they just turned on.
     showToast('Annotation mode on — double-click any paragraph or heading to add a note.', {
       type: 'info',
     });
@@ -157,121 +410,109 @@ export function toggleAnnotationMode() {
   }
 }
 
-// All block types a note can attach to. Both rendering and the double-click
-// handlers index by this exact selector, so element positions line up.
-const ANNOTATABLE_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, blockquote';
-
-/**
- * Assign a stable positional `data-annot-idx` to every annotatable block. Done
- * on every render (not just in annotation mode) so saved badges can resolve
- * their anchor element even when the user isn't actively annotating.
- * @param {Element} root
- * @returns {NodeListOf<Element>}
- */
-function indexAnnotatableElements(root) {
-  const els = root.querySelectorAll(ANNOTATABLE_SELECTOR);
-  els.forEach((el, idx) => el.setAttribute('data-annot-idx', String(idx)));
-  return els;
-}
-
-/**
- * Render saved annotation badges for a document, keyed by filename.
- * @param {string} key
- */
-export function renderAnnotations(key) {
-  const markdownContent = content();
-  annotationKey = key;
-  if (!markdownContent) return;
-  // Remove old annotation badges
-  markdownContent.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
-
-  // Index the blocks first so badges render whether or not annotation mode is
-  // on (previously badges only appeared while actively annotating).
-  indexAnnotatableElements(markdownContent);
-
-  const annotations = loadAnnotations(key);
-  Object.entries(annotations).forEach(([idx, text]) => {
-    const el = markdownContent.querySelectorAll('[data-annot-idx]')[parseInt(idx, 10)];
-    if (el) attachAnnotationBadge(el, parseInt(idx, 10), text);
-  });
-
-  // Re-arm double-click handlers if the user is currently annotating.
-  if (annotationMode) attachAnnotationHandlers();
-
-  // Refresh the side panel + toolbar toggle for this document.
-  renderAnnotationPanel();
-}
-
 function attachAnnotationHandlers() {
   const root = content();
   if (!root) return;
-  // Index (idempotent) then make each block interactive.
-  const els = indexAnnotatableElements(root);
-  els.forEach((el) => {
-    el.classList.add('annotatable');
-    el.addEventListener('dblclick', handleAnnotationDblClick);
+  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR));
+  blocks.forEach((element, idx) => {
+    element.setAttribute('data-annot-idx', String(idx));
+    element.classList.add('annotatable');
+    element.addEventListener('dblclick', handleAnnotationDblClick);
   });
 }
 
 function detachAnnotationHandlers() {
   const root = content();
   if (!root) return;
-  root.querySelectorAll('.annotatable').forEach((el) => {
-    el.removeEventListener('dblclick', handleAnnotationDblClick);
-    el.classList.remove('annotatable');
+  root.querySelectorAll('.annotatable').forEach((element) => {
+    element.removeEventListener('dblclick', handleAnnotationDblClick);
+    element.classList.remove('annotatable');
   });
 }
 
 /** @param {Event} e */
 function handleAnnotationDblClick(e) {
   if (!annotationMode) return;
-  const el = /** @type {HTMLElement} */ (e.currentTarget);
-  const idx = parseInt(el.getAttribute('data-annot-idx') || '', 10);
-  if (!Number.isNaN(idx)) openAnnotationEditor(idx);
+  const element = /** @type {HTMLElement} */ (e.currentTarget);
+  const id = element.getAttribute('data-annot-id');
+  if (id) openAnnotationEditor({ id });
+  else openAnnotationEditor({ element });
 }
 
+// ===========================
+// Rendering
+// ===========================
 /**
- * The annotatable block at a given positional index, or null.
- * @param {number} idx
+ * Render saved annotation badges for a document, keyed by filename.
+ * @param {string} key
  */
-function annotatedElement(idx) {
+export function renderAnnotations(key) {
   const root = content();
-  if (!root) return null;
-  const el = root.querySelectorAll('[data-annot-idx]')[idx];
-  return el || null;
+  annotationKey = key;
+  if (!root) return;
+
+  root.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
+  root.querySelectorAll('[data-annot-id]').forEach((element) => {
+    element.removeAttribute('data-annot-id');
+    element.classList.remove('has-annotation', 'annotation-orphaned');
+  });
+
+  const ctx = annContext(root);
+  const notes = annFileNotes(key);
+  let dirty = false;
+
+  for (const note of notes) {
+    const { idx, reason } = annResolve(ctx, note);
+    if (idx < 0) continue;
+    // Upgrade a v1 note to a durable anchor, and keep the positional fallback
+    // current whenever the fingerprint relocates the note.
+    if (reason === 'legacy') {
+      note.anchor = annAnchorFor(ctx, idx);
+      note.legacyIdx = idx;
+      dirty = true;
+    } else if (reason === 'fp' && note.legacyIdx !== idx) {
+      note.legacyIdx = idx;
+      dirty = true;
+    }
+    attachAnnotationBadge(ctx.blocks[idx], note, reason === 'fallback');
+  }
+
+  if (dirty) annPutFileNotes(key, notes);
+  if (annotationMode) attachAnnotationHandlers();
+  renderAnnotationPanel();
 }
 
 /**
- * Add / edit / remove the note at `idx` and refresh the badge + panel.
- * @param {number} idx
- * @param {string} rawText
+ * @param {Element} element
+ * @param {Note} note
+ * @param {boolean} orphaned The text changed; this is a best-guess location.
  */
-function commitAnnotation(idx, rawText) {
-  const text = String(rawText || '').trim();
-  const el = annotatedElement(idx);
-  const annotations = loadAnnotations(annotationKey);
+function attachAnnotationBadge(element, note, orphaned) {
+  const existing = element.querySelector('.annotation-badge');
+  if (existing) existing.remove();
 
-  if (!text) {
-    delete annotations[idx];
-    if (el) {
-      const badge = el.querySelector('.annotation-badge');
-      if (badge) badge.remove();
-      el.classList.remove('has-annotation');
-    }
-  } else {
-    annotations[idx] = text;
-    if (el) attachAnnotationBadge(el, idx, text);
-  }
-  saveAnnotations(annotationKey, annotations);
-  renderAnnotationPanel();
+  element.setAttribute('data-annot-id', note.id);
+  element.classList.add('has-annotation');
+  element.classList.toggle('annotation-orphaned', orphaned);
+
+  const badge = document.createElement('span');
+  badge.className = 'annotation-badge' + (orphaned ? ' annotation-badge-orphaned' : '');
+  badge.title = orphaned
+    ? `${note.text}\n(the anchored text changed — best-guess location)`
+    : note.text;
+  badge.textContent = '✎';
+  badge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showAnnotationPopover(badge, note.text);
+  });
+  element.appendChild(badge);
 }
 
 // ===========================
 // In-app note editor
 // ===========================
-// Replaces window.prompt(), which Electron does not implement (so desktop
-// annotation editing silently did nothing). A small modal works on every
-// surface and is nicer than a native prompt.
+// Replaces window.prompt(), which the native shells don't implement. A small
+// modal works on every surface.
 
 /** @type {(() => void) | null} */
 let editorCleanup = null;
@@ -297,18 +538,19 @@ function ensureEditor() {
 }
 
 /**
- * Open the note editor for the block at `idx`.
- * @param {number} idx
+ * Open the note editor for an existing note (`{ id }`) or a new note on a block
+ * (`{ element }`).
+ * @param {{ id?: string, element?: HTMLElement }} target
  */
-function openAnnotationEditor(idx) {
+function openAnnotationEditor(target) {
   const backdrop = ensureEditor();
   const textarea = /** @type {HTMLTextAreaElement} */ (backdrop.querySelector('.annotation-editor-input'));
   const deleteBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-delete'));
   const saveBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-save'));
   const cancelBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-cancel'));
 
-  const existing = loadAnnotations(annotationKey)[idx] || '';
-  textarea.value = existing;
+  const existing = target.id ? annFileNotes(annotationKey).find((n) => n.id === target.id) : null;
+  textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
   backdrop.style.display = 'flex';
   setTimeout(() => textarea.focus(), 0);
@@ -319,11 +561,11 @@ function openAnnotationEditor(idx) {
     editorCleanup = null;
   };
   const save = () => {
-    commitAnnotation(idx, textarea.value);
+    commitAnnotation(target, textarea.value);
     close();
   };
   const remove = () => {
-    commitAnnotation(idx, '');
+    commitAnnotation(target, '');
     close();
   };
   /** @param {KeyboardEvent} e */
@@ -356,20 +598,58 @@ function openAnnotationEditor(idx) {
   };
 }
 
+/**
+ * Add / edit / remove a note, then re-render badges + panel.
+ * @param {{ id?: string, element?: HTMLElement }} target
+ * @param {string} rawText
+ */
+function commitAnnotation(target, rawText) {
+  const text = String(rawText || '').trim();
+  const notes = annFileNotes(annotationKey);
+
+  if (target.id) {
+    const note = notes.find((n) => n.id === target.id);
+    if (!note) return;
+    if (!text) {
+      notes.splice(notes.indexOf(note), 1);
+    } else {
+      note.text = text;
+    }
+  } else if (target.element && text) {
+    const root = content();
+    const ctx = root ? annContext(root) : null;
+    const idx = ctx ? ctx.blocks.indexOf(target.element) : -1;
+    notes.push({
+      id: annNoteId(),
+      text,
+      anchor: ctx && idx >= 0 ? annAnchorFor(ctx, idx) : null,
+      legacyIdx: idx,
+    });
+  }
+
+  annPutFileNotes(annotationKey, notes);
+  renderAnnotations(annotationKey);
+}
+
 // ===========================
 // Annotations panel (list)
 // ===========================
-
 /**
- * Scroll to the annotated block and briefly flash it.
- * @param {number} idx
+ * Scroll to a note's block and briefly flash it.
+ * @param {string} id
  */
-function jumpToAnnotation(idx) {
-  const el = /** @type {HTMLElement | null} */ (annotatedElement(idx));
-  if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  el.classList.add('annotation-flash');
-  setTimeout(() => el.classList.remove('annotation-flash'), 1200);
+function jumpToAnnotation(id) {
+  const root = content();
+  if (!root) return;
+  const ctx = annContext(root);
+  const note = annFileNotes(annotationKey).find((n) => n.id === id);
+  if (!note) return;
+  const { idx } = annResolve(ctx, note);
+  if (idx < 0) return;
+  const target = /** @type {HTMLElement} */ (ctx.blocks[idx]);
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.classList.add('annotation-flash');
+  setTimeout(() => target.classList.remove('annotation-flash'), 1200);
 }
 
 /**
@@ -379,20 +659,18 @@ function jumpToAnnotation(idx) {
 export function renderAnnotationPanel() {
   const list = document.getElementById('annotation-list');
   const toggle = document.getElementById('annotation-list-toggle');
-  const annotations = loadAnnotations(annotationKey);
-  const indexes = Object.keys(annotations)
-    .map((k) => parseInt(k, 10))
-    .filter((n) => !Number.isNaN(n))
-    .sort((a, b) => a - b);
+  const root = content();
+  const notes = annFileNotes(annotationKey);
+  const ctx = root ? annContext(root) : null;
 
   if (toggle) {
-    toggle.style.display = indexes.length ? '' : 'none';
+    toggle.style.display = notes.length ? '' : 'none';
     const count = toggle.querySelector('.annotation-list-count');
-    if (count) count.textContent = String(indexes.length);
+    if (count) count.textContent = String(notes.length);
   }
 
   // An open-but-now-empty panel should close itself.
-  if (indexes.length === 0) {
+  if (notes.length === 0) {
     const panel = document.getElementById('annotation-panel');
     if (panel) {
       panel.style.display = 'none';
@@ -403,15 +681,19 @@ export function renderAnnotationPanel() {
 
   if (!list) return;
   list.innerHTML = '';
-  for (const idx of indexes) {
-    const el = annotatedElement(idx);
+
+  // Resolve each note to a block, then order rows by document position
+  // (unresolved notes sink to the bottom).
+  const rows = notes.map((note) => {
+    const r = ctx ? annResolve(ctx, note) : { idx: -1, reason: /** @type {const} */ ('missing') };
+    return { note, idx: r.idx, reason: r.reason };
+  });
+  rows.sort((a, b) => (a.idx < 0 ? Infinity : a.idx) - (b.idx < 0 ? Infinity : b.idx));
+
+  for (const row of rows) {
+    const { note, idx, reason } = row;
     let snippet = '';
-    if (el) {
-      // Read the block's text without the appended ✎ badge.
-      const clone = /** @type {HTMLElement} */ (el.cloneNode(true));
-      clone.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
-      snippet = (clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
-    }
+    if (ctx && idx >= 0) snippet = annBlockText(ctx.blocks[idx]).slice(0, 80);
 
     const li = document.createElement('li');
     li.className = 'annotation-list-item';
@@ -419,14 +701,15 @@ export function renderAnnotationPanel() {
     const jump = document.createElement('button');
     jump.type = 'button';
     jump.className = 'annotation-list-jump';
-    const note = document.createElement('span');
-    note.className = 'annotation-list-note';
-    note.textContent = annotations[idx];
-    const ctx = document.createElement('span');
-    ctx.className = 'annotation-list-context';
-    ctx.textContent = snippet || '(text not found)';
-    jump.append(note, ctx);
-    jump.addEventListener('click', () => jumpToAnnotation(idx));
+    const note_ = document.createElement('span');
+    note_.className = 'annotation-list-note';
+    note_.textContent = note.text;
+    const ctxEl = document.createElement('span');
+    ctxEl.className = 'annotation-list-context';
+    ctxEl.textContent = snippet || (reason === 'missing' ? '(text not found)' : '(moved or edited)');
+    if (reason === 'fallback' || reason === 'missing') ctxEl.classList.add('annotation-list-context-orphaned');
+    jump.append(note_, ctxEl);
+    jump.addEventListener('click', () => jumpToAnnotation(note.id));
 
     const edit = document.createElement('button');
     edit.type = 'button';
@@ -436,7 +719,7 @@ export function renderAnnotationPanel() {
     edit.textContent = '✎';
     edit.addEventListener('click', (e) => {
       e.stopPropagation();
-      openAnnotationEditor(idx);
+      openAnnotationEditor({ id: note.id });
     });
 
     const del = document.createElement('button');
@@ -447,7 +730,7 @@ export function renderAnnotationPanel() {
     del.textContent = '✕';
     del.addEventListener('click', (e) => {
       e.stopPropagation();
-      commitAnnotation(idx, '');
+      commitAnnotation({ id: note.id }, '');
     });
 
     li.append(jump, edit, del);
@@ -481,30 +764,6 @@ export function openAnnotationPanel() {
   panel.style.display = '';
   const toggle = document.getElementById('annotation-list-toggle');
   if (toggle) toggle.classList.add('active');
-}
-
-/**
- * @param {Element} el
- * @param {number} idx
- * @param {string} text
- */
-function attachAnnotationBadge(el, idx, text) {
-  // Remove existing badge first
-  const existing = el.querySelector('.annotation-badge');
-  if (existing) existing.remove();
-
-  el.setAttribute('data-annot-idx', String(idx));
-  el.classList.add('has-annotation');
-
-  const badge = document.createElement('span');
-  badge.className = 'annotation-badge';
-  badge.title = text;
-  badge.textContent = '✎';
-  badge.addEventListener('click', (e) => {
-    e.stopPropagation();
-    showAnnotationPopover(badge, text);
-  });
-  el.appendChild(badge);
 }
 
 /**
