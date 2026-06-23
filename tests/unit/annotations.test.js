@@ -1,5 +1,5 @@
 /**
- * Unit tests for annotation mode
+ * Unit tests for annotation mode (durable anchoring, schema v2).
  */
 
 const { loadHTML, loadApp } = require('../helpers/loadApp');
@@ -18,69 +18,44 @@ describe('Annotation Mode', () => {
   });
 
   // ===========================
-  // loadAnnotations
+  // Storage (v2 + v1 migration)
   // ===========================
-  describe('loadAnnotations', () => {
-    it('returns an empty object when localStorage has no annotations', () => {
-      const result = loadAnnotations('test.md');
-      expect(result).toEqual({});
+  describe('store helpers', () => {
+    it('returns an empty v2 store when localStorage is empty', () => {
+      expect(annReadStore()).toEqual({ version: 2, files: {} });
     });
 
-    it('returns the stored annotations for the given key', () => {
-      const data = { 'test.md': { 0: 'Note A', 3: 'Note B' } };
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(data));
-
-      const result = loadAnnotations('test.md');
-      expect(result).toEqual({ 0: 'Note A', 3: 'Note B' });
+    it('reads a legacy v1 store as migrated v2 notes (anchor null, index kept)', () => {
+      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'x', 2: 'y' } }));
+      const store = annReadStore();
+      expect(store.version).toBe(2);
+      expect(store.files['a.md'].map((n) => n.text)).toEqual(['x', 'y']);
+      expect(store.files['a.md'][0].legacyIdx).toBe(0);
+      expect(store.files['a.md'][1].legacyIdx).toBe(2);
+      expect(store.files['a.md'][0].anchor).toBeNull();
     });
 
-    it('returns empty object for a key that does not exist', () => {
-      const data = { 'other.md': { 0: 'Note' } };
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(data));
-
-      const result = loadAnnotations('missing.md');
-      expect(result).toEqual({});
-    });
-
-    it('returns empty object on malformed JSON', () => {
+    it('returns an empty v2 store on malformed JSON', () => {
       localStorage.setItem(ANNOTATIONS_KEY, 'NOT_JSON');
-      expect(() => loadAnnotations('test.md')).not.toThrow();
-      const result = loadAnnotations('test.md');
-      expect(result).toEqual({});
-    });
-  });
-
-  // ===========================
-  // saveAnnotations
-  // ===========================
-  describe('saveAnnotations', () => {
-    it('persists annotations to localStorage', () => {
-      saveAnnotations('test.md', { 0: 'Hello' });
-
-      const raw = localStorage.getItem(ANNOTATIONS_KEY);
-      const all = JSON.parse(raw);
-      expect(all['test.md']).toEqual({ 0: 'Hello' });
+      expect(() => annReadStore()).not.toThrow();
+      expect(annReadStore()).toEqual({ version: 2, files: {} });
     });
 
-    it('merges with existing annotations for other keys', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'other.md': { 1: 'Existing' } }));
-
-      saveAnnotations('test.md', { 0: 'New' });
-
-      const raw = localStorage.getItem(ANNOTATIONS_KEY);
-      const all = JSON.parse(raw);
-      expect(all['other.md']).toEqual({ 1: 'Existing' });
-      expect(all['test.md']).toEqual({ 0: 'New' });
+    it('annFileNotes returns the notes array for a key', () => {
+      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'x' } }));
+      expect(annFileNotes('a.md').map((n) => n.text)).toEqual(['x']);
+      expect(annFileNotes('missing.md')).toEqual([]);
     });
 
-    it('removes the key from storage when annotations object is empty', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'test.md': { 0: 'Old note' } }));
+    it('annPutFileNotes writes v2 and drops empty files', () => {
+      annPutFileNotes('a.md', [{ id: 'n', text: 't', anchor: null, legacyIdx: 0 }]);
+      let store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+      expect(store.version).toBe(2);
+      expect(store.files['a.md'][0].text).toBe('t');
 
-      saveAnnotations('test.md', {});
-
-      const raw = localStorage.getItem(ANNOTATIONS_KEY);
-      const all = JSON.parse(raw);
-      expect(all['test.md']).toBeUndefined();
+      annPutFileNotes('a.md', []);
+      store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+      expect(store.files['a.md']).toBeUndefined();
     });
   });
 
@@ -100,15 +75,10 @@ describe('Annotation Mode', () => {
       expect(annotationMode).toBe(false);
     });
 
-    it('adds active class to the annotation-toggle button when enabled', () => {
+    it('adds/removes active class on the annotation-toggle button', () => {
       const btn = document.getElementById('annotation-toggle');
       toggleAnnotationMode();
       expect(btn.classList.contains('active')).toBe(true);
-    });
-
-    it('removes active class from the annotation-toggle button when disabled', () => {
-      const btn = document.getElementById('annotation-toggle');
-      toggleAnnotationMode();
       toggleAnnotationMode();
       expect(btn.classList.contains('active')).toBe(false);
     });
@@ -118,17 +88,12 @@ describe('Annotation Mode', () => {
   // renderAnnotations
   // ===========================
   describe('renderAnnotations', () => {
-    beforeEach(async () => {
-      await renderMarkdown('# Title\n\nFirst paragraph.\n\nSecond paragraph.', 'test.md');
-    });
-
     it('sets annotationKey to the given key', () => {
       renderAnnotations('test.md');
       expect(annotationKey).toBe('test.md');
     });
 
     it('removes old annotation badges before rendering', () => {
-      // Manually insert a stale badge
       const mc = document.getElementById('markdown-content');
       const stale = document.createElement('span');
       stale.className = 'annotation-badge';
@@ -139,38 +104,93 @@ describe('Annotation Mode', () => {
       expect(mc.querySelectorAll('.annotation-badge').length).toBe(0);
     });
 
-    it('renders badges for stored annotations', () => {
-      const data = { 'test.md': { 0: 'My note' } };
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(data));
-
-      // Insert elements with data-annot-idx directly so renderAnnotations
-      // can find them (marked mock doesn't produce block elements)
-      const mc = document.getElementById('markdown-content');
-      mc.innerHTML = '<p data-annot-idx="0">Para 0</p><p data-annot-idx="1">Para 1</p>';
-
-      renderAnnotations('test.md');
-
-      const badges = document.querySelectorAll('.annotation-badge');
-      expect(badges.length).toBeGreaterThanOrEqual(1);
-    });
-
     it('renders saved badges when annotation mode is OFF (indexes blocks itself)', () => {
-      // Regression: previously badges only resolved their anchor while
-      // annotation mode was active, so saved notes were invisible on load.
-      const data = { 'doc.md': { 1: 'second-block note' } };
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify(data));
-
+      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'doc.md': { 1: 'second-block note' } }));
       const mc = document.getElementById('markdown-content');
-      // No data-annot-idx attributes, not in annotation mode.
       mc.innerHTML = '<p>Block zero</p><p>Block one</p>';
 
       renderAnnotations('doc.md');
 
       const badges = mc.querySelectorAll('.annotation-badge');
       expect(badges.length).toBe(1);
-      // The badge attaches to the second paragraph (index 1).
       expect(mc.querySelectorAll('p')[1].querySelector('.annotation-badge')).not.toBeNull();
       expect(mc.querySelectorAll('p')[0].querySelector('.annotation-badge')).toBeNull();
+    });
+
+    it('migrates a legacy v1 note and upgrades it to a durable anchor on render', () => {
+      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'm.md': { 1: 'legacy note' } }));
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML = '<p>Zero</p><p>One</p>';
+
+      renderAnnotations('m.md');
+
+      const store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+      expect(store.version).toBe(2);
+      const note = store.files['m.md'][0];
+      expect(note.text).toBe('legacy note');
+      expect(note.anchor).not.toBeNull();
+      expect(typeof note.anchor.fp).toBe('string');
+      expect(note.legacyIdx).toBe(1);
+    });
+  });
+
+  // ===========================
+  // Durable re-anchoring (the point of this feature)
+  // ===========================
+  describe('durable anchoring', () => {
+    it('follows the note to its content when blocks are reordered', () => {
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML = '<p>Alpha</p><p>Beta</p><p>Gamma</p>';
+      renderAnnotations('reorder.md');
+
+      const beta = [...mc.querySelectorAll('p')].find((p) => p.textContent === 'Beta');
+      commitAnnotation({ element: beta }, 'note on beta');
+      expect(beta.querySelector('.annotation-badge')).not.toBeNull();
+
+      // Move Beta from index 1 to index 2.
+      mc.innerHTML = '<p>Gamma</p><p>Alpha</p><p>Beta</p>';
+      renderAnnotations('reorder.md');
+
+      const ps = [...mc.querySelectorAll('p')];
+      const badged = ps.filter((p) => p.querySelector('.annotation-badge'));
+      expect(badged.length).toBe(1);
+      // The single badge is on the "Beta" block (textContent includes the ✎ badge).
+      expect(badged[0].textContent.replace('✎', '').trim()).toBe('Beta');
+      // The block now sitting at Beta's *old* index 1 is Alpha — no badge there.
+      expect(ps[1].textContent).toBe('Alpha');
+    });
+
+    it('disambiguates duplicate text by heading path', () => {
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML =
+        '<h2>First</h2><p>same text</p><h2>Second</h2><p>same text</p>';
+      renderAnnotations('dupe.md');
+
+      // Annotate the "same text" under the "Second" heading (the 2nd paragraph).
+      const secondPara = mc.querySelectorAll('p')[1];
+      commitAnnotation({ element: secondPara }, 'second one');
+
+      // Re-render; the badge must stay on the paragraph under "Second".
+      renderAnnotations('dupe.md');
+      const paras = mc.querySelectorAll('p');
+      expect(paras[0].querySelector('.annotation-badge')).toBeNull();
+      expect(paras[1].querySelector('.annotation-badge')).not.toBeNull();
+    });
+
+    it('falls back to the stored index and flags the note when its text is edited', () => {
+      const mc = document.getElementById('markdown-content');
+      mc.innerHTML = '<p>Alpha</p><p>Beta</p>';
+      renderAnnotations('edited.md');
+      const beta = [...mc.querySelectorAll('p')].find((p) => p.textContent === 'Beta');
+      commitAnnotation({ element: beta }, 'n');
+
+      // Rewrite Beta's text so the fingerprint no longer matches.
+      mc.innerHTML = '<p>Alpha</p><p>Beta, heavily rewritten now</p>';
+      renderAnnotations('edited.md');
+
+      const second = mc.querySelectorAll('p')[1];
+      expect(second.querySelector('.annotation-badge')).not.toBeNull();
+      expect(second.classList.contains('annotation-orphaned')).toBe(true);
     });
   });
 
@@ -178,6 +198,7 @@ describe('Annotation Mode', () => {
   // attachAnnotationBadge
   // ===========================
   describe('attachAnnotationBadge', () => {
+    const note = (text, id = 'n1') => ({ id, text, anchor: null, legacyIdx: 0 });
     function makeParagraph() {
       const mc = document.getElementById('markdown-content');
       const p = document.createElement('p');
@@ -186,122 +207,113 @@ describe('Annotation Mode', () => {
       return p;
     }
 
-    it('appends a badge element to the target element', () => {
+    it('appends a badge and tags the element with the note id', () => {
       const p = makeParagraph();
-
-      attachAnnotationBadge(p, 0, 'Test note');
-
-      const badge = p.querySelector('.annotation-badge');
-      expect(badge).not.toBeNull();
+      attachAnnotationBadge(p, note('Test note'), false);
+      expect(p.querySelector('.annotation-badge')).not.toBeNull();
+      expect(p.getAttribute('data-annot-id')).toBe('n1');
+      expect(p.classList.contains('has-annotation')).toBe(true);
     });
 
     it('sets the badge title to the annotation text', () => {
       const p = makeParagraph();
-
-      attachAnnotationBadge(p, 0, 'My annotation');
-
-      const badge = p.querySelector('.annotation-badge');
-      expect(badge.title).toBe('My annotation');
-    });
-
-    it('adds has-annotation class to the element', () => {
-      const p = makeParagraph();
-
-      attachAnnotationBadge(p, 0, 'Note');
-
-      expect(p.classList.contains('has-annotation')).toBe(true);
+      attachAnnotationBadge(p, note('My annotation'), false);
+      expect(p.querySelector('.annotation-badge').title).toBe('My annotation');
     });
 
     it('replaces an existing badge rather than adding a second one', () => {
       const p = makeParagraph();
-
-      attachAnnotationBadge(p, 0, 'First');
-      attachAnnotationBadge(p, 0, 'Second');
-
+      attachAnnotationBadge(p, note('First'), false);
+      attachAnnotationBadge(p, note('Second'), false);
       const badges = p.querySelectorAll('.annotation-badge');
       expect(badges.length).toBe(1);
       expect(badges[0].title).toBe('Second');
     });
+
+    it('marks an orphaned (best-guess) badge', () => {
+      const p = makeParagraph();
+      attachAnnotationBadge(p, note('x'), true);
+      expect(p.classList.contains('annotation-orphaned')).toBe(true);
+      expect(p.querySelector('.annotation-badge').classList.contains('annotation-badge-orphaned')).toBe(true);
+    });
   });
 
   // ===========================
-  // attachAnnotationHandlers / detachAnnotationHandlers
+  // attach / detach handlers
   // ===========================
-  describe('attachAnnotationHandlers', () => {
+  describe('attachAnnotationHandlers / detachAnnotationHandlers', () => {
     beforeEach(() => {
-      // Insert annotatable elements directly since the marked mock
-      // doesn't produce semantic block elements
       const mc = document.getElementById('markdown-content');
       mc.innerHTML = '<h1>Heading</h1><p>Para one.</p><p>Para two.</p>';
     });
 
-    it('adds annotatable class to paragraphs and headings', () => {
+    it('adds annotatable class and data-annot-idx', () => {
       attachAnnotationHandlers();
-
-      const annotatable = document.querySelectorAll('.annotatable');
-      expect(annotatable.length).toBeGreaterThan(0);
-    });
-
-    it('assigns data-annot-idx attributes starting from 0', () => {
-      attachAnnotationHandlers();
-
+      expect(document.querySelectorAll('.annotatable').length).toBeGreaterThan(0);
       const els = document.querySelectorAll('[data-annot-idx]');
-      expect(els.length).toBeGreaterThan(0);
       expect(els[0].getAttribute('data-annot-idx')).toBe('0');
     });
-  });
 
-  describe('detachAnnotationHandlers', () => {
-    beforeEach(() => {
-      const mc = document.getElementById('markdown-content');
-      mc.innerHTML = '<h1>Heading</h1><p>Para one.</p>';
+    it('removes annotatable class on detach', () => {
       attachAnnotationHandlers();
-    });
-
-    it('removes annotatable class from all elements', () => {
       detachAnnotationHandlers();
-
-      const annotatable = document.querySelectorAll('.annotatable');
-      expect(annotatable.length).toBe(0);
+      expect(document.querySelectorAll('.annotatable').length).toBe(0);
     });
   });
 });
 
 describe('Annotation export / import', () => {
-  const KEY = 'specdown-annotations';
-
   beforeEach(() => {
     localStorage.clear();
     loadHTML(document);
     loadApp(document);
   });
 
-  it('exports the full store as pretty JSON', () => {
-    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'note' } }));
+  it('exports the store as v2 (migrating legacy data)', () => {
+    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'note' } }));
     const parsed = JSON.parse(getAnnotationsJSON());
-    expect(parsed).toEqual({ 'a.md': { 0: 'note' } });
+    expect(parsed.version).toBe(2);
+    expect(parsed.files['a.md'][0].text).toBe('note');
   });
 
-  it('returns an empty object JSON when there are no annotations', () => {
-    expect(JSON.parse(getAnnotationsJSON())).toEqual({});
+  it('returns an empty v2 store JSON when there are no annotations', () => {
+    expect(JSON.parse(getAnnotationsJSON())).toEqual({ version: 2, files: {} });
   });
 
-  it('merges imported annotations across files', () => {
-    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'keep' } }));
-    const ok = importAnnotations(JSON.stringify({ 'a.md': { 1: 'add' }, 'b.md': { 0: 'new' } }));
-
+  it('imports a v2 payload, merging across files', () => {
+    annPutFileNotes('a.md', [{ id: 'x', text: 'keep', anchor: null, legacyIdx: 0 }]);
+    const ok = importAnnotations(
+      JSON.stringify({
+        version: 2,
+        files: {
+          'a.md': [{ id: 'y', text: 'add', anchor: null, legacyIdx: 1 }],
+          'b.md': [{ id: 'z', text: 'new', anchor: null, legacyIdx: 0 }],
+        },
+      })
+    );
     expect(ok).toBe(true);
-    const store = JSON.parse(localStorage.getItem(KEY));
-    expect(store).toEqual({
-      'a.md': { 0: 'keep', 1: 'add' },
-      'b.md': { 0: 'new' },
-    });
+    const store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+    expect(store.files['a.md'].map((n) => n.text).sort()).toEqual(['add', 'keep']);
+    expect(store.files['b.md'][0].text).toBe('new');
   });
 
-  it('lets incoming notes win on a key conflict', () => {
-    localStorage.setItem(KEY, JSON.stringify({ 'a.md': { 0: 'old' } }));
-    importAnnotations(JSON.stringify({ 'a.md': { 0: 'new' } }));
-    expect(JSON.parse(localStorage.getItem(KEY))['a.md']['0']).toBe('new');
+  it('imports a legacy v1 payload by migrating it', () => {
+    const ok = importAnnotations(JSON.stringify({ 'a.md': { 0: 'from v1' } }));
+    expect(ok).toBe(true);
+    const store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+    expect(store.version).toBe(2);
+    expect(store.files['a.md'][0].text).toBe('from v1');
+  });
+
+  it('does not duplicate an identical re-import', () => {
+    const payload = JSON.stringify({
+      version: 2,
+      files: { 'a.md': [{ id: 'x', text: 'once', anchor: null, legacyIdx: 0 }] },
+    });
+    importAnnotations(payload);
+    importAnnotations(payload);
+    const store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
+    expect(store.files['a.md'].length).toBe(1);
   });
 
   it('rejects invalid JSON with an error toast', () => {
@@ -340,11 +352,13 @@ describe('Annotation editor + panel', () => {
     backdrop.querySelector('.annotation-editor-save').dispatchEvent(new Event('click', { bubbles: true }));
 
     expect(mc.querySelector('p').querySelector('.annotation-badge')).not.toBeNull();
-    expect(JSON.parse(localStorage.getItem('specdown-annotations'))['doc.md']['0']).toBe('My note');
+    const store = JSON.parse(localStorage.getItem('specdown-annotations'));
+    expect(store.files['doc.md'][0].text).toBe('My note');
+    expect(store.files['doc.md'][0].anchor).not.toBeNull();
     expect(backdrop.style.display).toBe('none');
   });
 
-  it('renders the panel rows + toolbar count', () => {
+  it('renders the panel rows + toolbar count, in document order', () => {
     localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'note A', 1: 'note B' } }));
     const mc = document.getElementById('markdown-content');
     mc.innerHTML = '<p>Zero</p><p>One</p>';

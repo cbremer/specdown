@@ -2446,6 +2446,22 @@ mark.search-highlight-current {
     background-color: #e67e22;
 }
 
+/* Best-guess placement: the anchored block's text changed, so the note fell
+   back to its last-known position. Muted + dashed to signal "approximate". */
+.annotation-badge-orphaned {
+    background-color: #95a5a6;
+    border: 1px dashed rgba(255, 255, 255, 0.85);
+}
+
+.annotation-badge-orphaned:hover {
+    background-color: #7f8c8d;
+}
+
+.annotation-list-context-orphaned {
+    font-style: italic;
+    opacity: 0.75;
+}
+
 .annotation-popover {
     position: fixed;
     background-color: var(--bg-primary);
