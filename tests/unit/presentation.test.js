@@ -43,6 +43,15 @@ describe('Diagram presentation mode', () => {
     expect(hasPresentableDiagrams()).toBe(true);
   });
 
+  it('launches presentation from the iPhone action-sheet button', () => {
+    addDiagrams(2);
+    const btn = document.getElementById('ios-present-button');
+    expect(btn).not.toBeNull();
+    btn.dispatchEvent(new Event('click', { bubbles: true }));
+    expect(isPresentationOpen()).toBe(true);
+    expect(document.querySelector('.presentation-overlay')).not.toBeNull();
+  });
+
   it('opens a modal stage on the first diagram with a counter', () => {
     addDiagrams(3);
     startPresentation();

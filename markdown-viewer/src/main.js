@@ -210,6 +210,7 @@ const iosMoreButton = /** @type {HTMLButtonElement | null} */ ($('ios-more-butto
 const iosActionSheet = $('ios-action-sheet');
 const iosActionSheetClose = $('ios-action-sheet-close');
 const iosSplitButton = /** @type {HTMLButtonElement | null} */ ($('ios-split-button'));
+const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present-button'));
 const iosCommentsButton = /** @type {HTMLButtonElement | null} */ ($('ios-comments-button'));
 const iosAnnotationsButton = /** @type {HTMLButtonElement | null} */ ($('ios-annotations-button'));
 const iosPrintButton = /** @type {HTMLButtonElement | null} */ ($('ios-print-button'));
@@ -621,6 +622,13 @@ function setupEventListeners() {
         });
     }
 
+    if (iosPresentButton) {
+        iosPresentButton.addEventListener('click', () => {
+            closeIOSActionSheet();
+            startPresentation();
+        });
+    }
+
     if (iosCommentsButton) {
         iosCommentsButton.addEventListener('click', () => {
             closeIOSActionSheet();
@@ -881,9 +889,14 @@ async function renderMarkdown(content, filename) {
         // Process mermaid diagrams
         await processMermaidDiagrams();
 
-        // Reveal the Present button only when there are diagrams to present
+        // Reveal the Present entry points (desktop toolbar + iPhone action sheet)
+        // only when there are diagrams to present.
+        const canPresent = hasPresentableDiagrams();
         if (presentButton) {
-            presentButton.style.display = hasPresentableDiagrams() ? '' : 'none';
+            presentButton.style.display = canPresent ? '' : 'none';
+        }
+        if (iosPresentButton) {
+            iosPresentButton.style.display = canPresent ? '' : 'none';
         }
 
         // Reveal the workspace Files toggle when a folder is loaded, and refresh
