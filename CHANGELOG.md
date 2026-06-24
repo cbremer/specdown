@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.153 — 2026-06-24
+
+- Durable annotation anchoring (store schema v2)
+
 ## v0.0.152 — 2026-06-22
 
 ### Features
