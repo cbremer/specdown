@@ -21,6 +21,12 @@ let presentationPrevFocus = null;
 /** @type {PanzoomObject | null} */
 let slidePanzoom = null;
 
+// Touch-swipe tracking for slide navigation.
+let touchStartX = 0;
+let touchStartY = 0;
+let touchTracking = false;
+const SWIPE_MIN_PX = 60;
+
 /** Collect the rendered diagram SVGs in document order. */
 function collectDiagrams() {
   const content = el('markdown-content');
@@ -98,6 +104,12 @@ function buildPresentationOverlay() {
     },
     { passive: false }
   );
+
+  // Touch swipe → previous/next slide. Only when the slide isn't zoomed in
+  // (zoomed gestures are pans, handled by panzoom). Passive so panning still
+  // works. Listeners live on the overlay's stage and die with the overlay.
+  stage.addEventListener('touchstart', onPresentationTouchStart, { passive: true });
+  stage.addEventListener('touchend', onPresentationTouchEnd, { passive: true });
 
   const nav = document.createElement('div');
   nav.className = 'presentation-nav';
@@ -196,10 +208,41 @@ export function exitPresentation() {
   presentationOverlay = null;
   diagrams = [];
   slideIndex = 0;
+  touchTracking = false;
   if (presentationPrevFocus && typeof (/** @type {HTMLElement} */ (presentationPrevFocus)).focus === 'function') {
     (/** @type {HTMLElement} */ (presentationPrevFocus)).focus();
   }
   presentationPrevFocus = null;
+}
+
+/** @param {TouchEvent} e */
+function onPresentationTouchStart(e) {
+  // Single-finger only; a second finger means a pinch — leave it to panzoom.
+  if (e.touches && e.touches.length === 1) {
+    touchTracking = true;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  } else {
+    touchTracking = false;
+  }
+}
+
+/** @param {TouchEvent} e */
+function onPresentationTouchEnd(e) {
+  if (!touchTracking) return;
+  touchTracking = false;
+  const t = e.changedTouches && e.changedTouches[0];
+  if (!t) return;
+  // When zoomed in, the gesture is a pan (panzoom owns it), not a slide swipe.
+  const scale = slidePanzoom && typeof slidePanzoom.getScale === 'function' ? slidePanzoom.getScale() : 1;
+  if (scale > 1.05) return;
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
+  // Require a clearly horizontal swipe so vertical scrolls/flicks don't trigger.
+  if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0) presentNext();
+    else presentPrev();
+  }
 }
 
 /** @param {KeyboardEvent} e */

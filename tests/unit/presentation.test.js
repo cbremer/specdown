@@ -27,6 +27,21 @@ function counterText() {
   return c ? c.textContent : null;
 }
 
+// jsdom has no Touch/TouchEvent constructors; fake the bits the handlers read.
+function touchEvent(type, x, y) {
+  const e = new Event(type, { bubbles: true });
+  const point = [{ clientX: x, clientY: y }];
+  e.touches = type === 'touchend' ? [] : point;
+  e.changedTouches = point;
+  return e;
+}
+
+function swipe(fromX, toX, fromY = 100, toY = 100) {
+  const stage = document.querySelector('.presentation-stage');
+  stage.dispatchEvent(touchEvent('touchstart', fromX, fromY));
+  stage.dispatchEvent(touchEvent('touchend', toX, toY));
+}
+
 describe('Diagram presentation mode', () => {
   beforeEach(() => {
     loadHTML(document);
@@ -41,6 +56,32 @@ describe('Diagram presentation mode', () => {
     expect(hasPresentableDiagrams()).toBe(false);
     addDiagrams(2);
     expect(hasPresentableDiagrams()).toBe(true);
+  });
+
+  it('advances on a left swipe and goes back on a right swipe', () => {
+    addDiagrams(3);
+    startPresentation();
+    expect(counterText()).toBe('1 / 3');
+
+    swipe(220, 120); // dx = -100 → next
+    expect(counterText()).toBe('2 / 3');
+
+    swipe(120, 240); // dx = +120 → prev
+    expect(counterText()).toBe('1 / 3');
+  });
+
+  it('ignores a mostly-vertical drag', () => {
+    addDiagrams(3);
+    startPresentation();
+    swipe(200, 180, 100, 320); // dx = -20, dy = 220 → not a swipe
+    expect(counterText()).toBe('1 / 3');
+  });
+
+  it('ignores a swipe shorter than the threshold', () => {
+    addDiagrams(3);
+    startPresentation();
+    swipe(200, 165); // dx = -35 (< 60px) → ignored
+    expect(counterText()).toBe('1 / 3');
   });
 
   it('opens a modal stage on the first diagram with a counter', () => {
