@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.154 — 2026-06-25
+
+### Documentation
+
+- expand iOS distribution setup (step-by-step + App Store)
+
+### Other Changes
+
+- Surface presentation mode on iPhone via the action sheet
+
 ## v0.0.153 — 2026-06-24
 
 - Durable annotation anchoring (store schema v2)
