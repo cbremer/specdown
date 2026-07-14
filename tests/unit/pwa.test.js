@@ -22,7 +22,7 @@ describe('PWA service worker', () => {
     if (Object.getOwnPropertyDescriptor(navigator, 'serviceWorker')) {
       try {
         delete navigator.serviceWorker;
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -60,7 +60,7 @@ describe('PWA file handler (launchQueue)', () => {
   afterEach(() => {
     try {
       delete window.launchQueue;
-    } catch (e) {
+    } catch {
       // ignore
     }
   });
@@ -134,5 +134,17 @@ describe('PWA static assets', () => {
     expect(fs.existsSync(path.join(root, 'public/sw.js'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'public/icons/icon-512.png'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'public/icons/icon.svg'))).toBe(true);
+  });
+
+  it('only caches successful (response.ok) navigation responses', () => {
+    // Guards against re-introducing the stale-error-page bug: caching a
+    // transient 4xx/5xx navigation would serve that error page as the offline
+    // fallback until the next successful online navigation.
+    const sw = fs.readFileSync(path.join(root, 'public/sw.js'), 'utf8');
+    const navigateBlock = sw.slice(sw.indexOf("request.mode === 'navigate'"));
+    const cachePut = navigateBlock.indexOf('cache.put');
+    const okGuard = navigateBlock.indexOf('response.ok');
+    expect(okGuard).toBeGreaterThan(-1);
+    expect(cachePut).toBeGreaterThan(okGuard);
   });
 });

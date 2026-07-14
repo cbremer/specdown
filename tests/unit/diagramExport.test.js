@@ -33,8 +33,6 @@ function insertFakeDiagram(diagramId, svgViewBox = '0 0 200 100') {
 describe('Diagram Export', () => {
   let mockCreateObjectURL;
   let mockRevokeObjectURL;
-  let mockAppendChild;
-  let mockRemoveChild;
   let mockClick;
 
   beforeEach(() => {

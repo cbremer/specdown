@@ -15,7 +15,7 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:report": "jest --verbose --json --outputFile=test-results.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -67,7 +67,15 @@
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.js"
-    ]
+    ],
+    "coverageThreshold": {
+      "./desktop/main.js": {
+        "statements": 28,
+        "branches": 20,
+        "functions": 16,
+        "lines": 29
+      }
+    }
   },
   "build": {
     "appId": "com.specdown.desktop",

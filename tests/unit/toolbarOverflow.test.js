@@ -1,7 +1,8 @@
 /**
- * Unit tests for the toolbar overflow menu (the "⋮" menu that collapses the
- * content-header actions on narrow viewports). Menu items proxy to the real
- * toolbar buttons.
+ * Unit tests for the toolbar overflow menu — the "⋮" menu, visible at every
+ * width, holding the complete document-action list (long-tail `.overflow-only`
+ * actions like Watch/Comments/Notes/Print/Raw live only here). Menu items
+ * proxy to the real toolbar buttons.
  */
 
 const { loadHTML, loadApp } = require('../helpers/loadApp');
@@ -52,6 +53,40 @@ describe('Toolbar overflow menu', () => {
     openOverflowMenu();
     labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map((i) => i.textContent);
     expect(labels).toContain('Present diagrams');
+  });
+
+  it('offers the long-tail overflow-only actions (Print, Raw) at any width', () => {
+    openOverflowMenu();
+    const labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).toContain('Print / Save as PDF');
+    expect(labels).toContain('Toggle raw / preview');
+  });
+
+  it('offers "Show author comments" only when the comments feature is active', () => {
+    // comments-toggle is feature-gated via inline display (hidden by default).
+    openOverflowMenu();
+    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).not.toContain('Show author comments');
+    closeOverflowMenu();
+
+    document.getElementById('comments-toggle').style.display = '';
+    openOverflowMenu();
+    labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).toContain('Show author comments');
+  });
+
+  it('exposes a visible search affordance that opens the search bar', () => {
+    const searchButton = document.getElementById('search-button');
+    expect(searchButton).not.toBeNull();
+    // Create a tab so search has content context (search bar element exists regardless).
+    searchButton.dispatchEvent(new Event('click', { bubbles: true }));
+    expect(document.getElementById('search-bar').style.display).not.toBe('none');
   });
 
   it('opens via the overflow toggle button and syncs aria-expanded', () => {

@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
@@ -42,12 +42,12 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # Signed + notarized build (Developer ID). electron-builder imports the
       # cert from CSC_LINK/CSC_KEY_PASSWORD; `-c.mac.notarize=true` enables
@@ -81,7 +81,7 @@ jobs:
       # blockmaps, and the latest-mac.yml update feed so electron-updater can
       # discover and download new versions.
       - name: Upload macOS artifacts to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           files: |
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
@@ -117,12 +117,12 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Windows installer
         run: npm run desktop:build -- --win nsis --publish never
@@ -132,7 +132,7 @@ jobs:
       # Upload the NSIS installer, its blockmap, and the latest.yml update feed
       # for electron-updater on Windows.
       - name: Upload Windows artifacts to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           files: |
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
@@ -166,12 +166,12 @@ jobs:
           fi
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Linux build dependencies
         run: sudo apt-get update && sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgbm-dev
@@ -184,7 +184,7 @@ jobs:
       # Upload the AppImage and the latest-linux.yml update feed for
       # electron-updater on Linux.
       - name: Upload Linux artifacts to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           files: |

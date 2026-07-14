@@ -3,6 +3,7 @@
 // live in the render core (main.js) and are supplied via configureViewMode.
 
 import { state } from '../core/state.js';
+import { iconSvg } from '../core/icons.js';
 import { toggleToc } from './toc.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
 
@@ -66,11 +67,11 @@ export function updateViewToggleButton() {
   const icon = viewToggle.querySelector('.view-toggle-icon');
   if (state.currentViewMode === 'preview') {
     if (label) label.textContent = 'Raw';
-    if (icon) icon.innerHTML = '&lt;/&gt;';
+    if (icon) icon.innerHTML = iconSvg('code');
     viewToggle.classList.remove('active');
   } else {
     if (label) label.textContent = 'Preview';
-    if (icon) icon.innerHTML = '&#9664;';
+    if (icon) icon.innerHTML = iconSvg('eye');
     viewToggle.classList.add('active');
   }
 }

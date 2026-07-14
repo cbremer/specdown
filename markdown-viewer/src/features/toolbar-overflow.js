@@ -1,16 +1,25 @@
 // @ts-check
-// Toolbar overflow menu: on narrow viewports the content-header action buttons
-// collapse behind a single "⋮" button (shown via a CSS media query). The menu
-// items are thin proxies that `.click()` the real toolbar buttons, so there is
-// no duplicated action logic — whatever the buttons do, the menu does.
+// Toolbar overflow menu: the "⋮" button is visible at every width and its menu
+// is the COMPLETE list of document actions — the toolbar keeps only the
+// high-frequency shortcuts (Contents, Split, Annotate, Present, Search)
+// visible, and everything else (`.overflow-only` buttons: Watch, Workspace
+// files, author comments, annotations list, Print, Raw) lives here. Menu items
+// are thin proxies that `.click()` the real toolbar buttons, so there is no
+// duplicated action logic — whatever the buttons do, the menu does. A button
+// whose inline style is display:none is feature-gated off (e.g. Present with
+// no diagrams, Watch outside desktop) and is skipped.
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
 /** @type {Array<{ targetId: string, label: string }>} */
 const OVERFLOW_ACTIONS = [
+  { targetId: 'watch-toggle', label: 'Watch file for changes' },
+  { targetId: 'workspace-toggle', label: 'Workspace files' },
   { targetId: 'toc-toggle', label: 'Table of contents' },
   { targetId: 'split-toggle', label: 'Split view' },
   { targetId: 'annotation-toggle', label: 'Annotate' },
+  { targetId: 'annotation-list-toggle', label: 'Annotations list' },
+  { targetId: 'comments-toggle', label: 'Show author comments' },
   { targetId: 'present-button', label: 'Present diagrams' },
   { targetId: 'print-button', label: 'Print / Save as PDF' },
   { targetId: 'view-toggle', label: 'Toggle raw / preview' },

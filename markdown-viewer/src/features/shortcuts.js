@@ -2,6 +2,8 @@
 // Keyboard-shortcut reference sheet: a small accessible modal listing the app's
 // shortcuts. Opened with `?` or from the command palette.
 
+import { trapFocus } from '../core/focus-trap.js';
+
 const MOD = /Mac|iPhone|iPad/.test(
   (typeof navigator !== 'undefined' && navigator.platform) || ''
 )
@@ -12,15 +14,23 @@ const MOD = /Mac|iPhone|iPad/.test(
 const SHORTCUTS = [
   { keys: `${MOD} K`, label: 'Open command palette' },
   { keys: `${MOD} F`, label: 'Find in document' },
+  { keys: 'Enter / Shift Enter', label: 'Next / previous search match' },
   { keys: `${MOD} P`, label: 'Print / save as PDF' },
+  { keys: '← →', label: 'Previous / next diagram (presentation)' },
+  { keys: '+ − 0', label: 'Zoom in / out / fit slide (presentation)' },
+  { keys: 'Scroll / drag', label: 'Zoom and pan a diagram (pointer)' },
+  { keys: 'Double-click text', label: 'Add or edit a note (annotate mode on)' },
+  { keys: 'Double-click diagram', label: 'Reset diagram view' },
   { keys: '?', label: 'Show this shortcuts sheet' },
-  { keys: 'Esc', label: 'Close dialog, search, or fullscreen' },
+  { keys: 'Esc', label: 'Close dialog, search, presentation, or fullscreen' },
 ];
 
 /** @type {HTMLElement | null} */
 let overlay = null;
 /** @type {Element | null} */
 let previouslyFocused = null;
+/** @type {(() => void) | null} */
+let releaseTrap = null;
 
 export function isShortcutsSheetOpen() {
   return overlay !== null;
@@ -76,11 +86,14 @@ export function openShortcutsSheet() {
 
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
+  releaseTrap = trapFocus(overlay);
   dialog.focus();
 }
 
 export function closeShortcutsSheet() {
   if (!overlay) return;
+  if (releaseTrap) releaseTrap();
+  releaseTrap = null;
   if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
   overlay = null;
   if (

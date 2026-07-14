@@ -18,11 +18,7 @@ import 'highlight.js/styles/github-dark.css';
 // Internal modules (Phase 1 split — extracting cohesive units out of this entry).
 import { isDesktop, isIOSNative } from './core/platform.js';
 import { state } from './core/state.js';
-import {
-  normalizeMarkdownUrl,
-  getSvgNaturalDimensions,
-  revealHtmlComments,
-} from './core/utils.js';
+import { revealHtmlComments } from './core/utils.js';
 import { configureMarked } from './core/render-config.js';
 import {
   handleFile,
@@ -30,10 +26,6 @@ import {
   handleUrl,
   configureFileLoading,
 } from './features/file-loading.js';
-import {
-  downloadDiagramSvg,
-  downloadDiagramPng,
-} from './features/diagram-export.js';
 import {
   openSearch,
   closeSearch,
@@ -44,20 +36,13 @@ import {
 import {
   toggleAnnotationMode,
   renderAnnotations,
-  exportAnnotations,
-  importAnnotationsFromFile,
   toggleAnnotationPanel,
-  openAnnotationPanel,
 } from './features/annotations.js';
-import { handleRepoUrl } from './features/repo-browser.js';
-import { updateMinimap, updateMinimapViewport } from './features/minimap.js';
 import {
   processMermaidDiagrams,
   cleanupPanzoomInstances,
   reRenderMermaidDiagrams,
   closeFullscreen,
-  updateZoomUI,
-  resetToFit,
 } from './features/diagrams.js';
 import {
   setupIOSNativeUI,
@@ -65,9 +50,6 @@ import {
   requestNativeOpenIfAvailable,
   requestBundledSampleIfAvailable,
   performPrint,
-  closeIOSActionSheet,
-  closeIOSTocSheet,
-  setIOSSheetVisibility,
 } from './platform/ios-chrome.js';
 import {
   buildToc,
@@ -89,33 +71,17 @@ import {
   configureViewMode,
 } from './features/view-mode.js';
 import {
-  shareDiagramLink,
   checkForDiagramLink,
   configureShareLinks,
 } from './features/share-links.js';
 import { createTab, configureTabs } from './features/tabs.js';
 import { showToast } from './features/toast.js';
 import {
-  registerCommands,
-  toggleCommandPalette,
-  closeCommandPalette,
-  isCommandPaletteOpen,
-} from './features/command-palette.js';
-import {
-  openShortcutsSheet,
-  closeShortcutsSheet,
-  isShortcutsSheetOpen,
-} from './features/shortcuts.js';
-import {
   setupToolbarOverflow,
-  closeOverflowMenu,
-  isOverflowMenuOpen,
 } from './features/toolbar-overflow.js';
 import { registerServiceWorker, registerFileHandlerLaunchConsumer } from './features/pwa.js';
 import {
   startPresentation,
-  exitPresentation,
-  isPresentationOpen,
   hasPresentableDiagrams,
 } from './features/presentation.js';
 import {
@@ -128,16 +94,12 @@ import { enhanceCodeBlocks } from './features/code-copy.js';
 import {
   setupComments,
   refreshCommentsUI,
-  toggleComments,
 } from './features/comments.js';
 import {
   setupWorkspace,
   renderWorkspaceSidebar,
-  openWorkspaceFolder,
   hasWorkspace,
   configureWorkspace,
-  tryOpenDroppedFolder,
-  isFolderDragDropSupported,
 } from './features/workspace.js';
 import {
   setupDesktopIPC,
@@ -148,6 +110,11 @@ import {
   configureDesktop,
 } from './platform/desktop.js';
 import { bridgeRequestOpenPath } from './platform/bridge.js';
+import { registerAppCommands } from './features/app-commands.js';
+import { setupVersionInfo, checkForUpdates } from './features/version-check.js';
+import { setupDragAndDrop } from './features/drag-drop.js';
+import { setupGlobalKeyboardShortcuts } from './features/keyboard.js';
+import { setupIOSEventListeners } from './platform/ios-wiring.js';
 
 // ===========================
 // Constants
@@ -186,37 +153,19 @@ const fullscreenOverlay = /** @type {HTMLElement & { panzoomInstance?: any, full
 const viewToggle = req('view-toggle');
 const urlInput = /** @type {HTMLInputElement | null} */ ($('url-input'));
 const openUrlBtn = $('open-url-btn');
-const urlError = $('url-error');
 const tocToggle = $('toc-toggle');
 const annotationToggle = $('annotation-toggle');
 const annotationListToggle = $('annotation-list-toggle');
 const annotationPanelClose = $('annotation-panel-close');
 const splitToggle = $('split-toggle');
-const splitRawPane = $('split-raw-pane');
-const splitRawContent = $('split-raw-content');
 const printButton = $('print-button');
 const presentButton = $('present-button');
 const workspaceToggle = $('workspace-toggle');
-const searchBar = $('search-bar');
 const searchInput = /** @type {HTMLInputElement | null} */ ($('search-input'));
 const searchPrev = $('search-prev');
 const searchNext = $('search-next');
 const searchClose = $('search-close');
-const shareToast = $('share-toast');
-const iosOpenButton = $('ios-open-button');
-const iosContentsButton = /** @type {HTMLButtonElement | null} */ ($('ios-contents-button'));
-const iosViewButton = /** @type {HTMLButtonElement | null} */ ($('ios-view-button'));
-const iosMoreButton = /** @type {HTMLButtonElement | null} */ ($('ios-more-button'));
-const iosActionSheet = $('ios-action-sheet');
-const iosActionSheetClose = $('ios-action-sheet-close');
-const iosSplitButton = /** @type {HTMLButtonElement | null} */ ($('ios-split-button'));
 const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present-button'));
-const iosCommentsButton = /** @type {HTMLButtonElement | null} */ ($('ios-comments-button'));
-const iosAnnotationsButton = /** @type {HTMLButtonElement | null} */ ($('ios-annotations-button'));
-const iosPrintButton = /** @type {HTMLButtonElement | null} */ ($('ios-print-button'));
-const iosThemeButton = $('ios-theme-button');
-const iosTocSheet = $('ios-toc-sheet');
-const iosTocClose = $('ios-toc-close');
 
 // ===========================
 // Initialization
@@ -249,7 +198,7 @@ function init() {
         openFile: (/** @type {string} */ name, /** @type {string} */ content) => createTab(name, content, null),
     });
     registerAppCommands();
-    setupVersionInfo();
+    setupVersionInfo(APP_VERSION, APP_VERSION_LABEL);
     setupTheme();
     setupIOSNativeUI();
     setupToolbarOverflow();
@@ -258,7 +207,7 @@ function init() {
     setupComments();
     setupEventListeners();
     configureMarked();
-    checkForUpdates();
+    checkForUpdates({ version: APP_VERSION, repo: SOURCE_REPO, repoUrl: SOURCE_REPO_URL });
     checkForDiagramLink();
     registerServiceWorker();
     // Open .md/.markdown files launched via the OS "Open with" on an installed PWA.
@@ -272,128 +221,6 @@ function init() {
     if (isDesktop) {
         setupDesktopIPC();
     }
-}
-
-// ===========================
-// Command Palette registry
-// ===========================
-// The modifier glyph shown in command hints — ⌘ on Apple platforms, Ctrl else.
-const CMD_MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl';
-
-// Commands that act on the open document are only offered while one is visible.
-const isDocumentOpen = () => contentArea.style.display !== 'none';
-
-function registerAppCommands() {
-    registerCommands([
-        {
-            id: 'open-file',
-            title: 'Open file…',
-            keywords: ['browse', 'load', 'new'],
-            run: () => {
-                if (!requestNativeOpenIfAvailable()) fileInput.click();
-            },
-        },
-        {
-            id: 'open-folder',
-            title: 'Open folder…',
-            keywords: ['workspace', 'directory', 'browse', 'files', 'sidebar'],
-            run: () => openWorkspaceFolder(),
-            isAvailable: () => isDesktop,
-        },
-        {
-            id: 'toggle-theme',
-            title: 'Toggle theme (light / dark / system)',
-            keywords: ['dark', 'light', 'appearance', 'color'],
-            run: () => toggleTheme(),
-        },
-        {
-            id: 'toggle-view',
-            title: 'Toggle raw / preview',
-            keywords: ['markdown', 'source', 'code'],
-            run: () => toggleViewMode(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'toggle-toc',
-            title: 'Toggle table of contents',
-            keywords: ['outline', 'headings', 'contents'],
-            run: () => toggleToc(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'toggle-comments',
-            title: 'Show / hide HTML comments',
-            keywords: ['comments', 'hidden', 'html', 'reveal'],
-            run: () => toggleComments(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'toggle-split',
-            title: 'Toggle split view',
-            keywords: ['preview', 'raw', 'side'],
-            run: () => toggleSplitView(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'toggle-annotate',
-            title: 'Toggle annotation mode',
-            keywords: ['notes', 'comment', 'markup'],
-            run: () => {
-                toggleAnnotationMode();
-                syncIOSChrome();
-            },
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'show-annotations',
-            title: 'Show annotations list',
-            keywords: ['notes', 'annotations', 'panel', 'comments'],
-            run: () => openAnnotationPanel(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'find',
-            title: 'Find in document',
-            hint: CMD_MOD + ' F',
-            keywords: ['search'],
-            run: () => openSearch(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'print',
-            title: 'Print / Save as PDF',
-            hint: CMD_MOD + ' P',
-            keywords: ['pdf', 'export', 'save'],
-            run: () => performPrint(),
-            isAvailable: isDocumentOpen,
-        },
-        {
-            id: 'present-diagrams',
-            title: 'Present diagrams',
-            keywords: ['presentation', 'slideshow', 'fullscreen', 'mermaid', 'diagram'],
-            run: () => startPresentation(),
-            isAvailable: () => isDocumentOpen() && hasPresentableDiagrams(),
-        },
-        {
-            id: 'export-annotations',
-            title: 'Export annotations',
-            keywords: ['annotations', 'notes', 'download', 'backup', 'json'],
-            run: () => exportAnnotations(),
-        },
-        {
-            id: 'import-annotations',
-            title: 'Import annotations',
-            keywords: ['annotations', 'notes', 'upload', 'restore', 'json'],
-            run: () => importAnnotationsFromFile(),
-        },
-        {
-            id: 'shortcuts',
-            title: 'Keyboard shortcuts',
-            hint: '?',
-            keywords: ['help', 'keys', 'cheatsheet'],
-            run: () => openShortcutsSheet(),
-        },
-    ]);
 }
 
 // ===========================
@@ -420,52 +247,6 @@ function setupRecentFiles() {
             renderRecentFiles();
         });
     }
-}
-
-// ===========================
-// Version Info
-// ===========================
-function setupVersionInfo() {
-    var versionLabel = document.getElementById('version-label');
-    if (versionLabel) {
-        versionLabel.textContent = 'v' + APP_VERSION + ' (' + APP_VERSION_LABEL + ')';
-    }
-}
-
-// ===========================
-// Version Check
-// ===========================
-function checkForUpdates() {
-    if (isIOSNative) {
-        return;
-    }
-    const apiUrl = 'https://api.github.com/repos/' + SOURCE_REPO + '/releases/latest';
-    fetch(apiUrl)
-        .then(function(response) {
-            if (!response.ok) return null;
-            return response.json();
-        })
-        .then(function(data) {
-            if (!data || !data.tag_name) return;
-            const latest = data.tag_name.replace(/^v/, '');
-            if (latest !== APP_VERSION) {
-                const updateEl = document.getElementById('version-update');
-                if (updateEl) {
-                    const releaseUrl = data.html_url || SOURCE_REPO_URL + '/releases/latest';
-                    const link = document.createElement('a');
-                    link.href = releaseUrl;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.textContent = 'v' + latest + ' available';
-                    updateEl.textContent = '';
-                    updateEl.appendChild(link);
-                    updateEl.style.display = '';
-                }
-            }
-        })
-        .catch(function() {
-            // Version check is non-critical; silently ignore failures
-        });
 }
 
 // iOS API: called by Swift shell to load a file (Session 2+)
@@ -513,9 +294,7 @@ function setupEventListeners() {
         }
     });
 
-    dropZone.addEventListener('dragover', handleDragOver);
-    dropZone.addEventListener('dragleave', handleDragLeave);
-    dropZone.addEventListener('drop', handleDrop);
+    setupDragAndDrop();
 
     // Theme toggle
     themeToggle.addEventListener('click', toggleTheme);
@@ -554,109 +333,18 @@ function setupEventListeners() {
         printButton.addEventListener('click', performPrint);
     }
 
+    // Search button (visible affordance for Cmd/Ctrl+F)
+    const searchButton = $('search-button');
+    if (searchButton) {
+        searchButton.addEventListener('click', () => openSearch());
+    }
+
     // Present button (shown only when the document has diagrams)
     if (presentButton) {
         presentButton.addEventListener('click', () => startPresentation());
     }
 
-    if (iosOpenButton) {
-        iosOpenButton.addEventListener('click', () => {
-            closeIOSActionSheet();
-            if (requestNativeOpenIfAvailable()) return;
-            fileInput.click();
-        });
-    }
-
-    if (iosContentsButton) {
-        iosContentsButton.addEventListener('click', () => {
-            if (iosContentsButton.disabled) return;
-            toggleToc();
-        });
-    }
-
-    if (iosViewButton) {
-        iosViewButton.addEventListener('click', () => {
-            if (iosViewButton.disabled) return;
-            closeIOSActionSheet();
-            toggleViewMode();
-        });
-    }
-
-    if (iosMoreButton) {
-        iosMoreButton.addEventListener('click', () => {
-            if (iosMoreButton.disabled) return;
-            closeIOSTocSheet();
-            setIOSSheetVisibility(iosActionSheet, true);
-        });
-    }
-
-    if (iosActionSheetClose) {
-        iosActionSheetClose.addEventListener('click', closeIOSActionSheet);
-    }
-
-    if (iosActionSheet) {
-        iosActionSheet.addEventListener('click', (e) => {
-            if (e.target === iosActionSheet) {
-                closeIOSActionSheet();
-            }
-        });
-    }
-
-    if (iosTocClose) {
-        iosTocClose.addEventListener('click', closeIOSTocSheet);
-    }
-
-    if (iosTocSheet) {
-        iosTocSheet.addEventListener('click', (e) => {
-            if (e.target === iosTocSheet) {
-                closeIOSTocSheet();
-            }
-        });
-    }
-
-    if (iosSplitButton) {
-        iosSplitButton.addEventListener('click', () => {
-            if (iosSplitButton.disabled) return;
-            closeIOSActionSheet();
-            toggleSplitView();
-        });
-    }
-
-    if (iosPresentButton) {
-        iosPresentButton.addEventListener('click', () => {
-            closeIOSActionSheet();
-            startPresentation();
-        });
-    }
-
-    if (iosCommentsButton) {
-        iosCommentsButton.addEventListener('click', () => {
-            closeIOSActionSheet();
-            toggleComments();
-        });
-    }
-
-    if (iosAnnotationsButton) {
-        iosAnnotationsButton.addEventListener('click', () => {
-            closeIOSActionSheet();
-            openAnnotationPanel();
-        });
-    }
-
-    if (iosPrintButton) {
-        iosPrintButton.addEventListener('click', () => {
-            if (iosPrintButton.disabled) return;
-            closeIOSActionSheet();
-            performPrint();
-        });
-    }
-
-    if (iosThemeButton) {
-        iosThemeButton.addEventListener('click', () => {
-            closeIOSActionSheet();
-            toggleTheme();
-        });
-    }
+    setupIOSEventListeners();
 
     // Search bar events
     if (searchInput) {
@@ -680,170 +368,44 @@ function setupEventListeners() {
         }
     });
 
-    // Global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Cmd/Ctrl+K — toggle the command palette (works anywhere)
-        if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
-            e.preventDefault();
-            toggleCommandPalette();
-            return;
-        }
-        // "?" — open the keyboard shortcut sheet (unless typing or in a dialog)
-        if (e.key === '?' && !isTypingTarget(e.target) && !isCommandPaletteOpen()) {
-            e.preventDefault();
-            openShortcutsSheet();
-            return;
-        }
-        // ESC
-        if (e.key === 'Escape') {
-            if (isCommandPaletteOpen()) {
-                closeCommandPalette();
-            } else if (isShortcutsSheetOpen()) {
-                closeShortcutsSheet();
-            } else if (isPresentationOpen()) {
-                exitPresentation();
-            } else if (isOverflowMenuOpen()) {
-                closeOverflowMenu();
-            } else if (fullscreenOverlay.style.display !== 'none') {
-                closeFullscreen();
-            } else if (searchBar && searchBar.style.display !== 'none') {
-                closeSearch();
-            }
-            return;
-        }
-        // Cmd/Ctrl+F — open search
-        if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-            if (contentArea.style.display !== 'none') {
-                e.preventDefault();
-                openSearch();
-            }
-            return;
-        }
-        // Cmd/Ctrl+P — print
-        if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-            if (contentArea.style.display !== 'none') {
-                e.preventDefault();
-                performPrint();
-            }
-        }
+    setupGlobalKeyboardShortcuts();
 
-        if (fullscreenOverlay.style.display !== 'none' && fullscreenOverlay.panzoomInstance) {
-            const instance = fullscreenOverlay.panzoomInstance;
-            const controls = fullscreenOverlay.querySelector('.fullscreen-controls');
-            if (e.key === '+' || e.key === '=') {
-                e.preventDefault();
-                instance.zoomIn();
-                updateZoomUI(instance, controls);
-            } else if (e.key === '-') {
-                e.preventDefault();
-                instance.zoomOut();
-                updateZoomUI(instance, controls);
-            } else if (e.key === '0') {
-                e.preventDefault();
-                if (fullscreenOverlay.fullscreenState?.homeState) {
-                    resetToFit(instance, fullscreenOverlay.fullscreenState.homeState);
-                    updateZoomUI(instance, controls);
-                }
-            }
+    // URL input. The fetch can be slow (remote host, big repo scan), so the
+    // Open button carries a busy state — without it the flow reads as frozen.
+    const openUrlWithBusyState = async (/** @type {string} */ url) => {
+        const btn = /** @type {HTMLButtonElement | null} */ (openUrlBtn);
+        if (!btn) {
+            await handleUrl(url);
+            return;
         }
-    });
-
-    // URL input
+        if (btn.disabled) return; // already loading — ignore re-clicks
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Opening…';
+        btn.setAttribute('aria-busy', 'true');
+        try {
+            await handleUrl(url);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            btn.removeAttribute('aria-busy');
+        }
+    };
     if (openUrlBtn) {
         openUrlBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            handleUrl(urlInput ? urlInput.value.trim() : '');
+            openUrlWithBusyState(urlInput ? urlInput.value.trim() : '');
         });
     }
     if (urlInput) {
         urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleUrl(urlInput.value.trim());
+            if (e.key === 'Enter') openUrlWithBusyState(urlInput.value.trim());
         });
         urlInput.addEventListener('click', (e) => e.stopPropagation());
     }
 
-    // Prevent default drag behavior on document
-    document.addEventListener('dragover', (e) => e.preventDefault());
-
-    // Document-level drop: open files as new tabs when tabs are already open.
-    // When the drop zone is visible its handler fires first and calls
-    // stopPropagation(), so this listener is only reached for drops on the
-    // content area (when the drop zone is hidden).
-    document.addEventListener('drop', (e) => {
-        e.preventDefault();
-        if (!e.dataTransfer) return;
-        // Capture files synchronously — the FileList is invalidated after the event.
-        const droppedFiles = Array.from(e.dataTransfer.files || []);
-        const openDroppedFiles = () => {
-            if (state.tabs.length > 0) {
-                for (const file of droppedFiles) handleFile(file);
-            }
-        };
-        // Folder drag-and-drop is Chromium-only and async; elsewhere open files
-        // directly (keeps the synchronous drop path on other browsers).
-        if (isFolderDragDropSupported()) {
-            tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
-                if (!handled) openDroppedFiles();
-            });
-        } else {
-            openDroppedFiles();
-        }
-    });
-
     // TOC scroll spy
     markdownContent.addEventListener('scroll', scheduleTocActiveHeadingUpdate);
-}
-
-// True when the event target is a text-entry element, so global single-key
-// shortcuts (like "?") don't fire while the user is typing.
-/** @param {EventTarget | null} target */
-function isTypingTarget(target) {
-    if (!target) return false;
-    const element = /** @type {HTMLElement} */ (target);
-    const tag = element.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || element.isContentEditable === true;
-}
-
-// ===========================
-// Drag and Drop Handlers
-// ===========================
-/** @param {DragEvent} e */
-function handleDragOver(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.add('drag-over');
-}
-
-/** @param {DragEvent} e */
-function handleDragLeave(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!dropZone.contains(/** @type {Node | null} */ (e.relatedTarget))) {
-        dropZone.classList.remove('drag-over');
-    }
-}
-
-/** @param {DragEvent} e */
-function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.remove('drag-over');
-
-    if (!e.dataTransfer) return;
-    // Capture files synchronously — the FileList is invalidated after the event.
-    const droppedFiles = Array.from(e.dataTransfer.files || []);
-    const openDroppedFiles = () => {
-        for (const file of droppedFiles) handleFile(file);
-    };
-    // A dropped folder opens as a workspace (Chromium, async); otherwise — and on
-    // browsers without the API — fall back to opening the dropped files directly.
-    if (isFolderDragDropSupported()) {
-        tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
-            if (!handled) openDroppedFiles();
-        });
-    } else {
-        openDroppedFiles();
-    }
 }
 
 

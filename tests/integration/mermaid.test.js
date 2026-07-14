@@ -187,7 +187,7 @@ describe('Mermaid Diagram Processing', () => {
 
       await processMermaidDiagrams();
 
-      const svgElement = markdownContent.querySelector('svg');
+      const svgElement = markdownContent.querySelector('.diagram-wrapper svg');
       expect(svgElement).toBeTruthy();
       expect(svgElement.getAttribute('data-mermaid-source')).toBe(mermaidCode);
     });
@@ -671,6 +671,87 @@ describe('Mermaid Diagram Processing', () => {
 
       // Verify that the old panzoom instance was destroyed
       expect(destroySpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('render-generation guard (tab-switch race)', () => {
+    beforeEach(() => {
+      // Yielding to timers runs jsdom's rAF queue, which reaches the minimap's
+      // canvas/blob code — stub the URL APIs jsdom doesn't implement.
+      URL.createObjectURL = jest.fn(() => 'blob:mock');
+      URL.revokeObjectURL = jest.fn();
+    });
+
+    it('a superseded diagram pass stops mutating DOM and panzoom state', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+
+      // Doc A: its mermaid.render is deferred so the pass stalls mid-render.
+      markdownContent.innerHTML =
+        '<pre><code class="language-mermaid">graph A</code></pre>';
+      let resolveStale;
+      mermaid.render.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveStale = resolve;
+        })
+      );
+      const stalePass = processMermaidDiagrams();
+      // Let the stale pass advance past loadMermaid() and into mermaid.render.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mermaid.render).toHaveBeenCalledTimes(1);
+
+      // Doc B replaces the content (tab switch) and renders to completion.
+      markdownContent.innerHTML =
+        '<pre><code class="language-mermaid">graph B</code></pre>';
+      await processMermaidDiagrams();
+      const instancesAfterCurrent = state.currentPanzoomInstances.length;
+      const domAfterCurrent = markdownContent.innerHTML;
+
+      // The stale pass now finishes its render — and must change nothing.
+      resolveStale({
+        svg: '<svg viewBox="0 0 800 600" width="800" height="600"><text>graph A</text></svg>',
+        bindFunctions: jest.fn(),
+      });
+      await stalePass;
+
+      expect(state.currentPanzoomInstances.length).toBe(instancesAfterCurrent);
+      expect(markdownContent.innerHTML).toBe(domAfterCurrent);
+    });
+
+    it('a new document render invalidates an in-flight theme re-render', async () => {
+      const markdownContent = document.getElementById('markdown-content');
+
+      // Render a document with a diagram normally.
+      markdownContent.innerHTML =
+        '<pre><code class="language-mermaid">graph A</code></pre>';
+      await processMermaidDiagrams();
+
+      // Start a theme re-render whose mermaid.render is deferred.
+      let resolveStale;
+      mermaid.render.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveStale = resolve;
+        })
+      );
+      const staleRerender = reRenderMermaidDiagrams();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // A fresh document render supersedes it.
+      markdownContent.innerHTML =
+        '<pre><code class="language-mermaid">graph B</code></pre>';
+      await processMermaidDiagrams();
+      const domAfterCurrent = markdownContent.innerHTML;
+      const instancesAfterCurrent = state.currentPanzoomInstances.length;
+
+      resolveStale({
+        svg: '<svg viewBox="0 0 800 600" width="800" height="600"><text>stale</text></svg>',
+        bindFunctions: jest.fn(),
+      });
+      await staleRerender;
+
+      // The stale re-render must not have replaced doc B's diagram markup
+      // nor added/destroyed panzoom instances after it was superseded.
+      expect(markdownContent.innerHTML).toBe(domAfterCurrent);
+      expect(state.currentPanzoomInstances.length).toBe(instancesAfterCurrent);
     });
   });
 });

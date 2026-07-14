@@ -70,7 +70,7 @@ function getFilenameFromUrl(url) {
     if (segments.length > 0) {
       return segments[segments.length - 1];
     }
-  } catch (e) {
+  } catch {
     // ignore invalid URL
   }
   return 'untitled.md';
@@ -131,7 +131,7 @@ export async function handleUrl(url) {
     // Remember this URL for one-click re-open from the drop zone.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();
-  } catch (e) {
+  } catch {
     showUrlError(
       'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
     );

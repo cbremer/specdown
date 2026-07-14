@@ -12,7 +12,7 @@ const cEl = (/** @type {string} */ id) => document.getElementById(id);
 let commentsHidden = (() => {
   try {
     return localStorage.getItem(COMMENTS_HIDDEN_KEY) === '1';
-  } catch (e) {
+  } catch {
     return false;
   }
 })();
@@ -35,7 +35,7 @@ export function toggleComments() {
   commentsHidden = !commentsHidden;
   try {
     localStorage.setItem(COMMENTS_HIDDEN_KEY, commentsHidden ? '1' : '0');
-  } catch (e) {
+  } catch {
     // non-critical
   }
   applyCommentsVisibility();

@@ -13,7 +13,6 @@ const prettier = require('eslint-config-prettier');
 module.exports = [
   {
     ignores: [
-      'markdown-viewer/vendor/**',
       'markdown-viewer/dist/**',
       'dist/**',
       'coverage/**',

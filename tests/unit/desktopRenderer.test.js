@@ -95,4 +95,23 @@ describe('Desktop renderer integration', () => {
     const refreshedEl = document.querySelector(`.tab[data-tab-id="${backgroundTab.id}"]`);
     expect(refreshedEl.classList.contains('tab-has-changes')).toBe(false);
   });
+
+  describe('version check vs. the desktop auto-updater', () => {
+    const githubApiCalled = () =>
+      global.fetch.mock.calls.some((call) => String(call[0]).includes('api.github.com'));
+
+    it('skips the GitHub-API poll on macOS, where electron-updater owns updates', () => {
+      window.specdown.platform = 'darwin';
+      global.fetch.mockClear();
+      loadApp(document);
+      expect(githubApiCalled()).toBe(false);
+    });
+
+    it('still polls on unsigned desktop platforms (their only update signal)', () => {
+      window.specdown.platform = 'win32';
+      global.fetch.mockClear();
+      loadApp(document);
+      expect(githubApiCalled()).toBe(true);
+    });
+  });
 });

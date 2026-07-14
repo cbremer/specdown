@@ -5,6 +5,8 @@
 // Decoupled from the rest of the app via dependency injection — the caller
 // supplies the URL-error UI hooks and the file-selection handler.
 
+import { trapFocus } from '../core/focus-trap.js';
+import { iconSvg } from '../core/icons.js';
 import { escapeHtml } from '../core/utils.js';
 
 /**
@@ -45,7 +47,7 @@ export async function fetchGitHubRepoFiles(repoUrl) {
       url: item.html_url,
       rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${item.path}`,
     }));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -83,6 +85,9 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
     modal = document.createElement('div');
     modal.id = 'repo-browser-modal';
     modal.className = 'repo-browser-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Repository file browser');
     document.body.appendChild(modal);
   }
   const panel = modal;
@@ -93,7 +98,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
         <div class="repo-browser-content">
             <div class="repo-browser-header">
                 <span class="repo-browser-title">${escapeHtml(repoName)}</span>
-                <button class="repo-browser-close" title="Close">&#10005;</button>
+                <button class="repo-browser-close" title="Close" aria-label="Close file browser">&#10005;</button>
             </div>
             <div class="repo-browser-search">
                 <input type="text" class="repo-browser-filter" placeholder="Filter files..." autocomplete="off">
@@ -103,7 +108,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
                   .map(
                     (f) => `
                     <li class="repo-browser-item" data-raw-url="${escapeHtml(f.rawUrl)}">
-                        <span class="repo-file-icon">📄</span>
+                        <span class="repo-file-icon" aria-hidden="true">${iconSvg('file-text')}</span>
                         <span class="repo-file-path">${escapeHtml(f.path)}</span>
                     </li>
                 `
@@ -113,16 +118,19 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
         </div>
     `;
   panel.style.display = 'flex';
+  const releaseTrap = trapFocus(panel);
+  const closeModal = () => {
+    releaseTrap();
+    panel.style.display = 'none';
+  };
 
   const closeBtn = panel.querySelector('.repo-browser-close');
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      panel.style.display = 'none';
-    });
+    closeBtn.addEventListener('click', closeModal);
   }
 
   panel.addEventListener('click', (e) => {
-    if (e.target === panel) panel.style.display = 'none';
+    if (e.target === panel) closeModal();
   });
 
   const filterInput = /** @type {HTMLInputElement | null} */ (
@@ -144,7 +152,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
   panel.querySelectorAll('.repo-browser-item').forEach((item) => {
     item.addEventListener('click', () => {
       const rawUrl = item.getAttribute('data-raw-url');
-      panel.style.display = 'none';
+      closeModal();
       onSelectFile(rawUrl);
     });
   });

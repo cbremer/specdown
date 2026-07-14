@@ -40,7 +40,7 @@ describe('Theme Management', () => {
       loadApp(document);
 
       const icon = document.querySelector('.theme-icon');
-      expect(icon.textContent).toBe('☀️');
+      expect(icon.getAttribute('data-icon')).toBe('sun');
     });
 
     it('should show moon icon in light theme', () => {
@@ -49,7 +49,7 @@ describe('Theme Management', () => {
       loadApp(document);
 
       const icon = document.querySelector('.theme-icon');
-      expect(icon.textContent).toBe('🌙');
+      expect(icon.getAttribute('data-icon')).toBe('moon');
     });
   });
 
@@ -95,19 +95,19 @@ describe('Theme Management', () => {
       const icon = document.querySelector('.theme-icon');
 
       // Initially light (moon icon)
-      expect(icon.textContent).toBe('🌙');
+      expect(icon.getAttribute('data-icon')).toBe('moon');
 
       // Toggle to dark (sun icon)
       toggleTheme();
-      expect(icon.textContent).toBe('☀️');
+      expect(icon.getAttribute('data-icon')).toBe('sun');
 
       // Toggle to auto (half-moon icon)
       toggleTheme();
-      expect(icon.textContent).toBe('🌗');
+      expect(icon.getAttribute('data-icon')).toBe('auto');
 
       // Toggle back to light (moon icon)
       toggleTheme();
-      expect(icon.textContent).toBe('🌙');
+      expect(icon.getAttribute('data-icon')).toBe('moon');
     });
 
     it('should not re-render mermaid when content is hidden', () => {
@@ -146,7 +146,7 @@ describe('Theme Management', () => {
       updateThemeIcon();
 
       const icon = document.querySelector('.theme-icon');
-      expect(icon.textContent).toBe('🌙');
+      expect(icon.getAttribute('data-icon')).toBe('moon');
     });
 
     it('should show sun icon in dark theme', () => {
@@ -154,7 +154,7 @@ describe('Theme Management', () => {
       toggleTheme();
 
       const icon = document.querySelector('.theme-icon');
-      expect(icon.textContent).toBe('☀️');
+      expect(icon.getAttribute('data-icon')).toBe('sun');
     });
   });
 

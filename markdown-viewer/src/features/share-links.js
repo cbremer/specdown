@@ -66,7 +66,7 @@ export function checkForDiagramLink() {
     // Synthesize a one-diagram markdown document
     const md = '```mermaid\n' + source + '\n```\n';
     openTab('shared-diagram.md', md);
-  } catch (e) {
+  } catch {
     // Silently ignore malformed deep links
   }
 }

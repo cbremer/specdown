@@ -9,6 +9,7 @@
 // when the system switches while in auto mode.
 
 import { state } from '../core/state.js';
+import { iconSvg } from '../core/icons.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -53,8 +54,9 @@ function updateThemeIcon() {
 
   const icon = themeToggle.querySelector('.theme-icon');
   if (icon) {
-    icon.textContent =
-      preference === 'auto' ? '🌗' : preference === 'dark' ? '☀️' : '🌙';
+    const name = preference === 'auto' ? 'auto' : preference === 'dark' ? 'sun' : 'moon';
+    icon.setAttribute('data-icon', name);
+    icon.innerHTML = iconSvg(name);
   }
 
   // Keep the accessible name + tooltip in step with the 3-way cycle, naming

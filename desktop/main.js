@@ -5,6 +5,18 @@ const chokidar = require('chokidar');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
+const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
+
+// Only platforms whose shipped binaries are code-signed may auto-update.
+// electron-updater performs NO signature verification for an unsigned app, so
+// silent download + install-on-quit on an unsigned platform would execute
+// whatever the release feed serves, with no cryptographic check — a compromised
+// release asset or upload token becomes remote code execution. macOS builds are
+// signed + notarized (see .github/workflows/desktop.yml); Windows/Linux are not
+// yet, so they get a manual "download from Releases" flow instead.
+function isSignedUpdatePlatform(platform) {
+  return platform === 'darwin';
+}
 
 let mainWindow = null;
 let store = null;
@@ -30,7 +42,7 @@ function initLogFile() {
       fs.mkdirSync(userData, { recursive: true });
     }
     logFilePath = path.join(userData, 'specdown-main.log');
-  } catch (_) {
+  } catch {
     // Can't establish a log file — fall back to console only.
     logFilePath = null;
   }
@@ -39,12 +51,11 @@ function initLogFile() {
 function logError(msg, err) {
   const detail = err && err.stack ? err.stack : String(err || '');
   const line = `[${new Date().toISOString()}] ERROR ${msg}: ${detail}\n`;
-  // eslint-disable-next-line no-console
   console.error(line);
   if (logFilePath) {
     try {
       fs.appendFileSync(logFilePath, line);
-    } catch (_) {
+    } catch {
       // Swallow — logging must never crash the app.
     }
   }
@@ -52,12 +63,11 @@ function logError(msg, err) {
 
 function logInfo(msg) {
   const line = `[${new Date().toISOString()}] INFO  ${msg}\n`;
-  // eslint-disable-next-line no-console
   console.log(line);
   if (logFilePath) {
     try {
       fs.appendFileSync(logFilePath, line);
-    } catch (_) {
+    } catch {
       // Swallow — logging must never crash the app.
     }
   }
@@ -80,6 +90,13 @@ function initAutoUpdater() {
   }
   if (process.env.SPECDOWN_DISABLE_UPDATER === '1') {
     logInfo('Auto-update disabled via SPECDOWN_DISABLE_UPDATER.');
+    return;
+  }
+  if (!isSignedUpdatePlatform(process.platform)) {
+    logInfo(
+      `Auto-update skipped: ${process.platform} builds are unsigned, so update ` +
+        'signatures cannot be verified. Use Help > Check for Updates to open the Releases page.'
+    );
     return;
   }
 
@@ -149,6 +166,26 @@ function initAutoUpdater() {
 // update-downloaded toast. In an unpackaged/dev build there is no updater.
 function checkForUpdatesManually() {
   if (!autoUpdaterRef) {
+    if (app.isPackaged && !isSignedUpdatePlatform(process.platform)) {
+      // Unsigned platform: in-app install is deliberately disabled (no way to
+      // verify what we'd be installing), but we can point at Releases.
+      dialog
+        .showMessageBox({
+          type: 'info',
+          message: 'Automatic updates are not available on this platform yet',
+          detail:
+            'SpecDown builds for this platform are not code-signed, so updates are not ' +
+            'installed automatically. You can download the latest version from GitHub Releases.',
+          buttons: ['Open Releases Page', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        .then((result) => {
+          if (result && result.response === 0) shell.openExternal(RELEASES_URL);
+        })
+        .catch((err) => logError('Releases-page dialog failed', err));
+      return;
+    }
     dialog.showMessageBox({
       type: 'info',
       message: 'Updates are unavailable in this build',
@@ -217,7 +254,7 @@ function initStore() {
       // Best-effort cleanup of the temp file so it doesn't accumulate.
       try {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-      } catch (_) {
+      } catch {
         // Swallow — we've already logged the real failure.
       }
     }
@@ -305,7 +342,7 @@ function createWindow() {
     let protocol;
     try {
       protocol = new URL(url).protocol;
-    } catch (_) {
+    } catch {
       event.preventDefault();
       return;
     }
@@ -325,7 +362,7 @@ function createWindow() {
       if (protocol === 'http:' || protocol === 'https:') {
         shell.openExternal(url);
       }
-    } catch (_) {
+    } catch {
       // Malformed URL — deny without opening anything.
     }
     return { action: 'deny' };
@@ -460,6 +497,10 @@ function scanWorkspace(rootDir) {
   return out;
 }
 
+// Roots of every workspace opened this session. Relative-link navigation is
+// contained to these directories (see openRelativeFromFile).
+const workspaceRoots = new Set();
+
 async function showOpenFolderDialog() {
   if (!mainWindow) return;
 
@@ -471,10 +512,22 @@ async function showOpenFolderDialog() {
   if (result.canceled || !result.filePaths.length) return;
 
   const root = result.filePaths[0];
+  workspaceRoots.add(root);
   const files = scanWorkspace(root);
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('workspace-opened', { root, files });
   }
+}
+
+// True when targetPath sits inside (or is) one of the opened workspace roots.
+// path.relative-based so `/ws-evil` can't pass as inside `/ws` via a prefix
+// check, and so the root itself is accepted.
+function isInsideAnyWorkspace(targetPath) {
+  for (const root of workspaceRoots) {
+    const rel = path.relative(root, targetPath);
+    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) return true;
+  }
+  return false;
 }
 
 // Resolve a relative link (clicked inside a workspace document) against the
@@ -490,12 +543,21 @@ function openRelativeFromFile(fromPath, href) {
   let cleaned = href.split('#')[0].split('?')[0];
   try {
     cleaned = decodeURIComponent(cleaned);
-  } catch (_) {
+  } catch {
     // Leave as-is if it isn't valid percent-encoding.
   }
   if (!cleaned) return;
 
   const target = path.resolve(path.dirname(fromPath), cleaned);
+
+  // Containment: relative navigation only reaches files inside a workspace the
+  // user explicitly opened. Without this, a crafted `../../../…` link in a
+  // workspace doc could walk out of the workspace and open arbitrary markdown
+  // files the user never opted into (info disclosure via document content).
+  if (!isInsideAnyWorkspace(target)) {
+    logInfo(`Blocked relative link outside workspace roots: ${target}`);
+    return;
+  }
   openFileByPath(target);
 }
 
@@ -651,7 +713,7 @@ function restoreCustomCss() {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('apply-custom-css', cssContent);
     }
-  } catch (err) {
+  } catch {
     // CSS file may have been moved; silently skip
     store.set('customCssPath', '');
   }
@@ -972,7 +1034,7 @@ process.on('unhandledRejection', (reason) => {
         'SpecDown failed to start',
         String(err && err.message ? err.message : err)
       );
-    } catch (_) {
+    } catch {
       // Dialog may not be available yet — the log line above is our fallback.
     }
   }
@@ -1008,5 +1070,9 @@ module.exports = {
   unwatchFile,
   watchers,
   scanWorkspace,
+  openRelativeFromFile,
+  isInsideAnyWorkspace,
+  workspaceRoots,
+  isSignedUpdatePlatform,
   VALID_EXTENSIONS,
 };

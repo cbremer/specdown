@@ -30,7 +30,7 @@ function loadRecent() {
     const raw = localStorage.getItem(RECENT_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -38,7 +38,7 @@ function loadRecent() {
 function persistRecent() {
   try {
     localStorage.setItem(RECENT_KEY, JSON.stringify(recentEntries));
-  } catch (e) {
+  } catch {
     // quota / unavailable — non-critical
   }
 }

@@ -4,6 +4,7 @@
 // is cloned into a stage with pan/zoom (via the bundled Panzoom); prev/next
 // (buttons or keyboard) walk the set.
 
+import { trapFocus } from '../core/focus-trap.js';
 import Panzoom from '@panzoom/panzoom';
 import { showToast } from './toast.js';
 
@@ -18,6 +19,8 @@ let diagrams = [];
 let slideIndex = 0;
 /** @type {Element | null} */
 let presentationPrevFocus = null;
+/** @type {(() => void) | null} */
+let releaseTrap = null;
 /** @type {PanzoomObject | null} */
 let slidePanzoom = null;
 
@@ -130,6 +133,7 @@ function buildPresentationOverlay() {
   presentationOverlay.appendChild(stage);
   presentationOverlay.appendChild(nav);
   document.body.appendChild(presentationOverlay);
+  releaseTrap = trapFocus(presentationOverlay);
   presentationOverlay.focus();
 }
 
@@ -137,7 +141,7 @@ function destroySlidePanzoom() {
   if (slidePanzoom) {
     try {
       slidePanzoom.destroy();
-    } catch (err) {
+    } catch {
       // ignore
     }
     slidePanzoom = null;
@@ -191,6 +195,8 @@ export function presentPrev() {
 
 export function exitPresentation() {
   if (!presentationOverlay) return;
+  if (releaseTrap) releaseTrap();
+  releaseTrap = null;
   destroySlidePanzoom();
   if (presentationOverlay.parentNode) presentationOverlay.parentNode.removeChild(presentationOverlay);
   presentationOverlay = null;

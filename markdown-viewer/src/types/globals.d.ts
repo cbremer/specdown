@@ -37,6 +37,8 @@ interface SpecdownWorkspace {
 /** The desktop (Electron) bridge exposed on `window.specdown` by the preload. */
 interface SpecdownDesktopBridge {
   isDesktop?: boolean;
+  /** Shell OS (Node `process.platform`): 'darwin' | 'win32' | 'linux'. */
+  platform?: string;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
   requestOpenFolder?: () => void;

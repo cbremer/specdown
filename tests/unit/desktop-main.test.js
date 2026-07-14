@@ -62,7 +62,20 @@ jest.mock('electron', () => ({
 
 const os = require('os');
 
-const { isValidMarkdownFile, readMarkdownFile, buildMenu, watchFile, unwatchFile, watchers, scanWorkspace, VALID_EXTENSIONS } = require('../../desktop/main');
+const {
+  isValidMarkdownFile,
+  readMarkdownFile,
+  buildMenu,
+  watchFile,
+  unwatchFile,
+  watchers,
+  scanWorkspace,
+  openRelativeFromFile,
+  isInsideAnyWorkspace,
+  workspaceRoots,
+  isSignedUpdatePlatform,
+  VALID_EXTENSIONS,
+} = require('../../desktop/main');
 
 describe('desktop/main.js', () => {
   describe('VALID_EXTENSIONS', () => {
@@ -436,6 +449,82 @@ describe('desktop/main.js', () => {
 
       it('does nothing if the path is not being watched', () => {
         expect(() => unwatchFile('/not/watched.md')).not.toThrow();
+      });
+    });
+  });
+
+  describe('auto-update signing gate', () => {
+    // electron-updater performs no signature verification for unsigned apps,
+    // so auto-update must stay restricted to platforms we actually sign.
+    it('allows auto-update only on macOS (the signed platform)', () => {
+      expect(isSignedUpdatePlatform('darwin')).toBe(true);
+      expect(isSignedUpdatePlatform('win32')).toBe(false);
+      expect(isSignedUpdatePlatform('linux')).toBe(false);
+      expect(isSignedUpdatePlatform(undefined)).toBe(false);
+    });
+  });
+
+  describe('workspace relative-link containment', () => {
+    const { app } = require('electron');
+    const path = require('path');
+    let wsRoot;
+    let outsideDir;
+
+    beforeEach(() => {
+      wsRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-ws-'));
+      outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-outside-'));
+      fs.mkdirSync(path.join(wsRoot, 'sub'));
+      fs.writeFileSync(path.join(wsRoot, 'a.md'), '# A');
+      fs.writeFileSync(path.join(wsRoot, 'sub', 'b.md'), '# B');
+      fs.writeFileSync(path.join(outsideDir, 'secret.md'), '# Secret');
+      workspaceRoots.clear();
+      app.addRecentDocument.mockClear();
+    });
+
+    afterEach(() => {
+      workspaceRoots.clear();
+      fs.rmSync(wsRoot, { recursive: true, force: true });
+      fs.rmSync(outsideDir, { recursive: true, force: true });
+    });
+
+    describe('isInsideAnyWorkspace', () => {
+      it('accepts the root itself and nested paths', () => {
+        workspaceRoots.add(wsRoot);
+        expect(isInsideAnyWorkspace(wsRoot)).toBe(true);
+        expect(isInsideAnyWorkspace(path.join(wsRoot, 'sub', 'b.md'))).toBe(true);
+      });
+
+      it('rejects paths outside every root, including sibling-prefix dirs', () => {
+        workspaceRoots.add(wsRoot);
+        expect(isInsideAnyWorkspace(path.join(outsideDir, 'secret.md'))).toBe(false);
+        // `/ws-evil` must not pass as inside `/ws` via naive prefix matching.
+        expect(isInsideAnyWorkspace(wsRoot + '-evil')).toBe(false);
+      });
+
+      it('rejects everything when no workspace is open', () => {
+        expect(isInsideAnyWorkspace(path.join(wsRoot, 'a.md'))).toBe(false);
+      });
+    });
+
+    describe('openRelativeFromFile', () => {
+      // openFileByPath feeds every successful open into the OS recents via
+      // app.addRecentDocument (mocked) — use that as the observable outcome.
+      it('opens a relative .md inside the workspace', () => {
+        workspaceRoots.add(wsRoot);
+        openRelativeFromFile(path.join(wsRoot, 'a.md'), './sub/b.md');
+        expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(wsRoot, 'sub', 'b.md'));
+      });
+
+      it('blocks traversal that escapes the workspace root', () => {
+        workspaceRoots.add(wsRoot);
+        const escape = path.relative(wsRoot, outsideDir); // e.g. ../specdown-outside-xyz
+        openRelativeFromFile(path.join(wsRoot, 'a.md'), escape + '/secret.md');
+        expect(app.addRecentDocument).not.toHaveBeenCalled();
+      });
+
+      it('blocks relative opens when no workspace is open', () => {
+        openRelativeFromFile(path.join(wsRoot, 'a.md'), './sub/b.md');
+        expect(app.addRecentDocument).not.toHaveBeenCalled();
       });
     });
   });
