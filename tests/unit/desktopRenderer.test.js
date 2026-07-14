@@ -73,8 +73,8 @@ describe('Desktop renderer integration', () => {
     createTab('b.md', '# B', '/tmp/b.md');
 
     // Tab b is now active; deliver a file-changed event for tab a.
-    const backgroundTab = state.tabs.find(t => t.filePath === '/tmp/a.md');
-    const activeTab = state.tabs.find(t => t.filePath === '/tmp/b.md');
+    const backgroundTab = state.tabs.find((t) => t.filePath === '/tmp/a.md');
+    const activeTab = state.tabs.find((t) => t.filePath === '/tmp/b.md');
     expect(state.activeTabId).toBe(activeTab.id);
 
     await fileChangedCallback({
@@ -86,19 +86,27 @@ describe('Desktop renderer integration', () => {
     // Background tab should be flagged and its DOM element should carry
     // the change indicator class so the user sees something changed.
     expect(backgroundTab.hasUnseenChanges).toBe(true);
-    const backgroundEl = document.querySelector(`.tab[data-tab-id="${backgroundTab.id}"]`);
+    const backgroundEl = document.querySelector(
+      `.tab[data-tab-id="${backgroundTab.id}"]`
+    );
     expect(backgroundEl.classList.contains('tab-has-changes')).toBe(true);
 
     // Switching to the background tab should clear the flag.
     await switchTab(backgroundTab.id);
     expect(backgroundTab.hasUnseenChanges).toBe(false);
-    const refreshedEl = document.querySelector(`.tab[data-tab-id="${backgroundTab.id}"]`);
+    const refreshedEl = document.querySelector(
+      `.tab[data-tab-id="${backgroundTab.id}"]`
+    );
     expect(refreshedEl.classList.contains('tab-has-changes')).toBe(false);
   });
 
   describe('version check vs. the desktop auto-updater', () => {
     const githubApiCalled = () =>
-      global.fetch.mock.calls.some((call) => String(call[0]).includes('api.github.com'));
+      // startsWith (not includes): asserts the exact API origin, which also
+      // satisfies CodeQL's URL-substring-sanitization rule (alert #10).
+      global.fetch.mock.calls.some((call) =>
+        String(call[0]).startsWith('https://api.github.com/')
+      );
 
     it('skips the GitHub-API poll on macOS, where electron-updater owns updates', () => {
       window.specdown.platform = 'darwin';
