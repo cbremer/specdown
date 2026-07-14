@@ -58,7 +58,10 @@ export async function fetchGitHubRepoFiles(repoUrl) {
  * @param {{ clearError: Function, showError: Function, onSelectFile: Function }} hooks
  * @returns {Promise<boolean>} true if handled as a repo URL (caller should stop).
  */
-export async function handleRepoUrl(url, { clearError, showError, onSelectFile }) {
+export async function handleRepoUrl(
+  url,
+  { clearError, showError, onSelectFile }
+) {
   clearError();
   const files = await fetchGitHubRepoFiles(url);
   if (files === null) {
@@ -74,6 +77,13 @@ export async function handleRepoUrl(url, { clearError, showError, onSelectFile }
   return true;
 }
 
+// Close handler for the currently-open browser instance. The backdrop click
+// listener is bound ONCE (at modal creation) and delegates through this ref —
+// binding it per open stacked a new listener (plus its captured focus-trap
+// release) on the reused modal element every time the browser opened.
+/** @type {(() => void) | null} */
+let repoBrowserActiveClose = null;
+
 /**
  * @param {RepoFile[]} files
  * @param {string} repoUrl
@@ -88,11 +98,21 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-label', 'Repository file browser');
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal && repoBrowserActiveClose)
+        repoBrowserActiveClose();
+    });
     document.body.appendChild(modal);
   }
   const panel = modal;
 
-  const repoName = repoUrl.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+  // Re-opened while already open: release the previous instance's focus trap
+  // before it gets orphaned by the innerHTML rebuild below.
+  if (repoBrowserActiveClose) repoBrowserActiveClose();
+
+  const repoName = repoUrl
+    .replace(/^https?:\/\/github\.com\//, '')
+    .replace(/\/$/, '');
 
   panel.innerHTML = `
         <div class="repo-browser-content">
@@ -122,16 +142,17 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
   const closeModal = () => {
     releaseTrap();
     panel.style.display = 'none';
+    repoBrowserActiveClose = null;
   };
+  repoBrowserActiveClose = closeModal;
 
+  // Inner elements are rebuilt by the innerHTML assignment above, so these
+  // listeners are fresh per open (no stacking); only the backdrop listener on
+  // the reused modal element itself must not be re-bound here.
   const closeBtn = panel.querySelector('.repo-browser-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', closeModal);
   }
-
-  panel.addEventListener('click', (e) => {
-    if (e.target === panel) closeModal();
-  });
 
   const filterInput = /** @type {HTMLInputElement | null} */ (
     panel.querySelector('.repo-browser-filter')

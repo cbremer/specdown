@@ -34,21 +34,27 @@ describe('GitHub Repo Browser', () => {
     });
 
     it('returns null for a GitHub URL that is not a bare repo (e.g. a file path)', async () => {
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo/blob/main/README.md');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo/blob/main/README.md'
+      );
       expect(result).toBeNull();
     });
 
     it('returns null when the fetch response is not ok', async () => {
       global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo'
+      );
       expect(result).toBeNull();
     });
 
     it('returns null when fetch throws an error', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo'
+      );
       expect(result).toBeNull();
     });
 
@@ -58,42 +64,65 @@ describe('GitHub Repo Browser', () => {
         json: async () => ({ items: [] }),
       });
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo'
+      );
       expect(result).toEqual([]);
     });
 
     it('returns file objects with path, url, and rawUrl', async () => {
       const items = [
-        { path: 'README.md', html_url: 'https://github.com/owner/repo/blob/main/README.md' },
-        { path: 'docs/guide.md', html_url: 'https://github.com/owner/repo/blob/main/docs/guide.md' },
+        {
+          path: 'README.md',
+          html_url: 'https://github.com/owner/repo/blob/main/README.md',
+        },
+        {
+          path: 'docs/guide.md',
+          html_url: 'https://github.com/owner/repo/blob/main/docs/guide.md',
+        },
       ];
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ items }),
       });
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo'
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0].path).toBe('README.md');
-      expect(result[0].rawUrl).toBe('https://raw.githubusercontent.com/owner/repo/HEAD/README.md');
+      expect(result[0].rawUrl).toBe(
+        'https://raw.githubusercontent.com/owner/repo/HEAD/README.md'
+      );
       expect(result[1].path).toBe('docs/guide.md');
-      expect(result[1].rawUrl).toBe('https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md');
+      expect(result[1].rawUrl).toBe(
+        'https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md'
+      );
     });
 
     it('strips a trailing .git from the repo name', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          items: [{ path: 'README.md', html_url: 'https://github.com/owner/repo/blob/main/README.md' }],
+          items: [
+            {
+              path: 'README.md',
+              html_url: 'https://github.com/owner/repo/blob/main/README.md',
+            },
+          ],
         }),
       });
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo.git');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo.git'
+      );
 
       // The rawUrl should reference 'repo' without '.git'
       expect(result).not.toBeNull();
-      expect(result[0].rawUrl).toBe('https://raw.githubusercontent.com/owner/repo/HEAD/README.md');
+      expect(result[0].rawUrl).toBe(
+        'https://raw.githubusercontent.com/owner/repo/HEAD/README.md'
+      );
     });
 
     it('accepts a URL with a trailing slash', async () => {
@@ -102,7 +131,9 @@ describe('GitHub Repo Browser', () => {
         json: async () => ({ items: [] }),
       });
 
-      const result = await fetchGitHubRepoFiles('https://github.com/owner/repo/');
+      const result = await fetchGitHubRepoFiles(
+        'https://github.com/owner/repo/'
+      );
       expect(result).toEqual([]);
     });
   });
@@ -112,8 +143,17 @@ describe('GitHub Repo Browser', () => {
   // ===========================
   describe('showRepoBrowser', () => {
     const sampleFiles = [
-      { path: 'README.md', url: 'https://github.com/owner/repo/blob/main/README.md', rawUrl: 'https://raw.githubusercontent.com/owner/repo/HEAD/README.md' },
-      { path: 'docs/guide.md', url: 'https://github.com/owner/repo/blob/main/docs/guide.md', rawUrl: 'https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md' },
+      {
+        path: 'README.md',
+        url: 'https://github.com/owner/repo/blob/main/README.md',
+        rawUrl: 'https://raw.githubusercontent.com/owner/repo/HEAD/README.md',
+      },
+      {
+        path: 'docs/guide.md',
+        url: 'https://github.com/owner/repo/blob/main/docs/guide.md',
+        rawUrl:
+          'https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md',
+      },
     ];
 
     it('creates and displays the repo browser modal', () => {
@@ -128,7 +168,9 @@ describe('GitHub Repo Browser', () => {
       showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
 
       const modal = document.getElementById('repo-browser-modal');
-      expect(modal.querySelector('.repo-browser-title').textContent).toBe('owner/repo');
+      expect(modal.querySelector('.repo-browser-title').textContent).toBe(
+        'owner/repo'
+      );
     });
 
     it('renders one list item per file', () => {
@@ -142,8 +184,12 @@ describe('GitHub Repo Browser', () => {
       showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
 
       const items = document.querySelectorAll('.repo-browser-item');
-      expect(items[0].querySelector('.repo-file-path').textContent).toBe('README.md');
-      expect(items[1].querySelector('.repo-file-path').textContent).toBe('docs/guide.md');
+      expect(items[0].querySelector('.repo-file-path').textContent).toBe(
+        'README.md'
+      );
+      expect(items[1].querySelector('.repo-file-path').textContent).toBe(
+        'docs/guide.md'
+      );
     });
 
     it('each list item has a data-raw-url attribute', () => {
@@ -151,6 +197,34 @@ describe('GitHub Repo Browser', () => {
 
       const items = document.querySelectorAll('.repo-browser-item');
       expect(items[0].getAttribute('data-raw-url')).toBe(sampleFiles[0].rawUrl);
+    });
+
+    it('backdrop click still closes after repeated opens (no listener stacking)', () => {
+      // Regression: the backdrop listener used to be re-bound on every open of
+      // the reused modal element, stacking handlers + captured focus-trap
+      // closures. The listener is now bound once and delegates to the active
+      // instance, so repeated opens keep exactly one close path.
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
+
+      const modal = document.getElementById('repo-browser-modal');
+      expect(modal.style.display).toBe('flex');
+
+      // Click directly on the backdrop (target === modal) → closes.
+      modal.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(modal.style.display).toBe('none');
+
+      // A stray backdrop click while closed is a harmless no-op…
+      expect(() =>
+        modal.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      ).not.toThrow();
+
+      // …and the browser still opens and closes normally afterwards.
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
+      expect(modal.style.display).toBe('flex');
+      modal.querySelector('.repo-browser-close').click();
+      expect(modal.style.display).toBe('none');
     });
 
     it('close button hides the modal', () => {
@@ -169,7 +243,10 @@ describe('GitHub Repo Browser', () => {
       const modal = document.getElementById('repo-browser-modal');
       // Simulate a click directly on the modal overlay (target === modal)
       const evt = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(evt, 'target', { value: modal, configurable: true });
+      Object.defineProperty(evt, 'target', {
+        value: modal,
+        configurable: true,
+      });
       modal.dispatchEvent(evt);
 
       expect(modal.style.display).toBe('none');
@@ -183,9 +260,13 @@ describe('GitHub Repo Browser', () => {
       filterInput.dispatchEvent(new Event('input'));
 
       const items = document.querySelectorAll('.repo-browser-item');
-      const visibleItems = Array.from(items).filter((i) => i.style.display !== 'none');
+      const visibleItems = Array.from(items).filter(
+        (i) => i.style.display !== 'none'
+      );
       expect(visibleItems.length).toBe(1);
-      expect(visibleItems[0].querySelector('.repo-file-path').textContent).toBe('docs/guide.md');
+      expect(visibleItems[0].querySelector('.repo-file-path').textContent).toBe(
+        'docs/guide.md'
+      );
     });
 
     it('filter input is case-insensitive', () => {
@@ -196,9 +277,13 @@ describe('GitHub Repo Browser', () => {
       filterInput.dispatchEvent(new Event('input'));
 
       const items = document.querySelectorAll('.repo-browser-item');
-      const visibleItems = Array.from(items).filter((i) => i.style.display !== 'none');
+      const visibleItems = Array.from(items).filter(
+        (i) => i.style.display !== 'none'
+      );
       expect(visibleItems.length).toBe(1);
-      expect(visibleItems[0].querySelector('.repo-file-path').textContent).toBe('README.md');
+      expect(visibleItems[0].querySelector('.repo-file-path').textContent).toBe(
+        'README.md'
+      );
     });
 
     it('re-uses the existing modal element on subsequent calls', () => {
@@ -222,14 +307,20 @@ describe('GitHub Repo Browser', () => {
 
     it('returns false for a non-GitHub URL', async () => {
       global.fetch = jest.fn(); // should not be called
-      const result = await handleRepoUrl('https://example.com/not-a-repo', hooks());
+      const result = await handleRepoUrl(
+        'https://example.com/not-a-repo',
+        hooks()
+      );
       expect(result).toBe(false);
     });
 
     it('returns false when fetchGitHubRepoFiles returns null (fetch failed)', async () => {
       global.fetch = jest.fn().mockResolvedValue({ ok: false });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
+      const result = await handleRepoUrl(
+        'https://github.com/owner/repo',
+        hooks()
+      );
       expect(result).toBe(false);
     });
 
@@ -239,7 +330,10 @@ describe('GitHub Repo Browser', () => {
         json: async () => ({ items: [] }),
       });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
+      const result = await handleRepoUrl(
+        'https://github.com/owner/repo',
+        hooks()
+      );
       expect(result).toBe(true);
     });
 
@@ -247,11 +341,19 @@ describe('GitHub Repo Browser', () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          items: [{ path: 'README.md', html_url: 'https://github.com/owner/repo/blob/main/README.md' }],
+          items: [
+            {
+              path: 'README.md',
+              html_url: 'https://github.com/owner/repo/blob/main/README.md',
+            },
+          ],
         }),
       });
 
-      const result = await handleRepoUrl('https://github.com/owner/repo', hooks());
+      const result = await handleRepoUrl(
+        'https://github.com/owner/repo',
+        hooks()
+      );
       expect(result).toBe(true);
 
       const modal = document.getElementById('repo-browser-modal');
