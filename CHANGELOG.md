@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.156 — 2026-07-14
+
+### Build System
+
+- Bump the dev-dependencies group across 1 directory with 6 updates
+
 ## v0.0.155 — 2026-07-14
 
 ### Build System
