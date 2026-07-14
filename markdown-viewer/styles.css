@@ -633,7 +633,26 @@ body {
     color: var(--text-on-accent);
 }
 
-.watch-toggle-button {
+/* ===========================
+   Toolbar Action Buttons (shared)
+   =========================== */
+/* Every content-header action shares one base + accent hover/active
+   treatment. Per-button rules elsewhere carry only the real deviations:
+   watch-active green, annotate-active orange, the count badges, and the
+   view-toggle icon typography. */
+.watch-toggle-button,
+.workspace-toggle-button,
+.toc-toggle-button,
+.split-toggle-button,
+.comments-toggle-button,
+.annotation-toggle-button,
+.annotation-list-toggle-button,
+.print-button,
+.present-button,
+.view-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
@@ -642,12 +661,30 @@ body {
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
 }
 
-.watch-toggle-button:hover {
+/* Slightly tighter padding on the buttons that carry a count badge. */
+.comments-toggle-button,
+.annotation-list-toggle-button {
+    padding: 0.5rem 0.9rem;
+}
+
+.watch-toggle-button:hover,
+.workspace-toggle-button:hover,
+.workspace-toggle-button.active,
+.toc-toggle-button:hover,
+.toc-toggle-button.active,
+.split-toggle-button:hover,
+.split-toggle-button.active,
+.comments-toggle-button:hover,
+.comments-toggle-button.active,
+.annotation-toggle-button:hover,
+.annotation-list-toggle-button:hover,
+.annotation-list-toggle-button.active,
+.print-button:hover,
+.present-button:hover,
+.view-toggle-button:hover,
+.view-toggle-button.active {
     background-color: var(--accent-color);
     color: var(--text-on-accent);
     border-color: var(--accent-color);
@@ -705,60 +742,10 @@ body {
     50%      { opacity: 0.45; transform: scale(1.35); }
 }
 
-.view-toggle-button,
-.present-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.present-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
-.view-toggle-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
-.view-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 .view-toggle-icon {
     font-family: 'Courier New', Courier, monospace;
     font-weight: 700;
     font-size: 0.85rem;
-}
-
-.load-new-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.load-new-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
 }
 
 .markdown-content {
@@ -958,27 +945,6 @@ body {
 }
 
 /* Comments toggle button (mirrors the other toolbar toggles) */
-.comments-toggle-button {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 0.9rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.comments-toggle-button:hover,
-.comments-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 .comments-toggle-count {
     background-color: var(--accent-color);
     color: var(--text-on-accent);
@@ -1517,32 +1483,6 @@ body {
 .toc-level-4 { padding-left: 2.5rem; }
 
 /* TOC toggle button */
-.toc-toggle-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.toc-toggle-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
-.toc-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 /* ===========================
    Workspace (folder) Sidebar
    =========================== */
@@ -1651,27 +1591,6 @@ body {
 }
 
 /* Workspace toggle button (mirrors the TOC toggle) */
-.workspace-toggle-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.workspace-toggle-button:hover,
-.workspace-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 /* Drop-zone: keep the Browse / Open Folder buttons on one row */
 .drop-zone-buttons {
     display: flex;
@@ -1730,55 +1649,6 @@ body {
 }
 
 /* Split toggle button */
-.split-toggle-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.split-toggle-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
-.split-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
-/* ===========================
-   Print Button
-   =========================== */
-.print-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.print-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 /* ===========================
    Search Bar
    =========================== */
@@ -2443,26 +2313,6 @@ mark.search-highlight-current {
 /* ===========================
    Annotation Mode
    =========================== */
-.annotation-toggle-button {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.annotation-toggle-button:hover {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 .annotation-toggle-button.active {
     background-color: #f39c12;
     color: white;
@@ -2550,27 +2400,6 @@ mark.search-highlight-current {
 }
 
 /* Notes toggle button (mirrors the other toolbar buttons) */
-.annotation-list-toggle-button {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 0.9rem;
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.annotation-list-toggle-button:hover,
-.annotation-list-toggle-button.active {
-    background-color: var(--accent-color);
-    color: var(--text-on-accent);
-    border-color: var(--accent-color);
-}
-
 .annotation-list-count {
     background-color: var(--accent-color);
     color: var(--text-on-accent);

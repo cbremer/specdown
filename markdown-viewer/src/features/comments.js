@@ -17,11 +17,6 @@ let commentsHidden = (() => {
   }
 })();
 
-/** Whether comment blocks are currently hidden. */
-export function isCommentsHidden() {
-  return commentsHidden;
-}
-
 /** Apply the current visibility to the content + toggle button. */
 function applyCommentsVisibility() {
   const content = cEl('markdown-content');
@@ -49,7 +44,9 @@ export function toggleComments() {
 export function refreshCommentsUI() {
   const content = cEl('markdown-content');
   const btn = cEl('comments-toggle');
-  const count = content ? content.querySelectorAll('.html-comment-block').length : 0;
+  const count = content
+    ? content.querySelectorAll('.html-comment-block').length
+    : 0;
   if (btn) {
     btn.style.display = count > 0 ? '' : 'none';
     const countEl = btn.querySelector('.comments-toggle-count');
