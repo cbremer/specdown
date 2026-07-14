@@ -121,8 +121,12 @@ scripts and the CI workflows do this for you).
 
 Tests, lint, and typecheck must pass before committing; all three run in CI on
 every PR (`.github/workflows/ci.yml`). Coverage is reported by
-`npm run test:coverage` but no hard `coverageThreshold` is configured in
-`package.json` yet.
+`npm run test:coverage`. A hard `coverageThreshold` is enforced for
+`desktop/main.js` (the only file Jest instruments directly). Renderer modules
+under `markdown-viewer/src/` show ~0% in coverage reports because the test
+helper (`tests/helpers/loadApp.js`) inlines and evals the module graph outside
+Jest's instrumentation — don't trust those numbers, and don't add renderer
+thresholds until tests import modules through Jest.
 
 **Gradual TypeScript:** the viewer is plain ESM JS, type-checked via
 `checkJs`. `tsconfig.json` keeps `checkJs` off globally; modules opt in one at a

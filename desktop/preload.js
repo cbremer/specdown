@@ -7,6 +7,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('specdown', {
   isDesktop: true,
 
+  // OS platform of the shell (Node's process.platform: 'darwin', 'win32',
+  // 'linux'). Lets the renderer adapt to per-platform shell behavior — e.g.
+  // skipping its GitHub-API version poll where electron-updater owns updates.
+  platform: process.platform,
+
   // Called by the renderer to open the native file dialog
   requestFileOpen: () => {
     ipcRenderer.send('request-file-open');

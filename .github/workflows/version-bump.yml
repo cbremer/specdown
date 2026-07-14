@@ -17,6 +17,13 @@ jobs:
   # protection. The [version bump] marker prevents infinite loops.
   # For pull_request events it is a no-op so the required "bump"
   # status check passes on every PR.
+  #
+  # SECURITY (action item for the repo owner): ADMIN_PAT is a standing
+  # admin-scoped credential — if it leaks, an attacker can push directly to
+  # main. Prefer replacing it with a GitHub App installation token (or at
+  # minimum a fine-grained PAT scoped to this repo with only `contents:write`
+  # + a branch-protection bypass entry for the app/bot), so the blast radius
+  # of a leak is one repo's contents rather than admin over the account.
   # -----------------------------------------------------------------
   bump:
     runs-on: ubuntu-latest
@@ -31,7 +38,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         if: github.event_name == 'push'
         with:
           token: ${{ secrets.ADMIN_PAT }}
@@ -39,7 +46,7 @@ jobs:
           # release tag (git describe needs them).
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         if: github.event_name == 'push'
         with:
           node-version: 22
@@ -88,7 +95,7 @@ jobs:
       actions: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Create and push tag
         id: tag

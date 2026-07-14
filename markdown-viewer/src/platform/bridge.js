@@ -24,6 +24,15 @@ export function hasDesktopBridge() {
   return !!nativeBridge();
 }
 
+/**
+ * The desktop shell's OS platform (Node `process.platform`: 'darwin', 'win32',
+ * 'linux'), or undefined outside the desktop shell.
+ * @returns {string | undefined}
+ */
+export function bridgeDesktopPlatform() {
+  return nativeBridge()?.platform;
+}
+
 // --- Commands (renderer → shell) -------------------------------------------
 
 /** Ask the shell to show its native file-open dialog. */

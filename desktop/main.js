@@ -5,6 +5,18 @@ const chokidar = require('chokidar');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
+const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
+
+// Only platforms whose shipped binaries are code-signed may auto-update.
+// electron-updater performs NO signature verification for an unsigned app, so
+// silent download + install-on-quit on an unsigned platform would execute
+// whatever the release feed serves, with no cryptographic check — a compromised
+// release asset or upload token becomes remote code execution. macOS builds are
+// signed + notarized (see .github/workflows/desktop.yml); Windows/Linux are not
+// yet, so they get a manual "download from Releases" flow instead.
+function isSignedUpdatePlatform(platform) {
+  return platform === 'darwin';
+}
 
 let mainWindow = null;
 let store = null;
@@ -82,6 +94,13 @@ function initAutoUpdater() {
     logInfo('Auto-update disabled via SPECDOWN_DISABLE_UPDATER.');
     return;
   }
+  if (!isSignedUpdatePlatform(process.platform)) {
+    logInfo(
+      `Auto-update skipped: ${process.platform} builds are unsigned, so update ` +
+        'signatures cannot be verified. Use Help > Check for Updates to open the Releases page.'
+    );
+    return;
+  }
 
   let autoUpdater;
   try {
@@ -149,6 +168,26 @@ function initAutoUpdater() {
 // update-downloaded toast. In an unpackaged/dev build there is no updater.
 function checkForUpdatesManually() {
   if (!autoUpdaterRef) {
+    if (app.isPackaged && !isSignedUpdatePlatform(process.platform)) {
+      // Unsigned platform: in-app install is deliberately disabled (no way to
+      // verify what we'd be installing), but we can point at Releases.
+      dialog
+        .showMessageBox({
+          type: 'info',
+          message: 'Automatic updates are not available on this platform yet',
+          detail:
+            'SpecDown builds for this platform are not code-signed, so updates are not ' +
+            'installed automatically. You can download the latest version from GitHub Releases.',
+          buttons: ['Open Releases Page', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        .then((result) => {
+          if (result && result.response === 0) shell.openExternal(RELEASES_URL);
+        })
+        .catch((err) => logError('Releases-page dialog failed', err));
+      return;
+    }
     dialog.showMessageBox({
       type: 'info',
       message: 'Updates are unavailable in this build',
@@ -460,6 +499,10 @@ function scanWorkspace(rootDir) {
   return out;
 }
 
+// Roots of every workspace opened this session. Relative-link navigation is
+// contained to these directories (see openRelativeFromFile).
+const workspaceRoots = new Set();
+
 async function showOpenFolderDialog() {
   if (!mainWindow) return;
 
@@ -471,10 +514,22 @@ async function showOpenFolderDialog() {
   if (result.canceled || !result.filePaths.length) return;
 
   const root = result.filePaths[0];
+  workspaceRoots.add(root);
   const files = scanWorkspace(root);
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('workspace-opened', { root, files });
   }
+}
+
+// True when targetPath sits inside (or is) one of the opened workspace roots.
+// path.relative-based so `/ws-evil` can't pass as inside `/ws` via a prefix
+// check, and so the root itself is accepted.
+function isInsideAnyWorkspace(targetPath) {
+  for (const root of workspaceRoots) {
+    const rel = path.relative(root, targetPath);
+    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) return true;
+  }
+  return false;
 }
 
 // Resolve a relative link (clicked inside a workspace document) against the
@@ -496,6 +551,15 @@ function openRelativeFromFile(fromPath, href) {
   if (!cleaned) return;
 
   const target = path.resolve(path.dirname(fromPath), cleaned);
+
+  // Containment: relative navigation only reaches files inside a workspace the
+  // user explicitly opened. Without this, a crafted `../../../…` link in a
+  // workspace doc could walk out of the workspace and open arbitrary markdown
+  // files the user never opted into (info disclosure via document content).
+  if (!isInsideAnyWorkspace(target)) {
+    logInfo(`Blocked relative link outside workspace roots: ${target}`);
+    return;
+  }
   openFileByPath(target);
 }
 
@@ -1008,5 +1072,9 @@ module.exports = {
   unwatchFile,
   watchers,
   scanWorkspace,
+  openRelativeFromFile,
+  isInsideAnyWorkspace,
+  workspaceRoots,
+  isSignedUpdatePlatform,
   VALID_EXTENSIONS,
 };

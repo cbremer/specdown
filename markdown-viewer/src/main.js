@@ -147,7 +147,7 @@ import {
   stopWatchingFilePath,
   configureDesktop,
 } from './platform/desktop.js';
-import { bridgeRequestOpenPath } from './platform/bridge.js';
+import { bridgeRequestOpenPath, bridgeDesktopPlatform } from './platform/bridge.js';
 
 // ===========================
 // Constants
@@ -437,6 +437,13 @@ function setupVersionInfo() {
 // ===========================
 function checkForUpdates() {
     if (isIOSNative) {
+        return;
+    }
+    // On macOS desktop, electron-updater owns the update lifecycle (signed
+    // builds auto-update); polling the GitHub API here would be redundant
+    // traffic against an unauthenticated 60 req/hr/IP limit. Unsigned desktop
+    // platforms (win32/linux) keep this check — it's their only update signal.
+    if (isDesktop && bridgeDesktopPlatform() === 'darwin') {
         return;
     }
     const apiUrl = 'https://api.github.com/repos/' + SOURCE_REPO + '/releases/latest';
