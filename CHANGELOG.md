@@ -5,6 +5,13 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.157 — 2026-07-14
+
+### Build System
+
+- Bump marked from 18.0.5 to 18.0.6
+- Bump marked from 18.0.5 to 18.0.6
+
 ## v0.0.156 — 2026-07-14
 
 ### Build System

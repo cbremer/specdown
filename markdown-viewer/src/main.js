@@ -152,7 +152,7 @@ import { bridgeRequestOpenPath } from './platform/bridge.js';
 // ===========================
 // Constants
 // ===========================
-const APP_VERSION = '0.0.156';
+const APP_VERSION = '0.0.157';
 const APP_VERSION_LABEL = 'alpha';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
