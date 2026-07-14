@@ -3,9 +3,6 @@
  * Configures the testing environment and global mocks
  */
 
-// Import testing library extensions
-require('@testing-library/jest-dom');
-
 // Spy on localStorage/sessionStorage methods
 // jsdom provides its own Storage implementation, so spy on prototype
 // rather than replacing the entire object
@@ -39,7 +36,7 @@ class FileReaderMock {
     this.onload = null;
     this.result = null;
     const self = this;
-    this.readAsText = jest.fn(function(file) {
+    this.readAsText = jest.fn(function (file) {
       // Simulate async file reading
       setTimeout(() => {
         if (self.onload) {

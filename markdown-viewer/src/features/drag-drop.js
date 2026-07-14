@@ -40,16 +40,28 @@ export function handleDrop(e) {
   const dropZone = dragDropZoneEl();
   if (dropZone) dropZone.classList.remove('drag-over');
 
-  if (!e.dataTransfer) return;
-  // Capture files synchronously — the FileList is invalidated after the event.
-  const droppedFiles = Array.from(e.dataTransfer.files || []);
+  openDroppedTransfer(e.dataTransfer, () => true);
+}
+
+/**
+ * Shared drop core: capture the files synchronously (the FileList is
+ * invalidated after the event), try the Chromium-only async folder path, and
+ * otherwise open the files directly — but only while shouldOpen() still holds
+ * (the document-level drop requires an open tab).
+ * @param {DataTransfer | null} dataTransfer
+ * @param {() => boolean} shouldOpen
+ */
+function openDroppedTransfer(dataTransfer, shouldOpen) {
+  if (!dataTransfer) return;
+  const droppedFiles = Array.from(dataTransfer.files || []);
   const openDroppedFiles = () => {
+    if (!shouldOpen()) return;
     for (const file of droppedFiles) handleFile(file);
   };
   // A dropped folder opens as a workspace (Chromium, async); otherwise — and on
   // browsers without the API — fall back to opening the dropped files directly.
   if (isFolderDragDropSupported()) {
-    tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
+    tryOpenDroppedFolder(dataTransfer).then((handled) => {
       if (!handled) openDroppedFiles();
     });
   } else {
@@ -75,22 +87,6 @@ export function setupDragAndDrop() {
   // content area (when the drop zone is hidden).
   document.addEventListener('drop', (e) => {
     e.preventDefault();
-    if (!e.dataTransfer) return;
-    // Capture files synchronously — the FileList is invalidated after the event.
-    const droppedFiles = Array.from(e.dataTransfer.files || []);
-    const openDroppedFiles = () => {
-      if (state.tabs.length > 0) {
-        for (const file of droppedFiles) handleFile(file);
-      }
-    };
-    // Folder drag-and-drop is Chromium-only and async; elsewhere open files
-    // directly (keeps the synchronous drop path on other browsers).
-    if (isFolderDragDropSupported()) {
-      tryOpenDroppedFolder(e.dataTransfer).then((handled) => {
-        if (!handled) openDroppedFiles();
-      });
-    } else {
-      openDroppedFiles();
-    }
+    openDroppedTransfer(e.dataTransfer, () => state.tabs.length > 0);
   });
 }

@@ -13,18 +13,8 @@ const mermaid = {
     });
   }),
 
-  mermaidAPI: {
-    render: jest.fn((id, code, callback) => {
-      const svg = `<svg id="${id}" class="mermaid-diagram"><text>${code}</text></svg>`;
-      if (callback) {
-        callback(svg);
-      }
-      return svg;
-    }),
-  },
-
   // Mock error scenarios
-  __setRenderError: function(shouldError) {
+  __setRenderError: function (shouldError) {
     if (shouldError) {
       this.render.mockRejectedValue(new Error('Mermaid syntax error'));
     } else {
