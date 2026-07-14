@@ -43,7 +43,17 @@ const errMessage = (error) => (error instanceof Error ? error.message : String(e
 // ===========================
 // Mermaid Diagram Processing
 // ===========================
+// Render-generation token. renderMarkdown / switchTab / theme changes are all
+// async and can overlap (e.g. rapid tab switches A→B→C while Mermaid renders):
+// without a guard, a superseded run keeps writing into detached DOM, pushes
+// panzoom instances for dead diagrams into shared state, and can interleave
+// mermaid.initialize() with another run's in-flight render (mixed-theme
+// output). Every entry to a diagram pass bumps the generation; after each
+// await, a run that is no longer current stops touching DOM or state.
+let diagramRenderGeneration = 0;
+
 export async function processMermaidDiagrams() {
+    const generation = ++diagramRenderGeneration;
     const root = el('markdown-content');
     if (!root) return;
     // Find all code blocks with mermaid language
@@ -54,6 +64,7 @@ export async function processMermaidDiagrams() {
     // Load the mermaid engine on demand (this is the only place — plus the theme
     // re-render — that needs it, so documents without diagrams never pay for it).
     const mermaid = await loadMermaid();
+    if (generation !== diagramRenderGeneration) return;
 
     // Process each mermaid diagram
     for (let i = 0; i < codeBlocks.length; i++) {
@@ -67,6 +78,7 @@ export async function processMermaidDiagrams() {
 
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
+            if (generation !== diagramRenderGeneration) return; // superseded mid-render
 
             // Create diagram container with mermaid source for re-rendering
             const container = createDiagramContainer(svg, diagramId, mermaidCode);
@@ -561,6 +573,9 @@ export function cleanupPanzoomInstances() {
 // Re-render Mermaid (for theme change)
 // ===========================
 export async function reRenderMermaidDiagrams() {
+    // Shares the generation counter with processMermaidDiagrams: a new document
+    // render invalidates an in-flight theme re-render, and vice versa.
+    const generation = ++diagramRenderGeneration;
     const root = el('markdown-content');
     if (!root) return;
     // Get all diagram containers
@@ -571,6 +586,7 @@ export async function reRenderMermaidDiagrams() {
 
     // Update mermaid theme (the engine is already loaded if diagrams exist)
     const mermaid = await loadMermaid();
+    if (generation !== diagramRenderGeneration) return;
     mermaid.initialize(getMermaidConfig());
 
     for (const container of containers) {
@@ -590,6 +606,7 @@ export async function reRenderMermaidDiagrams() {
         try {
             // Re-render with new theme
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
+            if (generation !== diagramRenderGeneration) return; // superseded mid-render
 
             // Clean up old panzoom
             const oldInstance = state.currentPanzoomInstances.find((p) => p.id === diagramId);

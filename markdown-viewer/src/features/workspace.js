@@ -48,8 +48,6 @@ const WS_MAX_FILES = 2000;
  * @property {WorkspaceFile[]} files
  */
 
-/** @type {string} */
-let workspaceRoot = '';
 /** @type {WorkspaceFile[]} */
 let workspaceFiles = [];
 let workspaceSidebarVisible = false;
@@ -125,14 +123,14 @@ async function pickWebFolder() {
   let dirHandle;
   try {
     dirHandle = await w.showDirectoryPicker();
-  } catch (e) {
+  } catch {
     return; // user dismissed the picker
   }
   /** @type {WorkspaceFile[]} */
   const files = [];
   try {
     await scanDirectoryHandle(dirHandle, '', files, 0);
-  } catch (e) {
+  } catch {
     showToast('Could not read the folder.', { type: 'error' });
     return;
   }
@@ -176,7 +174,7 @@ export async function tryOpenDroppedFolder(dataTransfer) {
         dirHandle = h;
         break;
       }
-    } catch (e) {
+    } catch {
       // ignore an unreadable item; keep checking the rest
     }
   }
@@ -186,7 +184,7 @@ export async function tryOpenDroppedFolder(dataTransfer) {
   const files = [];
   try {
     await scanDirectoryHandle(dirHandle, '', files, 0);
-  } catch (e) {
+  } catch {
     showToast('Could not read the folder.', { type: 'error' });
     return true; // it was a folder — handled, albeit with an error
   }
@@ -206,7 +204,6 @@ export async function tryOpenDroppedFolder(dataTransfer) {
  */
 export function applyWorkspace(workspace) {
   if (!workspace || !Array.isArray(workspace.files)) return;
-  workspaceRoot = workspace.root || '';
   workspaceFiles = workspace.files;
   workspaceSidebarVisible = workspaceFiles.length > 0;
   collapsedDirs.clear();
@@ -244,7 +241,7 @@ async function readHandleAndOpen(entry) {
     const file = await entry.handle.getFile();
     const text = await file.text();
     workspaceOpenFile(entry.name, text, entry.relPath);
-  } catch (e) {
+  } catch {
     showToast('Could not open the file.', { type: 'error' });
   }
 }
@@ -300,7 +297,7 @@ export function resolveRelativeRelPath(fromRelPath, href) {
   let clean = String(href || '').split('#')[0].split('?')[0];
   try {
     clean = decodeURIComponent(clean);
-  } catch (e) {
+  } catch {
     // leave as-is on bad encoding
   }
   if (!clean) return '';

@@ -22,7 +22,7 @@ describe('PWA service worker', () => {
     if (Object.getOwnPropertyDescriptor(navigator, 'serviceWorker')) {
       try {
         delete navigator.serviceWorker;
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -60,7 +60,7 @@ describe('PWA file handler (launchQueue)', () => {
   afterEach(() => {
     try {
       delete window.launchQueue;
-    } catch (e) {
+    } catch {
       // ignore
     }
   });

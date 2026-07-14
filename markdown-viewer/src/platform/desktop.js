@@ -80,7 +80,6 @@ function pulseWatchToggle() {
   watchToggle.classList.remove('reloaded');
   // Force reflow so re-adding the class restarts the animation even
   // when multiple reloads happen in quick succession.
-  // eslint-disable-next-line no-unused-expressions
   void watchToggle.offsetWidth;
   watchToggle.classList.add('reloaded');
   watchToggle.title = 'Reloaded from disk';

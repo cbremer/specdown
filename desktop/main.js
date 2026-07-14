@@ -42,7 +42,7 @@ function initLogFile() {
       fs.mkdirSync(userData, { recursive: true });
     }
     logFilePath = path.join(userData, 'specdown-main.log');
-  } catch (_) {
+  } catch {
     // Can't establish a log file — fall back to console only.
     logFilePath = null;
   }
@@ -51,12 +51,11 @@ function initLogFile() {
 function logError(msg, err) {
   const detail = err && err.stack ? err.stack : String(err || '');
   const line = `[${new Date().toISOString()}] ERROR ${msg}: ${detail}\n`;
-  // eslint-disable-next-line no-console
   console.error(line);
   if (logFilePath) {
     try {
       fs.appendFileSync(logFilePath, line);
-    } catch (_) {
+    } catch {
       // Swallow — logging must never crash the app.
     }
   }
@@ -64,12 +63,11 @@ function logError(msg, err) {
 
 function logInfo(msg) {
   const line = `[${new Date().toISOString()}] INFO  ${msg}\n`;
-  // eslint-disable-next-line no-console
   console.log(line);
   if (logFilePath) {
     try {
       fs.appendFileSync(logFilePath, line);
-    } catch (_) {
+    } catch {
       // Swallow — logging must never crash the app.
     }
   }
@@ -256,7 +254,7 @@ function initStore() {
       // Best-effort cleanup of the temp file so it doesn't accumulate.
       try {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-      } catch (_) {
+      } catch {
         // Swallow — we've already logged the real failure.
       }
     }
@@ -344,7 +342,7 @@ function createWindow() {
     let protocol;
     try {
       protocol = new URL(url).protocol;
-    } catch (_) {
+    } catch {
       event.preventDefault();
       return;
     }
@@ -364,7 +362,7 @@ function createWindow() {
       if (protocol === 'http:' || protocol === 'https:') {
         shell.openExternal(url);
       }
-    } catch (_) {
+    } catch {
       // Malformed URL — deny without opening anything.
     }
     return { action: 'deny' };
@@ -545,7 +543,7 @@ function openRelativeFromFile(fromPath, href) {
   let cleaned = href.split('#')[0].split('?')[0];
   try {
     cleaned = decodeURIComponent(cleaned);
-  } catch (_) {
+  } catch {
     // Leave as-is if it isn't valid percent-encoding.
   }
   if (!cleaned) return;
@@ -715,7 +713,7 @@ function restoreCustomCss() {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('apply-custom-css', cssContent);
     }
-  } catch (err) {
+  } catch {
     // CSS file may have been moved; silently skip
     store.set('customCssPath', '');
   }
@@ -1036,7 +1034,7 @@ process.on('unhandledRejection', (reason) => {
         'SpecDown failed to start',
         String(err && err.message ? err.message : err)
       );
-    } catch (_) {
+    } catch {
       // Dialog may not be available yet — the log line above is our fallback.
     }
   }

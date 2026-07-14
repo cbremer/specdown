@@ -47,7 +47,7 @@ export async function fetchGitHubRepoFiles(repoUrl) {
       url: item.html_url,
       rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${item.path}`,
     }));
-  } catch (e) {
+  } catch {
     return null;
   }
 }

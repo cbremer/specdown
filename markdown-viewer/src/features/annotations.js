@@ -182,14 +182,14 @@ function annReadStore() {
   let raw;
   try {
     raw = localStorage.getItem(ANNOTATIONS_KEY);
-  } catch (e) {
+  } catch {
     return { version: STORE_VERSION, files: {} };
   }
   if (!raw) return { version: STORE_VERSION, files: {} };
   let parsed;
   try {
     parsed = JSON.parse(raw);
-  } catch (e) {
+  } catch {
     return { version: STORE_VERSION, files: {} };
   }
   if (parsed && parsed.version === STORE_VERSION && parsed.files && typeof parsed.files === 'object') {
@@ -242,7 +242,7 @@ function annWriteStore(store) {
       if (Array.isArray(notes) && notes.length) files[file] = notes;
     }
     localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ version: STORE_VERSION, files }));
-  } catch (e) {
+  } catch {
     // localStorage quota exceeded — silently ignore.
   }
 }
@@ -332,7 +332,7 @@ export function importAnnotations(jsonText) {
   let incoming;
   try {
     incoming = JSON.parse(jsonText);
-  } catch (e) {
+  } catch {
     showToast('Import failed: the file is not valid JSON.', { type: 'error' });
     return false;
   }
@@ -362,7 +362,7 @@ export function importAnnotations(jsonText) {
 
   try {
     annWriteStore(store);
-  } catch (e) {
+  } catch {
     showToast('Import failed: could not save (storage full?).', { type: 'error' });
     return false;
   }

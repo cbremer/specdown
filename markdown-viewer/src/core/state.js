@@ -74,3 +74,10 @@ export const state = {
   splitViewActive: false,
   iosLayoutMode: 'phone',
 };
+
+// Seal the shape (not the values): fields stay mutable, but adding a NEW field
+// requires editing this file — which keeps the shared-state surface reviewable
+// and stops modules from smuggling private state in via ad-hoc properties.
+// (Object.seal throws on new props in strict mode / ESM, silently no-ops in
+// sloppy mode — either way the drift can't land.)
+Object.seal(state);

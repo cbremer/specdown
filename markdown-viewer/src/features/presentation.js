@@ -141,7 +141,7 @@ function destroySlidePanzoom() {
   if (slidePanzoom) {
     try {
       slidePanzoom.destroy();
-    } catch (err) {
+    } catch {
       // ignore
     }
     slidePanzoom = null;
