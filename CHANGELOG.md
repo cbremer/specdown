@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.159 — 2026-07-14
+
+### Bug Fixes
+
+- resolve PR #178 review findings (CodeQL alert #10, repo-browser listener stacking)
+
 ## v0.0.158 — 2026-07-14
 
 ### Refactoring
