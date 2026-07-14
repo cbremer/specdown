@@ -5,6 +5,21 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.158 — 2026-07-14
+
+### Refactoring
+
+- Wave C hygiene — render race fix, main.js split, zero warnings
+
+### Documentation
+
+- evaluation v2 — independent re-audit of the modernized app at v0.0.154
+
+### Other Changes
+
+- Wave B consolidation — icons, toolbar, dark theme, focus traps
+- Wave A hardening — update integrity, release lanes, containment
+
 ## v0.0.157 — 2026-07-14
 
 ### Build System
