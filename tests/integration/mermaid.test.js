@@ -187,7 +187,7 @@ describe('Mermaid Diagram Processing', () => {
 
       await processMermaidDiagrams();
 
-      const svgElement = markdownContent.querySelector('svg');
+      const svgElement = markdownContent.querySelector('.diagram-wrapper svg');
       expect(svgElement).toBeTruthy();
       expect(svgElement.getAttribute('data-mermaid-source')).toBe(mermaidCode);
     });

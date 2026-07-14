@@ -16,8 +16,15 @@
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
-    --transition: all 0.3s ease;
-    --transition-fast: all 0.15s ease;
+    /* Motion: targeted properties only — never `all`, which animates layout
+       and makes theme switches feel sluggish. Two speeds: --transition for
+       surface changes, --transition-fast for hover/press feedback. */
+    --transition:
+        color 200ms ease, background-color 200ms ease, border-color 200ms ease,
+        box-shadow 200ms ease, opacity 200ms ease, transform 200ms ease;
+    --transition-fast:
+        color 120ms ease, background-color 120ms ease, border-color 120ms ease,
+        box-shadow 120ms ease, opacity 120ms ease, transform 120ms ease;
 
     /* Semantic status palette (the toast/badge/status colors). Defined once so
        components reference intent, not raw hex. Values match the prior inline
@@ -52,15 +59,19 @@
     --bg-primary: #1a1a1a;
     --bg-secondary: #2a2a2a;
     --bg-tertiary: #3a3a3a;
-    --text-primary: #ffffff;
+    /* Off-white, not pure #fff: full-white body text on near-black causes
+       halation (glow) for astigmatic readers; #e6e6e6 still measures ~14:1. */
+    --text-primary: #e6e6e6;
     --text-secondary: #cccccc;
     --border-color: #444444;
-    /* Accent for the dark theme. #5aa0ec read well as link text but made
-       white-on-accent buttons (Browse / Open / samples) too low-contrast;
-       this medium blue keeps both link text and button text legible on the
-       dark background. A fuller light/dark token split is Phase 2 work. */
-    --accent-color: #4a90e2;
-    --accent-hover: #357abd;
+    /* Full light/dark accent split. In dark mode the accent must serve two
+       jobs the old #4a90e2 couldn't do at once: link text on #1a1a1a and a
+       button background. A light blue does both — links measure ~8.3:1 —
+       provided button TEXT flips to a dark navy (see --text-on-accent below,
+       ~8.3:1) instead of white (which would be ~1.9:1 on this accent). */
+    --accent-color: #7ab8f5;
+    --accent-hover: #a3cdf8;
+    --text-on-accent: #0d1b2a;
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
@@ -274,7 +285,7 @@ body {
 
 .browse-button {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border: none;
     padding: 0.75rem 2rem;
     border-radius: var(--radius-lg);
@@ -319,10 +330,29 @@ body {
 
 .sample-button:hover {
     border-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     background-color: var(--accent-color);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+}
+
+/* Secondary open paths (URL / samples / recents) are visually demoted so the
+   first-run screen has ONE primary action (Browse) — everything else reads as
+   an alternative, separated by a hairline and slightly muted until hovered. */
+.url-section,
+.sample-section,
+.recent-files-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--space-4);
+    opacity: 0.85;
+    transition: var(--transition-fast);
+}
+
+.url-section:hover,
+.url-section:focus-within,
+.sample-section:hover,
+.recent-files-section:hover {
+    opacity: 1;
 }
 
 .url-section {
@@ -333,6 +363,11 @@ body {
     gap: 0.5rem;
     width: 100%;
     max-width: 420px;
+}
+
+#open-url-btn[aria-busy='true'] {
+    cursor: progress;
+    opacity: 0.7;
 }
 
 .url-separator {
@@ -367,7 +402,7 @@ body {
 .url-input-row button {
     padding: 0.55rem 1.1rem;
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border: none;
     border-radius: var(--radius-md);
     font-size: 0.9rem;
@@ -519,6 +554,33 @@ body {
     position: relative; /* anchor for the overflow menu */
 }
 
+/* Long-tail actions live only in the "⋮" overflow menu (at every width).
+   The inline style on these buttons still carries feature-gating (the menu
+   skips buttons whose inline display is none), so hide them here with
+   !important rather than touching the inline style. */
+.content-header-actions .overflow-only {
+    display: none !important;
+}
+
+.search-toggle-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.4rem 0.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.search-toggle-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--text-on-accent);
+}
+
 /* ===========================
    Toolbar Overflow Menu
    =========================== */
@@ -587,7 +649,7 @@ body {
 
 .watch-toggle-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -666,13 +728,13 @@ body {
 
 .view-toggle-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
 .view-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -695,7 +757,7 @@ body {
 
 .load-new-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -913,13 +975,13 @@ body {
 .comments-toggle-button:hover,
 .comments-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
 .comments-toggle-count {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-radius: var(--radius-pill);
     padding: 0 0.4em;
     font-size: 0.7rem;
@@ -1005,7 +1067,7 @@ body {
 
 .diagram-controls button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
     transform: scale(1.1);
 }
@@ -1113,7 +1175,7 @@ body {
 
 .fullscreen-controls button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
     transform: scale(1.1);
 }
@@ -1471,13 +1533,13 @@ body {
 
 .toc-toggle-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
 .toc-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1606,7 +1668,7 @@ body {
 .workspace-toggle-button:hover,
 .workspace-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1626,7 +1688,7 @@ body {
 
 .browse-button-secondary:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1684,13 +1746,13 @@ body {
 
 .split-toggle-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
 .split-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1713,7 +1775,7 @@ body {
 
 .print-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1767,7 +1829,7 @@ body {
 
 .search-nav-btn:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -1916,7 +1978,7 @@ mark.search-highlight-current {
     z-index: 10001;
     padding: 0.5rem 1rem;
     background-color: var(--accent-color);
-    color: #fff;
+    color: var(--text-on-accent);
     border-radius: var(--radius-md);
     text-decoration: none;
     box-shadow: var(--shadow-md);
@@ -2059,7 +2121,7 @@ mark.search-highlight-current {
 
 .command-palette-item.is-selected {
     background-color: var(--accent-color);
-    color: #fff;
+    color: var(--text-on-accent);
 }
 
 .command-palette-item-hint {
@@ -2397,7 +2459,7 @@ mark.search-highlight-current {
 
 .annotation-toggle-button:hover {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
@@ -2505,13 +2567,13 @@ mark.search-highlight-current {
 .annotation-list-toggle-button:hover,
 .annotation-list-toggle-button.active {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
 }
 
 .annotation-list-count {
     background-color: var(--accent-color);
-    color: white;
+    color: var(--text-on-accent);
     border-radius: var(--radius-pill);
     padding: 0 0.4em;
     font-size: 0.7rem;
@@ -2871,18 +2933,12 @@ mark.search-highlight-current {
         border-bottom: 1px solid var(--border-color);
     }
 
-    /* Collapse the secondary content-header actions behind the overflow "⋮"
-       menu on narrow viewports; the overflow menu proxies to these buttons.
-       view-toggle and watch-toggle stay inline as primary/contextual actions. */
+    /* On narrow viewports even the visible shortcut buttons collapse into the
+       (always-present) overflow "⋮" menu; only Search and "⋮" stay inline. */
     .content-header-actions #toc-toggle,
     .content-header-actions #split-toggle,
     .content-header-actions #annotation-toggle,
-    .content-header-actions #present-button,
-    .content-header-actions #print-button {
+    .content-header-actions #present-button {
         display: none;
-    }
-
-    #overflow-toggle {
-        display: inline-flex !important;
     }
 }

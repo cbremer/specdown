@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { state } from '../core/state.js';
 import { isIOSNative } from '../core/platform.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
+import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
 import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
@@ -110,11 +111,11 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
             <span class="zoom-percent">100%</span>
             <input class="zoom-range" type="range" min="25" max="400" value="100" step="5" aria-label="Diagram zoom level">
         </label>
-        <button class="reset" title="Reset view">⟲</button>
+        <button class="reset" title="Reset view" aria-label="Reset view">${iconSvg('rotate-ccw')}</button>
         <button class="export-svg" title="Download as SVG">SVG</button>
         <button class="export-png" title="Download as PNG">PNG</button>
-        <button class="share-diagram" title="Copy shareable link">🔗</button>
-        <button class="fullscreen" title="Fullscreen">⛶</button>
+        <button class="share-diagram" title="Copy shareable link" aria-label="Copy shareable link">${iconSvg('link')}</button>
+        <button class="fullscreen" title="Fullscreen" aria-label="Open fullscreen">${iconSvg('maximize')}</button>
     `;
 
     // Create wrapper

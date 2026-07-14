@@ -6,6 +6,8 @@
 // The palette DOM is built on open and torn down on close, so there's no stale
 // selection state between invocations. It's an ARIA combobox + listbox dialog.
 
+import { trapFocus } from '../core/focus-trap.js';
+
 /**
  * @typedef {object} Command
  * @property {string} id
@@ -30,6 +32,8 @@ let visible = [];
 let selectedIndex = 0;
 /** @type {Element | null} */
 let previouslyFocused = null;
+/** @type {(() => void) | null} */
+let releaseTrap = null;
 
 /**
  * Register the set of commands the palette offers. Replaces any prior set.
@@ -235,11 +239,14 @@ export function openCommandPalette() {
   visible = filterCommands(registry, '');
   selectedIndex = 0;
   renderList();
+  releaseTrap = trapFocus(overlay);
   input.focus();
 }
 
 export function closeCommandPalette() {
   if (!overlay) return;
+  if (releaseTrap) releaseTrap();
+  releaseTrap = null;
   if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
   overlay = null;
   input = null;

@@ -561,6 +561,12 @@ function setupEventListeners() {
         printButton.addEventListener('click', performPrint);
     }
 
+    // Search button (visible affordance for Cmd/Ctrl+F)
+    const searchButton = $('search-button');
+    if (searchButton) {
+        searchButton.addEventListener('click', () => openSearch());
+    }
+
     // Present button (shown only when the document has diagrams)
     if (presentButton) {
         presentButton.addEventListener('click', () => startPresentation());
@@ -755,16 +761,36 @@ function setupEventListeners() {
         }
     });
 
-    // URL input
+    // URL input. The fetch can be slow (remote host, big repo scan), so the
+    // Open button carries a busy state — without it the flow reads as frozen.
+    const openUrlWithBusyState = async (/** @type {string} */ url) => {
+        const btn = /** @type {HTMLButtonElement | null} */ (openUrlBtn);
+        if (!btn) {
+            await handleUrl(url);
+            return;
+        }
+        if (btn.disabled) return; // already loading — ignore re-clicks
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Opening…';
+        btn.setAttribute('aria-busy', 'true');
+        try {
+            await handleUrl(url);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            btn.removeAttribute('aria-busy');
+        }
+    };
     if (openUrlBtn) {
         openUrlBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            handleUrl(urlInput ? urlInput.value.trim() : '');
+            openUrlWithBusyState(urlInput ? urlInput.value.trim() : '');
         });
     }
     if (urlInput) {
         urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleUrl(urlInput.value.trim());
+            if (e.key === 'Enter') openUrlWithBusyState(urlInput.value.trim());
         });
         urlInput.addEventListener('click', (e) => e.stopPropagation());
     }

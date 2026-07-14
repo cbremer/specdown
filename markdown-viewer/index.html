@@ -50,7 +50,7 @@
             </div>
             <div class="header-controls">
                 <button id="theme-toggle" class="theme-toggle" title="Toggle theme" aria-label="Toggle light/dark theme">
-                    <span class="theme-icon" aria-hidden="true">🌙</span>
+                    <span class="theme-icon" aria-hidden="true" data-icon="moon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
                 </button>
             </div>
         </header>
@@ -106,54 +106,57 @@
         <div id="content-area" class="content-area" style="display: none;">
             <div class="content-header">
                 <div class="file-info">
-                    <span class="file-icon">📄</span>
+                    <span class="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
                     <span id="file-name" class="file-name"></span>
                 </div>
                 <div class="content-header-actions">
-                    <button id="watch-toggle" class="watch-toggle-button" title="Auto-reload when file changes on disk" aria-label="Watch file for changes" style="display: none;">
-                        <span class="watch-toggle-icon" aria-hidden="true">⟳</span>
+                    <button id="watch-toggle" class="watch-toggle-button overflow-only" title="Auto-reload when file changes on disk" aria-label="Watch file for changes" style="display: none;">
+                        <span class="watch-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
                         <span class="watch-toggle-label">Watch</span>
                     </button>
-                    <button id="workspace-toggle" class="workspace-toggle-button" title="Toggle workspace files" aria-label="Toggle workspace files" style="display: none;">
-                        <span class="workspace-toggle-icon" aria-hidden="true">🗂</span>
+                    <button id="workspace-toggle" class="workspace-toggle-button overflow-only" title="Toggle workspace files" aria-label="Toggle workspace files" style="display: none;">
+                        <span class="workspace-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
                         <span class="workspace-toggle-label">Files</span>
                     </button>
                     <button id="toc-toggle" class="toc-toggle-button" title="Toggle table of contents" aria-label="Toggle contents">
-                        <span class="toc-toggle-icon" aria-hidden="true">☰</span>
+                        <span class="toc-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
                         <span class="toc-toggle-label">Contents</span>
                     </button>
                     <button id="split-toggle" class="split-toggle-button" title="Toggle split view (preview + raw)" aria-label="Toggle split view">
-                        <span class="split-toggle-icon" aria-hidden="true">⊟</span>
+                        <span class="split-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"/></svg></span>
                         <span class="split-toggle-label">Split</span>
                     </button>
-                    <button id="comments-toggle" class="comments-toggle-button active" title="Show/hide authored HTML comments" aria-label="Toggle HTML comments" style="display: none;">
-                        <span class="comments-toggle-icon" aria-hidden="true">💬</span>
+                    <button id="comments-toggle" class="comments-toggle-button overflow-only active" title="Show/hide authored HTML comments" aria-label="Toggle HTML comments" style="display: none;">
+                        <span class="comments-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                         <span class="comments-toggle-label">Comments</span>
                         <span class="comments-toggle-count">0</span>
                     </button>
                     <button id="annotation-toggle" class="annotation-toggle-button" title="Toggle annotation mode (double-click text to add notes)" aria-label="Toggle annotate mode">
-                        <span class="annotation-toggle-icon" aria-hidden="true">✎</span>
+                        <span class="annotation-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
                         <span class="annotation-toggle-label">Annotate</span>
                     </button>
-                    <button id="annotation-list-toggle" class="annotation-list-toggle-button" title="Show annotations list" aria-label="Show annotations list" style="display: none;">
-                        <span class="annotation-list-icon" aria-hidden="true">🗒</span>
+                    <button id="annotation-list-toggle" class="annotation-list-toggle-button overflow-only" title="Show annotations list" aria-label="Show annotations list" style="display: none;">
+                        <span class="annotation-list-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/></svg></span>
                         <span class="annotation-list-label">Notes</span>
                         <span class="annotation-list-count">0</span>
                     </button>
-                    <button id="print-button" class="print-button" title="Print / Save as PDF (Cmd+P)" aria-label="Print or save as PDF">
-                        <span class="print-button-icon" aria-hidden="true">⎙</span>
+                    <button id="print-button" class="print-button overflow-only" title="Print / Save as PDF (Cmd+P)" aria-label="Print or save as PDF">
+                        <span class="print-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span>
                         <span class="print-button-label">Print</span>
                     </button>
                     <button id="present-button" class="present-button" title="Present diagrams full-screen" aria-label="Present diagrams" style="display: none;">
-                        <span class="present-button-icon" aria-hidden="true">▶</span>
+                        <span class="present-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>
                         <span class="present-button-label">Present</span>
                     </button>
-                    <button id="view-toggle" class="view-toggle-button" title="Toggle between preview and raw markdown" aria-label="Toggle raw markdown view">
-                        <span class="view-toggle-icon" aria-hidden="true">&lt;/&gt;</span>
+                    <button id="view-toggle" class="view-toggle-button overflow-only" title="Toggle between preview and raw markdown" aria-label="Toggle raw markdown view">
+                        <span class="view-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
                         <span class="view-toggle-label">Raw</span>
                     </button>
-                    <button id="overflow-toggle" class="overflow-toggle-button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false" style="display: none;">
-                        <span aria-hidden="true">⋮</span>
+                    <button id="search-button" class="search-toggle-button" title="Find in document (Cmd+F)" aria-label="Find in document">
+                        <span class="search-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    </button>
+                    <button id="overflow-toggle" class="overflow-toggle-button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false">
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
                     </button>
                 </div>
             </div>
@@ -202,19 +205,19 @@
 
         <div id="ios-action-bar" class="ios-action-bar" style="display: none;">
             <button id="ios-open-button" class="ios-action-button" title="Open file">
-                <span class="ios-action-icon">+</span>
+                <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                 <span class="ios-action-label">Open</span>
             </button>
             <button id="ios-contents-button" class="ios-action-button" title="Show contents">
-                <span class="ios-action-icon">☰</span>
+                <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
                 <span class="ios-action-label">Contents</span>
             </button>
             <button id="ios-view-button" class="ios-action-button" title="Toggle raw markdown">
-                <span class="ios-action-icon">&lt;/&gt;</span>
+                <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
                 <span class="ios-action-label">Raw</span>
             </button>
             <button id="ios-more-button" class="ios-action-button" title="More actions">
-                <span class="ios-action-icon">⋯</span>
+                <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
                 <span class="ios-action-label">More</span>
             </button>
         </div>
@@ -256,10 +259,10 @@
                         <span class="zoom-percent">100%</span>
                         <input class="zoom-range" type="range" min="25" max="400" value="100" step="5" aria-label="Diagram zoom level">
                     </label>
-                    <button class="reset" title="Reset view">⟲</button>
+                    <button class="reset" title="Reset view" aria-label="Reset view"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
                     <button class="export-svg" title="Download as SVG">SVG</button>
                     <button class="export-png" title="Download as PNG">PNG</button>
-                    <button class="close-fullscreen" title="Exit fullscreen (ESC)">✕</button>
+                    <button class="close-fullscreen" title="Exit fullscreen (ESC)" aria-label="Exit fullscreen"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
                 <div class="fullscreen-diagram-wrapper"></div>
                 <!-- Minimap -->

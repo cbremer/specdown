@@ -8,6 +8,7 @@
 // so the module is self-contained.
 
 import { state } from '../core/state.js';
+import { trapFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
@@ -77,6 +78,9 @@ export function hasLoadedContent() {
   return !!(contentArea && contentArea.style.display !== 'none' && state.currentRawMarkdown);
 }
 
+/** Per-sheet focus-trap release fns, keyed by element id. @type {Map<string, () => void>} */
+const sheetTraps = new Map();
+
 /**
  * @param {HTMLElement | null} sheet
  * @param {boolean} visible
@@ -84,6 +88,16 @@ export function hasLoadedContent() {
 export function setIOSSheetVisibility(sheet, visible) {
   if (!sheet) return;
   sheet.style.display = visible ? 'flex' : 'none';
+  // Sheets are aria-modal surfaces; trap Tab while open (external keyboards
+  // on iPad are common) and release on close.
+  const existing = sheetTraps.get(sheet.id);
+  if (existing) {
+    existing();
+    sheetTraps.delete(sheet.id);
+  }
+  if (visible) {
+    sheetTraps.set(sheet.id, trapFocus(sheet));
+  }
 }
 
 export function closeIOSActionSheet() {
