@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.155 — 2026-07-14
+
+### Build System
+
+- Bump mermaid from 11.15.0 to 11.16.0
+
 ## v0.0.154 — 2026-06-25
 
 ### Documentation
