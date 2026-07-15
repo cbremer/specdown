@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.164 — 2026-07-15
+
+### CI
+
+- file a macos-release-failure issue when the macOS release lane fails
+
+### Other Changes
+
+- live-reload chip beside the filename + manual Reload from disk
+
 ## v0.0.163 — 2026-07-15
 
 ### Bug Fixes
