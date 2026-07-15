@@ -2,12 +2,14 @@
 // Toolbar overflow menu: the "⋮" button is visible at every width and its menu
 // is the COMPLETE list of document actions — the toolbar keeps only the
 // high-frequency shortcuts (Contents, Split, Annotate, Present, Search)
-// visible, and everything else (`.overflow-only` buttons: Watch, Workspace
-// files, author comments, annotations list, Print, Raw) lives here. Menu items
-// are thin proxies that `.click()` the real toolbar buttons, so there is no
-// duplicated action logic — whatever the buttons do, the menu does. A button
-// whose inline style is display:none is feature-gated off (e.g. Present with
-// no diagrams, Watch outside desktop) and is skipped.
+// visible, and everything else (`.overflow-only` buttons: Workspace files,
+// author comments, annotations list, Print, Raw) lives here. Entries come in
+// two shapes: button proxies (`targetId`) that `.click()` the real toolbar
+// button — no duplicated action logic, and an inline display:none on the
+// button means feature-gated off (e.g. Present with no diagrams), so the
+// entry is skipped — and run-entries (`run` + `isAvailable`) for actions with
+// no toolbar button at all (e.g. "Reload from disk"). Live-reload state is
+// NOT in this menu: it lives on the "Live" chip beside the filename.
 
 import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
