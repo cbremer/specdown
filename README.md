@@ -60,9 +60,9 @@ Download the latest installer from the **[Releases page](../../releases)**:
 
 | Platform | Artifact | Notes |
 |---|---|---|
-| macOS | `Specdown Desktop-<version>-universal.dmg` | **Signed & notarized**; universal (Intel + Apple Silicon) |
-| Windows | `Specdown Desktop Setup <version>.exe` | NSIS installer |
-| Linux | `Specdown Desktop-<version>.AppImage` | mark executable, then run |
+| macOS | `Specdown-Desktop-<version>-universal.dmg` | **Signed & notarized**; universal (Intel + Apple Silicon) |
+| Windows | `Specdown-Desktop-Setup-<version>.exe` | NSIS installer |
+| Linux | `Specdown-Desktop-<version>.AppImage` | mark executable, then run |
 
 On macOS, open the DMG, drag **Specdown Desktop** to Applications, and launch — no
 Gatekeeper warning, because the app is signed with a Developer ID certificate and

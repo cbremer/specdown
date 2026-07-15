@@ -119,7 +119,8 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "Specdown-Desktop-${version}-${arch}.${ext}"
     },
     "dmg": {
       "title": "Specdown Desktop"
@@ -130,13 +131,16 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Specdown-Desktop-Setup-${version}.${ext}"
     },
     "linux": {
       "target": "AppImage",
       "category": "Development",
-      "icon": "build/icon-square.png"
-    }
+      "icon": "build/icon-square.png",
+      "artifactName": "Specdown-Desktop-${version}.${ext}"
+    },
+    "artifactName": "Specdown-Desktop-${version}-${arch}.${ext}"
   },
   "overrides": {
     "@istanbuljs/load-nyc-config": {
