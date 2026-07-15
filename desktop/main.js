@@ -786,6 +786,22 @@ ipcMain.on('unwatch-file', (_event, filePath) => {
   unwatchFile(filePath);
 });
 
+// Manual "Reload from disk": re-read the file and reply over the same
+// file-changed channel a watcher event uses, so the renderer updates the
+// open tab in place (scroll preserved, "Updated" chip flash).
+ipcMain.on('refresh-file', (_event, filePath) => {
+  if (typeof filePath !== 'string' || !isValidMarkdownFile(filePath)) return;
+  try {
+    const fileData = readMarkdownFile(filePath);
+    const wc = mainWindow && mainWindow.webContents;
+    if (wc && !wc.isDestroyed()) {
+      wc.send('file-changed', fileData);
+    }
+  } catch (err) {
+    logError(`Failed to refresh file from disk: ${filePath}`, err);
+  }
+});
+
 // Session save: renderer sends tab state when it changes
 ipcMain.on('save-session', (_event, tabs) => {
   saveSession(tabs);

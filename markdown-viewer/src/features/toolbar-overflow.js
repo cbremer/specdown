@@ -9,11 +9,31 @@
 // whose inline style is display:none is feature-gated off (e.g. Present with
 // no diagrams, Watch outside desktop) and is skipped.
 
+import { state } from '../core/state.js';
+import { isDesktop } from '../core/platform.js';
+import { refreshActiveFileFromDisk } from '../platform/desktop.js';
+
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
-/** @type {Array<{ targetId: string, label: string }>} */
+// True when the active tab is backed by a local file on desktop — the
+// precondition for disk-related actions (live reload lives on the "Live"
+// chip beside the filename; the menu carries the manual refresh).
+const overflowHasDesktopFileTab = () => {
+  if (!isDesktop) return false;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
+  return !!(tab && tab.filePath);
+};
+
+/** @type {Array<{ label: string, targetId?: string, run?: () => void, isAvailable?: () => boolean }>} */
 const OVERFLOW_ACTIONS = [
-  { targetId: 'watch-toggle', label: 'Watch file for changes' },
+  {
+    label: 'Reload from disk',
+    run: () => refreshActiveFileFromDisk(),
+    isAvailable: overflowHasDesktopFileTab,
+  },
   { targetId: 'workspace-toggle', label: 'Workspace files' },
   { targetId: 'toc-toggle', label: 'Table of contents' },
   { targetId: 'split-toggle', label: 'Split view' },
@@ -42,7 +62,23 @@ export function openOverflowMenu() {
   built.setAttribute('role', 'menu');
 
   for (const action of OVERFLOW_ACTIONS) {
-    const target = el(action.targetId);
+    // run-entries carry their own availability + behavior (no toolbar button).
+    if (action.run) {
+      if (action.isAvailable && !action.isAvailable()) continue;
+      const item = document.createElement('button');
+      item.className = 'overflow-menu-item';
+      item.setAttribute('role', 'menuitem');
+      item.textContent = action.label;
+      const runAction = action.run;
+      item.addEventListener('click', () => {
+        closeOverflowMenu();
+        runAction();
+      });
+      built.appendChild(item);
+      continue;
+    }
+
+    const target = action.targetId ? el(action.targetId) : null;
     if (!target) continue;
     // Skip actions whose button is inline-hidden (e.g. Present with no diagrams).
     if (target.style.display === 'none') continue;
@@ -52,7 +88,7 @@ export function openOverflowMenu() {
     item.textContent = action.label;
     item.addEventListener('click', () => {
       closeOverflowMenu();
-      const proxied = el(action.targetId);
+      const proxied = action.targetId ? el(action.targetId) : null;
       if (proxied) proxied.click();
     });
     built.appendChild(item);

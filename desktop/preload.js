@@ -67,6 +67,12 @@ contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('unwatch-file', filePath);
   },
 
+  // Re-read a file from disk on demand (manual "Reload from disk"). The main
+  // process replies over the file-changed channel, same as a watch event.
+  requestRefreshFile: (filePath) => {
+    ipcRenderer.send('refresh-file', filePath);
+  },
+
   // Register a callback for when a watched file changes on disk
   onFileChanged: (callback) => {
     ipcRenderer.on('file-changed', (_event, fileData) => {

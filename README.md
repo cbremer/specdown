@@ -38,7 +38,10 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 - **Workspace (folder) mode** — open a folder (desktop picker, or drag a folder
   onto the web app in Chromium), browse its markdown in a sidebar, and follow
   relative `.md` links between documents
-- **Live file watching** (desktop) — auto-reload when a watched file changes on disk
+- **Live reload** (desktop) — file-backed documents refresh automatically when
+  they change on disk. The **Live** chip next to the filename shows the state
+  (click to pause / resume); **Reload from disk** (⋮ menu or command palette)
+  re-reads the file on demand
 
 ### Navigation & UX
 - **Command palette** (`Cmd/Ctrl + K`) for everything, with fuzzy search

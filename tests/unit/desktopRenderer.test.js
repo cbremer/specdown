@@ -23,6 +23,7 @@ describe('Desktop renderer integration', () => {
       onTriggerSearch: jest.fn(),
       onApplyCustomCss: jest.fn(),
       saveSession: jest.fn(),
+      requestRefreshFile: jest.fn(),
     };
 
     loadHTML(document);
@@ -98,6 +99,49 @@ describe('Desktop renderer integration', () => {
       `.tab[data-tab-id="${backgroundTab.id}"]`
     );
     expect(refreshedEl.classList.contains('tab-has-changes')).toBe(false);
+  });
+
+  describe('live-reload chip', () => {
+    it('shows "Live" with active state for a fresh desktop file tab', () => {
+      createTab('one.md', '# One', '/tmp/one.md');
+      const chip = document.getElementById('watch-toggle');
+      expect(chip.style.display).not.toBe('none');
+      expect(chip.classList.contains('active')).toBe(true);
+      expect(chip.querySelector('.watch-toggle-label').textContent).toBe('Live');
+    });
+
+    it('click pauses live reload: "Paused" label and the watcher is released', () => {
+      createTab('one.md', '# One', '/tmp/one.md');
+      const chip = document.getElementById('watch-toggle');
+
+      chip.dispatchEvent(new Event('click', { bubbles: true }));
+
+      expect(window.specdown.unwatchFile).toHaveBeenCalledWith('/tmp/one.md');
+      expect(chip.classList.contains('active')).toBe(false);
+      expect(chip.querySelector('.watch-toggle-label').textContent).toBe('Paused');
+
+      // Click again resumes.
+      chip.dispatchEvent(new Event('click', { bubbles: true }));
+      expect(chip.querySelector('.watch-toggle-label').textContent).toBe('Live');
+    });
+
+    it('hides the chip for tabs without a file path (URL/dragged content)', () => {
+      createTab('remote.md', '# Remote', null);
+      const chip = document.getElementById('watch-toggle');
+      expect(chip.style.display).toBe('none');
+    });
+
+    it('Reload from disk asks the shell to re-read the active tab\'s file', () => {
+      createTab('one.md', '# One', '/tmp/one.md');
+      refreshActiveFileFromDisk();
+      expect(window.specdown.requestRefreshFile).toHaveBeenCalledWith('/tmp/one.md');
+    });
+
+    it('Reload from disk is a no-op without a file-backed tab', () => {
+      createTab('remote.md', '# Remote', null);
+      refreshActiveFileFromDisk();
+      expect(window.specdown.requestRefreshFile).not.toHaveBeenCalled();
+    });
   });
 
   describe('version check vs. the desktop auto-updater', () => {
