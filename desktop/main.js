@@ -122,14 +122,7 @@ function initAutoUpdater() {
 
   autoUpdater.on('error', (err) => {
     logError('Auto-update error', err);
-    if (manualUpdateCheck) {
-      manualUpdateCheck = false;
-      dialog.showMessageBox({
-        type: 'error',
-        message: 'Could not check for updates',
-        detail: err && err.message ? err.message : String(err),
-      });
-    }
+    showManualUpdateCheckError(err);
   });
   autoUpdater.on('update-available', (info) =>
     logInfo(`Update available: ${info && info.version}`)
@@ -193,15 +186,47 @@ function checkForUpdatesManually() {
     });
     return;
   }
-  manualUpdateCheck = true;
+  armManualUpdateCheck();
   autoUpdaterRef.checkForUpdates().catch((err) => {
-    manualUpdateCheck = false;
     logError('Manual update check failed', err);
+    showManualUpdateCheckError(err);
+  });
+}
+
+// Arm the "surface the next updater result in a dialog" flag. Split out so
+// tests can arm it without driving the whole menu flow.
+function armManualUpdateCheck() {
+  manualUpdateCheck = true;
+}
+
+// One dialog per failed manual check. electron-updater reports the SAME
+// failure twice — it emits an 'error' event AND rejects the checkForUpdates()
+// promise — and both paths used to open a dialog back-to-back (close the
+// first modal, the second pops). The manualUpdateCheck flag is consumed by
+// whichever path runs first; the other stays silent. Background (non-manual)
+// checks never dialog — they only log.
+function showManualUpdateCheckError(err) {
+  if (!manualUpdateCheck) return;
+  manualUpdateCheck = false;
+
+  const detail = err && err.message ? err.message : String(err || '');
+  // A 404 on the update feed usually means a release was just published and
+  // its platform artifacts are still building/notarizing (the release record
+  // appears minutes before the assets do). Say that instead of dumping HTTP.
+  if (/cannot find latest[^\s]*\.yml/i.test(detail) || /HttpError: 404/.test(detail)) {
     dialog.showMessageBox({
-      type: 'error',
-      message: 'Could not check for updates',
-      detail: err && err.message ? err.message : String(err),
+      type: 'info',
+      message: 'The newest release is still being packaged',
+      detail:
+        'A new version was just published and its update files are still being ' +
+        'built and uploaded. Try Check for Updates again in a few minutes.',
     });
+    return;
+  }
+  dialog.showMessageBox({
+    type: 'error',
+    message: 'Could not check for updates',
+    detail,
   });
 }
 
@@ -1064,6 +1089,8 @@ app.on('open-file', (event, filePath) => {
 // Export for testing
 module.exports = {
   isValidMarkdownFile,
+  armManualUpdateCheck,
+  showManualUpdateCheckError,
   readMarkdownFile,
   buildMenu,
   watchFile,

@@ -72,6 +72,8 @@ const {
   scanWorkspace,
   openRelativeFromFile,
   isInsideAnyWorkspace,
+  armManualUpdateCheck,
+  showManualUpdateCheckError,
   workspaceRoots,
   isSignedUpdatePlatform,
   VALID_EXTENSIONS,
@@ -450,6 +452,72 @@ describe('desktop/main.js', () => {
       it('does nothing if the path is not being watched', () => {
         expect(() => unwatchFile('/not/watched.md')).not.toThrow();
       });
+    });
+  });
+
+  describe('manual update-check error dialog', () => {
+    const { dialog } = require('electron');
+
+    beforeEach(() => {
+      dialog.showMessageBox.mockClear();
+    });
+
+    it('shows exactly one dialog when both updater error paths fire', () => {
+      // electron-updater reports one failure via BOTH the 'error' event and
+      // the rejected checkForUpdates() promise; the flag dedupes them.
+      armManualUpdateCheck();
+      showManualUpdateCheckError(new Error('boom'));
+      showManualUpdateCheckError(new Error('boom'));
+      expect(dialog.showMessageBox).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays silent for background (non-manual) check errors', () => {
+      showManualUpdateCheckError(new Error('boom'));
+      expect(dialog.showMessageBox).not.toHaveBeenCalled();
+    });
+
+    it('explains the still-packaging window for update-feed 404s', () => {
+      armManualUpdateCheck();
+      showManualUpdateCheckError(
+        new Error(
+          'Cannot find latest-mac.yml in the latest release artifacts ' +
+            '(https://github.com/x/y/releases/download/v1/latest-mac.yml): HttpError: 404'
+        )
+      );
+      expect(dialog.showMessageBox).toHaveBeenCalledTimes(1);
+      const arg = dialog.showMessageBox.mock.calls[0][0];
+      expect(arg.type).toBe('info');
+      expect(arg.detail).toMatch(/few minutes/i);
+    });
+
+    it('keeps the generic error dialog for non-404 failures', () => {
+      armManualUpdateCheck();
+      showManualUpdateCheckError(new Error('net::ERR_CONNECTION_REFUSED'));
+      const arg = dialog.showMessageBox.mock.calls[0][0];
+      expect(arg.type).toBe('error');
+      expect(arg.detail).toMatch(/CONNECTION_REFUSED/);
+    });
+  });
+
+  describe('electron-builder artifact names', () => {
+    it('contain no spaces (GitHub rewrites spaces to dots, breaking the update feed URLs)', () => {
+      // Root cause of the "Cannot download ...-universal-mac.zip, status 404"
+      // update failure: electron-builder's feed (latest-mac.yml) hyphenates
+      // spaces in artifact names while GitHub's asset store dots them, so any
+      // space in an artifactName makes every auto-update download 404.
+      const pkg = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')
+      );
+      const names = [
+        pkg.build.artifactName,
+        pkg.build.mac && pkg.build.mac.artifactName,
+        pkg.build.nsis && pkg.build.nsis.artifactName,
+        pkg.build.linux && pkg.build.linux.artifactName,
+      ];
+      for (const name of names) {
+        expect(typeof name).toBe('string');
+        expect(name).not.toMatch(/ /);
+      }
     });
   });
 
