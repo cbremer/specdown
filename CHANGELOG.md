@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.160 — 2026-07-15
+
+### Chores
+
+- simplification pass — consolidate button CSS, drop dead code and deps
+
 ## v0.0.159 — 2026-07-14
 
 ### Bug Fixes
