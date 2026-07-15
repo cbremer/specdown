@@ -5,6 +5,13 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.162 — 2026-07-15
+
+### Documentation
+
+- document '=' as the shift-free zoom-in alternative
+- address Copilot review nits from #181
+
 ## v0.0.161 — 2026-07-15
 
 ### Documentation
