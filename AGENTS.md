@@ -32,13 +32,18 @@ When working with this repo, read and follow `CLAUDE.md` for:
   build output in `markdown-viewer/dist/`, so `npm run build` must run before
   packaging desktop or iOS. `dist/` is git-ignored and built in CI.
 - **ESLint + Prettier are configured** (`eslint.config.js`, `.prettierrc.json`).
-  `npm run lint` must be clean; it runs in CI alongside the tests
-  (`.github/workflows/ci.yml`). A repo-wide Prettier reformat of the legacy
-  `main.js`/`styles.css` is intentionally deferred to the upcoming internal
-  module split to avoid churn — see `docs/project-modernization/`.
+  `npm run lint` runs with `--max-warnings=0` in CI (`.github/workflows/ci.yml`),
+  so warnings fail the build — keep it at zero. A whole-file Prettier reformat
+  of `markdown-viewer/styles.css` (still not Prettier-conforming) is
+  intentionally avoided: it would bury real changes in ~1,700 lines of
+  formatting noise. Format only the files you touch.
 - **Lockfile committed.** `package-lock.json` is committed; CI uses `npm ci`.
   Use `npm install` locally when adding/upgrading dependencies.
 - **Node.js >=22.12 required** (specified in `package.json` engines).
 - **Electron desktop app** cannot run in headless Cloud Agent environments (needs a display). Test the shared viewer code via Jest, or `npm run dev` / `npm run preview` in a browser.
-- **Coverage thresholds** are not enforced via config, but `npm run test:coverage` will show coverage percentages.
+- **Coverage thresholds**: a hard `coverageThreshold` is enforced for
+  `desktop/main.js` (the only file Jest instruments directly). Renderer modules
+  under `markdown-viewer/src/` report ~0% because `tests/helpers/loadApp.js`
+  evals the module graph outside Jest's instrumentation — don't trust those
+  numbers or add renderer thresholds (see CLAUDE.md).
 - To test markdown rendering interactively, inject markdown via JS in the browser console (simulate drag-and-drop with `DragEvent` + `DataTransfer` on `#drop-zone`).

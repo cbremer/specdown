@@ -35,8 +35,9 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 - **Drag & drop** or **browse** for `.md` / `.markdown` files
 - **Open from URL**, including **GitHub repo browsing** (paste a repo URL and pick a file)
 - **Recent files** list for one-click re-open; **session restore** reopens your last doc on the web
-- **Workspace (folder) mode** (desktop) — open a folder, browse its markdown in a
-  sidebar, and follow relative `.md` links between documents
+- **Workspace (folder) mode** — open a folder (desktop picker, or drag a folder
+  onto the web app in Chromium), browse its markdown in a sidebar, and follow
+  relative `.md` links between documents
 - **Live file watching** (desktop) — auto-reload when a watched file changes on disk
 
 ### Navigation & UX
@@ -90,9 +91,11 @@ does not produce a distributable build.)
 | Shortcut | Action |
 |---|---|
 | `Cmd/Ctrl + K` | Command palette |
-| `Cmd/Ctrl + F` | Find in document |
+| `Cmd/Ctrl + F` | Find in document (`Enter` / `Shift+Enter` next / previous match) |
 | `Cmd/Ctrl + P` | Print / Save as PDF |
 | `?` | Keyboard shortcut sheet |
+| `← →` | Previous / next diagram (presentation mode) |
+| `+ − 0` | Zoom in / out / fit (presentation & fullscreen) |
 | Mouse wheel over a diagram | Zoom |
 | Drag a diagram | Pan |
 | `Esc` | Exit fullscreen / close overlays |
