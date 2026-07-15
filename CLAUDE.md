@@ -202,3 +202,16 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   is a boolean; the notarization wait is Apple-side/variable (a long wait isn't a
   failure); a universal mac build needs the `--universal` CLI flag in
   `desktop.yml` (a config `arch` alone is overridden).
+- **electron-builder `artifactName` must never contain spaces.** The update
+  feed (`latest*.yml`) hyphenates spaces while GitHub's asset store dots them
+  on upload, so a space makes every auto-update download 404 even though the
+  check succeeds. A regression test in `desktop-main.test.js` enforces this.
+- **Notarization dies with Apple 403 "required agreement … expired"** whenever
+  Apple updates the Developer Program License Agreement and it hasn't been
+  re-accepted at developer.apple.com. The macOS release job fails (no DMG /
+  `latest-mac.yml` on the release) while Win/Linux keep publishing — so
+  update checks 404 until the account holder accepts and the job is re-run.
+- **The GitHub release record appears minutes before its artifacts.** Every
+  merge has a ~5–15-min window where update checks find the new release but
+  its `latest*.yml` doesn't exist yet; the desktop app shows a "still being
+  packaged" notice for feed 404s rather than treating it as an error.
