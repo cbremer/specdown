@@ -1,8 +1,8 @@
 /**
  * Unit tests for the toolbar overflow menu — the "⋮" menu, visible at every
  * width, holding the complete document-action list (long-tail `.overflow-only`
- * actions like Watch/Comments/Notes/Print/Raw live only here). Menu items
- * proxy to the real toolbar buttons.
+ * actions like Comments/Notes/Print/Raw live only here, plus run-entries such
+ * as "Reload from disk"). Button entries proxy to the real toolbar buttons.
  */
 
 const { loadHTML, loadApp } = require('../helpers/loadApp');
@@ -114,6 +114,9 @@ describe('Toolbar overflow menu', () => {
       onApplyCustomCss: jest.fn(),
     };
     try {
+      // Reload HTML + app together: re-evaling the app against the existing
+      // DOM would stack duplicate listeners from the earlier beforeEach load.
+      loadHTML(document);
       loadApp(document);
       createTab('one.md', '# One', '/tmp/one.md');
       openOverflowMenu();
