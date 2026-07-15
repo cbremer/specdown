@@ -42,24 +42,26 @@ describe('Toolbar overflow menu', () => {
     // Hidden by default (no diagrams) → not offered in the menu.
     expect(present.style.display).toBe('none');
     openOverflowMenu();
-    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-      (i) => i.textContent
-    );
+    let labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
     expect(labels).not.toContain('Present diagrams');
     closeOverflowMenu();
 
     // Once visible (diagrams present), it appears.
     present.style.display = '';
     openOverflowMenu();
-    labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map((i) => i.textContent);
+    labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
     expect(labels).toContain('Present diagrams');
   });
 
   it('offers the long-tail overflow-only actions (Print, Raw) at any width', () => {
     openOverflowMenu();
-    const labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-      (i) => i.textContent
-    );
+    const labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
     expect(labels).toContain('Print / Save as PDF');
     expect(labels).toContain('Toggle raw / preview');
   });
@@ -67,9 +69,9 @@ describe('Toolbar overflow menu', () => {
   it('offers "Show author comments" only when the comments feature is active', () => {
     // comments-toggle is feature-gated via inline display (hidden by default).
     openOverflowMenu();
-    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-      (i) => i.textContent
-    );
+    let labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
     expect(labels).not.toContain('Show author comments');
     closeOverflowMenu();
 
@@ -83,58 +85,18 @@ describe('Toolbar overflow menu', () => {
 
   it('no longer lists the old Watch entry (state lives on the Live chip)', () => {
     openOverflowMenu();
-    const labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-      (i) => i.textContent
-    );
+    const labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
     expect(labels).not.toContain('Watch file for changes');
   });
 
-  it('offers "Reload from disk" only for a desktop file-backed tab', () => {
-    // No desktop bridge / no tab → absent.
+  it('does not offer "Reload from disk" without a desktop bridge', () => {
     openOverflowMenu();
-    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-      (i) => i.textContent
-    );
+    const labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
     expect(labels).not.toContain('Reload from disk');
-    closeOverflowMenu();
-
-    // Desktop with a file-backed tab → present. isDesktop is captured at app
-    // load, so install the bridge mock and reload the app before opening.
-    window.specdown = {
-      isDesktop: true,
-      watchFile: jest.fn(),
-      unwatchFile: jest.fn(),
-      requestRefreshFile: jest.fn(),
-      saveSession: jest.fn(),
-      onFileOpened: jest.fn(),
-      onCloseTab: jest.fn(),
-      onFileChanged: jest.fn(),
-      onTriggerPrint: jest.fn(),
-      onTriggerSearch: jest.fn(),
-      onApplyCustomCss: jest.fn(),
-    };
-    try {
-      // Reload HTML + app together: re-evaling the app against the existing
-      // DOM would stack duplicate listeners from the earlier beforeEach load.
-      loadHTML(document);
-      loadApp(document);
-      createTab('one.md', '# One', '/tmp/one.md');
-      openOverflowMenu();
-      labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
-        (i) => i.textContent
-      );
-      expect(labels).toContain('Reload from disk');
-
-      // Clicking it triggers the shell refresh and closes the menu.
-      const item = Array.from(document.querySelectorAll('.overflow-menu-item')).find(
-        (i) => i.textContent === 'Reload from disk'
-      );
-      item.dispatchEvent(new Event('click', { bubbles: true }));
-      expect(window.specdown.requestRefreshFile).toHaveBeenCalledWith('/tmp/one.md');
-      expect(isOverflowMenuOpen()).toBe(false);
-    } finally {
-      delete window.specdown;
-    }
   });
 
   it('exposes a visible search affordance that opens the search bar', () => {
@@ -142,7 +104,9 @@ describe('Toolbar overflow menu', () => {
     expect(searchButton).not.toBeNull();
     // Create a tab so search has content context (search bar element exists regardless).
     searchButton.dispatchEvent(new Event('click', { bubbles: true }));
-    expect(document.getElementById('search-bar').style.display).not.toBe('none');
+    expect(document.getElementById('search-bar').style.display).not.toBe(
+      'none'
+    );
   });
 
   it('opens via the overflow toggle button and syncs aria-expanded', () => {
@@ -176,7 +140,9 @@ describe('Toolbar overflow menu', () => {
 
     expect(isOverflowMenuOpen()).toBe(false);
     expect(document.querySelector('.overflow-menu')).toBeNull();
-    expect(document.getElementById('overflow-toggle').getAttribute('aria-expanded')).toBe('false');
+    expect(
+      document.getElementById('overflow-toggle').getAttribute('aria-expanded')
+    ).toBe('false');
   });
 
   it('toggles open/closed', () => {
@@ -196,5 +162,62 @@ describe('Toolbar overflow menu', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+// Separate top-level describe (per Copilot review on #185): the desktop
+// variant sets window.specdown BEFORE its single loadApp(), so each test runs
+// init() exactly once — re-evaling the app in-test would stack document-level
+// listeners (keyboard, drag-drop) that loadHTML cannot clear.
+describe('Toolbar overflow menu (desktop bridge)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.specdown = {
+      isDesktop: true,
+      watchFile: jest.fn(),
+      unwatchFile: jest.fn(),
+      requestRefreshFile: jest.fn(),
+      saveSession: jest.fn(),
+      onFileOpened: jest.fn(),
+      onCloseTab: jest.fn(),
+      onFileChanged: jest.fn(),
+      onTriggerPrint: jest.fn(),
+      onTriggerSearch: jest.fn(),
+      onApplyCustomCss: jest.fn(),
+    };
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  afterEach(() => {
+    if (isOverflowMenuOpen()) closeOverflowMenu();
+    delete window.specdown;
+  });
+
+  it('offers "Reload from disk" for a file-backed tab and triggers the shell refresh', () => {
+    createTab('one.md', '# One', '/tmp/one.md');
+    openOverflowMenu();
+    const labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
+    expect(labels).toContain('Reload from disk');
+
+    const item = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).find((i) => i.textContent === 'Reload from disk');
+    item.dispatchEvent(new Event('click', { bubbles: true }));
+    expect(window.specdown.requestRefreshFile).toHaveBeenCalledWith(
+      '/tmp/one.md'
+    );
+    expect(isOverflowMenuOpen()).toBe(false);
+  });
+
+  it('does not offer "Reload from disk" for tabs without a file path', () => {
+    createTab('remote.md', '# Remote', null);
+    openOverflowMenu();
+    const labels = Array.from(
+      document.querySelectorAll('.overflow-menu-item')
+    ).map((i) => i.textContent);
+    expect(labels).not.toContain('Reload from disk');
   });
 });
