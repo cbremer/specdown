@@ -638,9 +638,8 @@ body {
    =========================== */
 /* Every content-header action shares one base + accent hover/active
    treatment. Per-button rules elsewhere carry only the real deviations:
-   watch-active green, annotate-active orange, the count badges, and the
-   view-toggle icon typography. */
-.watch-toggle-button,
+   annotate-active orange, the count badges, and the view-toggle icon
+   typography. (Live-reload state lives on the .watch-chip by the filename.) */
 .workspace-toggle-button,
 .toc-toggle-button,
 .split-toggle-button,
@@ -669,7 +668,6 @@ body {
     padding: 0.5rem 0.9rem;
 }
 
-.watch-toggle-button:hover,
 .workspace-toggle-button:hover,
 .workspace-toggle-button.active,
 .toc-toggle-button:hover,
@@ -690,34 +688,64 @@ body {
     border-color: var(--accent-color);
 }
 
-.watch-toggle-button.active {
+/* Live-reload status chip (desktop file tabs): sits beside the filename so
+   the auto-reload state is always visible. Green dot + "Live" while watching,
+   grey "Paused" when stopped; the whole chip is the pause/resume toggle. */
+.watch-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: 0.6rem;
+    padding: 0.15rem 0.55rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.watch-chip:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.watch-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.watch-chip.active {
+    color: var(--text-primary);
+}
+
+.watch-chip.active .watch-chip-dot {
     background-color: #27ae60;
-    color: white;
-    border-color: #27ae60;
+    opacity: 1;
 }
 
-.watch-toggle-button.active:hover {
-    background-color: #219a52;
-    border-color: #219a52;
+/* Reload feedback: flash the chip when a disk change lands so the reload is
+   visible even if the content change itself is subtle. JS swaps the label to
+   "Updated" and strips the class after ~1.2s. */
+@keyframes watch-chip-pulse {
+    0%   { background-color: var(--bg-tertiary); }
+    30%  { background-color: var(--accent-color); color: var(--text-on-accent); }
+    100% { background-color: var(--bg-tertiary); }
 }
 
-.watch-toggle-icon {
-    font-size: 1rem;
-    line-height: 1;
-    display: inline-block;
+.watch-chip.reloaded {
+    animation: watch-chip-pulse 1100ms ease-out;
 }
 
-/* Reload feedback: briefly spin + scale the watch icon so the user
-   sees that an auto-reload just happened. The JS strips the class
-   after ~1.2s. */
-@keyframes watch-toggle-pulse {
-    0%   { transform: rotate(0deg)   scale(1);    opacity: 1; }
-    40%  { transform: rotate(180deg) scale(1.25); opacity: 0.75; }
-    100% { transform: rotate(360deg) scale(1);    opacity: 1; }
-}
-
-.watch-toggle-button.reloaded .watch-toggle-icon {
-    animation: watch-toggle-pulse 900ms ease-out;
+.watch-chip.reloaded .watch-chip-dot {
+    background-color: var(--color-success);
+    opacity: 1;
 }
 
 .tab-watching-dot {

@@ -26,6 +26,11 @@ import {
 import { openSearch } from './search.js';
 import { startPresentation, hasPresentableDiagrams } from './presentation.js';
 import { openShortcutsSheet } from './shortcuts.js';
+import {
+  toggleWatching,
+  refreshActiveFileFromDisk,
+} from '../platform/desktop.js';
+import { state } from '../core/state.js';
 
 // The modifier glyph shown in command hints — ⌘ on Apple platforms, Ctrl else.
 const CMD_MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl';
@@ -34,6 +39,16 @@ const CMD_MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl
 const isDocumentOpen = () => {
   const contentArea = document.getElementById('content-area');
   return !!contentArea && contentArea.style.display !== 'none';
+};
+
+// Disk-backed commands need a desktop file tab (web/URL tabs have no path).
+const isDesktopFileTabActive = () => {
+  if (!isDesktop) return false;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
+  return !!(tab && tab.filePath);
 };
 
 export function registerAppCommands() {
@@ -146,6 +161,20 @@ export function registerAppCommands() {
       title: 'Import annotations',
       keywords: ['annotations', 'notes', 'upload', 'restore', 'json'],
       run: () => importAnnotationsFromFile(),
+    },
+    {
+      id: 'toggle-live-reload',
+      title: 'Pause / resume live reload',
+      keywords: ['watch', 'auto', 'reload', 'live', 'pause', 'file'],
+      run: () => toggleWatching(),
+      isAvailable: isDesktopFileTabActive,
+    },
+    {
+      id: 'reload-from-disk',
+      title: 'Reload from disk',
+      keywords: ['refresh', 'reread', 'sync', 'file', 'revert'],
+      run: () => refreshActiveFileFromDisk(),
+      isAvailable: isDesktopFileTabActive,
     },
     {
       id: 'shortcuts',

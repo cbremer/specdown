@@ -68,6 +68,12 @@ export function bridgeUnwatchFile(filePath) {
   nativeBridge()?.unwatchFile?.(filePath);
 }
 
+/** @param {string} filePath Re-read a file from disk; the shell replies over
+ * the file-changed channel so the open tab updates in place. */
+export function bridgeRequestRefreshFile(filePath) {
+  nativeBridge()?.requestRefreshFile?.(filePath);
+}
+
 /** @param {Parameters<NonNullable<DesktopBridge['saveSession']>>[0]} tabs */
 export function bridgeSaveSession(tabs) {
   nativeBridge()?.saveSession?.(tabs);

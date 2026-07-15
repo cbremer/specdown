@@ -46,6 +46,7 @@ interface SpecdownDesktopBridge {
   onWorkspaceOpened?: (cb: (workspace: SpecdownWorkspace) => void) => void;
   watchFile?: (filePath: string) => void;
   unwatchFile?: (filePath: string) => void;
+  requestRefreshFile?: (filePath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;
   onCloseTab?: (cb: () => void) => void;
   onFileChanged?: (

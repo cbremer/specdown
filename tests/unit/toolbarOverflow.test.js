@@ -81,6 +81,59 @@ describe('Toolbar overflow menu', () => {
     expect(labels).toContain('Show author comments');
   });
 
+  it('no longer lists the old Watch entry (state lives on the Live chip)', () => {
+    openOverflowMenu();
+    const labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).not.toContain('Watch file for changes');
+  });
+
+  it('offers "Reload from disk" only for a desktop file-backed tab', () => {
+    // No desktop bridge / no tab → absent.
+    openOverflowMenu();
+    let labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+      (i) => i.textContent
+    );
+    expect(labels).not.toContain('Reload from disk');
+    closeOverflowMenu();
+
+    // Desktop with a file-backed tab → present. isDesktop is captured at app
+    // load, so install the bridge mock and reload the app before opening.
+    window.specdown = {
+      isDesktop: true,
+      watchFile: jest.fn(),
+      unwatchFile: jest.fn(),
+      requestRefreshFile: jest.fn(),
+      saveSession: jest.fn(),
+      onFileOpened: jest.fn(),
+      onCloseTab: jest.fn(),
+      onFileChanged: jest.fn(),
+      onTriggerPrint: jest.fn(),
+      onTriggerSearch: jest.fn(),
+      onApplyCustomCss: jest.fn(),
+    };
+    try {
+      loadApp(document);
+      createTab('one.md', '# One', '/tmp/one.md');
+      openOverflowMenu();
+      labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
+        (i) => i.textContent
+      );
+      expect(labels).toContain('Reload from disk');
+
+      // Clicking it triggers the shell refresh and closes the menu.
+      const item = Array.from(document.querySelectorAll('.overflow-menu-item')).find(
+        (i) => i.textContent === 'Reload from disk'
+      );
+      item.dispatchEvent(new Event('click', { bubbles: true }));
+      expect(window.specdown.requestRefreshFile).toHaveBeenCalledWith('/tmp/one.md');
+      expect(isOverflowMenuOpen()).toBe(false);
+    } finally {
+      delete window.specdown;
+    }
+  });
+
   it('exposes a visible search affordance that opens the search bar', () => {
     const searchButton = document.getElementById('search-button');
     expect(searchButton).not.toBeNull();

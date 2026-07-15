@@ -218,6 +218,7 @@ describe('desktop/main.js', () => {
       const registeredChannels = ipcMain.on.mock.calls.map(call => call[0]);
       expect(registeredChannels).toContain('watch-file');
       expect(registeredChannels).toContain('unwatch-file');
+      expect(registeredChannels).toContain('refresh-file');
     });
 
     it('registers a request-open-path handler that ignores non-string paths', () => {

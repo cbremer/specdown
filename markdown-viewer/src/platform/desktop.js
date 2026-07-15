@@ -21,6 +21,7 @@ import {
   hasDesktopBridge,
   bridgeWatchFile,
   bridgeUnwatchFile,
+  bridgeRequestRefreshFile,
   bridgeSaveSession,
   bridgeOnFileOpened,
   bridgeOnFileChanged,
@@ -48,24 +49,31 @@ export function configureDesktop(deps) {
   }
 }
 
+// The "Live" chip beside the filename: the single visible home for live-reload
+// state. Green "Live" while auto-reloading, grey "Paused" when stopped, a
+// brief "Updated" flash when a disk change lands. Click toggles pause/resume.
 export function updateWatchToggle() {
   const watchToggle = el('watch-toggle');
   if (!watchToggle) return;
 
   const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
 
-  if (!tab || !tab.filePath) {
+  if (!isDesktop || !tab || !tab.filePath) {
     watchToggle.style.display = 'none';
     return;
   }
 
+  const label = watchToggle.querySelector('.watch-toggle-label');
   watchToggle.style.display = '';
   if (tab.watching) {
     watchToggle.classList.add('active');
-    watchToggle.title = 'Watching — click to stop';
+    if (label) label.textContent = 'Live';
+    watchToggle.title =
+      'Live reload is on — this document updates automatically when the file changes on disk. Click to pause.';
   } else {
     watchToggle.classList.remove('active');
-    watchToggle.title = 'Auto-reload when file changes on disk';
+    if (label) label.textContent = 'Paused';
+    watchToggle.title = 'Live reload is paused — click to resume.';
   }
 }
 
@@ -83,6 +91,8 @@ function pulseWatchToggle() {
   void watchToggle.offsetWidth;
   watchToggle.classList.add('reloaded');
   watchToggle.title = 'Reloaded from disk';
+  const pulseLabel = watchToggle.querySelector('.watch-toggle-label');
+  if (pulseLabel) pulseLabel.textContent = 'Updated';
 
   if (watchTogglePulseTimer) clearTimeout(watchTogglePulseTimer);
   watchTogglePulseTimer = setTimeout(() => {
@@ -119,7 +129,7 @@ export function stopWatchingFilePath(filePath) {
   watchRefCounts.set(filePath, currentCount - 1);
 }
 
-function toggleWatching() {
+export function toggleWatching() {
   if (!isDesktop) return;
   const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
   if (!tab || !tab.filePath) return;
@@ -134,6 +144,17 @@ function toggleWatching() {
 
   renderTabBar();
   updateWatchToggle();
+}
+
+// Manual refresh: re-read the active tab's file from disk on demand. The main
+// process replies over the existing file-changed channel, so the tab updates
+// in place (scroll preserved) and the chip flashes "Updated" — same path as a
+// live reload, minus the watcher.
+export function refreshActiveFileFromDisk() {
+  if (!isDesktop) return;
+  const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+  if (!tab || !tab.filePath) return;
+  bridgeRequestRefreshFile(tab.filePath);
 }
 
 export function setupDesktopIPC() {
