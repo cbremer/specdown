@@ -95,7 +95,7 @@ does not produce a distributable build.)
 | `Cmd/Ctrl + P` | Print / Save as PDF |
 | `?` | Keyboard shortcut sheet |
 | `← →` | Previous / next diagram (presentation mode) |
-| `+ − 0` | Zoom in / out / fit (presentation & fullscreen) |
+| `+ - 0` | Zoom in / out / fit (presentation & fullscreen) |
 | Mouse wheel over a diagram | Zoom |
 | Drag a diagram | Pan |
 | `Esc` | Exit fullscreen / close overlays |
