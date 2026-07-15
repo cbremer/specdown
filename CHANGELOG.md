@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.165 — 2026-07-15
+
+### Documentation
+
+- docs/tests: address Copilot review on #184 (stale comments, test reload hygiene)
+
+### Tests
+
+- desktop overflow variant runs in its own describe (single init per test)
+
 ## v0.0.164 — 2026-07-15
 
 ### CI
