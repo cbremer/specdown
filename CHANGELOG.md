@@ -5,6 +5,17 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.163 — 2026-07-15
+
+### Bug Fixes
+
+- space-free electron-builder artifact names so auto-update downloads work
+- one dialog per failed update check + friendly still-packaging message
+
+### Documentation
+
+- session-27 record + hard-won update-pipeline gotchas in CLAUDE.md
+
 ## v0.0.162 — 2026-07-15
 
 ### Documentation
