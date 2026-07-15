@@ -42,7 +42,9 @@ When working with this repo, read and follow `CLAUDE.md` for:
 - **Node.js >=22.12 required** (specified in `package.json` engines).
 - **Electron desktop app** cannot run in headless Cloud Agent environments (needs a display). Test the shared viewer code via Jest, or `npm run dev` / `npm run preview` in a browser.
 - **Coverage thresholds**: a hard `coverageThreshold` is enforced for
-  `desktop/main.js` (the only file Jest instruments directly). Renderer modules
+  `desktop/main.js` — the only file the tests both instrument and actually
+  exercise (other globs in `collectCoverageFrom`, like `desktop/preload.js`,
+  are collected but never required by tests). Renderer modules
   under `markdown-viewer/src/` report ~0% because `tests/helpers/loadApp.js`
   evals the module graph outside Jest's instrumentation — don't trust those
   numbers or add renderer thresholds (see CLAUDE.md).
