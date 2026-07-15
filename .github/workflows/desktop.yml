@@ -19,6 +19,7 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+      issues: write # failure step files/refreshes the macos-release-failure issue
     # Sign + notarize only when the signing secrets are configured; otherwise
     # fall back to an unsigned build so the pipeline never hard-fails (e.g. on a
     # fork or a quick manual dispatch). See docs/project-modernization for setup.
@@ -89,6 +90,53 @@ jobs:
             dist/*.zip
             dist/*.blockmap
             dist/latest-mac.yml
+
+      # Loud failure: when this lane breaks, macOS users silently lose both
+      # the DMG and the latest-mac.yml update feed while Win/Linux keep
+      # publishing (exactly how the 2026-07 Apple-agreement expiry went
+      # unnoticed for three releases). File/refresh a labeled issue so the
+      # outage is visible without anyone reading Actions logs.
+      - name: Open an issue if the macOS release build failed
+        if: failure()
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const tag = '${{ steps.get_tag.outputs.tag }}' || 'unknown tag';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const label = 'macos-release-failure';
+            const title = 'macOS release build is failing';
+            const body = [
+              `The **Build macOS DMG** job failed for **${tag}**.`,
+              '',
+              `Run: ${runUrl}`,
+              '',
+              'Until this is fixed, releases publish WITHOUT a DMG or',
+              '`latest-mac.yml`, so macOS auto-update checks fail with a 404.',
+              '',
+              'Common cause: Apple 403 "required agreement … expired" — the',
+              'account holder must accept the updated agreement at',
+              'developer.apple.com, then re-run the failed job.',
+            ].join('\n');
+
+            try {
+              await github.rest.issues.getLabel({ ...context.repo, name: label });
+            } catch {
+              await github.rest.issues.createLabel({ ...context.repo, name: label, color: 'B60205' });
+            }
+
+            const open = await github.rest.issues.listForRepo({
+              ...context.repo, state: 'open', labels: label, per_page: 1,
+            });
+            if (open.data.length > 0) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: open.data[0].number,
+                body: `Still failing for **${tag}** — ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                ...context.repo, title, body, labels: [label],
+              });
+            }
 
   # -------------------------------------------------------
   # Windows: NSIS installer (.exe)
