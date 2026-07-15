@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.161 — 2026-07-15
+
+### Documentation
+
+- sync AGENTS.md and README with current toolchain and features
+
 ## v0.0.160 — 2026-07-15
 
 ### Chores
