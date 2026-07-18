@@ -7,11 +7,13 @@
 // entangled with the iOS native-print path). DOM elements are looked up by id
 // so the module is self-contained.
 
+import DOMPurify from 'dompurify';
 import { state } from '../core/state.js';
 import { trapFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
-import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
+import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
+import { hasDesktopBridge, bridgeRequestFileOpen, bridgePrintDocument } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -57,20 +59,10 @@ export function requestBundledSampleIfAvailable(sampleName) {
   return true;
 }
 
-function requestNativePrintIfAvailable() {
-  const handler = iosHandler();
-  if (!isIOSNative || !handler || !hasLoadedContent()) {
-    return false;
-  }
+/** The active document's display title, for print/export headers. */
+function printableTitle() {
   const fileName = el('file-name');
-  handler.postMessage({
-    action: 'printDocument',
-    data: {
-      title: fileName ? fileName.textContent : '',
-      html: buildPrintableDocument(),
-    },
-  });
-  return true;
+  return fileName && fileName.textContent ? fileName.textContent : 'Specdown Document';
 }
 
 export function hasLoadedContent() {
@@ -135,11 +127,93 @@ function updateIOSSheetButton(button, label, active) {
   button.classList.toggle('active', !!active);
 }
 
-export function performPrint() {
-  if (requestNativePrintIfAvailable()) {
-    return;
+// Print pipeline. Every surface prints the SAME standalone document built by
+// buildPrintableDocument() — never the live app layout, whose viewport-fixed
+// flex containers (body overflow:hidden, 100vh app shell) clip printing to
+// the visible screen:
+//   - iOS      → native UIPrintInteractionController via the WK bridge
+//   - desktop  → main process renders the document offscreen and opens the
+//                system print dialog (bridgePrintDocument)
+//   - web      → a hidden same-origin iframe hosting the document is printed
+//   - fallback → bare window.print() plus the @media print CSS, only if the
+//                paths above are unavailable
+export async function performPrint() {
+  try {
+    const iosPrintHandler = iosHandler();
+    if (isIOSNative && iosPrintHandler && hasLoadedContent()) {
+      iosPrintHandler.postMessage({
+        action: 'printDocument',
+        data: { title: printableTitle(), html: await buildPrintableDocument() },
+      });
+      return;
+    }
+    if (isDesktop && hasDesktopBridge() && hasLoadedContent()) {
+      const desktopPrintHtml = await buildPrintableDocument();
+      if (desktopPrintHtml) {
+        bridgePrintDocument({ title: printableTitle(), html: desktopPrintHtml });
+        return;
+      }
+    }
+    if (hasLoadedContent() && (await printViaHiddenFrame())) {
+      return;
+    }
+  } catch (error) {
+    console.error('Print pipeline failed, falling back to window.print():', error);
   }
   window.print();
+}
+
+/** @type {HTMLIFrameElement | null} */
+let activePrintFrame = null;
+
+function removeActivePrintFrame() {
+  if (activePrintFrame && activePrintFrame.parentNode) {
+    activePrintFrame.parentNode.removeChild(activePrintFrame);
+  }
+  activePrintFrame = null;
+}
+
+// Web print: host the printable document in a hidden same-origin iframe and
+// print THAT window. The iframe document carries its own @page/print styles
+// and none of the app's viewport-fixed layout, so the full document paginates
+// instead of clipping to the current scroll position.
+async function printViaHiddenFrame() {
+  const printableHtml = await buildPrintableDocument();
+  if (!printableHtml) return false;
+  try {
+    removeActivePrintFrame();
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText =
+      'position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0; visibility: hidden;';
+    document.body.appendChild(frame);
+    activePrintFrame = frame;
+
+    const frameDoc = frame.contentDocument;
+    const frameWindow = frame.contentWindow;
+    if (!frameDoc || !frameWindow || typeof frameWindow.print !== 'function') {
+      removeActivePrintFrame();
+      return false;
+    }
+    frameDoc.open();
+    frameDoc.write(printableHtml);
+    frameDoc.close();
+
+    // Clean up when the print dialog closes; the timeout is a backstop for
+    // engines that never deliver afterprint to a subframe.
+    frameWindow.addEventListener('afterprint', () => removeActivePrintFrame());
+    setTimeout(() => {
+      if (activePrintFrame === frame) removeActivePrintFrame();
+    }, 60000);
+
+    frameWindow.focus();
+    frameWindow.print();
+    return true;
+  } catch (error) {
+    console.error('Hidden-frame print failed:', error);
+    removeActivePrintFrame();
+    return false;
+  }
 }
 
 window.setIOSLayoutMode = function (/** @type {string} */ mode) {
@@ -155,10 +229,68 @@ window.setIOSLayoutMode = function (/** @type {string} */ mode) {
   syncIOSChrome();
 };
 
-function buildPrintableDocument() {
-  const fileName = el('file-name');
+// Re-render the cloned diagrams with the LIGHT mermaid theme when the app is
+// in dark mode: a dark-theme SVG (light strokes/text tuned for a dark canvas)
+// prints nearly invisible on white paper. Each diagram is re-rendered from its
+// stored source; on any failure the on-screen clone is kept for that diagram.
+/** @param {HTMLElement} printRoot */
+async function rerenderPrintDiagramsLight(printRoot) {
+  const darkSvgs = printRoot.querySelectorAll('.diagram-wrapper svg[data-mermaid-source]');
+  if (darkSvgs.length === 0) return;
+  let printMermaid;
+  try {
+    printMermaid = await loadMermaid();
+  } catch (error) {
+    console.error('Mermaid unavailable for print re-render:', error);
+    return;
+  }
+  // getMermaidConfig derives its theme from state.currentTheme, so flip it for
+  // the duration of the render and restore in finally (including the engine's
+  // config, so an on-screen theme re-render isn't left with print settings).
+  const savedPrintTheme = state.currentTheme;
+  state.currentTheme = 'light';
+  let printDiagramSeq = 0;
+  try {
+    printMermaid.initialize(getMermaidConfig());
+    for (const node of darkSvgs) {
+      const diagramSource = node.getAttribute('data-mermaid-source');
+      if (!diagramSource) continue;
+      try {
+        const { svg } = await printMermaid.render(
+          `print-diagram-${Date.now()}-${printDiagramSeq++}`,
+          diagramSource
+        );
+        const holder = document.createElement('div');
+        holder.innerHTML = DOMPurify.sanitize(svg, {
+          ADD_TAGS: ['foreignObject'],
+          ADD_ATTR: ['xmlns'],
+        });
+        const lightSvg = holder.querySelector('svg');
+        if (lightSvg) {
+          lightSvg.setAttribute('data-mermaid-source', diagramSource);
+          node.replaceWith(lightSvg);
+        }
+      } catch (error) {
+        console.error('Print diagram re-render failed, keeping on-screen copy:', error);
+      }
+    }
+  } finally {
+    state.currentTheme = savedPrintTheme;
+    try {
+      printMermaid.initialize(getMermaidConfig());
+    } catch {
+      // Engine config restore is best-effort.
+    }
+  }
+}
+
+// Build a fully standalone printable HTML document from the rendered content:
+// UI chrome stripped, panzoom sizing/transforms cleared, its own light-on-white
+// print stylesheet with @page margins. This is the ONE artifact every print and
+// PDF-export path renders, so all surfaces paginate identically.
+export async function buildPrintableDocument() {
   const markdownContent = el('markdown-content');
-  const title = fileName && fileName.textContent ? fileName.textContent : 'Specdown Document';
+  const title = printableTitle();
   if (!markdownContent) return '';
   const printableContent = /** @type {HTMLElement} */ (markdownContent.cloneNode(true));
 
@@ -169,17 +301,30 @@ function buildPrintableDocument() {
   printableContent.querySelectorAll('.has-annotation').forEach((element) => {
     element.classList.remove('has-annotation');
   });
+
+  if (state.currentTheme === 'dark') {
+    await rerenderPrintDiagramsLight(printableContent);
+  }
+
   printableContent.querySelectorAll('.diagram-wrapper').forEach((node) => {
     const wrapper = /** @type {HTMLElement} */ (node);
+    wrapper.style.cssText = '';
     wrapper.style.height = 'auto';
     wrapper.style.overflow = 'visible';
   });
   printableContent.querySelectorAll('.diagram-wrapper svg').forEach((node) => {
     const svg = /** @type {SVGElement} */ (node);
+    // The on-screen SVG carries panzoom's absolute positioning, transform, and
+    // explicit pixel size. Clear all of it and let the viewBox drive natural
+    // size, capped to the printable page so wide diagrams shrink-to-fit
+    // instead of running off the sheet and tall ones stay on one page.
+    svg.removeAttribute('width');
+    svg.removeAttribute('height');
+    svg.style.cssText = '';
     svg.style.maxWidth = '100%';
+    svg.style.maxHeight = '230mm';
+    svg.style.width = 'auto';
     svg.style.height = 'auto';
-    svg.style.position = 'static';
-    svg.style.transform = 'none';
   });
 
   return `<!DOCTYPE html>

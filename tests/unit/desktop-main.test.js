@@ -32,9 +32,18 @@ jest.mock('electron', () => ({
   },
   BrowserWindow: Object.assign(
     jest.fn(() => ({
-      loadFile: jest.fn(),
-      webContents: { on: jest.fn(), send: jest.fn() },
+      loadFile: jest.fn(() => Promise.resolve()),
+      webContents: {
+        on: jest.fn(),
+        send: jest.fn(),
+        // Print pipeline: invoke the completion callback synchronously so
+        // cleanup runs within the awaited call.
+        print: jest.fn((_opts, cb) => cb && cb(true)),
+        printToPDF: jest.fn(() => Promise.resolve(Buffer.from('%PDF-mock'))),
+      },
       on: jest.fn(),
+      isDestroyed: jest.fn(() => false),
+      destroy: jest.fn(),
     })),
     { getAllWindows: jest.fn(() => []) }
   ),
@@ -76,6 +85,10 @@ const {
   showManualUpdateCheckError,
   workspaceRoots,
   isSignedUpdatePlatform,
+  isValidPrintPayload,
+  pdfDefaultName,
+  printDocumentFromHtml,
+  exportPdfFromHtml,
   VALID_EXTENSIONS,
 } = require('../../desktop/main');
 
@@ -175,6 +188,21 @@ describe('desktop/main.js', () => {
       expect(typeof openItem.click).toBe('function');
     });
 
+    it('includes File menu Print and Export as PDF items', () => {
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const fileMenu = template.find(m => m.label === 'File');
+
+      const printItem = fileMenu.submenu.find(item => item.label === 'Print...');
+      expect(printItem).toBeDefined();
+      expect(printItem.accelerator).toBe('CmdOrCtrl+P');
+
+      const exportItem = fileMenu.submenu.find(item => item.label === 'Export as PDF...');
+      expect(exportItem).toBeDefined();
+      expect(exportItem.accelerator).toBe('CmdOrCtrl+Shift+E');
+      expect(typeof exportItem.click).toBe('function');
+    });
+
     it('includes a File menu with Close Tab item', () => {
       buildMenu();
       const template = Menu.buildFromTemplate.mock.calls[0][0];
@@ -248,6 +276,90 @@ describe('desktop/main.js', () => {
       expect(() => handler({}, {})).not.toThrow();
       expect(() => handler({}, { fromPath: '', href: '' })).not.toThrow();
       expect(() => handler({}, { fromPath: '/a/b.md', href: '../c.md' })).not.toThrow();
+    });
+
+    it('registers print-document and export-pdf handlers', () => {
+      const { ipcMain } = require('electron');
+      const channels = ipcMain.on.mock.calls.map(c => c[0]);
+      expect(channels).toContain('print-document');
+      expect(channels).toContain('export-pdf');
+    });
+  });
+
+  describe('print / PDF export', () => {
+    const { BrowserWindow, dialog, app } = require('electron');
+
+    beforeEach(() => {
+      BrowserWindow.mockClear();
+      dialog.showSaveDialog = jest.fn();
+      // loadPrintableWindow stages the HTML through a temp file under
+      // app.getPath('temp') — make sure the mocked path exists.
+      fs.mkdirSync(app.getPath('temp'), { recursive: true });
+    });
+
+    describe('isValidPrintPayload', () => {
+      it('accepts a payload with a non-empty html string', () => {
+        expect(isValidPrintPayload({ title: 'x', html: '<!DOCTYPE html>' })).toBe(true);
+      });
+
+      it('rejects missing, empty, and non-string html', () => {
+        expect(isValidPrintPayload(undefined)).toBe(false);
+        expect(isValidPrintPayload(null)).toBe(false);
+        expect(isValidPrintPayload({})).toBe(false);
+        expect(isValidPrintPayload({ html: '' })).toBe(false);
+        expect(isValidPrintPayload({ html: 42 })).toBe(false);
+      });
+    });
+
+    describe('pdfDefaultName', () => {
+      it('derives the PDF name from the document title', () => {
+        expect(pdfDefaultName('release-notes.md')).toBe('release-notes.pdf');
+        expect(pdfDefaultName('Spec.markdown')).toBe('Spec.pdf');
+      });
+
+      it('sanitizes path-hostile characters and falls back to document.pdf', () => {
+        expect(pdfDefaultName('a/b:c.md')).toBe('a-b-c.pdf');
+        expect(pdfDefaultName('')).toBe('document.pdf');
+        expect(pdfDefaultName(undefined)).toBe('document.pdf');
+      });
+    });
+
+    describe('printDocumentFromHtml', () => {
+      it('renders the payload in an offscreen window and opens the print dialog', async () => {
+        await printDocumentFromHtml({ title: 'spec.md', html: '<!DOCTYPE html><p>hi</p>' });
+
+        expect(BrowserWindow).toHaveBeenCalledTimes(1);
+        expect(BrowserWindow.mock.calls[0][0].show).toBe(false);
+        const win = BrowserWindow.mock.results[0].value;
+        expect(win.loadFile).toHaveBeenCalledTimes(1);
+        expect(win.webContents.print).toHaveBeenCalledTimes(1);
+        expect(win.webContents.print.mock.calls[0][0]).toEqual({ printBackground: true });
+        // The print callback fired synchronously in the mock → cleanup ran.
+        expect(win.destroy).toHaveBeenCalledTimes(1);
+      });
+
+      it('ignores invalid payloads without creating a window', async () => {
+        await printDocumentFromHtml(undefined);
+        await printDocumentFromHtml({ html: '' });
+        expect(BrowserWindow).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('exportPdfFromHtml', () => {
+      it('is a safe no-op when no main window exists (guards before the dialog)', async () => {
+        // The test harness never runs createWindow, so mainWindow is null —
+        // the export must bail out before showing any dialog.
+        await expect(
+          exportPdfFromHtml({ title: 'spec.md', html: '<!DOCTYPE html><p>hi</p>' })
+        ).resolves.toBeUndefined();
+        expect(dialog.showSaveDialog).not.toHaveBeenCalled();
+        expect(BrowserWindow).not.toHaveBeenCalled();
+      });
+
+      it('ignores invalid payloads', async () => {
+        await exportPdfFromHtml({});
+        expect(dialog.showSaveDialog).not.toHaveBeenCalled();
+      });
     });
   });
 

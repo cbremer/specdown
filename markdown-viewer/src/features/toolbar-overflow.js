@@ -13,7 +13,10 @@
 
 import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
-import { refreshActiveFileFromDisk } from '../platform/desktop.js';
+import {
+  refreshActiveFileFromDisk,
+  exportActivePdf,
+} from '../platform/desktop.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -44,6 +47,11 @@ const OVERFLOW_ACTIONS = [
   { targetId: 'comments-toggle', label: 'Show author comments' },
   { targetId: 'present-button', label: 'Present diagrams' },
   { targetId: 'print-button', label: 'Print / Save as PDF' },
+  {
+    label: 'Export as PDF',
+    run: () => exportActivePdf(),
+    isAvailable: () => isDesktop,
+  },
   { targetId: 'view-toggle', label: 'Toggle raw / preview' },
 ];
 

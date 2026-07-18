@@ -110,6 +110,27 @@ contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
+  // Print a standalone printable HTML document: the main process renders it in
+  // an offscreen window and opens the system print dialog. Printing the live
+  // app layout (window.print) clips to the viewport, so all desktop printing
+  // goes through this channel.
+  printDocument: (payload) => {
+    ipcRenderer.send('print-document', payload);
+  },
+
+  // Export the printable HTML document to a PDF file (offscreen render +
+  // printToPDF + save dialog in the main process).
+  exportPdf: (payload) => {
+    ipcRenderer.send('export-pdf', payload);
+  },
+
+  // Register a callback for the native File > Export as PDF menu item.
+  onTriggerExportPdf: (callback) => {
+    ipcRenderer.on('trigger-export-pdf', () => {
+      callback();
+    });
+  },
+
   // Register a callback for when the native Edit > Find menu item is clicked
   onTriggerSearch: (callback) => {
     ipcRenderer.on('trigger-search', () => {

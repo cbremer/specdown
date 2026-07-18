@@ -117,12 +117,17 @@ describe('iOS renderer integration', () => {
     expect(viewButton.textContent).toContain('Preview');
   });
 
-  it('routes print requests through the native iOS bridge', () => {
+  it('routes print requests through the native iOS bridge', async () => {
     window.loadFileContent('# Native file', 'native.md');
 
     const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
     const printButton = document.getElementById('ios-print-button');
     printButton.dispatchEvent(new Event('click', { bubbles: true }));
+    // performPrint is async (the printable document builder may re-render
+    // diagrams) — let its microtasks settle before asserting.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(window.webkit.messageHandlers.specdown.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
