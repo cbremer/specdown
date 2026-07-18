@@ -198,6 +198,14 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   warnings.
 - **The `window.specdown` bridge (`platform/bridge.js`) is the only shell
   coupling** — keep new desktop integration behind it (the portability seam).
+- **Never print the live app layout.** The shell is a viewport-fixed flex
+  column (`body{overflow:hidden}`, 100vh container), so a bare
+  `window.print()` clips output to the visible screen. All print/PDF paths
+  render the standalone document from `buildPrintableDocument()`
+  (platform/ios-chrome.js): iOS native print, desktop offscreen-window
+  print/`printToPDF` (`print-document`/`export-pdf` IPC), web hidden iframe.
+  The `@media print` CSS is only a fallback — if you add a new full-height
+  ancestor around the content, add its print reset there too.
 - **Packaging:** macOS needs a **Developer ID Application** cert; `mac.notarize`
   is a boolean; the notarization wait is Apple-side/variable (a long wait isn't a
   failure); a universal mac build needs the `--universal` CLI flag in

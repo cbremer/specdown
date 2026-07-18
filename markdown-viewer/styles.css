@@ -1400,21 +1400,56 @@ body {
 /* ===========================
    Print Styles
    =========================== */
+/* Fallback print styles. The primary print path renders a standalone
+   printable document (buildPrintableDocument) — these rules only matter when
+   bare window.print() fires on the live layout (e.g. browser menu > Print).
+   The app shell is a viewport-fixed flex column (body overflow:hidden,
+   100vh container, scrolling content pane), so WITHOUT unlocking every
+   ancestor here, printing clips to the currently visible screen. */
 @media print {
     .app-header,
     .tab-bar,
     .content-header,
     .search-bar,
     .toc-sidebar,
+    .workspace-sidebar,
+    .annotation-panel,
+    .annotation-popover,
     .diagram-controls,
     .fullscreen-overlay,
+    .presentation-overlay,
+    .overflow-menu,
     .share-toast,
-    .theme-toggle {
+    .toast,
+    .theme-toggle,
+    .watch-chip,
+    .drop-zone,
+    .ios-action-bar,
+    .ios-sheet-backdrop,
+    .skip-link {
         display: none !important;
+    }
+
+    html,
+    body {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .app-container,
+    .content-area,
+    .content-main {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
     }
 
     .content-body {
         display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
     }
 
     .markdown-content {
@@ -1427,13 +1462,52 @@ body {
         display: none !important;
     }
 
+    /* Force light, legible content on white paper regardless of app theme:
+       dark-theme text and code colors print faint-to-invisible. Token-level
+       syntax colors are dropped in this fallback for guaranteed contrast. */
+    .markdown-content {
+        color: #1f2937 !important;
+        background: #ffffff !important;
+    }
+
+    .markdown-content pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow: visible !important;
+        background: #f6f8fa !important;
+        border: 1px solid #d1d5db;
+    }
+
+    .markdown-content pre code,
+    .markdown-content pre code * {
+        color: #1f2937 !important;
+        background: transparent !important;
+    }
+
+    /* On screen a wide table scrolls within itself; in print that inner
+       scroll region clips columns — lay it out as a real table again. */
+    .markdown-content table {
+        display: table !important;
+        overflow-x: visible !important;
+        table-layout: fixed;
+        width: 100% !important;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+        word-break: break-word;
+    }
+
     .diagram-wrapper {
         page-break-inside: avoid;
+        break-inside: avoid;
         height: auto !important;
+        overflow: visible !important;
     }
 
     .diagram-wrapper svg {
         max-width: 100%;
+        width: auto !important;
         height: auto !important;
         position: static !important;
         transform: none !important;

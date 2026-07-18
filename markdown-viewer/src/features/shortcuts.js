@@ -16,6 +16,7 @@ const SHORTCUTS = [
   { keys: `${MOD} F`, label: 'Find in document' },
   { keys: 'Enter / Shift Enter', label: 'Next / previous search match' },
   { keys: `${MOD} P`, label: 'Print / save as PDF' },
+  { keys: `${MOD} ⇧ E`, label: 'Export as PDF (desktop app)' },
   { keys: '← →', label: 'Previous / next diagram (presentation)' },
   { keys: '+ − 0', label: 'Zoom in / out / fit slide (presentation)' },
   { keys: 'Scroll / drag', label: 'Zoom and pan a diagram (pointer)' },

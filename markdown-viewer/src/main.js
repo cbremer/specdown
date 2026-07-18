@@ -497,7 +497,10 @@ async function renderMarkdown(content, filename) {
 // Feature: Print / PDF Export
 // ===========================
 // Print button wired in setupEventListeners; Cmd+P wired in keydown handler.
-// CSS print styles in styles.css hide UI chrome automatically.
+// All surfaces print the standalone document from buildPrintableDocument()
+// (platform/ios-chrome.js): iOS via the native print controller, desktop via
+// an offscreen shell window (plus File > Export as PDF), web via a hidden
+// iframe. The @media print CSS is only the bare-window.print() fallback.
 
 // ===========================
 // Initialize App

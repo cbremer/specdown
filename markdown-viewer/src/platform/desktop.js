@@ -16,17 +16,19 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { showToast } from '../features/toast.js';
-import { performPrint } from './ios-chrome.js';
+import { performPrint, buildPrintableDocument, hasLoadedContent } from './ios-chrome.js';
 import {
   hasDesktopBridge,
   bridgeWatchFile,
   bridgeUnwatchFile,
   bridgeRequestRefreshFile,
   bridgeSaveSession,
+  bridgeExportPdf,
   bridgeOnFileOpened,
   bridgeOnFileChanged,
   bridgeOnCloseTab,
   bridgeOnTriggerPrint,
+  bridgeOnTriggerExportPdf,
   bridgeOnTriggerSearch,
   bridgeOnApplyCustomCss,
   bridgeOnUpdateDownloaded,
@@ -157,6 +159,20 @@ export function refreshActiveFileFromDisk() {
   bridgeRequestRefreshFile(tab.filePath);
 }
 
+// Export the current document as a PDF file (desktop only): build the same
+// standalone printable document the print pipeline uses and hand it to the
+// shell, which renders it offscreen and writes the PDF via printToPDF.
+export async function exportActivePdf() {
+  if (!isDesktop || !hasDesktopBridge() || !hasLoadedContent()) return;
+  const html = await buildPrintableDocument();
+  if (!html) return;
+  const fileNameEl = el('file-name');
+  bridgeExportPdf({
+    title: fileNameEl && fileNameEl.textContent ? fileNameEl.textContent : 'Specdown Document',
+    html,
+  });
+}
+
 export function setupDesktopIPC() {
   if (!hasDesktopBridge()) return;
 
@@ -225,6 +241,11 @@ export function setupDesktopIPC() {
   // Native menu: File > Print
   bridgeOnTriggerPrint(function () {
     performPrint();
+  });
+
+  // Native menu: File > Export as PDF
+  bridgeOnTriggerExportPdf(function () {
+    exportActivePdf();
   });
 
   // Native menu: Edit > Find

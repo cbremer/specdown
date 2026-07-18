@@ -29,6 +29,7 @@ import { openShortcutsSheet } from './shortcuts.js';
 import {
   toggleWatching,
   refreshActiveFileFromDisk,
+  exportActivePdf,
 } from '../platform/desktop.js';
 import { state } from '../core/state.js';
 
@@ -136,6 +137,14 @@ export function registerAppCommands() {
       keywords: ['pdf', 'export', 'save'],
       run: () => performPrint(),
       isAvailable: isDocumentOpen,
+    },
+    {
+      id: 'export-pdf',
+      title: 'Export as PDF…',
+      hint: CMD_MOD + ' ⇧ E',
+      keywords: ['pdf', 'save', 'export', 'file', 'print'],
+      run: () => exportActivePdf(),
+      isAvailable: () => isDesktop && isDocumentOpen(),
     },
     {
       id: 'present-diagrams',

@@ -20,7 +20,9 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 - **Raw / preview toggle** and a side-by-side **split view**
 - **Table of contents** sidebar with scroll-spy
 - **Find in document** (`Cmd/Ctrl + F`)
-- **Print / Save as PDF** (`Cmd/Ctrl + P`)
+- **Print / Save as PDF** (`Cmd/Ctrl + P`) — prints the full document as a clean,
+  paginated layout (diagrams re-rendered light for paper); the desktop app also
+  has **File > Export as PDF…** (`Cmd/Ctrl + Shift + E`) for one-step PDF files
 - **Annotations** — double-click any block to attach a sticky note; **export / import**
   the whole annotation set as JSON to move it between devices
 
@@ -96,6 +98,7 @@ does not produce a distributable build.)
 | `Cmd/Ctrl + K` | Command palette |
 | `Cmd/Ctrl + F` | Find in document (`Enter` / `Shift+Enter` next / previous match) |
 | `Cmd/Ctrl + P` | Print / Save as PDF |
+| `Cmd/Ctrl + Shift + E` | Export as PDF (desktop app) |
 | `?` | Keyboard shortcut sheet |
 | `← →` | Previous / next diagram (presentation mode) |
 | `+` (or `=`) / `-` / `0` | Zoom in / out / fit (presentation & fullscreen) |

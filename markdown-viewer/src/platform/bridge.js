@@ -90,6 +90,20 @@ export function bridgeOpenDroppedPath(absPath) {
   nativeBridge()?.openDroppedPath?.(absPath);
 }
 
+/** @param {{ title: string, html: string }} payload Print a standalone
+ * printable HTML document: the shell renders it offscreen and opens the
+ * system print dialog (never the live app layout). */
+export function bridgePrintDocument(payload) {
+  nativeBridge()?.printDocument?.(payload);
+}
+
+/** @param {{ title: string, html: string }} payload Export a standalone
+ * printable HTML document to PDF: the shell renders it offscreen, asks where
+ * to save, and writes the file via printToPDF. */
+export function bridgeExportPdf(payload) {
+  nativeBridge()?.exportPdf?.(payload);
+}
+
 /** @param {Parameters<NonNullable<DesktopBridge['saveSession']>>[0]} tabs */
 export function bridgeSaveSession(tabs) {
   nativeBridge()?.saveSession?.(tabs);
@@ -120,6 +134,11 @@ export function bridgeOnWorkspaceOpened(cb) {
 /** @param {Parameters<NonNullable<DesktopBridge['onTriggerPrint']>>[0]} cb */
 export function bridgeOnTriggerPrint(cb) {
   nativeBridge()?.onTriggerPrint?.(cb);
+}
+
+/** @param {Parameters<NonNullable<DesktopBridge['onTriggerExportPdf']>>[0]} cb */
+export function bridgeOnTriggerExportPdf(cb) {
+  nativeBridge()?.onTriggerExportPdf?.(cb);
 }
 
 /** @param {Parameters<NonNullable<DesktopBridge['onTriggerSearch']>>[0]} cb */

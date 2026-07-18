@@ -745,10 +745,133 @@ function restoreCustomCss() {
 }
 
 // ===========================
+// Print / PDF Export
+// ===========================
+// Both printing and PDF export render the renderer-built standalone printable
+// document (see buildPrintableDocument in the web app) in an offscreen window.
+// Printing the visible window would capture the viewport-fixed app layout —
+// which is exactly the "only get the screen I'm on" bug this replaces.
+//
+// The HTML is staged through a temp file rather than a data: URL — data URLs
+// hit length limits and encoding issues on large documents.
+async function loadPrintableWindow(html) {
+  const tempHtmlPath = path.join(
+    app.getPath('temp'),
+    `specdown-print-${process.pid}-${Date.now()}.html`
+  );
+  fs.writeFileSync(tempHtmlPath, html, 'utf8');
+  const printWindow = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  const cleanup = () => {
+    try {
+      if (!printWindow.isDestroyed()) printWindow.destroy();
+    } catch {
+      // Window teardown is best-effort.
+    }
+    try {
+      fs.unlinkSync(tempHtmlPath);
+    } catch {
+      // Temp file may already be gone.
+    }
+  };
+  try {
+    await printWindow.loadFile(tempHtmlPath);
+  } catch (err) {
+    cleanup();
+    throw err;
+  }
+  return { printWindow, cleanup };
+}
+
+function isValidPrintPayload(payload) {
+  return !!(payload && typeof payload.html === 'string' && payload.html);
+}
+
+// Derive a save-dialog default filename from the document title.
+function pdfDefaultName(title) {
+  const base = (typeof title === 'string' && title ? title : 'document')
+    .replace(/\.(md|markdown)$/i, '')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .trim();
+  return `${base || 'document'}.pdf`;
+}
+
+async function printDocumentFromHtml(payload) {
+  if (!isValidPrintPayload(payload)) return;
+  let printable;
+  try {
+    printable = await loadPrintableWindow(payload.html);
+  } catch (err) {
+    logError('Failed to prepare document for printing', err);
+    return;
+  }
+  const { printWindow, cleanup } = printable;
+  // Non-silent: opens the system print dialog for the offscreen document.
+  printWindow.webContents.print({ printBackground: true }, (success, failureReason) => {
+    if (!success && failureReason && failureReason !== 'cancelled') {
+      logError('Print failed', new Error(failureReason));
+    }
+    cleanup();
+  });
+}
+
+async function exportPdfFromHtml(payload) {
+  if (!isValidPrintPayload(payload) || !mainWindow) return;
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export as PDF',
+    defaultPath: pdfDefaultName(payload.title),
+    filters: [{ name: 'PDF', extensions: ['pdf'] }],
+  });
+  if (!result || result.canceled || !result.filePath) return;
+
+  let printable;
+  try {
+    printable = await loadPrintableWindow(payload.html);
+  } catch (err) {
+    logError('Failed to prepare document for PDF export', err);
+    dialog.showErrorBox('Export as PDF failed', 'The document could not be prepared for export.');
+    return;
+  }
+  const { printWindow, cleanup } = printable;
+  try {
+    const pdfData = await printWindow.webContents.printToPDF({
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+    fs.writeFileSync(result.filePath, pdfData);
+    shell.showItemInFolder(result.filePath);
+  } catch (err) {
+    logError('Failed to export PDF', err);
+    dialog.showErrorBox(
+      'Export as PDF failed',
+      `The PDF could not be written to ${result.filePath}.`
+    );
+  } finally {
+    cleanup();
+  }
+}
+
+// ===========================
 // IPC Handlers
 // ===========================
 ipcMain.on('request-file-open', () => {
   showOpenDialog();
+});
+
+// Print the standalone printable document built by the renderer.
+ipcMain.on('print-document', (_event, payload) => {
+  printDocumentFromHtml(payload);
+});
+
+// Export the standalone printable document as a PDF file.
+ipcMain.on('export-pdf', (_event, payload) => {
+  exportPdfFromHtml(payload);
 });
 
 // Re-open a recent file by path (from the renderer's in-app recent-files list).
@@ -915,6 +1038,15 @@ function buildMenu() {
           click: () => {
             if (mainWindow && mainWindow.webContents) {
               mainWindow.webContents.send('trigger-print');
+            }
+          },
+        },
+        {
+          label: 'Export as PDF...',
+          accelerator: 'CmdOrCtrl+Shift+E',
+          click: () => {
+            if (mainWindow && mainWindow.webContents) {
+              mainWindow.webContents.send('trigger-export-pdf');
             }
           },
         },
@@ -1142,5 +1274,9 @@ module.exports = {
   isInsideAnyWorkspace,
   workspaceRoots,
   isSignedUpdatePlatform,
+  isValidPrintPayload,
+  pdfDefaultName,
+  printDocumentFromHtml,
+  exportPdfFromHtml,
   VALID_EXTENSIONS,
 };
