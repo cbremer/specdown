@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.167 — 2026-07-18
+
+### Bug Fixes
+
+- presentation mode presented the reset icon instead of the diagram
+
 ## v0.0.166 — 2026-07-18
 
 ### Bug Fixes
