@@ -15,9 +15,31 @@ function addDiagrams(n) {
     const container = document.createElement('div');
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', 'd' + i);
+
+    // Faithful to production DOM: the controls come FIRST and contain SVG
+    // icon buttons. This is the regression fixture for the bug where
+    // presentation mode cloned the reset-button icon (a bare 'svg' query
+    // matched the controls) instead of the diagram in the wrapper.
+    const controls = document.createElement('div');
+    controls.className = 'diagram-controls';
+    const iconSvgEl = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'svg'
+    );
+    iconSvgEl.setAttribute('data-icon-not-a-diagram', 'true');
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'reset';
+    resetBtn.appendChild(iconSvgEl);
+    controls.appendChild(resetBtn);
+    container.appendChild(controls);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'diagram-wrapper';
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('data-i', String(i));
-    container.appendChild(svg);
+    wrapper.appendChild(svg);
+    container.appendChild(wrapper);
+
     content.appendChild(container);
   }
 }
@@ -62,10 +84,12 @@ describe('Diagram presentation mode', () => {
     expect(overlay.getAttribute('role')).toBe('dialog');
     expect(overlay.getAttribute('aria-modal')).toBe('true');
 
-    // The first diagram's SVG is cloned into the stage.
+    // The first diagram's SVG is cloned into the stage — the DIAGRAM from
+    // the wrapper, never a control-button icon (the loop-arrow bug).
     const staged = document.querySelector('.presentation-stage svg');
     expect(staged).not.toBeNull();
     expect(staged.getAttribute('data-i')).toBe('0');
+    expect(staged.hasAttribute('data-icon-not-a-diagram')).toBe(false);
     expect(counterText()).toBe('1 / 3');
   });
 
@@ -89,7 +113,9 @@ describe('Diagram presentation mode', () => {
 
     presentNext();
     expect(counterText()).toBe('2 / 3');
-    expect(document.querySelector('.presentation-stage svg').getAttribute('data-i')).toBe('1');
+    expect(
+      document.querySelector('.presentation-stage svg').getAttribute('data-i')
+    ).toBe('1');
 
     presentNext();
     expect(counterText()).toBe('3 / 3');
@@ -109,13 +135,19 @@ describe('Diagram presentation mode', () => {
     startPresentation();
     const overlay = document.querySelector('.presentation-overlay');
 
-    overlay.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    overlay.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
+    );
     expect(counterText()).toBe('2 / 2');
 
-    overlay.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    overlay.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })
+    );
     expect(counterText()).toBe('1 / 2');
 
-    overlay.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    overlay.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    );
     expect(isPresentationOpen()).toBe(false);
   });
 
@@ -159,9 +191,13 @@ describe('Diagram presentation mode', () => {
       const pz = currentPanzoom();
       const overlay = document.querySelector('.presentation-overlay');
 
-      overlay.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true }));
+      overlay.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '+', bubbles: true })
+      );
       expect(pz.getScale()).toBeGreaterThan(1);
-      overlay.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true }));
+      overlay.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '0', bubbles: true })
+      );
       expect(pz.getScale()).toBe(1);
     });
 
