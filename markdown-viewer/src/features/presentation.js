@@ -31,7 +31,11 @@ function collectDiagrams() {
   /** @type {SVGElement[]} */
   const found = [];
   content.querySelectorAll('.diagram-container').forEach((container) => {
-    const svg = container.querySelector('svg');
+    // Scope to the wrapper: the container's controls come FIRST and contain
+    // SVG icon buttons (reset/share/fullscreen), so a bare 'svg' query
+    // returns the reset icon — which is how presentation mode ended up
+    // showing a giant loop-arrow instead of the diagram.
+    const svg = container.querySelector('.diagram-wrapper svg');
     if (svg) found.push(/** @type {SVGElement} */ (svg));
   });
   return found;
@@ -105,7 +109,12 @@ function buildPresentationOverlay() {
   const nav = document.createElement('div');
   nav.className = 'presentation-nav';
 
-  const prev = navButton('presentation-prev', '‹', 'Previous diagram', presentPrev);
+  const prev = navButton(
+    'presentation-prev',
+    '‹',
+    'Previous diagram',
+    presentPrev
+  );
   const counter = document.createElement('span');
   counter.className = 'presentation-counter';
   const next = navButton('presentation-next', '›', 'Next diagram', presentNext);
@@ -120,7 +129,12 @@ function buildPresentationOverlay() {
     if (slidePanzoom) slidePanzoom.zoomIn();
   });
 
-  const close = navButton('presentation-close', '✕', 'Exit presentation', exitPresentation);
+  const close = navButton(
+    'presentation-close',
+    '✕',
+    'Exit presentation',
+    exitPresentation
+  );
 
   nav.appendChild(prev);
   nav.appendChild(counter);
@@ -152,8 +166,12 @@ function renderSlide() {
   if (!presentationOverlay) return;
   const stage = presentationOverlay.querySelector('.presentation-stage');
   const counter = presentationOverlay.querySelector('.presentation-counter');
-  const prev = /** @type {HTMLButtonElement | null} */ (presentationOverlay.querySelector('.presentation-prev'));
-  const next = /** @type {HTMLButtonElement | null} */ (presentationOverlay.querySelector('.presentation-next'));
+  const prev = /** @type {HTMLButtonElement | null} */ (
+    presentationOverlay.querySelector('.presentation-prev')
+  );
+  const next = /** @type {HTMLButtonElement | null} */ (
+    presentationOverlay.querySelector('.presentation-next')
+  );
   if (!stage) return;
 
   destroySlidePanzoom();
@@ -198,22 +216,36 @@ export function exitPresentation() {
   if (releaseTrap) releaseTrap();
   releaseTrap = null;
   destroySlidePanzoom();
-  if (presentationOverlay.parentNode) presentationOverlay.parentNode.removeChild(presentationOverlay);
+  if (presentationOverlay.parentNode)
+    presentationOverlay.parentNode.removeChild(presentationOverlay);
   presentationOverlay = null;
   diagrams = [];
   slideIndex = 0;
-  if (presentationPrevFocus && typeof (/** @type {HTMLElement} */ (presentationPrevFocus)).focus === 'function') {
-    (/** @type {HTMLElement} */ (presentationPrevFocus)).focus();
+  if (
+    presentationPrevFocus &&
+    typeof /** @type {HTMLElement} */ (presentationPrevFocus).focus ===
+      'function'
+  ) {
+    /** @type {HTMLElement} */ (presentationPrevFocus).focus();
   }
   presentationPrevFocus = null;
 }
 
 /** @param {KeyboardEvent} e */
 function onPresentationKeydown(e) {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+  if (
+    e.key === 'ArrowRight' ||
+    e.key === 'ArrowDown' ||
+    e.key === 'PageDown' ||
+    e.key === ' '
+  ) {
     e.preventDefault();
     presentNext();
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+  } else if (
+    e.key === 'ArrowLeft' ||
+    e.key === 'ArrowUp' ||
+    e.key === 'PageUp'
+  ) {
     e.preventDefault();
     presentPrev();
   } else if (e.key === '+' || e.key === '=') {
