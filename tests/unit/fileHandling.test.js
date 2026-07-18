@@ -275,3 +275,71 @@ describe('File Handling', () => {
     });
   });
 });
+
+// Bridge-first describe (single init per test): on desktop, drops route
+// through the main process by absolute path so files open file-backed (live
+// reload + Reload from disk) and folders become real desktop workspaces.
+// This was the drag-and-drop bug where dropped documents opened without the
+// Live chip: the web fallback reads content only, and Electron v32+ removed
+// the legacy File.path the old code relied on.
+describe('Drag and drop (desktop bridge routing)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.specdown = {
+      isDesktop: true,
+      getPathForFile: jest.fn((file) => '/abs/' + file.name),
+      openDroppedPath: jest.fn(),
+      watchFile: jest.fn(),
+      unwatchFile: jest.fn(),
+      saveSession: jest.fn(),
+      onFileOpened: jest.fn(),
+      onCloseTab: jest.fn(),
+      onFileChanged: jest.fn(),
+      onTriggerPrint: jest.fn(),
+      onTriggerSearch: jest.fn(),
+      onApplyCustomCss: jest.fn(),
+    };
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  afterEach(() => {
+    delete window.specdown;
+  });
+
+  const dropEvent = (files) => ({
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+    dataTransfer: { files },
+  });
+
+  it('routes dropped files to the shell by absolute path (no content-only tab)', () => {
+    const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
+    handleDrop(dropEvent([file]));
+
+    expect(window.specdown.openDroppedPath).toHaveBeenCalledWith('/abs/test.md');
+    // The tab arrives later via the shell's file-opened event — the renderer
+    // must NOT also open a pathless copy through the web reader.
+    expect(state.tabs.length).toBe(0);
+  });
+
+  it('routes each dropped item (files and folders share the path channel)', () => {
+    const a = new File(['# A'], 'a.md', { type: 'text/markdown' });
+    const b = new File([''], 'docs', { type: '' }); // a dropped folder surfaces as a typeless File
+    handleDrop(dropEvent([a, b]));
+
+    expect(window.specdown.openDroppedPath).toHaveBeenCalledWith('/abs/a.md');
+    expect(window.specdown.openDroppedPath).toHaveBeenCalledWith('/abs/docs');
+  });
+
+  it('falls back to the web reader when the shell cannot resolve paths', () => {
+    window.specdown.getPathForFile.mockReturnValue('');
+    const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
+    handleDrop(dropEvent([file]));
+
+    expect(window.specdown.openDroppedPath).not.toHaveBeenCalled();
+    // Web reader path proceeds (FileReader is async; just assert no crash and
+    // that the drop wasn't swallowed by the desktop branch).
+  });
+});
+

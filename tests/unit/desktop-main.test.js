@@ -219,6 +219,7 @@ describe('desktop/main.js', () => {
       expect(registeredChannels).toContain('watch-file');
       expect(registeredChannels).toContain('unwatch-file');
       expect(registeredChannels).toContain('refresh-file');
+      expect(registeredChannels).toContain('open-dropped-path');
     });
 
     it('registers a request-open-path handler that ignores non-string paths', () => {
@@ -519,6 +520,45 @@ describe('desktop/main.js', () => {
         expect(typeof name).toBe('string');
         expect(name).not.toMatch(/ /);
       }
+    });
+  });
+
+  describe('open-dropped-path routing', () => {
+    const { app, ipcMain } = require('electron');
+    const getHandler = () =>
+      ipcMain.on.mock.calls.find((c) => c[0] === 'open-dropped-path')[1];
+    let dropDir;
+
+    beforeEach(() => {
+      dropDir = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-drop-'));
+      fs.writeFileSync(path.join(dropDir, 'notes.md'), '# Notes');
+      workspaceRoots.clear();
+      app.addRecentDocument.mockClear();
+    });
+
+    afterEach(() => {
+      workspaceRoots.clear();
+      fs.rmSync(dropDir, { recursive: true, force: true });
+    });
+
+    it('opens a dropped markdown file like a native open (recents recorded)', () => {
+      getHandler()(null, path.join(dropDir, 'notes.md'));
+      expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(dropDir, 'notes.md'));
+      // A plain file must not be registered as a workspace root.
+      expect(workspaceRoots.size).toBe(0);
+    });
+
+    it('registers a dropped directory as a workspace root (relative-link containment)', () => {
+      getHandler()(null, dropDir);
+      expect(workspaceRoots.has(dropDir)).toBe(true);
+      expect(app.addRecentDocument).not.toHaveBeenCalled();
+    });
+
+    it('ignores non-string and nonexistent paths', () => {
+      expect(() => getHandler()(null, 42)).not.toThrow();
+      expect(() => getHandler()(null, path.join(dropDir, 'missing.md'))).not.toThrow();
+      expect(app.addRecentDocument).not.toHaveBeenCalled();
+      expect(workspaceRoots.size).toBe(0);
     });
   });
 
