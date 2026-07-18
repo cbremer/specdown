@@ -70,9 +70,9 @@ struct ContentView: View {
                 }
 
                 Button {
-                    bridge.openBundledSampleFromSidebar(named: "sample-with-mermaid.md")
+                    bridge.openBundledSampleFromSidebar(named: "diagram-showcase.md")
                 } label: {
-                    Label("Open Mermaid Sample", systemImage: "chart.xyaxis.line")
+                    Label("Open Diagram Showcase", systemImage: "chart.xyaxis.line")
                 }
             }
 
