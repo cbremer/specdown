@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.169 — 2026-07-18
+
+- render one standalone printable document on every surface + desktop Export as PDF
+
 ## v0.0.168 — 2026-07-18
 
 - make diagram-showcase the primary diagram sample
