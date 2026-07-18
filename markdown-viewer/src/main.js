@@ -277,7 +277,7 @@ function setupEventListeners() {
     if (openSampleMermaid) {
         openSampleMermaid.addEventListener('click', (e) => {
             e.stopPropagation();
-            requestBundledSampleIfAvailable('sample-with-mermaid.md');
+            requestBundledSampleIfAvailable('diagram-showcase.md');
         });
     }
 

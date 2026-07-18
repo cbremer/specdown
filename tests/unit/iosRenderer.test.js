@@ -67,7 +67,7 @@ describe('iOS renderer integration', () => {
 
     expect(window.webkit.messageHandlers.specdown.postMessage).toHaveBeenCalledWith({
       action: 'openBundledSample',
-      data: { name: 'sample-with-mermaid.md' },
+      data: { name: 'diagram-showcase.md' },
     });
   });
 
