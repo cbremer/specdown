@@ -802,6 +802,31 @@ ipcMain.on('refresh-file', (_event, filePath) => {
   }
 });
 
+// Dropped file/folder routed from the renderer by absolute path (the preload
+// resolves dragged Files via webUtils.getPathForFile — Electron v32+ removed
+// the legacy File.path). A markdown file opens like any native open (real
+// file-backed tab: live reload + Reload from disk); a directory becomes a
+// full desktop workspace (real paths, relative-link navigation, containment).
+ipcMain.on('open-dropped-path', (_event, absPath) => {
+  if (typeof absPath !== 'string' || !absPath) return;
+  let stats;
+  try {
+    stats = fs.statSync(absPath);
+  } catch (err) {
+    logError(`Failed to stat dropped path: ${absPath}`, err);
+    return;
+  }
+  if (stats.isDirectory()) {
+    workspaceRoots.add(absPath);
+    const files = scanWorkspace(absPath);
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('workspace-opened', { root: absPath, files });
+    }
+    return;
+  }
+  openFileByPath(absPath);
+});
+
 // Session save: renderer sends tab state when it changes
 ipcMain.on('save-session', (_event, tabs) => {
   saveSession(tabs);

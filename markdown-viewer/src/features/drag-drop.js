@@ -9,6 +9,11 @@ import {
   tryOpenDroppedFolder,
   isFolderDragDropSupported,
 } from './workspace.js';
+import {
+  hasDesktopBridge,
+  bridgeGetPathForFile,
+  bridgeOpenDroppedPath,
+} from '../platform/bridge.js';
 
 const dragDropZoneEl = () => document.getElementById('drop-zone');
 
@@ -54,6 +59,27 @@ export function handleDrop(e) {
 function openDroppedTransfer(dataTransfer, shouldOpen) {
   if (!dataTransfer) return;
   const droppedFiles = Array.from(dataTransfer.files || []);
+
+  // Desktop: route drops through the main process by ABSOLUTE PATH, so a
+  // dropped file opens as a real file-backed tab (live reload + Reload from
+  // disk) and a dropped folder becomes a full desktop workspace (real paths,
+  // relative-link navigation). The web fallback below reads content only,
+  // which silently loses every disk affordance — that was the bug where
+  // drag-and-drop opened documents without the Live chip. Electron v32+
+  // removed the legacy File.path, so paths come from the preload's
+  // webUtils.getPathForFile; if it yields nothing (e.g. a synthetic File),
+  // the whole drop falls through to the web reader.
+  if (hasDesktopBridge() && droppedFiles.length > 0) {
+    const absPaths = droppedFiles
+      .map((file) => bridgeGetPathForFile(file))
+      .filter(Boolean);
+    if (absPaths.length > 0) {
+      if (!shouldOpen()) return;
+      for (const absPath of absPaths) bridgeOpenDroppedPath(absPath);
+      return;
+    }
+  }
+
   const openDroppedFiles = () => {
     if (!shouldOpen()) return;
     for (const file of droppedFiles) handleFile(file);

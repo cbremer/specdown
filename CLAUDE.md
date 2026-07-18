@@ -211,6 +211,11 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   re-accepted at developer.apple.com. The macOS release job fails (no DMG /
   `latest-mac.yml` on the release) while Win/Linux keep publishing — so
   update checks 404 until the account holder accepts and the job is re-run.
+- **Electron v32+ removed the legacy `File.path` property.** Any renderer code
+  reading `file.path` on a dragged-in File silently gets `undefined` (this
+  broke drag-and-drop live reload after the Electron 40→43 bump). The
+  sanctioned replacement is `webUtils.getPathForFile(file)`, callable only in
+  the preload — exposed on the bridge as `getPathForFile`.
 - **The GitHub release record appears minutes before its artifacts.** Every
   merge has a ~5–15-min window where update checks find the new release but
   its `latest*.yml` doesn't exist yet; the desktop app shows a "still being

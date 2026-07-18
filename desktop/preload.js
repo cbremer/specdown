@@ -2,7 +2,7 @@
 // Exposes a limited API via contextBridge so the renderer can communicate with
 // the main process without direct access to Node.js or Electron internals.
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('specdown', {
   isDesktop: true,
@@ -71,6 +71,24 @@ contextBridge.exposeInMainWorld('specdown', {
   // process replies over the file-changed channel, same as a watch event.
   requestRefreshFile: (filePath) => {
     ipcRenderer.send('refresh-file', filePath);
+  },
+
+  // Absolute filesystem path for a dragged-in File. Electron removed the
+  // legacy File.path property (v32+); webUtils.getPathForFile is the
+  // sanctioned replacement and is only callable from the preload context.
+  getPathForFile: (file) => {
+    try {
+      return webUtils.getPathForFile(file) || '';
+    } catch {
+      return '';
+    }
+  },
+
+  // Open a dropped file/folder by absolute path: the main process stats it
+  // and either opens the file (file-opened) or scans the directory into a
+  // workspace (workspace-opened).
+  openDroppedPath: (absPath) => {
+    ipcRenderer.send('open-dropped-path', absPath);
   },
 
   // Register a callback for when a watched file changes on disk

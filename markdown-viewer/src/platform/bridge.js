@@ -74,6 +74,22 @@ export function bridgeRequestRefreshFile(filePath) {
   nativeBridge()?.requestRefreshFile?.(filePath);
 }
 
+/**
+ * Absolute filesystem path for a dragged-in File ('' when unavailable).
+ * Electron v32+ removed File.path; the preload resolves via webUtils.
+ * @param {File} file
+ * @returns {string}
+ */
+export function bridgeGetPathForFile(file) {
+  return nativeBridge()?.getPathForFile?.(file) || '';
+}
+
+/** @param {string} absPath Open a dropped file/folder by absolute path: the
+ * shell stats it and routes to file-opened or workspace-opened. */
+export function bridgeOpenDroppedPath(absPath) {
+  nativeBridge()?.openDroppedPath?.(absPath);
+}
+
 /** @param {Parameters<NonNullable<DesktopBridge['saveSession']>>[0]} tabs */
 export function bridgeSaveSession(tabs) {
   nativeBridge()?.saveSession?.(tabs);
