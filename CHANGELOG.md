@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.166 — 2026-07-18
+
+### Bug Fixes
+
+- route desktop drag-and-drop by absolute path (live reload for drops)
+
 ## v0.0.165 — 2026-07-15
 
 ### Documentation
