@@ -202,9 +202,13 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   column (`body{overflow:hidden}`, 100vh container), so a bare
   `window.print()` clips output to the visible screen. All print/PDF paths
   render the standalone document from `buildPrintableDocument()`
-  (platform/ios-chrome.js): iOS native print, desktop offscreen-window
-  print/`printToPDF` (`print-document`/`export-pdf` IPC), web hidden iframe.
-  The `@media print` CSS is only a fallback — if you add a new full-height
+  (platform/ios-chrome.js): iOS native print, desktop + web a hidden iframe
+  in the visible window, desktop PDF export an offscreen window +
+  `printToPDF` (`export-pdf` IPC). **Print must stay in the visible window**:
+  on macOS the print dialog is a sheet attached to its window, so
+  `webContents.print()` on a hidden BrowserWindow shows no dialog at all
+  (PDF export is fine — its save dialog attaches to the main window). The
+  `@media print` CSS is only a fallback — if you add a new full-height
   ancestor around the content, add its print reset there too.
 - **Packaging:** macOS needs a **Developer ID Application** cert; `mac.notarize`
   is a boolean; the notarization wait is Apple-side/variable (a long wait isn't a

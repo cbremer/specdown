@@ -747,10 +747,12 @@ function restoreCustomCss() {
 // ===========================
 // Print / PDF Export
 // ===========================
-// Both printing and PDF export render the renderer-built standalone printable
-// document (see buildPrintableDocument in the web app) in an offscreen window.
-// Printing the visible window would capture the viewport-fixed app layout —
-// which is exactly the "only get the screen I'm on" bug this replaces.
+// PDF export renders the renderer-built standalone printable document (see
+// buildPrintableDocument in the web app) in an offscreen window and writes it
+// with printToPDF. Printing does NOT come through here: on macOS the print
+// dialog is a sheet attached to its window, so webContents.print() on a
+// hidden window never shows a dialog — the renderer prints the same document
+// via a hidden iframe in the visible window instead.
 //
 // The HTML is staged through a temp file rather than a data: URL — data URLs
 // hit length limits and encoding issues on large documents.
@@ -802,25 +804,6 @@ function pdfDefaultName(title) {
   return `${base || 'document'}.pdf`;
 }
 
-async function printDocumentFromHtml(payload) {
-  if (!isValidPrintPayload(payload)) return;
-  let printable;
-  try {
-    printable = await loadPrintableWindow(payload.html);
-  } catch (err) {
-    logError('Failed to prepare document for printing', err);
-    return;
-  }
-  const { printWindow, cleanup } = printable;
-  // Non-silent: opens the system print dialog for the offscreen document.
-  printWindow.webContents.print({ printBackground: true }, (success, failureReason) => {
-    if (!success && failureReason && failureReason !== 'cancelled') {
-      logError('Print failed', new Error(failureReason));
-    }
-    cleanup();
-  });
-}
-
 async function exportPdfFromHtml(payload) {
   if (!isValidPrintPayload(payload) || !mainWindow) return;
   const result = await dialog.showSaveDialog(mainWindow, {
@@ -862,11 +845,6 @@ async function exportPdfFromHtml(payload) {
 // ===========================
 ipcMain.on('request-file-open', () => {
   showOpenDialog();
-});
-
-// Print the standalone printable document built by the renderer.
-ipcMain.on('print-document', (_event, payload) => {
-  printDocumentFromHtml(payload);
 });
 
 // Export the standalone printable document as a PDF file.
@@ -1276,7 +1254,7 @@ module.exports = {
   isSignedUpdatePlatform,
   isValidPrintPayload,
   pdfDefaultName,
-  printDocumentFromHtml,
+  loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
 };

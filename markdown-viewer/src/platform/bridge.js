@@ -90,13 +90,6 @@ export function bridgeOpenDroppedPath(absPath) {
   nativeBridge()?.openDroppedPath?.(absPath);
 }
 
-/** @param {{ title: string, html: string }} payload Print a standalone
- * printable HTML document: the shell renders it offscreen and opens the
- * system print dialog (never the live app layout). */
-export function bridgePrintDocument(payload) {
-  nativeBridge()?.printDocument?.(payload);
-}
-
 /** @param {{ title: string, html: string }} payload Export a standalone
  * printable HTML document to PDF: the shell renders it offscreen, asks where
  * to save, and writes the file via printToPDF. */

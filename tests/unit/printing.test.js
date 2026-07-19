@@ -173,7 +173,6 @@ describe('Desktop print + PDF export routing', () => {
       onApplyCustomCss: jest.fn(),
       saveSession: jest.fn(),
       requestRefreshFile: jest.fn(),
-      printDocument: jest.fn(),
       exportPdf: jest.fn(),
     };
     window.print = jest.fn();
@@ -188,18 +187,22 @@ describe('Desktop print + PDF export routing', () => {
     delete window.specdown;
   });
 
-  it('routes Print to the shell with the printable document, never window.print', async () => {
+  it('prints via the in-window hidden iframe, never an offscreen shell window', async () => {
+    // Regression: printing used to be routed to a hidden BrowserWindow in the
+    // main process, but on macOS the print dialog is a sheet attached to its
+    // window — a hidden window shows NO dialog, so Cmd+P silently did nothing.
+    // Desktop must print the printable document from inside the visible
+    // window (hidden iframe), where the dialog can attach.
     await performPrint();
 
-    expect(window.specdown.printDocument).toHaveBeenCalledTimes(1);
-    const payload = window.specdown.printDocument.mock.calls[0][0];
-    expect(payload.title).toBe('spec.md');
-    expect(payload.html).toContain('print-content');
-    expect(payload.html).toContain(
+    const frame = document.querySelector('iframe[aria-hidden="true"]');
+    expect(frame).not.toBeNull();
+    expect(frame.contentDocument.body.innerHTML).toContain('print-content');
+    expect(frame.contentDocument.body.textContent).toContain(
       'Tail paragraph that a viewport-clipped print would lose.'
     );
     expect(window.print).not.toHaveBeenCalled();
-    expect(document.querySelector('iframe[aria-hidden="true"]')).toBeNull();
+    removeActivePrintFrame();
   });
 
   it('exports the printable document as PDF over the bridge', async () => {

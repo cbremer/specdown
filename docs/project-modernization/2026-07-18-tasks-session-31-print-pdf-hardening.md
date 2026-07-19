@@ -38,9 +38,14 @@ all print/PDF paths render:
   mermaid theme** (state flipped with try/finally restore + engine re-init;
   per-diagram fallback to the on-screen clone).
 - **iOS** — unchanged contract: native `printDocument` message.
-- **Desktop** — new `print-document` IPC: the main process stages the HTML in
-  a temp file, renders it in an offscreen sandboxed `BrowserWindow`, and opens
-  the system print dialog (`webContents.print`). Never prints the live window.
+- **Desktop** — prints the same document through the hidden-iframe path in
+  the **visible** window. (First shipped as an offscreen-BrowserWindow
+  `print-document` IPC — user testing caught that Cmd+P showed nothing: on
+  macOS the print dialog is a *sheet attached to its window*, so a hidden
+  window has nowhere to show it. Export as PDF worked all along because its
+  save dialog attaches to the main window. Follow-up in the same session
+  moved desktop printing into the in-window iframe and deleted the
+  `print-document` channel.)
 - **Desktop Export as PDF** — new `export-pdf` IPC + **File > Export as
   PDF…** (`Cmd+Shift+E`): save dialog → offscreen render →
   `printToPDF({ printBackground, preferCSSPageSize })` → reveal in Finder.
@@ -65,8 +70,8 @@ all print/PDF paths render:
 - `markdown-viewer/src/platform/desktop.js` — `exportActivePdf` + IPC wiring
 - `markdown-viewer/src/platform/bridge.js`, `src/types/globals.d.ts`,
   `desktop/preload.js` — `printDocument` / `exportPdf` / `onTriggerExportPdf`
-- `desktop/main.js` — `loadPrintableWindow`, `printDocumentFromHtml`,
-  `exportPdfFromHtml`, `print-document`/`export-pdf` IPC, Export menu item
+- `desktop/main.js` — `loadPrintableWindow`, `exportPdfFromHtml`,
+  `export-pdf` IPC, Export menu item
 - `markdown-viewer/styles.css` — hardened fallback `@media print`
 - `markdown-viewer/src/features/app-commands.js`, `toolbar-overflow.js`,
   `shortcuts.js` — Export as PDF surfacing

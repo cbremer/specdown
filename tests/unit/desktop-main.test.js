@@ -87,7 +87,7 @@ const {
   isSignedUpdatePlatform,
   isValidPrintPayload,
   pdfDefaultName,
-  printDocumentFromHtml,
+  loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
 } = require('../../desktop/main');
@@ -278,11 +278,14 @@ describe('desktop/main.js', () => {
       expect(() => handler({}, { fromPath: '/a/b.md', href: '../c.md' })).not.toThrow();
     });
 
-    it('registers print-document and export-pdf handlers', () => {
+    it('registers the export-pdf handler (printing stays in the renderer)', () => {
       const { ipcMain } = require('electron');
       const channels = ipcMain.on.mock.calls.map(c => c[0]);
-      expect(channels).toContain('print-document');
       expect(channels).toContain('export-pdf');
+      // Printing must NOT round-trip through a hidden shell window: on macOS
+      // the print dialog is a sheet attached to its window, so it would never
+      // appear. The renderer prints via a hidden iframe instead.
+      expect(channels).not.toContain('print-document');
     });
   });
 
@@ -324,24 +327,23 @@ describe('desktop/main.js', () => {
       });
     });
 
-    describe('printDocumentFromHtml', () => {
-      it('renders the payload in an offscreen window and opens the print dialog', async () => {
-        await printDocumentFromHtml({ title: 'spec.md', html: '<!DOCTYPE html><p>hi</p>' });
+    describe('loadPrintableWindow', () => {
+      it('stages the HTML in an offscreen sandboxed window and cleans up fully', async () => {
+        const { printWindow, cleanup } = await loadPrintableWindow('<!DOCTYPE html><p>hi</p>');
 
         expect(BrowserWindow).toHaveBeenCalledTimes(1);
-        expect(BrowserWindow.mock.calls[0][0].show).toBe(false);
-        const win = BrowserWindow.mock.results[0].value;
-        expect(win.loadFile).toHaveBeenCalledTimes(1);
-        expect(win.webContents.print).toHaveBeenCalledTimes(1);
-        expect(win.webContents.print.mock.calls[0][0]).toEqual({ printBackground: true });
-        // The print callback fired synchronously in the mock → cleanup ran.
-        expect(win.destroy).toHaveBeenCalledTimes(1);
-      });
+        const opts = BrowserWindow.mock.calls[0][0];
+        expect(opts.show).toBe(false);
+        expect(opts.webPreferences.sandbox).toBe(true);
+        expect(opts.webPreferences.nodeIntegration).toBe(false);
+        expect(printWindow.loadFile).toHaveBeenCalledTimes(1);
 
-      it('ignores invalid payloads without creating a window', async () => {
-        await printDocumentFromHtml(undefined);
-        await printDocumentFromHtml({ html: '' });
-        expect(BrowserWindow).not.toHaveBeenCalled();
+        // The staged temp file exists until cleanup, then is removed.
+        const tempHtmlPath = printWindow.loadFile.mock.calls[0][0];
+        expect(fs.existsSync(tempHtmlPath)).toBe(true);
+        cleanup();
+        expect(printWindow.destroy).toHaveBeenCalledTimes(1);
+        expect(fs.existsSync(tempHtmlPath)).toBe(false);
       });
     });
 
