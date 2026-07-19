@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.170 — 2026-07-19
+
+- fix desktop Cmd+P showing no dialog — print from the visible window, not a hidden one
+
 ## v0.0.169 — 2026-07-18
 
 - render one standalone printable document on every surface + desktop Export as PDF
