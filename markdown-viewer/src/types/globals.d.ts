@@ -55,8 +55,6 @@ interface SpecdownDesktopBridge {
     cb: (fileData: SpecdownFileData) => void | Promise<void>
   ) => void;
   onTriggerPrint?: (cb: () => void) => void;
-  /** Print a standalone printable HTML document via the system print dialog. */
-  printDocument?: (payload: { title: string; html: string }) => void;
   /** Export a standalone printable HTML document to a PDF file. */
   exportPdf?: (payload: { title: string; html: string }) => void;
   onTriggerExportPdf?: (cb: () => void) => void;

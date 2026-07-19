@@ -13,7 +13,7 @@ import { trapFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
-import { hasDesktopBridge, bridgeRequestFileOpen, bridgePrintDocument } from './bridge.js';
+import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -132,9 +132,12 @@ function updateIOSSheetButton(button, label, active) {
 // flex containers (body overflow:hidden, 100vh app shell) clip printing to
 // the visible screen:
 //   - iOS      → native UIPrintInteractionController via the WK bridge
-//   - desktop  → main process renders the document offscreen and opens the
-//                system print dialog (bridgePrintDocument)
-//   - web      → a hidden same-origin iframe hosting the document is printed
+//   - desktop + web → a hidden same-origin iframe hosting the document is
+//                printed. Desktop MUST use this in-window path, not an
+//                offscreen shell window: on macOS the print dialog is a sheet
+//                attached to its window, so printing from a hidden
+//                BrowserWindow shows no dialog at all (PDF export is fine —
+//                its save dialog attaches to the main window).
 //   - fallback → bare window.print() plus the @media print CSS, only if the
 //                paths above are unavailable
 export async function performPrint() {
@@ -146,13 +149,6 @@ export async function performPrint() {
         data: { title: printableTitle(), html: await buildPrintableDocument() },
       });
       return;
-    }
-    if (isDesktop && hasDesktopBridge() && hasLoadedContent()) {
-      const desktopPrintHtml = await buildPrintableDocument();
-      if (desktopPrintHtml) {
-        bridgePrintDocument({ title: printableTitle(), html: desktopPrintHtml });
-        return;
-      }
     }
     if (hasLoadedContent() && (await printViaHiddenFrame())) {
       return;
@@ -173,10 +169,11 @@ function removeActivePrintFrame() {
   activePrintFrame = null;
 }
 
-// Web print: host the printable document in a hidden same-origin iframe and
-// print THAT window. The iframe document carries its own @page/print styles
-// and none of the app's viewport-fixed layout, so the full document paginates
-// instead of clipping to the current scroll position.
+// Desktop + web print: host the printable document in a hidden same-origin
+// iframe and print THAT window. The iframe document carries its own
+// @page/print styles and none of the app's viewport-fixed layout, so the full
+// document paginates instead of clipping to the current scroll position. The
+// print dialog attaches to the visible window (as a sheet on macOS).
 async function printViaHiddenFrame() {
   const printableHtml = await buildPrintableDocument();
   if (!printableHtml) return false;

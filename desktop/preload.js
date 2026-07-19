@@ -110,14 +110,6 @@ contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
-  // Print a standalone printable HTML document: the main process renders it in
-  // an offscreen window and opens the system print dialog. Printing the live
-  // app layout (window.print) clips to the viewport, so all desktop printing
-  // goes through this channel.
-  printDocument: (payload) => {
-    ipcRenderer.send('print-document', payload);
-  },
-
   // Export the printable HTML document to a PDF file (offscreen render +
   // printToPDF + save dialog in the main process).
   exportPdf: (payload) => {

@@ -498,9 +498,11 @@ async function renderMarkdown(content, filename) {
 // ===========================
 // Print button wired in setupEventListeners; Cmd+P wired in keydown handler.
 // All surfaces print the standalone document from buildPrintableDocument()
-// (platform/ios-chrome.js): iOS via the native print controller, desktop via
-// an offscreen shell window (plus File > Export as PDF), web via a hidden
-// iframe. The @media print CSS is only the bare-window.print() fallback.
+// (platform/ios-chrome.js): iOS via the native print controller, desktop and
+// web via a hidden iframe in the visible window (the macOS print dialog is a
+// window-attached sheet, so it must originate there); desktop also has
+// File > Export as PDF via an offscreen shell window + printToPDF. The
+// @media print CSS is only the bare-window.print() fallback.
 
 // ===========================
 // Initialize App
