@@ -431,11 +431,16 @@ describe('Mermaid Diagram Processing', () => {
       const panzoom = Panzoom(svg, {});
       const result = fitDiagramToContainer(wrapper, svg, panzoom);
 
-      // fitScale = 0.72, scaledWidth = 720, scaledHeight = 360
-      // x = (800 - 720) / 2 = 40
-      // y = (600 - 360) / 2 = 120
-      expect(result.x).toBeCloseTo(40, 0);
-      expect(result.y).toBeCloseTo(120, 0);
+      // Panzoom applies the pan inside scale() — transform is
+      // `scale(S) translate(x, y)` — so the pan is in pre-scale coordinates and
+      // the on-screen offset is S*x. To center, the pixel gap is divided by the
+      // scale: x = (800/0.72 - 1000) / 2 ≈ 55.56, y = (600/0.72 - 500) / 2 ≈ 166.67.
+      // These land the scaled diagram at screen offset (40, 120) — truly centered.
+      expect(result.x).toBeCloseTo(55.56, 1);
+      expect(result.y).toBeCloseTo(166.67, 1);
+      // On-screen centering offset = scale * pan.
+      expect(result.scale * result.x).toBeCloseTo(40, 0);
+      expect(result.scale * result.y).toBeCloseTo(120, 0);
     });
 
     it('should call panzoom zoom and pan with correct values', () => {
@@ -454,7 +459,8 @@ describe('Mermaid Diagram Processing', () => {
       fitDiagramToContainer(wrapper, svg, panzoom);
 
       expect(zoomSpy).toHaveBeenCalledWith(expect.closeTo(0.72, 1), { animate: false });
-      expect(panSpy).toHaveBeenCalledWith(expect.closeTo(40, 0), expect.closeTo(120, 0), { animate: false });
+      // Pan is in pre-scale coordinates (see the centering test above).
+      expect(panSpy).toHaveBeenCalledWith(expect.closeTo(55.56, 1), expect.closeTo(166.67, 1), { animate: false });
     });
   });
 

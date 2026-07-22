@@ -1023,12 +1023,17 @@ body {
 .diagram-container {
     position: relative;
     margin: 2em 0;
+    /* Reserve a strip above the diagram for the expand button so it never
+       overlaps the diagram itself — a wide flowchart fills the column width,
+       leaving no in-bounds corner the button could sit in without obscuring a
+       node. The button lives in this strip, right-aligned. */
+    padding-top: 40px;
 }
 
 .diagram-expand {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0;
+    right: 0;
     z-index: 10;
     display: inline-flex;
     align-items: center;
@@ -1039,8 +1044,12 @@ body {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
     cursor: pointer;
-    min-width: 44px;
-    min-height: 44px;
+    /* Compact control on pointer devices; the touch target grows to 44px on
+       coarse pointers below. Sized to fit the reserved 40px top strip. */
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     opacity: 0;
     transition: opacity 0.15s ease;
     /* A fast double-tap was being read by mobile Safari/WKWebView as the
@@ -1060,8 +1069,16 @@ body {
 }
 
 @media (pointer: coarse) {
+    .diagram-container {
+        /* Widen the reserved strip for the larger touch target. */
+        padding-top: 52px;
+    }
     .diagram-expand {
         opacity: 1;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
     }
 }
 
