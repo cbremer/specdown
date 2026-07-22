@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.172 — 2026-07-22
+
+### Features
+
+- Add portable SpecDown Xcode skill
+
 ## v0.0.171 — 2026-07-22
 
 - render inline as static content, move interactivity to fullscreen
