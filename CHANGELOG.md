@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.171 — 2026-07-22
+
+- render inline as static content, move interactivity to fullscreen
+
 ## v0.0.170 — 2026-07-19
 
 - fix desktop Cmd+P showing no dialog — print from the visible window, not a hidden one
