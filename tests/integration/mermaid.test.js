@@ -136,7 +136,7 @@ describe('Mermaid Diagram Processing', () => {
       expect(markdownContent.querySelector('.diagram-container')).toBeTruthy();
     });
 
-    it('should initialize panzoom for each diagram', async () => {
+    it('should not initialize panzoom for inline diagrams', async () => {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
@@ -144,8 +144,8 @@ describe('Mermaid Diagram Processing', () => {
 
       await processMermaidDiagrams();
 
-      // Panzoom should be initialized
-      expect(Panzoom).toHaveBeenCalled();
+      // Inline diagrams are static; panzoom only exists in fullscreen
+      expect(Panzoom).not.toHaveBeenCalled();
     });
 
     it('should generate unique IDs for each diagram', async () => {
@@ -212,17 +212,19 @@ describe('Mermaid Diagram Processing', () => {
       expect(container.getAttribute('data-diagram-id')).toBe(diagramId);
     });
 
-    it('should create control buttons', () => {
+    it('should create a single expand button instead of a toolbar', () => {
       const svg = '<svg><text>test</text></svg>';
       const diagramId = 'test-diagram-123';
 
       const container = createDiagramContainer(svg, diagramId);
 
-      const controls = container.querySelector('.diagram-controls');
-      expect(controls.querySelector('.zoom-in')).toBeTruthy();
-      expect(controls.querySelector('.zoom-out')).toBeTruthy();
-      expect(controls.querySelector('.reset')).toBeTruthy();
-      expect(controls.querySelector('.fullscreen')).toBeTruthy();
+      const expandBtn = container.querySelector('.diagram-expand');
+      expect(expandBtn).toBeTruthy();
+      expect(expandBtn.getAttribute('aria-label')).toContain('Expand diagram');
+      // The old inline control cluster must be gone
+      expect(container.querySelector('.diagram-controls')).toBeNull();
+      expect(container.querySelector('.zoom-in')).toBeNull();
+      expect(container.querySelector('.zoom-range')).toBeNull();
     });
 
     it('should create wrapper with correct ID', () => {
@@ -241,8 +243,25 @@ describe('Mermaid Diagram Processing', () => {
 
       const container = createDiagramContainer(svg, diagramId);
 
-      const wrapper = container.querySelector('.diagram-wrapper');
-      expect(wrapper.innerHTML).toBe(svg);
+      const svgEl = container.querySelector('.diagram-wrapper svg');
+      expect(svgEl).toBeTruthy();
+      expect(svgEl.textContent).toBe('test diagram');
+    });
+
+    it('should give the SVG an intrinsic pixel size from its viewBox', () => {
+      // Mermaid emits width/height of "100%" and an inline max-width style;
+      // static inline layout replaces those with the natural pixel size and
+      // lets the stylesheet cap oversized diagrams.
+      const svg =
+        '<svg viewBox="0 0 800 600" width="100%" height="100%" style="max-width: 800px;"><text>big</text></svg>';
+
+      const container = createDiagramContainer(svg, 'test-diagram-123');
+
+      const svgEl = container.querySelector('.diagram-wrapper svg');
+      expect(svgEl.getAttribute('width')).toBe('800');
+      expect(svgEl.getAttribute('height')).toBe('600');
+      expect(svgEl.style.maxWidth).toBe('');
+      expect(svgEl.getAttribute('viewBox')).toBe('0 0 800 600');
     });
   });
 
@@ -470,51 +489,120 @@ describe('Mermaid Diagram Processing', () => {
     });
   });
 
-  describe('panzoom initialization with fit', () => {
-    it('should initialize panzoom with wider scale range', async () => {
+  describe('inline diagram affordance', () => {
+    async function renderOneDiagram() {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
       `;
-
       await processMermaidDiagrams();
+      return markdownContent.querySelector('.diagram-container');
+    }
 
-      expect(Panzoom).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          maxScale: 10,
-          minScale: 0.1
-        })
-      );
+    it('expand button opens the fullscreen overlay', async () => {
+      const container = await renderOneDiagram();
+
+      container.querySelector('.diagram-expand').click();
+
+      const overlay = document.getElementById('fullscreen-overlay');
+      expect(overlay.style.display).toBe('flex');
+      expect(overlay.panzoomInstance).toBeTruthy();
     });
 
-    it('should not use contain option for free panning', async () => {
-      const markdownContent = document.getElementById('markdown-content');
-      markdownContent.innerHTML = `
-        <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
-      `;
+    it('clicking a scaled-down diagram opens fullscreen', async () => {
+      const container = await renderOneDiagram();
+      container.classList.add('diagram-scaled');
 
-      await processMermaidDiagrams();
+      container.querySelector('.diagram-wrapper').click();
 
-      const panzoomOptions = Panzoom.mock.calls[0][1];
-      expect(panzoomOptions.contain).toBeUndefined();
+      const overlay = document.getElementById('fullscreen-overlay');
+      expect(overlay.style.display).toBe('flex');
     });
 
-    it('should store mutable state with homeState in panzoom instance data', async () => {
+    it('clicking a diagram that fits inline does not open fullscreen', async () => {
+      const container = await renderOneDiagram();
+
+      container.querySelector('.diagram-wrapper').click();
+
+      const overlay = document.getElementById('fullscreen-overlay');
+      expect(overlay.style.display).toBe('none');
+    });
+
+    it('tap-anywhere opens fullscreen on coarse-pointer (touch) devices', async () => {
+      const container = await renderOneDiagram();
+      const originalMatchMedia = window.matchMedia;
+      window.matchMedia = jest.fn(() => ({ matches: true }));
+
+      try {
+        container.querySelector('.diagram-wrapper').click();
+
+        const overlay = document.getElementById('fullscreen-overlay');
+        expect(overlay.style.display).toBe('flex');
+      } finally {
+        window.matchMedia = originalMatchMedia;
+      }
+    });
+
+    it('fullscreen share button copies a diagram deep link', async () => {
+      const container = await renderOneDiagram();
+      const writeSpy = jest.fn(() => Promise.resolve());
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeSpy },
+        configurable: true,
+      });
+
+      const diagramId = container.getAttribute('data-diagram-id');
+      openFullscreen(diagramId);
+      document.querySelector('#fullscreen-overlay .share-diagram').click();
+
+      expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('?diagram='));
+    });
+  });
+
+  describe('markDiagramScaledState', () => {
+    async function renderOneDiagram() {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
       `;
-
       await processMermaidDiagrams();
+      return markdownContent.querySelector('.diagram-container');
+    }
 
-      // currentPanzoomInstances should have state.homeState
-      expect(state.currentPanzoomInstances.length).toBeGreaterThan(0);
-      expect(state.currentPanzoomInstances[0].state).toBeDefined();
-      expect(state.currentPanzoomInstances[0].state.homeState).toBeDefined();
-      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('scale');
-      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('x');
-      expect(state.currentPanzoomInstances[0].state.homeState).toHaveProperty('y');
+    /** Natural size from the mock SVG's viewBox is 800x600. */
+    function setRenderedSize(container, width, height) {
+      const svg = container.querySelector('.diagram-wrapper svg');
+      Object.defineProperty(svg, 'clientWidth', { value: width, configurable: true });
+      Object.defineProperty(svg, 'clientHeight', { value: height, configurable: true });
+    }
+
+    it('flags containers whose SVG was scaled down by the CSS caps', async () => {
+      const container = await renderOneDiagram();
+      setRenderedSize(container, 400, 300);
+
+      markDiagramScaledState(container);
+
+      expect(container.classList.contains('diagram-scaled')).toBe(true);
+    });
+
+    it('clears the flag when the SVG renders at natural size', async () => {
+      const container = await renderOneDiagram();
+      container.classList.add('diagram-scaled');
+      setRenderedSize(container, 800, 600);
+
+      markDiagramScaledState(container);
+
+      expect(container.classList.contains('diagram-scaled')).toBe(false);
+    });
+
+    it('leaves the state alone before layout (clientWidth 0)', async () => {
+      const container = await renderOneDiagram();
+      container.classList.add('diagram-scaled');
+      // jsdom default clientWidth/clientHeight is 0 — no layout information
+
+      markDiagramScaledState(container);
+
+      expect(container.classList.contains('diagram-scaled')).toBe(true);
     });
   });
 
@@ -653,24 +741,19 @@ describe('Mermaid Diagram Processing', () => {
       await expect(reRenderMermaidDiagrams()).resolves.not.toThrow();
     });
 
-    it('should cleanup old panzoom instance before re-render', async () => {
+    it('should keep the static inline sizing on the re-rendered SVG', async () => {
       const markdownContent = document.getElementById('markdown-content');
       markdownContent.innerHTML = `
         <pre><code class="language-mermaid">graph TD\nA --> B</code></pre>
       `;
       await processMermaidDiagrams();
 
-      // Get the panzoom instance that was created
-      const panzoomCalls = Panzoom.mock.results;
-      expect(panzoomCalls.length).toBeGreaterThan(0);
-      
-      const firstInstance = panzoomCalls[0].value;
-      const destroySpy = jest.spyOn(firstInstance, 'destroy');
-
       await reRenderMermaidDiagrams();
 
-      // Verify that the old panzoom instance was destroyed
-      expect(destroySpy).toHaveBeenCalled();
+      const svgEl = markdownContent.querySelector('.diagram-wrapper svg');
+      expect(svgEl.getAttribute('width')).toBe('800');
+      expect(svgEl.getAttribute('height')).toBe('600');
+      expect(svgEl.getAttribute('data-mermaid-source')).toBeTruthy();
     });
   });
 
@@ -682,7 +765,7 @@ describe('Mermaid Diagram Processing', () => {
       URL.revokeObjectURL = jest.fn();
     });
 
-    it('a superseded diagram pass stops mutating DOM and panzoom state', async () => {
+    it('a superseded diagram pass stops mutating the DOM', async () => {
       const markdownContent = document.getElementById('markdown-content');
 
       // Doc A: its mermaid.render is deferred so the pass stalls mid-render.
@@ -703,7 +786,6 @@ describe('Mermaid Diagram Processing', () => {
       markdownContent.innerHTML =
         '<pre><code class="language-mermaid">graph B</code></pre>';
       await processMermaidDiagrams();
-      const instancesAfterCurrent = state.currentPanzoomInstances.length;
       const domAfterCurrent = markdownContent.innerHTML;
 
       // The stale pass now finishes its render — and must change nothing.
@@ -713,7 +795,6 @@ describe('Mermaid Diagram Processing', () => {
       });
       await stalePass;
 
-      expect(state.currentPanzoomInstances.length).toBe(instancesAfterCurrent);
       expect(markdownContent.innerHTML).toBe(domAfterCurrent);
     });
 
@@ -740,7 +821,6 @@ describe('Mermaid Diagram Processing', () => {
         '<pre><code class="language-mermaid">graph B</code></pre>';
       await processMermaidDiagrams();
       const domAfterCurrent = markdownContent.innerHTML;
-      const instancesAfterCurrent = state.currentPanzoomInstances.length;
 
       resolveStale({
         svg: '<svg viewBox="0 0 800 600" width="800" height="600"><text>stale</text></svg>',
@@ -749,9 +829,8 @@ describe('Mermaid Diagram Processing', () => {
       await staleRerender;
 
       // The stale re-render must not have replaced doc B's diagram markup
-      // nor added/destroyed panzoom instances after it was superseded.
+      // after it was superseded.
       expect(markdownContent.innerHTML).toBe(domAfterCurrent);
-      expect(state.currentPanzoomInstances.length).toBe(instancesAfterCurrent);
     });
   });
 });

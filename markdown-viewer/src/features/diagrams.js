@@ -1,7 +1,6 @@
 // @ts-check
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
-import { state } from '../core/state.js';
 import { isIOSNative } from '../core/platform.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
 import { iconSvg } from '../core/icons.js';
@@ -86,8 +85,8 @@ export async function processMermaidDiagrams() {
             // Replace pre/code block with diagram container
             if (preElement) preElement.replaceWith(container);
 
-            // Initialize panzoom for this diagram
-            initializePanzoom(diagramId);
+            // Wire the expand affordance and scaled-state detection
+            initializeInlineDiagram(diagramId);
 
         } catch (error) {
             console.error('Error rendering mermaid diagram:', error);
@@ -113,22 +112,14 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', diagramId);
 
-    // Create controls
-    const controls = document.createElement('div');
-    controls.className = 'diagram-controls';
-    controls.innerHTML = `
-        <button class="zoom-in" title="Zoom in">+</button>
-        <button class="zoom-out" title="Zoom out">-</button>
-        <label class="zoom-range-label" title="Zoom level">
-            <span class="zoom-percent">100%</span>
-            <input class="zoom-range" type="range" min="25" max="400" value="100" step="5" aria-label="Diagram zoom level">
-        </label>
-        <button class="reset" title="Reset view" aria-label="Reset view">${iconSvg('rotate-ccw')}</button>
-        <button class="export-svg" title="Download as SVG">SVG</button>
-        <button class="export-png" title="Download as PNG">PNG</button>
-        <button class="share-diagram" title="Copy shareable link" aria-label="Copy shareable link">${iconSvg('link')}</button>
-        <button class="fullscreen" title="Fullscreen" aria-label="Open fullscreen">${iconSvg('maximize')}</button>
-    `;
+    // Single affordance: inline diagrams are static document content, and all
+    // interactive machinery (zoom/pan, export, share, minimap) lives in the
+    // fullscreen overlay this button opens.
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'diagram-expand';
+    expandBtn.title = 'Expand diagram';
+    expandBtn.setAttribute('aria-label', 'Expand diagram (opens interactive view)');
+    expandBtn.innerHTML = iconSvg('maximize');
 
     // Create wrapper
     const wrapper = document.createElement('div');
@@ -146,11 +137,31 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     if (svgEl && mermaidSource) {
         svgEl.setAttribute('data-mermaid-source', mermaidSource);
     }
+    prepareInlineDiagramSvg(svgEl);
 
-    container.appendChild(controls);
+    container.appendChild(expandBtn);
     container.appendChild(wrapper);
 
     return container;
+}
+
+/**
+ * Normalize a freshly rendered mermaid SVG for static inline layout: read the
+ * natural size first (viewBox preferred, attrs as fallback), then strip
+ * mermaid's inline style (its max-width) and set intrinsic pixel width/height
+ * attributes. Small diagrams then render at natural size while the stylesheet
+ * caps large ones at the column width / viewport height. The viewBox is left
+ * untouched — export, minimap, fullscreen fit, and print all rely on it.
+ * @param {SVGElement | null} svgEl
+ */
+function prepareInlineDiagramSvg(svgEl) {
+    if (!svgEl) return;
+    const dims = getSvgNaturalDimensions(svgEl);
+    svgEl.style.cssText = '';
+    if (dims) {
+        svgEl.setAttribute('width', String(dims.width));
+        svgEl.setAttribute('height', String(dims.height));
+    }
 }
 
 // ===========================
@@ -223,119 +234,80 @@ export function updateZoomUI(panzoomInstance, controlsRoot) {
 }
 
 // ===========================
-// Panzoom Initialization
+// Inline Diagram Wiring
 // ===========================
+const hasCoarsePointer = () =>
+    typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+
+/**
+ * Mark containers whose diagram had to be scaled down by the stylesheet caps
+ * (column width / viewport height). Scaled diagrams are not fully readable
+ * inline, so they get an always-visible expand button, a zoom-in cursor, and
+ * click-anywhere-to-expand. A clientWidth of 0 means layout hasn't happened
+ * yet — leave the current state alone rather than guessing.
+ * @param {Element} container
+ */
+function markDiagramScaledState(container) {
+    const svgEl = container.querySelector('.diagram-wrapper svg');
+    if (!svgEl) return;
+    const dims = getSvgNaturalDimensions(/** @type {SVGElement} */ (svgEl));
+    if (!dims) return;
+    const shownWidth = svgEl.clientWidth;
+    const shownHeight = svgEl.clientHeight;
+    if (!shownWidth) return;
+    const scaledDown = shownWidth + 1 < dims.width || shownHeight + 1 < dims.height;
+    container.classList.toggle('diagram-scaled', scaledDown);
+}
+
+let diagramResizeListenerInstalled = false;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let diagramResizeRecalcTimer;
+
+// Window resizes move diagrams across the fits/doesn't-fit threshold, so the
+// scaled state (and with it the expand affordance) is recomputed, debounced.
+function installDiagramResizeListener() {
+    if (diagramResizeListenerInstalled) return;
+    diagramResizeListenerInstalled = true;
+    window.addEventListener('resize', () => {
+        clearTimeout(diagramResizeRecalcTimer);
+        diagramResizeRecalcTimer = setTimeout(() => {
+            document
+                .querySelectorAll('#markdown-content .diagram-container')
+                .forEach((container) => markDiagramScaledState(container));
+        }, 150);
+    });
+}
+
 /** @param {string} diagramId */
-function initializePanzoom(diagramId) {
+function initializeInlineDiagram(diagramId) {
     const wrapper = document.getElementById(`wrapper-${diagramId}`);
     if (!wrapper) return;
-
-    const svgElement = wrapper.querySelector('svg');
-    if (!svgElement) return;
-
-    // Initialize panzoom with wide scale range for free navigation
-    const panzoomInstance = Panzoom(svgElement, {
-        maxScale: 10,
-        minScale: 0.1,
-        step: 0.2,
-        cursor: 'grab'
-    });
-
-    // Use a mutable state object so reset always uses the latest fit values.
-    // Initial fit runs immediately; a deferred fit via requestAnimationFrame
-    // recalculates after the browser has laid out the container (in case
-    // clientWidth/Height weren't available synchronously).
-    const instanceState = {
-        homeState: fitDiagramToContainer(wrapper, svgElement, panzoomInstance)
-    };
-    requestAnimationFrame(() => {
-        instanceState.homeState = fitDiagramToContainer(wrapper, svgElement, panzoomInstance);
-    });
-
-    // Store instance for cleanup
-    state.currentPanzoomInstances.push({
-        id: diagramId,
-        instance: panzoomInstance,
-        element: svgElement,
-        state: instanceState
-    });
-
-    // Get controls
-    const container = wrapper.closest('.diagram-container');
+    const container = /** @type {HTMLElement | null} */ (wrapper.closest('.diagram-container'));
     if (!container) return;
-    const controls = container.querySelector('.diagram-controls');
-    if (!controls) return;
-    const zoomInBtn = controls.querySelector('.zoom-in');
-    const zoomOutBtn = controls.querySelector('.zoom-out');
-    const zoomRange = controls.querySelector('.zoom-range');
-    const resetBtn = controls.querySelector('.reset');
-    const exportSvgBtn = controls.querySelector('.export-svg');
-    const exportPngBtn = controls.querySelector('.export-png');
-    const shareBtn = controls.querySelector('.share-diagram');
-    const fullscreenBtn = controls.querySelector('.fullscreen');
 
-    // Bind control events
-    on(zoomInBtn, 'click', (e) => {
-        e.stopPropagation();
-        panzoomInstance.zoomIn();
-        updateZoomUI(panzoomInstance, controls);
-    });
+    // Theme re-renders replace the wrapper's SVG but keep the container,
+    // wrapper, and button elements — bind their listeners only once.
+    if (container.dataset.inlineWired !== 'true') {
+        container.dataset.inlineWired = 'true';
 
-    on(zoomOutBtn, 'click', (e) => {
-        e.stopPropagation();
-        panzoomInstance.zoomOut();
-        updateZoomUI(panzoomInstance, controls);
-    });
+        on(container.querySelector('.diagram-expand'), 'click', (e) => {
+            e.stopPropagation();
+            openFullscreen(diagramId);
+        });
 
-    on(zoomRange, 'input', (e) => {
-        e.stopPropagation();
-        const target = /** @type {HTMLInputElement} */ (e.target);
-        const targetPercent = Number(target.value);
-        if (!isNaN(targetPercent)) {
-            panzoomInstance.zoom(targetPercent / 100);
-            updateZoomUI(panzoomInstance, controls);
-        }
-    });
+        // Click-anywhere opens fullscreen only where it matches intent: a
+        // scaled-down diagram (unreadable inline), or a touch device (no
+        // hover to reveal the button). Small readable diagrams keep normal
+        // click behavior, e.g. selecting label text.
+        on(wrapper, 'click', () => {
+            if (container.classList.contains('diagram-scaled') || hasCoarsePointer()) {
+                openFullscreen(diagramId);
+            }
+        });
+    }
 
-    on(resetBtn, 'click', (e) => {
-        e.stopPropagation();
-        resetToFit(panzoomInstance, instanceState.homeState);
-        updateZoomUI(panzoomInstance, controls);
-    });
-
-    on(exportSvgBtn, 'click', (e) => {
-        e.stopPropagation();
-        downloadDiagramSvg(diagramId);
-    });
-
-    on(exportPngBtn, 'click', (e) => {
-        e.stopPropagation();
-        downloadDiagramPng(diagramId);
-    });
-
-    on(shareBtn, 'click', (e) => {
-        e.stopPropagation();
-        shareDiagramLink(diagramId);
-    });
-
-    on(fullscreenBtn, 'click', (e) => {
-        e.stopPropagation();
-        openFullscreen(diagramId);
-    });
-
-    // Mouse wheel zoom
-    wrapper.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        panzoomInstance.zoomWithWheel(e);
-        updateZoomUI(panzoomInstance, controls);
-    }, { passive: false });
-
-    // Double click to reset to fit
-    wrapper.addEventListener('dblclick', () => {
-        resetToFit(panzoomInstance, instanceState.homeState);
-        updateZoomUI(panzoomInstance, controls);
-    });
-    updateZoomUI(panzoomInstance, controls);
+    requestAnimationFrame(() => markDiagramScaledState(container));
+    installDiagramResizeListener();
 }
 
 // ===========================
@@ -429,6 +401,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const resetBtn = controls.querySelector('.reset');
     const exportSvgBtn = controls.querySelector('.export-svg');
     const exportPngBtn = controls.querySelector('.export-png');
+    const shareBtn = controls.querySelector('.share-diagram');
     const closeBtn = controls.querySelector('.close-fullscreen');
     if (!zoomInBtn || !zoomOutBtn || !resetBtn || !closeBtn) return;
 
@@ -440,6 +413,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const newZoomRangeLabel = zoomRangeLabel ? zoomRangeLabel.cloneNode(true) : null;
     const newExportSvg = exportSvgBtn ? exportSvgBtn.cloneNode(true) : null;
     const newExportPng = exportPngBtn ? exportPngBtn.cloneNode(true) : null;
+    const newShare = shareBtn ? shareBtn.cloneNode(true) : null;
     const newClose = closeBtn.cloneNode(true);
 
     zoomInBtn.replaceWith(newZoomIn);
@@ -448,6 +422,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     if (zoomRangeLabel && newZoomRangeLabel) zoomRangeLabel.replaceWith(newZoomRangeLabel);
     if (exportSvgBtn && newExportSvg) exportSvgBtn.replaceWith(newExportSvg);
     if (exportPngBtn && newExportPng) exportPngBtn.replaceWith(newExportPng);
+    if (shareBtn && newShare) shareBtn.replaceWith(newShare);
     closeBtn.replaceWith(newClose);
 
     // Add new listeners
@@ -488,6 +463,11 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     on(newExportPng, 'click', (e) => {
         e.stopPropagation();
         downloadDiagramPng(fsOverlay.diagramId || '');
+    });
+
+    on(newShare, 'click', (e) => {
+        e.stopPropagation();
+        shareDiagramLink(fsOverlay.diagramId || '');
     });
 
     on(newClose, 'click', (e) => {
@@ -556,20 +536,6 @@ export function closeFullscreen() {
 }
 
 // ===========================
-// Cleanup
-// ===========================
-export function cleanupPanzoomInstances() {
-    state.currentPanzoomInstances.forEach(({ instance }) => {
-        try {
-            instance.destroy();
-        } catch (error) {
-            console.error('Error destroying panzoom instance:', error);
-        }
-    });
-    state.currentPanzoomInstances = [];
-}
-
-// ===========================
 // Re-render Mermaid (for theme change)
 // ===========================
 export async function reRenderMermaidDiagrams() {
@@ -608,13 +574,6 @@ export async function reRenderMermaidDiagrams() {
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
             if (generation !== diagramRenderGeneration) return; // superseded mid-render
 
-            // Clean up old panzoom
-            const oldInstance = state.currentPanzoomInstances.find((p) => p.id === diagramId);
-            if (oldInstance) {
-                oldInstance.instance.destroy();
-                state.currentPanzoomInstances = state.currentPanzoomInstances.filter((p) => p.id !== diagramId);
-            }
-
             // Update wrapper content
             // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
             // diagram types that use them) so DOMPurify does not strip the text.
@@ -628,9 +587,10 @@ export async function reRenderMermaidDiagrams() {
             if (newSvgElement) {
                 newSvgElement.setAttribute('data-mermaid-source', mermaidCode);
             }
+            prepareInlineDiagramSvg(newSvgElement);
 
-            // Re-initialize panzoom
-            initializePanzoom(diagramId);
+            // Refresh scaled-state detection for the re-themed SVG
+            initializeInlineDiagram(diagramId);
 
         } catch (error) {
             console.error('Error re-rendering mermaid diagram:', error);

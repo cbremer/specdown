@@ -1017,68 +1017,81 @@ body {
 /* ===========================
    Diagram Container
    =========================== */
+/* Inline diagrams are static document content: natural size, capped by the
+   column width and viewport height. All interactivity (zoom/pan, export,
+   share) lives in the fullscreen overlay opened by the expand button. */
 .diagram-container {
     position: relative;
     margin: 2em 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    background-color: var(--bg-secondary);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
 }
 
-.diagram-controls {
+.diagram-expand {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    gap: 5px;
+    top: 8px;
+    right: 8px;
     z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background-color: var(--bg-primary);
-    padding: 5px;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-}
-
-.diagram-controls button {
-    background-color: var(--bg-tertiary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
-    font-size: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
     cursor: pointer;
-    transition: var(--transition);
-    font-weight: 600;
     min-width: 44px;
     min-height: 44px;
-    /* A fast double-tap on a zoom button (e.g. +) was being read by mobile
-       Safari/WKWebView as the page's double-tap-to-zoom gesture, zooming the
-       whole interface. `manipulation` keeps tap/pan/pinch but drops double-tap
-       zoom on the control itself. */
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    /* A fast double-tap was being read by mobile Safari/WKWebView as the
+       page's double-tap-to-zoom gesture, zooming the whole interface.
+       `manipulation` keeps tap/pan/pinch but drops double-tap zoom on the
+       control itself. */
     touch-action: manipulation;
 }
 
-.diagram-controls button:hover {
+/* Reveal on hover/keyboard focus; keep it always visible when the diagram had
+   to be scaled down (it isn't fully readable inline, so expanding is the
+   primary action) and on touch devices, where hover doesn't exist. */
+.diagram-container:hover .diagram-expand,
+.diagram-expand:focus-visible,
+.diagram-container.diagram-scaled .diagram-expand {
+    opacity: 1;
+}
+
+@media (pointer: coarse) {
+    .diagram-expand {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .diagram-expand {
+        transition: none;
+    }
+}
+
+.diagram-expand:hover {
     background-color: var(--accent-color);
     color: var(--text-on-accent);
     border-color: var(--accent-color);
-    transform: scale(1.1);
 }
 
 .diagram-wrapper {
-    height: 500px;
-    cursor: grab;
-    overflow: hidden;
-    position: relative;
-}
-
-.diagram-wrapper:active {
-    cursor: grabbing;
+    display: flex;
+    justify-content: center;
 }
 
 .diagram-wrapper svg {
-    transform-origin: 0 0;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 70vh;
+}
+
+.diagram-container.diagram-scaled .diagram-wrapper {
+    cursor: zoom-in;
 }
 
 /* ===========================
@@ -1141,7 +1154,7 @@ body {
     font-weight: 600;
     min-width: 44px;
     min-height: 44px;
-    /* See .diagram-controls button — avoid double-tap-to-zoom on the page. */
+    /* See .diagram-expand — avoid double-tap-to-zoom on the page. */
     touch-action: manipulation;
 }
 
@@ -1264,44 +1277,13 @@ body {
         padding: 1rem;
     }
 
-    /* On phones the control cluster is too wide/tall to float over the diagram
-       without covering it (the zoom slider + touch-sized buttons wrap into a
-       large block). Drop it out of the absolute overlay and into normal flow as
-       a toolbar above the diagram so it never obscures the content. The controls
-       already precede .diagram-wrapper in the DOM, so static positioning stacks
-       them on top. Applies to mobile web and the iOS WKWebView shell alike. */
-    .diagram-controls {
-        position: static;
-        top: auto;
-        right: auto;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        align-items: center;
-        border-radius: 0;
-        box-shadow: none;
-        background-color: var(--bg-secondary);
-        border-bottom: 1px solid var(--border-color);
-    }
-
     .fullscreen-controls {
         flex-wrap: wrap;
     }
 
-    .diagram-controls button,
     .fullscreen-controls button {
         padding: 0.4rem 0.6rem;
         font-size: 0.9rem;
-    }
-
-    /* Keep the zoom slider from forcing the toolbar absurdly wide on phones. */
-    .diagram-controls .zoom-range-label {
-        flex: 1 1 120px;
-        min-width: 100px;
-    }
-
-    .diagram-controls .zoom-range {
-        width: 100%;
-        min-width: 0;
     }
 }
 
@@ -1415,7 +1397,7 @@ body {
     .workspace-sidebar,
     .annotation-panel,
     .annotation-popover,
-    .diagram-controls,
+    .diagram-expand,
     .fullscreen-overlay,
     .presentation-overlay,
     .overflow-menu,
@@ -1507,6 +1489,7 @@ body {
 
     .diagram-wrapper svg {
         max-width: 100%;
+        max-height: none !important;
         width: auto !important;
         height: auto !important;
         position: static !important;
@@ -2224,7 +2207,7 @@ mark.search-highlight-current {
 .ios-native .browse-button,
 .ios-native .sample-button,
 .ios-native .theme-toggle,
-.ios-native .diagram-controls button,
+.ios-native .diagram-expand,
 .ios-native .fullscreen-controls button {
     transition: none;
 }
@@ -2233,7 +2216,7 @@ mark.search-highlight-current {
 .ios-native .browse-button:hover,
 .ios-native .sample-button:hover,
 .ios-native .theme-toggle:hover,
-.ios-native .diagram-controls button:hover,
+.ios-native .diagram-expand:hover,
 .ios-native .fullscreen-controls button:hover {
     transform: none;
     box-shadow: none;

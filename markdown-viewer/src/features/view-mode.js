@@ -1,6 +1,6 @@
 // @ts-check
-// Preview / raw-markdown view toggle. The preview render and panzoom cleanup
-// live in the render core (main.js) and are supplied via configureViewMode.
+// Preview / raw-markdown view toggle. The preview render lives in the render
+// core (main.js) and is supplied via configureViewMode.
 
 import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
@@ -11,16 +11,11 @@ const el = (/** @type {string} */ id) => document.getElementById(id);
 
 /** @type {(content: string, title: string) => void} */
 let renderPreview = () => {};
-/** @type {() => void} */
-let cleanupPanzoom = () => {};
 
-/** @param {{ renderMarkdown?: Function, cleanupPanzoom?: Function }} [deps] */
+/** @param {{ renderMarkdown?: Function }} [deps] */
 export function configureViewMode(deps) {
   if (deps && typeof deps.renderMarkdown === 'function') {
     renderPreview = /** @type {typeof renderPreview} */ (deps.renderMarkdown);
-  }
-  if (deps && typeof deps.cleanupPanzoom === 'function') {
-    cleanupPanzoom = /** @type {typeof cleanupPanzoom} */ (deps.cleanupPanzoom);
   }
 }
 
@@ -34,8 +29,6 @@ export function toggleViewMode() {
     if (state.tocVisible) {
       toggleToc(false);
     }
-    // Clean up panzoom before switching
-    cleanupPanzoom();
     // Show raw markdown in a pre/code block
     const escaped = state.currentRawMarkdown
       .replace(/&/g, '&amp;')

@@ -30,7 +30,7 @@ function loadPrintFixture() {
     <h1>First section</h1>
     <p>Intro paragraph well above the fold.</p>
     <div class="diagram-container" data-diagram-id="d0">
-      <div class="diagram-controls"><button class="reset"><svg data-icon="true"></svg></button></div>
+      <button class="diagram-expand"><svg data-icon="true"></svg></button>
       <div class="diagram-wrapper">
         <svg data-mermaid-source="graph TD; A--&gt;B" viewBox="0 0 800 600"
              style="position: absolute; width: 800px; transform: scale(2);"></svg>
@@ -64,9 +64,9 @@ describe('Printable document builder', () => {
     expect(html).toContain('spec.md');
   });
 
-  it('strips UI chrome: diagram controls, copy buttons, annotation badges', async () => {
+  it('strips UI chrome: diagram expand button, copy buttons, annotation badges', async () => {
     const html = await buildPrintableDocument();
-    expect(html).not.toContain('diagram-controls');
+    expect(html).not.toContain('diagram-expand');
     expect(html).not.toContain('code-copy-btn');
     expect(html).not.toContain('annotation-badge');
     expect(html).not.toContain('has-annotation');

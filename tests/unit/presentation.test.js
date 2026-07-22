@@ -16,22 +16,19 @@ function addDiagrams(n) {
     container.className = 'diagram-container';
     container.setAttribute('data-diagram-id', 'd' + i);
 
-    // Faithful to production DOM: the controls come FIRST and contain SVG
-    // icon buttons. This is the regression fixture for the bug where
-    // presentation mode cloned the reset-button icon (a bare 'svg' query
-    // matched the controls) instead of the diagram in the wrapper.
-    const controls = document.createElement('div');
-    controls.className = 'diagram-controls';
+    // Faithful to production DOM: the expand button comes FIRST and contains
+    // an SVG icon. This is the regression fixture for the bug where
+    // presentation mode cloned a button icon (a bare 'svg' query matched the
+    // chrome) instead of the diagram in the wrapper.
     const iconSvgEl = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'svg'
     );
     iconSvgEl.setAttribute('data-icon-not-a-diagram', 'true');
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'reset';
-    resetBtn.appendChild(iconSvgEl);
-    controls.appendChild(resetBtn);
-    container.appendChild(controls);
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'diagram-expand';
+    expandBtn.appendChild(iconSvgEl);
+    container.appendChild(expandBtn);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'diagram-wrapper';

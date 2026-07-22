@@ -12,7 +12,7 @@
 import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
-import { cleanupPanzoomInstances, closeFullscreen } from './diagrams.js';
+import { closeFullscreen } from './diagrams.js';
 import { closeSearch } from './search.js';
 import { toggleToc } from './toc.js';
 import { toggleSplitView } from './split-view.js';
@@ -200,7 +200,6 @@ export async function switchTab(id) {
 
   renderTabBar();
   if (isDesktop) refreshWatchUI();
-  cleanupPanzoomInstances();
 
   const markdownContent = el('markdown-content');
   if (!markdownContent) return;
@@ -239,10 +238,6 @@ export async function closeTab(id) {
   // Stop watching before removing the tab
   if (isDesktop && closedTab.watching && closedTab.filePath) {
     endWatch(closedTab.filePath);
-  }
-
-  if (wasActive) {
-    cleanupPanzoomInstances();
   }
 
   state.tabs.splice(idx, 1);
@@ -287,7 +282,6 @@ export async function closeTab(id) {
 
 export function showDropZone() {
   // Cleanup
-  cleanupPanzoomInstances();
   closeFullscreen();
   closeSearch();
   closeIOSActionSheet();

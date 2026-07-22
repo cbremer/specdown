@@ -88,15 +88,6 @@ describe('Markdown Rendering', () => {
       expect(markdownContent.innerHTML).toContain('Test Heading');
     });
 
-    it('should cleanup existing panzoom instances', async () => {
-      const cleanupSpy = jest.fn();
-      global.cleanupPanzoomInstances = cleanupSpy;
-
-      await renderMarkdown('# Test', 'test.md');
-
-      expect(cleanupSpy).toHaveBeenCalled();
-    });
-
     it('should call processMermaidDiagrams', async () => {
       const processSpy = jest.fn().mockResolvedValue(undefined);
       global.processMermaidDiagrams = processSpy;

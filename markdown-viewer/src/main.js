@@ -40,7 +40,6 @@ import {
 } from './features/annotations.js';
 import {
   processMermaidDiagrams,
-  cleanupPanzoomInstances,
   reRenderMermaidDiagrams,
   closeFullscreen,
 } from './features/diagrams.js';
@@ -181,7 +180,6 @@ function init() {
     });
     configureViewMode({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
-        cleanupPanzoom: () => cleanupPanzoomInstances(),
     });
     configureTabs({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
@@ -418,9 +416,6 @@ function setupEventListeners() {
  */
 async function renderMarkdown(content, filename) {
     try {
-        // Clean up existing panzoom instances
-        cleanupPanzoomInstances();
-
         // Store raw markdown for toggle
         state.currentRawMarkdown = content;
         state.currentViewMode = 'preview';
