@@ -30,7 +30,6 @@
 
 /**
  * @typedef {object} AppState
- * @property {any[]} currentPanzoomInstances Active panzoom instances to clean up.
  * @property {'light' | 'dark'} currentTheme The resolved, applied theme.
  * @property {'light' | 'dark' | 'auto'} themePreference User choice; 'auto' follows the OS.
  * @property {string} currentRawMarkdown Raw source of the active document.
@@ -48,7 +47,6 @@
 /** @type {AppState} */
 export const state = {
   // Render / view
-  currentPanzoomInstances: [],
   // `themePreference` is the persisted user choice (light/dark/auto);
   // `currentTheme` is the resolved theme that's actually applied, set by
   // setupTheme() at init (an 'auto' preference resolves via prefers-color-scheme).

@@ -13,6 +13,8 @@ folder tracks the smaller fixes that follow.
 | 2026-06-21 | [tasks-session-02](2026-06-21-tasks-session-02-diagram-double-tap-zoom.md) | Double-tap on a diagram zoom button zoomed the whole page instead of the diagram |
 | 2026-06-21 | [tasks-session-03](2026-06-21-tasks-session-03-jsyaml-dos-advisory.md) | Cleared the js-yaml DoS Dependabot advisory (dev-only transitive) via a scoped override |
 | 2026-06-22 | [tasks-session-04](2026-06-22-tasks-session-04-ios-present-action-sheet.md) | Presentation mode was unreachable on iPhone — added a Present entry to the iOS action sheet |
+| 2026-07-22 | [brainstorm-diagram-inline-static-ux](2026-07-22-brainstorm-diagram-inline-static-ux.md) | Diagrams read like control panels — options + decision to render them as static document content |
+| 2026-07-22 | [tasks-session-05](2026-07-22-tasks-session-05-diagram-inline-static-ux.md) | Static inline diagrams: fixed 500px card + 8-button toolbar + always-armed panzoom replaced by natural-size rendering with an on-demand fullscreen explore mode |
 
 ## Status
 

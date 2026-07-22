@@ -1,9 +1,10 @@
 # Diagram Showcase
 
 A test document packed with **every major Mermaid diagram type** — handy for
-exercising SpecDown's diagram features: per-diagram zoom/pan, fullscreen with
-minimap, SVG/PNG export, share links, theme re-rendering, and **presentation
-mode** (hit *Present* and step through with `←` / `→`).
+exercising SpecDown's diagram features: inline diagrams that expand into a
+fullscreen explorer with zoom/pan, minimap, SVG/PNG export, and share links,
+plus theme re-rendering and **presentation mode** (hit *Present* and step
+through with `←` / `→`).
 
 Between the diagrams there's ordinary markdown — headings for the table of
 contents, a table, and a code block — so this file also works as a general
@@ -13,7 +14,7 @@ smoke-test document.
 
 ## 1. Flowchart — system architecture
 
-The classic. Drag to pan, scroll to zoom, double-click to reset.
+The classic. Expand it to zoom, pan, and explore.
 
 ```mermaid
 graph TD

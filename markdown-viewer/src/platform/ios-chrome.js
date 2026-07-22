@@ -292,7 +292,7 @@ export async function buildPrintableDocument() {
   const printableContent = /** @type {HTMLElement} */ (markdownContent.cloneNode(true));
 
   printableContent
-    .querySelectorAll('.diagram-controls, .annotation-popover, .search-highlight, .search-highlight-current, .code-copy-btn')
+    .querySelectorAll('.diagram-expand, .annotation-popover, .search-highlight, .search-highlight-current, .code-copy-btn')
     .forEach((element) => element.remove());
   printableContent.querySelectorAll('.annotation-badge').forEach((badge) => badge.remove());
   printableContent.querySelectorAll('.has-annotation').forEach((element) => {
