@@ -1,0 +1,4 @@
+interface:
+  display_name: "SpecDown Xcode"
+  short_description: "Update SpecDown and prepare iOS builds"
+  default_prompt: "Use $specdown-xcode to update SpecDown and tell me what iOS build steps are needed."
