@@ -101,6 +101,36 @@ describe('Desktop renderer integration', () => {
     expect(refreshedEl.classList.contains('tab-has-changes')).toBe(false);
   });
 
+  it('reloads the active tab when the same file is open in an earlier tab too', async () => {
+    const fileChangedCallback = window.specdown.onFileChanged.mock.calls[0][0];
+
+    // Same file opened twice; the second copy is the active tab. Array.find
+    // would return the first (background) copy, so the old handler took the
+    // background branch and never re-rendered the visible view.
+    createTab('dup.md', '# Original', '/tmp/dup.md');
+    createTab('dup.md', '# Original', '/tmp/dup.md');
+
+    const firstTab = state.tabs[0];
+    const activeTab = state.tabs[1];
+    expect(state.activeTabId).toBe(activeTab.id);
+
+    await fileChangedCallback({
+      filename: 'dup.md',
+      filePath: '/tmp/dup.md',
+      content: '# Reloaded from disk',
+    });
+
+    // The visible content must reflect the new file contents.
+    const markdownContent = document.getElementById('markdown-content');
+    expect(markdownContent.innerHTML).toContain('Reloaded from disk');
+    expect(markdownContent.innerHTML).not.toContain('Original');
+
+    // Both copies carry the fresh raw markdown; the background copy is flagged.
+    expect(activeTab.rawMarkdown).toBe('# Reloaded from disk');
+    expect(firstTab.rawMarkdown).toBe('# Reloaded from disk');
+    expect(firstTab.hasUnseenChanges).toBe(true);
+  });
+
   describe('live-reload chip', () => {
     it('shows "Live" with active state for a fresh desktop file tab', () => {
       createTab('one.md', '# One', '/tmp/one.md');

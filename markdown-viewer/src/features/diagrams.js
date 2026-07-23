@@ -198,11 +198,12 @@ function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
     const scaleY = containerHeight / dims.height;
     const fitScale = Math.min(scaleX, scaleY) * 0.9;
 
-    // Center the diagram
-    const scaledWidth = dims.width * fitScale;
-    const scaledHeight = dims.height * fitScale;
-    const x = (containerWidth - scaledWidth) / 2;
-    const y = (containerHeight - scaledHeight) / 2;
+    // Center the diagram. Panzoom's transform is `scale(S) translate(x, y)`, so
+    // the translate is applied in the *pre-scale* coordinate space — a pan of x
+    // moves the element S*x pixels on screen. To land the scaled diagram's
+    // top-left at the centering offset, divide the pixel gap by the scale.
+    const x = (containerWidth / fitScale - dims.width) / 2;
+    const y = (containerHeight / fitScale - dims.height) / 2;
 
     panzoomInstance.zoom(fitScale, { animate: false });
     panzoomInstance.pan(x, y, { animate: false });
@@ -352,13 +353,24 @@ function openFullscreen(diagramId) {
         cursor: 'grab'
     });
 
-    // Use mutable state for deferred fit recalculation
+    // Use mutable state for deferred fit recalculation.
     const fullscreenState = {
         homeState: fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom)
     };
-    requestAnimationFrame(() => {
+    // Panzoom's constructor defers a forced `pan(startX, startY)` (0,0) via a
+    // setTimeout(0) to constrain its initial values — that reset fires *after*
+    // this synchronous fit and would clobber the centering back to the
+    // top-left corner. Re-apply the fit from a setTimeout scheduled here: it was
+    // queued after panzoom's (which ran during construction above), so it fires
+    // after the reset and wins. A trailing rAF refits once more against the
+    // final post-layout container dimensions.
+    const applyFit = () => {
         fullscreenState.homeState = fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom);
-    });
+    };
+    setTimeout(() => {
+        applyFit();
+        requestAnimationFrame(applyFit);
+    }, 0);
 
     // Store for cleanup
     fsOverlay.panzoomInstance = fullscreenPanzoom;

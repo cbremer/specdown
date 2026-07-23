@@ -193,22 +193,32 @@ export function setupDesktopIPC() {
     }
   });
 
-  // Listen for file-changed events (watched file updated on disk)
+  // Listen for file-changed events (watched file updated on disk, or a manual
+  // "Reload from disk"). The same file can be open in more than one tab, so
+  // update EVERY matching tab — and, crucially, decide the visible re-render by
+  // whether the *active* tab is among them, not by the first match. Keying off
+  // the first match (Array.find) silently broke Reload from disk whenever the
+  // same file was open twice and the active copy wasn't the first: the handler
+  // took the background branch and never refreshed the view.
   bridgeOnFileChanged(async function (fileData) {
-    const tab = state.tabs.find((t) => t.filePath === fileData.filePath);
-    if (!tab) return;
+    const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath);
+    if (matchingTabs.length === 0) return;
 
-    tab.rawMarkdown = fileData.content;
-    tab.filename = fileData.filename;
+    for (const tab of matchingTabs) {
+      tab.rawMarkdown = fileData.content;
+      tab.filename = fileData.filename;
+    }
 
-    if (tab.id === state.activeTabId) {
+    const activeTab = matchingTabs.find((t) => t.id === state.activeTabId);
+
+    if (activeTab) {
       // Preserve scroll position across the re-render so an
       // auto-reload doesn't yank the user back to the top.
       const markdownContent = el('markdown-content');
       if (!markdownContent) return;
       const savedScrollTop = markdownContent.scrollTop;
 
-      if (tab.viewMode === 'raw') {
+      if (activeTab.viewMode === 'raw') {
         state.currentRawMarkdown = fileData.content;
         const escaped = fileData.content
           .replace(/&/g, '&amp;')
@@ -224,12 +234,18 @@ export function setupDesktopIPC() {
       // Visual feedback that an auto-reload happened — otherwise
       // the user has no way to tell the content just changed.
       pulseWatchToggle();
-    } else {
-      // Background tab: flag it so the user sees that something
-      // changed when they come back to it.
-      tab.hasUnseenChanges = true;
-      renderTabBar();
     }
+
+    // Flag any non-active copies so the user sees that something changed when
+    // they come back to them. (When the active tab wasn't among the matches,
+    // this covers every match — the previous background-tab behavior.)
+    let flaggedBackground = false;
+    for (const tab of matchingTabs) {
+      if (tab.id === state.activeTabId) continue;
+      tab.hasUnseenChanges = true;
+      flaggedBackground = true;
+    }
+    if (flaggedBackground) renderTabBar();
   });
 
   // Wire up watch toggle button
