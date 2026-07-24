@@ -495,6 +495,69 @@ describe('Mermaid Diagram Processing', () => {
     });
   });
 
+  describe('zoomKeepingCenter', () => {
+    function makeWrapper(width, height) {
+      const wrapper = document.createElement('div');
+      Object.defineProperty(wrapper, 'clientWidth', { value: width, configurable: true });
+      Object.defineProperty(wrapper, 'clientHeight', { value: height, configurable: true });
+      return wrapper;
+    }
+
+    // The content point currently under the container center, given panzoom's
+    // `scale(S) translate(x, y)` transform (origin 0 0): centerScreen = S*(v + t).
+    function contentUnderCenter(panzoom, wrapper) {
+      const s = panzoom.getScale();
+      const { x, y } = panzoom.getPan();
+      return {
+        x: (wrapper.clientWidth / 2) / s - x,
+        y: (wrapper.clientHeight / 2) / s - y,
+      };
+    }
+
+    it('keeps the container center fixed when zooming to a smaller scale', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const panzoom = Panzoom(svg, {});
+      const wrapper = makeWrapper(800, 600);
+
+      const before = contentUnderCenter(panzoom, wrapper);
+      zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(0.5));
+      const after = contentUnderCenter(panzoom, wrapper);
+
+      expect(panzoom.getScale()).toBe(0.5);
+      expect(after.x).toBeCloseTo(before.x, 6);
+      expect(after.y).toBeCloseTo(before.y, 6);
+      // Pan is re-derived, not left at the origin (the old buggy behavior).
+      expect(panzoom.getPan()).toEqual({ x: 400, y: 300 });
+    });
+
+    it('keeps the container center fixed when zooming to a larger scale', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const panzoom = Panzoom(svg, {});
+      const wrapper = makeWrapper(800, 600);
+      panzoom.pan(30, -20);
+
+      const before = contentUnderCenter(panzoom, wrapper);
+      zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(2));
+      const after = contentUnderCenter(panzoom, wrapper);
+
+      expect(after.x).toBeCloseTo(before.x, 6);
+      expect(after.y).toBeCloseTo(before.y, 6);
+    });
+
+    it('leaves the pan untouched when the scale does not change', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const panzoom = Panzoom(svg, {});
+      const wrapper = makeWrapper(800, 600);
+      panzoom.pan(45, 15);
+      const panSpy = jest.spyOn(panzoom, 'pan');
+
+      zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(1));
+
+      expect(panSpy).not.toHaveBeenCalled();
+      expect(panzoom.getPan()).toEqual({ x: 45, y: 15 });
+    });
+  });
+
   describe('inline diagram affordance', () => {
     async function renderOneDiagram() {
       const markdownContent = document.getElementById('markdown-content');
