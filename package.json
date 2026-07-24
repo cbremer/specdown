@@ -35,7 +35,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "electron": "43.1.0",
+    "electron": "43.1.1",
     "electron-builder": "^26.8.1",
     "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
@@ -44,7 +44,7 @@
     "jest-environment-jsdom": "30.4.1",
     "prettier": "3.9.5",
     "typescript": "^7.0.2",
-    "vite": "8.1.4"
+    "vite": "8.1.5"
   },
   "engines": {
     "node": ">=22.12"
