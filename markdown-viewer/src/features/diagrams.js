@@ -221,6 +221,36 @@ export function resetToFit(panzoomInstance, homeState) {
 }
 
 /**
+ * Change the zoom scale while keeping the container's center point fixed.
+ *
+ * Panzoom's `zoom()`/`zoomIn()`/`zoomOut()` change the scale but leave the pan
+ * (translate) untouched. Because the transform is `scale(S) translate(x, y)`
+ * with a `0 0` origin, the on-screen position of the diagram's top-left is
+ * `S * translate` — so raising S alone pushes the diagram toward the
+ * bottom-right and out of view (the wheel path avoids this by zooming about the
+ * cursor's focal point). Re-derive the pan so the content point under the
+ * container's center stays put across the zoom.
+ *
+ * @param {PanzoomObject} panzoomInstance
+ * @param {HTMLElement} wrapper
+ * @param {() => void} applyZoom  applies the scale change (e.g. zoomIn, zoom)
+ */
+export function zoomKeepingCenter(panzoomInstance, wrapper, applyZoom) {
+    const oldScale = panzoomInstance.getScale();
+    applyZoom();
+    const newScale = panzoomInstance.getScale();
+    // Nothing to re-center if a scale is missing or unchanged.
+    if (!oldScale || !newScale || oldScale === newScale) return;
+    const { x, y } = panzoomInstance.getPan();
+    // Pan is in the pre-scale coordinate space, so the shift needed to hold a
+    // point fixed is the on-screen offset divided out by each scale.
+    const shift = 1 / newScale - 1 / oldScale;
+    const cx = wrapper.clientWidth / 2;
+    const cy = wrapper.clientHeight / 2;
+    panzoomInstance.pan(x + cx * shift, y + cy * shift, { animate: false });
+}
+
+/**
  * @param {PanzoomObject | null} panzoomInstance
  * @param {Element | null} controlsRoot
  */
@@ -440,13 +470,13 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     // Add new listeners
     on(newZoomIn, 'click', (e) => {
         e.stopPropagation();
-        panzoomInstance.zoomIn();
+        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomIn());
         updateZoomUI(panzoomInstance, controls);
     });
 
     on(newZoomOut, 'click', (e) => {
         e.stopPropagation();
-        panzoomInstance.zoomOut();
+        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomOut());
         updateZoomUI(panzoomInstance, controls);
     });
 
@@ -462,7 +492,9 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
         const target = /** @type {HTMLInputElement} */ (e.target);
         const targetPercent = Number(target.value);
         if (!isNaN(targetPercent)) {
-            panzoomInstance.zoom(targetPercent / 100);
+            zoomKeepingCenter(panzoomInstance, wrapper, () =>
+                panzoomInstance.zoom(targetPercent / 100)
+            );
             updateZoomUI(panzoomInstance, controls);
         }
     });
