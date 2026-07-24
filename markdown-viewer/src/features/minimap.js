@@ -30,9 +30,25 @@ export function updateMinimap(svgElement) {
   canvas.style.width = canvas.width + 'px';
   canvas.style.height = canvas.height + 'px';
 
-  // Render the SVG into the minimap canvas via an image
+  // Render the SVG into the minimap canvas via an image.
+  //
+  // Serialize a *clean clone*, not the element itself: by the time this runs,
+  // panzoom has stamped an inline `transform` (scale + translate) and
+  // `transform-origin` onto the live svg. The outermost <svg>'s CSS transform
+  // is honored when the string is rasterized through an Image, so it shoves the
+  // whole diagram outside the viewBox and the canvas draws nothing (the empty
+  // minimap bug). Strip the transform and pin explicit natural width/height
+  // (Mermaid emits width="100%" + a max-width style, which gives the Image a
+  // 300px default intrinsic size) so it rasterizes at true size.
+  const cleanSvg = /** @type {SVGElement} */ (svgElement.cloneNode(true));
+  cleanSvg.style.transform = '';
+  cleanSvg.style.transformOrigin = '';
+  cleanSvg.style.maxWidth = '';
+  cleanSvg.setAttribute('width', String(dims.width));
+  cleanSvg.setAttribute('height', String(dims.height));
+
   const serializer = new XMLSerializer();
-  const svgStr = serializer.serializeToString(svgElement);
+  const svgStr = serializer.serializeToString(cleanSvg);
   const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const img = new Image();
