@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.175 — 2026-07-25
+
+### Bug Fixes
+
+- keep fullscreen diagram centered when using the zoom slider
+
 ## v0.0.174 — 2026-07-24
 
 ### Bug Fixes
