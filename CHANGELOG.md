@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.176 — 2026-08-08
+
+### Chores
+
+- **deps:** bump mermaid from 11.16.0 to 11.16.1 (#213)
+- **deps-dev:** bump postcss from 8.5.16 to 8.5.26 (#212)
+- **deps-dev:** bump tar from 7.5.16 to 7.5.22 (#202)
+- **deps-dev:** bump undici from 6.27.0 to 6.28.0 (#210)
+- **deps:** bump dompurify from 3.4.11 to 3.4.13 (#211)
+
 ## v0.0.175 — 2026-07-25
 
 ### Bug Fixes
