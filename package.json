@@ -154,6 +154,6 @@
     "electron-updater": "^6.8.9",
     "highlight.js": "11.11.1",
     "marked": "18.0.6",
-    "mermaid": "11.16.0"
+    "mermaid": "11.16.1"
   }
 }
