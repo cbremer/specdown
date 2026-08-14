@@ -17,6 +17,7 @@ import {
   refreshActiveFileFromDisk,
   exportActivePdf,
 } from '../platform/desktop.js';
+import { openFileInfoSheet } from './file-info.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -32,8 +33,17 @@ const overflowHasDesktopFileTab = () => {
   return !!(tab && tab.filePath);
 };
 
+// True when a document is open — the precondition for the File info entry
+// (it needs an active tab to describe).
+const overflowHasOpenDocument = () => state.activeTabId !== null;
+
 /** @type {Array<{ label: string, targetId?: string, run?: () => void, isAvailable?: () => boolean }>} */
 const OVERFLOW_ACTIONS = [
+  {
+    label: 'File info',
+    run: () => openFileInfoSheet(),
+    isAvailable: overflowHasOpenDocument,
+  },
   {
     label: 'Reload from disk',
     run: () => refreshActiveFileFromDisk(),

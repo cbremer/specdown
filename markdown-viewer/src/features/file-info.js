@@ -1,0 +1,274 @@
+// @ts-check
+// File info sheet: a small accessible modal that shows metadata for the active
+// document — its absolute path on disk, creation/modification dates, size, and
+// owner. Opened from the "⋮" overflow menu, the iOS action sheet, or the command
+// palette.
+//
+// The headline field is the on-disk location: agents (and editors) sometimes
+// stash markdown in hidden or unexpected directories, and this is the one place
+// the viewer tells you exactly where the open file lives. Full metadata
+// (path/created/owner) comes from the desktop shell via the bridge; on the web
+// surface only what a browser File exposes (name, size, last-modified) is
+// available, and the sheet says so rather than inventing values.
+
+import { state } from '../core/state.js';
+import { isDesktop } from '../core/platform.js';
+import { trapFocus } from '../core/focus-trap.js';
+import { bridgeGetFileMetadata } from '../platform/bridge.js';
+import { showToast } from './toast.js';
+
+// Module-private state uses `fileInfo`-prefixed names on purpose: the test
+// harness (tests/helpers/loadApp.js) flattens every module to global scope, so
+// generic names like `overlay`/`releaseTrap` — already used by the command
+// palette and shortcuts sheet — would collide into one shared global.
+/** @type {HTMLElement | null} */
+let fileInfoOverlay = null;
+/** @type {Element | null} */
+let fileInfoPreviouslyFocused = null;
+/** @type {(() => void) | null} */
+let fileInfoReleaseTrap = null;
+// Bumps on every open so a slow metadata fetch from a previous open can't write
+// into a sheet the user has since reopened for a different document.
+let fileInfoOpenToken = 0;
+
+export function isFileInfoSheetOpen() {
+  return fileInfoOverlay !== null;
+}
+
+/** The active tab, or null when nothing is open. */
+function fileInfoActiveTab() {
+  return state.activeTabId !== null
+    ? state.tabs.find((t) => t.id === state.activeTabId) || null
+    : null;
+}
+
+/**
+ * Human-readable byte size (e.g. "12.4 KB"). Bytes stay whole; larger units get
+ * one decimal.
+ * @param {number} bytes
+ * @returns {string}
+ */
+export function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—';
+  if (bytes < 1024) return `${bytes} byte${bytes === 1 ? '' : 's'}`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${value.toFixed(1)} ${units[unit]}`;
+}
+
+/**
+ * Locale date-time string for an epoch-millisecond value, or '—' when missing.
+ * @param {number | null | undefined} ms
+ * @returns {string}
+ */
+export function formatTimestamp(ms) {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0) return '—';
+  try {
+    return new Date(ms).toLocaleString();
+  } catch {
+    return '—';
+  }
+}
+
+/**
+ * Build the ordered rows to display for a tab, before any async desktop
+ * metadata resolves. Pure so it can be unit-tested. Each row is
+ * `{ label, value, mono? }`; `value === null` marks a field still loading.
+ * @param {import('../core/state.js').Tab | null} tab
+ * @returns {Array<{ key: string, label: string, value: string | null, mono?: boolean }>}
+ */
+export function buildInfoRows(tab) {
+  if (!tab) return [];
+  const meta = tab.sourceMeta || {};
+  /** @type {Array<{ key: string, label: string, value: string | null, mono?: boolean }>} */
+  const rows = [{ key: 'name', label: 'Name', value: tab.filename, mono: true }];
+
+  if (tab.filePath) {
+    // Desktop file-backed tab: the path is known now; the rest is fetched.
+    rows.push({ key: 'location', label: 'Location', value: tab.filePath, mono: true });
+    rows.push({ key: 'size', label: 'Size', value: isDesktop ? null : '—' });
+    rows.push({ key: 'created', label: 'Created', value: isDesktop ? null : '—' });
+    rows.push({ key: 'modified', label: 'Modified', value: isDesktop ? null : '—' });
+    rows.push({ key: 'owner', label: 'Owner', value: isDesktop ? null : '—' });
+  } else if (meta.url) {
+    // Opened from a URL — the "location" is the source address.
+    rows.push({ key: 'location', label: 'Source URL', value: meta.url, mono: true });
+    if (typeof meta.size === 'number') {
+      rows.push({ key: 'size', label: 'Size', value: formatBytes(meta.size) });
+    }
+  } else {
+    // A browser File drop/open: no path, but size + last-modified are exposed.
+    rows.push({
+      key: 'location',
+      label: 'Location',
+      value: 'Local file — the browser can’t reveal its path. Open it in the SpecDown desktop app to see the full path.',
+    });
+    if (typeof meta.size === 'number') {
+      rows.push({ key: 'size', label: 'Size', value: formatBytes(meta.size) });
+    }
+    if (typeof meta.lastModified === 'number') {
+      rows.push({ key: 'modified', label: 'Modified', value: formatTimestamp(meta.lastModified) });
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * Overwrite a single row's value cell (used when async desktop metadata lands).
+ * @param {HTMLElement} list
+ * @param {string} key
+ * @param {string} value
+ */
+function setRowValue(list, key, value) {
+  const cell = list.querySelector(`[data-info-value="${key}"]`);
+  if (cell) cell.textContent = value;
+}
+
+/**
+ * Fetch and fill the disk-backed metadata (size/created/modified/owner) for a
+ * desktop file tab. No-op off desktop or without a path.
+ * @param {HTMLElement} list
+ * @param {import('../core/state.js').Tab} tab
+ * @param {number} token
+ */
+async function fillDesktopMetadata(list, tab, token) {
+  if (!isDesktop || !tab.filePath) return;
+  let meta;
+  try {
+    meta = await bridgeGetFileMetadata(tab.filePath);
+  } catch {
+    meta = null;
+  }
+  // The user reopened the sheet (or closed it) while we were waiting.
+  if (token !== fileInfoOpenToken || !fileInfoOverlay) return;
+
+  if (!meta) {
+    setRowValue(list, 'size', 'Unavailable');
+    setRowValue(list, 'created', 'Unavailable');
+    setRowValue(list, 'modified', 'Unavailable');
+    setRowValue(list, 'owner', 'Unavailable');
+    return;
+  }
+  setRowValue(list, 'size', formatBytes(meta.size));
+  setRowValue(list, 'created', formatTimestamp(meta.birthtimeMs));
+  setRowValue(list, 'modified', formatTimestamp(meta.mtimeMs));
+  setRowValue(list, 'owner', meta.owner || 'Unknown');
+}
+
+/** Copy the given path to the clipboard, with a toast either way. */
+function copyPath(/** @type {string} */ path) {
+  const clip = typeof navigator !== 'undefined' ? navigator.clipboard : undefined;
+  if (clip && typeof clip.writeText === 'function') {
+    clip.writeText(path).then(
+      () => showToast('Path copied to clipboard', { type: 'success' }),
+      () => showToast('Could not copy the path', { type: 'error' })
+    );
+  } else {
+    showToast('Copying is not available here', { type: 'warning' });
+  }
+}
+
+export function openFileInfoSheet() {
+  if (fileInfoOverlay) return;
+  const tab = fileInfoActiveTab();
+  if (!tab) {
+    showToast('Open a document to see its file info.', { type: 'warning' });
+    return;
+  }
+
+  const token = ++fileInfoOpenToken;
+  fileInfoPreviouslyFocused = document.activeElement;
+
+  const overlay = document.createElement('div');
+  fileInfoOverlay = overlay;
+  overlay.className = 'file-info-overlay';
+  overlay.addEventListener('mousedown', (e) => {
+    if (e.target === overlay) closeFileInfoSheet();
+  });
+
+  const dialog = document.createElement('div');
+  dialog.className = 'file-info-sheet';
+  dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('aria-label', 'File info');
+  dialog.tabIndex = -1;
+  dialog.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeFileInfoSheet();
+    }
+  });
+
+  const heading = document.createElement('h2');
+  heading.className = 'file-info-title';
+  heading.textContent = 'File info';
+  dialog.appendChild(heading);
+
+  const list = document.createElement('dl');
+  list.className = 'file-info-list';
+
+  const rows = buildInfoRows(tab);
+  for (const row of rows) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'file-info-row';
+
+    const dt = document.createElement('dt');
+    dt.textContent = row.label;
+
+    const dd = document.createElement('dd');
+    dd.setAttribute('data-info-value', row.key);
+    if (row.mono) dd.classList.add('file-info-mono');
+    dd.textContent = row.value === null ? 'Loading…' : row.value;
+
+    rowEl.appendChild(dt);
+    rowEl.appendChild(dd);
+    list.appendChild(rowEl);
+  }
+  dialog.appendChild(list);
+
+  // A one-click "Copy path" for the desktop location — the whole point is
+  // knowing where the file is, so make it easy to grab.
+  if (tab.filePath) {
+    const actions = document.createElement('div');
+    actions.className = 'file-info-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'file-info-copy';
+    copyBtn.textContent = 'Copy path';
+    const pathToCopy = tab.filePath;
+    copyBtn.addEventListener('click', () => copyPath(pathToCopy));
+    actions.appendChild(copyBtn);
+    dialog.appendChild(actions);
+  }
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  fileInfoReleaseTrap = trapFocus(overlay);
+  dialog.focus();
+
+  // Fill disk-backed fields asynchronously (desktop only).
+  fillDesktopMetadata(list, tab, token);
+}
+
+export function closeFileInfoSheet() {
+  if (!fileInfoOverlay) return;
+  // Invalidate any in-flight metadata fetch so it can't write after close.
+  fileInfoOpenToken++;
+  if (fileInfoReleaseTrap) fileInfoReleaseTrap();
+  fileInfoReleaseTrap = null;
+  if (fileInfoOverlay.parentNode) fileInfoOverlay.parentNode.removeChild(fileInfoOverlay);
+  fileInfoOverlay = null;
+  if (
+    fileInfoPreviouslyFocused &&
+    typeof (/** @type {HTMLElement} */ (fileInfoPreviouslyFocused)).focus === 'function'
+  ) {
+    (/** @type {HTMLElement} */ (fileInfoPreviouslyFocused)).focus();
+  }
+  fileInfoPreviouslyFocused = null;
+}

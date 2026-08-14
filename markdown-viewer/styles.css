@@ -2172,6 +2172,92 @@ mark.search-highlight-current {
 }
 
 /* ===========================
+   File Info Sheet
+   =========================== */
+.file-info-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+}
+
+.file-info-sheet {
+    width: min(92vw, 32rem);
+    max-height: 85vh;
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: 1.25rem 1.5rem;
+    outline: none;
+}
+
+.file-info-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.file-info-list {
+    margin: 0;
+}
+
+.file-info-row {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.4rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.file-info-row:first-child {
+    border-top: none;
+}
+
+.file-info-row dt {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.file-info-row dd {
+    margin: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.file-info-mono {
+    font-family: "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, monospace;
+    font-size: 0.9rem;
+    user-select: text;
+}
+
+.file-info-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.file-info-copy {
+    padding: 0.4rem 0.9rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.file-info-copy:hover {
+    background-color: var(--bg-secondary);
+}
+
+/* ===========================
    iOS Native Shell
    =========================== */
 .ios-native {

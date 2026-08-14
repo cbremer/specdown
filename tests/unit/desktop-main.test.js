@@ -58,6 +58,7 @@ jest.mock('electron', () => ({
   },
   ipcMain: {
     on: jest.fn(),
+    handle: jest.fn(),
   },
   globalShortcut: {
     register: jest.fn(),
@@ -74,6 +75,8 @@ const os = require('os');
 const {
   isValidMarkdownFile,
   readMarkdownFile,
+  buildFileMetadata,
+  resolveOwnerName,
   buildMenu,
   watchFile,
   unwatchFile,
@@ -159,6 +162,59 @@ describe('desktop/main.js', () => {
       expect(() => {
         readMarkdownFile('/nonexistent/path/file.md');
       }).toThrow();
+    });
+  });
+
+  describe('resolveOwnerName', () => {
+    it('names the current user when the uid matches', () => {
+      const me = os.userInfo();
+      // Skip on platforms where uid is meaningless (Windows reports -1).
+      if (typeof me.uid === 'number' && me.uid >= 0) {
+        expect(resolveOwnerName(me.uid)).toBe(me.username);
+      }
+    });
+
+    it('falls back to the numeric uid for another user', () => {
+      const me = os.userInfo();
+      const otherUid = typeof me.uid === 'number' && me.uid >= 0 ? me.uid + 1 : 12345;
+      expect(resolveOwnerName(otherUid)).toBe(`uid ${otherUid}`);
+    });
+
+    it('returns null for a Windows/unknown uid (-1)', () => {
+      expect(resolveOwnerName(-1)).toBeNull();
+      expect(resolveOwnerName(undefined)).toBeNull();
+    });
+  });
+
+  describe('buildFileMetadata', () => {
+    const fixturesDir = path.join(__dirname, '..', 'fixtures');
+
+    it('returns size, timestamps, and owner for a real file', () => {
+      const fixturePath = path.join(fixturesDir, 'test-metadata.md');
+      const content = '# Metadata\n\nSome bytes here.\n';
+      fs.writeFileSync(fixturePath, content);
+
+      try {
+        const meta = buildFileMetadata(fixturePath);
+        expect(meta).not.toBeNull();
+        expect(meta.filePath).toBe(fixturePath);
+        expect(meta.size).toBe(Buffer.byteLength(content));
+        expect(typeof meta.birthtimeMs).toBe('number');
+        expect(typeof meta.mtimeMs).toBe('number');
+        // owner is a string (username or "uid N") on POSIX, or null on Windows.
+        expect(meta.owner === null || typeof meta.owner === 'string').toBe(true);
+      } finally {
+        fs.unlinkSync(fixturePath);
+      }
+    });
+
+    it('returns null for a non-existent file (no throw across IPC)', () => {
+      expect(buildFileMetadata('/nonexistent/path/file.md')).toBeNull();
+    });
+
+    it('returns null for an empty or non-string path', () => {
+      expect(buildFileMetadata('')).toBeNull();
+      expect(buildFileMetadata(undefined)).toBeNull();
     });
   });
 

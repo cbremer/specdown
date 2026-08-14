@@ -26,6 +26,7 @@ import {
 import { openSearch } from './search.js';
 import { startPresentation, hasPresentableDiagrams } from './presentation.js';
 import { openShortcutsSheet } from './shortcuts.js';
+import { openFileInfoSheet } from './file-info.js';
 import {
   toggleWatching,
   refreshActiveFileFromDisk,
@@ -184,6 +185,13 @@ export function registerAppCommands() {
       keywords: ['refresh', 'reread', 'sync', 'file', 'revert'],
       run: () => refreshActiveFileFromDisk(),
       isAvailable: isDesktopFileTabActive,
+    },
+    {
+      id: 'file-info',
+      title: 'Show file info',
+      keywords: ['metadata', 'path', 'location', 'directory', 'created', 'modified', 'owner', 'size'],
+      run: () => openFileInfoSheet(),
+      isAvailable: isDocumentOpen,
     },
     {
       id: 'shortcuts',

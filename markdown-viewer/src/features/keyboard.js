@@ -14,6 +14,7 @@ import {
   closeShortcutsSheet,
   isShortcutsSheetOpen,
 } from './shortcuts.js';
+import { closeFileInfoSheet, isFileInfoSheetOpen } from './file-info.js';
 import { isPresentationOpen, exitPresentation } from './presentation.js';
 import { closeOverflowMenu, isOverflowMenuOpen } from './toolbar-overflow.js';
 import { closeFullscreen, updateZoomUI, resetToFit } from './diagrams.js';
@@ -59,6 +60,8 @@ export function setupGlobalKeyboardShortcuts() {
     if (e.key === 'Escape') {
       if (isCommandPaletteOpen()) {
         closeCommandPalette();
+      } else if (isFileInfoSheetOpen()) {
+        closeFileInfoSheet();
       } else if (isShortcutsSheetOpen()) {
         closeShortcutsSheet();
       } else if (isPresentationOpen()) {

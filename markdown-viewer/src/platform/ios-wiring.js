@@ -17,6 +17,7 @@ import { toggleTheme } from '../features/theme.js';
 import { toggleComments } from '../features/comments.js';
 import { openAnnotationPanel } from '../features/annotations.js';
 import { startPresentation } from '../features/presentation.js';
+import { openFileInfoSheet } from '../features/file-info.js';
 
 const iosWiringEl = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -46,6 +47,9 @@ export function setupIOSEventListeners() {
   );
   const iosAnnotationsButton = /** @type {HTMLButtonElement | null} */ (
     iosWiringEl('ios-annotations-button')
+  );
+  const iosInfoButton = /** @type {HTMLButtonElement | null} */ (
+    iosWiringEl('ios-info-button')
   );
   const iosPrintButton = /** @type {HTMLButtonElement | null} */ (
     iosWiringEl('ios-print-button')
@@ -136,6 +140,13 @@ export function setupIOSEventListeners() {
     iosAnnotationsButton.addEventListener('click', () => {
       closeIOSActionSheet();
       openAnnotationPanel();
+    });
+  }
+
+  if (iosInfoButton) {
+    iosInfoButton.addEventListener('click', () => {
+      closeIOSActionSheet();
+      openFileInfoSheet();
     });
   }
 

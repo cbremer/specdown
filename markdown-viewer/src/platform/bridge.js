@@ -13,6 +13,7 @@
 // drift.
 
 /** @typedef {NonNullable<Window['specdown']>} DesktopBridge */
+/** @typedef {Awaited<ReturnType<NonNullable<DesktopBridge['getFileMetadata']>>>} FileMetadata */
 
 /** @returns {Window['specdown']} */
 function nativeBridge() {
@@ -72,6 +73,21 @@ export function bridgeUnwatchFile(filePath) {
  * the file-changed channel so the open tab updates in place. */
 export function bridgeRequestRefreshFile(filePath) {
   nativeBridge()?.requestRefreshFile?.(filePath);
+}
+
+/**
+ * Fetch on-disk metadata (path, size, created/modified times, owner) for a
+ * file. Request/response over IPC, so it returns a Promise; resolves to null
+ * off the desktop shell or when the file can't be stat'd.
+ * @param {string} filePath
+ * @returns {Promise<FileMetadata>}
+ */
+export function bridgeGetFileMetadata(filePath) {
+  const bridge = nativeBridge();
+  if (!bridge || typeof bridge.getFileMetadata !== 'function') {
+    return Promise.resolve(null);
+  }
+  return Promise.resolve(bridge.getFileMetadata(filePath));
 }
 
 /**
