@@ -189,7 +189,7 @@ export function registerAppCommands() {
     {
       id: 'file-info',
       title: 'Show file info',
-      keywords: ['metadata', 'path', 'location', 'directory', 'created', 'modified', 'owner', 'size'],
+      keywords: ['metadata', 'path', 'location', 'directory', 'created', 'modified', 'owner', 'size', 'creator', 'generated', 'generator'],
       run: () => openFileInfoSheet(),
       isAvailable: isDocumentOpen,
     },
