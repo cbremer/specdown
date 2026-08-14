@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const chokidar = require('chokidar');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
@@ -431,6 +432,42 @@ function readMarkdownFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const filename = path.basename(filePath);
   return { filename, filePath, content };
+}
+
+// Best-effort owner name for a stat result. Node has no portable uid→username
+// lookup, so we can only name the owner confidently when it's the current user
+// (os.userInfo()). Otherwise fall back to the numeric uid on POSIX, or null on
+// Windows where uid is meaningless (-1).
+function resolveOwnerName(uid) {
+  if (typeof uid !== 'number' || uid < 0) return null; // Windows / unknown
+  try {
+    const me = os.userInfo();
+    if (me && me.uid === uid && me.username) return me.username;
+  } catch {
+    // os.userInfo() can throw if the user has no passwd entry — fall through.
+  }
+  return `uid ${uid}`;
+}
+
+// On-disk metadata for the renderer's File info sheet. Returns null (rather than
+// throwing across the IPC boundary) when the file can't be stat'd, so the sheet
+// can show "Unavailable" instead of hanging.
+function buildFileMetadata(filePath) {
+  if (typeof filePath !== 'string' || !filePath) return null;
+  let stats;
+  try {
+    stats = fs.statSync(filePath);
+  } catch (err) {
+    logError(`Failed to stat file for metadata: ${filePath}`, err);
+    return null;
+  }
+  return {
+    filePath,
+    size: stats.size,
+    birthtimeMs: stats.birthtimeMs,
+    mtimeMs: stats.mtimeMs,
+    owner: resolveOwnerName(stats.uid),
+  };
 }
 
 function openFileByPath(filePath) {
@@ -887,6 +924,12 @@ ipcMain.on('unwatch-file', (_event, filePath) => {
   unwatchFile(filePath);
 });
 
+// File info sheet: return on-disk metadata for a path (request/response, so
+// this uses handle/invoke rather than the one-way send channels above).
+ipcMain.handle('get-file-metadata', (_event, filePath) => {
+  return buildFileMetadata(filePath);
+});
+
 // Manual "Reload from disk": re-read the file and reply over the same
 // file-changed channel a watcher event uses, so the renderer updates the
 // open tab in place (scroll preserved, "Updated" chip flash).
@@ -1243,6 +1286,8 @@ module.exports = {
   armManualUpdateCheck,
   showManualUpdateCheckError,
   readMarkdownFile,
+  buildFileMetadata,
+  resolveOwnerName,
   buildMenu,
   watchFile,
   unwatchFile,

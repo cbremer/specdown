@@ -73,6 +73,11 @@ contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('refresh-file', filePath);
   },
 
+  // Fetch on-disk metadata (size, created/modified, owner) for the File info
+  // sheet. Request/response, so this uses invoke and returns a Promise that
+  // resolves to the metadata object (or null when the file can't be stat'd).
+  getFileMetadata: (filePath) => ipcRenderer.invoke('get-file-metadata', filePath),
+
   // Absolute filesystem path for a dragged-in File. Electron removed the
   // legacy File.path property (v32+); webUtils.getPathForFile is the
   // sanctioned replacement and is only callable from the preload context.

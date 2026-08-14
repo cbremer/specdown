@@ -147,8 +147,11 @@ export function renderTabBar() {
  * @param {string} filename
  * @param {string} content
  * @param {string | null} [filePath]
+ * @param {import('../core/state.js').TabSourceMeta | null} [sourceMeta] Origin
+ *   metadata for pathless tabs (web File size/last-modified, or a source URL),
+ *   shown in the File info sheet.
  */
-export function createTab(filename, content, filePath) {
+export function createTab(filename, content, filePath, sourceMeta) {
   if (state.tabs.length >= MAX_TABS) {
     showToast('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.', {
       type: 'warning',
@@ -170,6 +173,7 @@ export function createTab(filename, content, filePath) {
     scrollTop: 0,
     watching: !!(isDesktop && filePath),
     hasUnseenChanges: false,
+    sourceMeta: sourceMeta || null,
   };
   state.tabs.push(tab);
   state.activeTabId = id;

@@ -11,7 +11,7 @@ import { recordRecentFile, renderRecentFiles } from './recent-files.js';
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
-/** @type {(filename: string, content?: string, filePath?: string | null) => void} */
+/** @type {(filename: string, content?: string, filePath?: string | null, sourceMeta?: import('../core/state.js').TabSourceMeta | null) => void} */
 let openTab = () => {};
 
 /** @param {{ createTab?: Function }} [deps] */
@@ -48,7 +48,12 @@ export function handleFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
     const content = /** @type {string} */ (reader.result);
-    openTab(file.name, content, file.path || null);
+    // A browser File exposes size + last-modified (but no path); carry them so
+    // the File info sheet can show them on the web surface.
+    openTab(file.name, content, file.path || null, {
+      size: file.size,
+      lastModified: file.lastModified,
+    });
     // On desktop, dropped files carry a real path the main process can re-read,
     // so record them for one-click re-open. Browser File objects have no path.
     if (file.path) {
@@ -127,7 +132,8 @@ export async function handleUrl(url) {
     }
     const markdown = await response.text();
     if (urlInput) urlInput.value = '';
-    openTab(filename, markdown);
+    // Record the source URL so the File info sheet can show where it came from.
+    openTab(filename, markdown, null, { url });
     // Remember this URL for one-click re-open from the drop zone.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();

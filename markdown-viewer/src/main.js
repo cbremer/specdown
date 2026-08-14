@@ -172,8 +172,8 @@ const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present
 function init() {
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
     configureFileLoading({
-        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath) =>
-            createTab(filename, content, filePath),
+        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>
+            createTab(filename, content, filePath, sourceMeta),
     });
     configureShareLinks({
         createTab: (/** @type {string} */ filename, /** @type {string} */ md) => createTab(filename, md),

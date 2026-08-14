@@ -15,6 +15,17 @@ interface SpecdownFileData {
   filePath: string;
 }
 
+/** On-disk metadata for a file, returned by the desktop shell for the File
+ * info sheet. Times are epoch milliseconds; `owner` is a best-effort username
+ * (or null when it can't be resolved, e.g. another user or on Windows). */
+interface SpecdownFileMetadata {
+  filePath: string;
+  size: number;
+  birthtimeMs: number;
+  mtimeMs: number;
+  owner: string | null;
+}
+
 /** One persisted tab descriptor sent to the desktop shell's session store. */
 interface SpecdownSessionTab {
   filePath: string | null;
@@ -47,6 +58,10 @@ interface SpecdownDesktopBridge {
   watchFile?: (filePath: string) => void;
   unwatchFile?: (filePath: string) => void;
   requestRefreshFile?: (filePath: string) => void;
+  /** Fetch on-disk metadata for the File info sheet (request/response IPC). */
+  getFileMetadata?: (
+    filePath: string
+  ) => Promise<SpecdownFileMetadata | null> | SpecdownFileMetadata | null;
   getPathForFile?: (file: File) => string;
   openDroppedPath?: (absPath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;

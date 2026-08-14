@@ -8,6 +8,16 @@
 // into feature modules that need to share state.
 
 /**
+ * Origin metadata for a tab that has no local file path (web File open or URL
+ * fetch), surfaced by the File info sheet. Desktop file tabs read their metadata
+ * live from disk instead, so they don't populate this.
+ * @typedef {object} TabSourceMeta
+ * @property {string} [url] Source URL when the document was fetched from one.
+ * @property {number} [size] Byte size (from a browser File).
+ * @property {number} [lastModified] Last-modified epoch ms (from a browser File).
+ */
+
+/**
  * An open file tab.
  * @typedef {object} Tab
  * @property {number} id
@@ -18,6 +28,7 @@
  * @property {number} scrollTop
  * @property {boolean} watching
  * @property {boolean} hasUnseenChanges
+ * @property {TabSourceMeta | null} [sourceMeta]
  */
 
 /**
