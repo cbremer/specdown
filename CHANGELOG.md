@@ -5,6 +5,18 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.177 — 2026-08-14
+
+### Chores
+
+- **deps-dev:** bump the dev-dependencies group across 1 directory with 5 updates (#206)
+- **deps:** bump marked from 18.0.6 to 18.0.9 (#204)
+- **deps-dev:** bump brace-expansion from 1.1.15 to 1.1.18 (#208)
+- **deps-dev:** bump fast-uri from 3.1.2 to 3.1.5 (#209)
+- **deps:** bump actions/checkout from 7.0.0 to 7.0.1 (#203)
+- **deps:** bump actions/setup-node from 6.5.0 to 7.0.0 (#191)
+- **deps:** bump actions/github-script from 8.0.0 to 9.0.0 (#190)
+
 ## v0.0.176 — 2026-08-08
 
 ### Chores
