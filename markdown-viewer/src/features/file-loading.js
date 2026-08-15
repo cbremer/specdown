@@ -7,17 +7,23 @@ import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 import { recordRecentFile, renderRecentFiles } from './recent-files.js';
+import { bridgeGetPathForFile } from '../platform/bridge.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
+// Named uniquely (not a bare `openTab`): the test harness
+// (tests/helpers/loadApp.js) flattens every module to global scope, so a
+// module-top `openTab` here collides with the identically-named binding in
+// share-links.js — whichever configure*() runs last wins the shared global, and
+// this module's createTab (with its filePath/sourceMeta args) silently loses.
 /** @type {(filename: string, content?: string, filePath?: string | null, sourceMeta?: import('../core/state.js').TabSourceMeta | null) => void} */
-let openTab = () => {};
+let openTabFromFile = () => {};
 
 /** @param {{ createTab?: Function }} [deps] */
 export function configureFileLoading(deps) {
   if (deps && typeof deps.createTab === 'function') {
-    openTab = /** @type {typeof openTab} */ (deps.createTab);
+    openTabFromFile = /** @type {typeof openTabFromFile} */ (deps.createTab);
   }
 }
 
@@ -34,7 +40,7 @@ export function handleFileSelect(e) {
   input.value = '';
 }
 
-/** @param {File & { path?: string }} file */
+/** @param {File} file */
 export function handleFile(file) {
   // Validate file type
   const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -44,20 +50,28 @@ export function handleFile(file) {
     return;
   }
 
+  // Resolve the on-disk path via the desktop bridge (webUtils.getPathForFile):
+  // Electron v32+ removed the legacy File.path, and browser File objects never
+  // carried one — so reading file.path here silently yielded undefined, losing
+  // the desktop path affordances (recent-file reopen, live reload). The bridge
+  // returns '' off the desktop shell or when a path can't be resolved, so this
+  // is null on the web surface, exactly as before.
+  const filePath = bridgeGetPathForFile(file) || null;
+
   // Read file and open in a new tab
   const reader = new FileReader();
   reader.onload = () => {
     const content = /** @type {string} */ (reader.result);
-    // A browser File exposes size + last-modified (but no path); carry them so
-    // the File info sheet can show them on the web surface.
-    openTab(file.name, content, file.path || null, {
+    // A browser File also exposes size + last-modified; carry them so the File
+    // info sheet can show them on the web surface (where there's no path).
+    openTabFromFile(file.name, content, filePath, {
       size: file.size,
       lastModified: file.lastModified,
     });
-    // On desktop, dropped files carry a real path the main process can re-read,
-    // so record them for one-click re-open. Browser File objects have no path.
-    if (file.path) {
-      recordRecentFile({ type: 'path', ref: file.path, title: file.name });
+    // A real path means the main process can re-read the file, so record it for
+    // one-click re-open. Browser File objects resolve to no path.
+    if (filePath) {
+      recordRecentFile({ type: 'path', ref: filePath, title: file.name });
       renderRecentFiles();
     }
   };
@@ -133,7 +147,7 @@ export async function handleUrl(url) {
     const markdown = await response.text();
     if (urlInput) urlInput.value = '';
     // Record the source URL so the File info sheet can show where it came from.
-    openTab(filename, markdown, null, { url });
+    openTabFromFile(filename, markdown, null, { url });
     // Remember this URL for one-click re-open from the drop zone.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();

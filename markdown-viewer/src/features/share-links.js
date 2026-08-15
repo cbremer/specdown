@@ -7,13 +7,16 @@
 
 const MAX_DIAGRAM_URL_PARAM_LENGTH = 65536;
 
+// Named uniquely (not a bare `openTab`) to avoid colliding with file-loading.js
+// under the flat-eval test harness, which shares module-top bindings at global
+// scope. See the matching note in file-loading.js.
 /** @type {(filename: string, markdown?: string, filePath?: string | null) => void} */
-let openTab = () => {};
+let openTabFromShare = () => {};
 
 /** @param {{ createTab?: Function }} [deps] */
 export function configureShareLinks(deps) {
   if (deps && typeof deps.createTab === 'function') {
-    openTab = /** @type {typeof openTab} */ (deps.createTab);
+    openTabFromShare = /** @type {typeof openTabFromShare} */ (deps.createTab);
   }
 }
 
@@ -65,7 +68,7 @@ export function checkForDiagramLink() {
 
     // Synthesize a one-diagram markdown document
     const md = '```mermaid\n' + source + '\n```\n';
-    openTab('shared-diagram.md', md);
+    openTabFromShare('shared-diagram.md', md);
   } catch {
     // Silently ignore malformed deep links
   }
