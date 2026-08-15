@@ -343,3 +343,51 @@ describe('Drag and drop (desktop bridge routing)', () => {
   });
 });
 
+// handleFile resolves the on-disk path through the bridge (webUtils.
+// getPathForFile), not the removed File.path. This is the direct fix for the
+// Copilot follow-up: a file that reaches handleFile on desktop (e.g. the web
+// reader fallback, or the <input> picker) must still become a real file-backed
+// tab and get recorded as a recent file.
+describe('handleFile (desktop bridge path resolution)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    window.specdown = {
+      isDesktop: true,
+      getPathForFile: jest.fn((file) => '/abs/' + file.name),
+      watchFile: jest.fn(),
+      unwatchFile: jest.fn(),
+      saveSession: jest.fn(),
+      onFileOpened: jest.fn(),
+      onCloseTab: jest.fn(),
+      onFileChanged: jest.fn(),
+      onTriggerPrint: jest.fn(),
+      onTriggerSearch: jest.fn(),
+      onApplyCustomCss: jest.fn(),
+    };
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  afterEach(() => {
+    delete window.specdown;
+  });
+
+  it('opens a file-backed tab using the bridge-resolved path and records it', (done) => {
+    const file = new File(['# Test'], 'notes.md', { type: 'text/markdown' });
+    handleFile(file);
+
+    expect(window.specdown.getPathForFile).toHaveBeenCalledWith(file);
+
+    setTimeout(() => {
+      const tab = state.tabs.find((t) => t.filename === 'notes.md');
+      expect(tab).toBeTruthy();
+      expect(tab.filePath).toBe('/abs/notes.md');
+      // A resolved path means it should be watched (Live) and recorded.
+      expect(window.specdown.watchFile).toHaveBeenCalledWith('/abs/notes.md');
+      const recents = JSON.parse(localStorage.getItem('specdown-recent-files') || '[]');
+      expect(recents.some((r) => r.ref === '/abs/notes.md' && r.type === 'path')).toBe(true);
+      done();
+    }, 20);
+  });
+});
+
