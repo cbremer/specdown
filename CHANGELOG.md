@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.179 — 2026-08-15
+
+### Bug Fixes
+
+- resolve dropped/opened file paths via bridge, not removed File.path
+
+### Tests
+
+- make handleFile path-resolution test deterministic
+
 ## v0.0.178 — 2026-08-15
 
 ### Features
