@@ -374,20 +374,36 @@ describe('handleFile (desktop bridge path resolution)', () => {
 
   it('opens a file-backed tab using the bridge-resolved path and records it', (done) => {
     const file = new File(['# Test'], 'notes.md', { type: 'text/markdown' });
+
+    // Mock FileReader (as the other handleFile tests do) so onload fires
+    // deterministically — no arbitrary wait for the real async read.
+    const originalFileReader = global.FileReader;
+    global.FileReader = class {
+      constructor() {
+        this.readAsText = jest.fn(function () {
+          this.result = '# Test';
+          setTimeout(() => {
+            if (this.onload) this.onload({ target: this });
+
+            const tab = state.tabs.find((t) => t.filename === 'notes.md');
+            expect(tab).toBeTruthy();
+            expect(tab.filePath).toBe('/abs/notes.md');
+            // A resolved path means it should be watched (Live) and recorded.
+            expect(window.specdown.watchFile).toHaveBeenCalledWith('/abs/notes.md');
+            const recents = JSON.parse(localStorage.getItem('specdown-recent-files') || '[]');
+            expect(recents.some((r) => r.ref === '/abs/notes.md' && r.type === 'path')).toBe(true);
+
+            global.FileReader = originalFileReader;
+            done();
+          }, 0);
+        });
+      }
+    };
+
     handleFile(file);
 
+    // Path resolution happens synchronously, before the read.
     expect(window.specdown.getPathForFile).toHaveBeenCalledWith(file);
-
-    setTimeout(() => {
-      const tab = state.tabs.find((t) => t.filename === 'notes.md');
-      expect(tab).toBeTruthy();
-      expect(tab.filePath).toBe('/abs/notes.md');
-      // A resolved path means it should be watched (Live) and recorded.
-      expect(window.specdown.watchFile).toHaveBeenCalledWith('/abs/notes.md');
-      const recents = JSON.parse(localStorage.getItem('specdown-recent-files') || '[]');
-      expect(recents.some((r) => r.ref === '/abs/notes.md' && r.type === 'path')).toBe(true);
-      done();
-    }, 20);
   });
 });
 
