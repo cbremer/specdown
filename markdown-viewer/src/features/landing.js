@@ -44,6 +44,8 @@ const LANDING_CLICK_IGNORE_SELECTOR = [
   '.landing-interactive',
   '.diagram-container',
   '.landing-hero',
+  '#landing-space-canvas',
+  '#landing-cursor-core',
 ].join(', ');
 
 /** @type {(filename: string, content?: string, filePath?: string | null, sourceMeta?: import('../core/state.js').TabSourceMeta | null) => void} */
@@ -126,4 +128,196 @@ export function setupWebLanding() {
     if (node) node.hidden = false;
   }
   void renderLandingMermaidDiagram();
+  setupLandingSpaceField();
+}
+
+/**
+ * Starfield + cursor gravity well for the web empty state. Stars spring back
+ * to a home position but part around the pointer, leaving a void bubble.
+ * Skipped when the canvas has no layout box (jsdom) or the user prefers
+ * reduced motion — CSS nebula still paints.
+ */
+function setupLandingSpaceField() {
+  const dropZone = landingEl('drop-zone');
+  if (!dropZone) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'landing-space-canvas';
+  canvas.className = 'landing-space-canvas';
+  canvas.setAttribute('aria-hidden', 'true');
+  dropZone.insertBefore(canvas, dropZone.firstChild);
+
+  const cursorCore = document.createElement('div');
+  cursorCore.id = 'landing-cursor-core';
+  cursorCore.className = 'landing-cursor-core';
+  cursorCore.setAttribute('aria-hidden', 'true');
+  cursorCore.innerHTML =
+    '<span class="landing-cursor-ring"></span><span class="landing-cursor-dot"></span>';
+  dropZone.insertBefore(cursorCore, canvas.nextSibling);
+
+  const reduceMotion =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ctx = canvas.getContext('2d');
+  if (!ctx || reduceMotion) return;
+  if (dropZone.getBoundingClientRect().width < 1) return;
+
+  const landingSpaceZone = dropZone;
+  const landingSpaceCtx = ctx;
+
+  const LANDING_SPACE_STAR_COUNT = 120;
+  const LANDING_SPACE_WARP_RADIUS = 140;
+  /** @type {{ x: number, y: number, homeX: number, homeY: number, r: number, tw: number, drift: number }[]} */
+  const landingSpaceStars = [];
+  const landingSpaceMouse = { x: -9999, y: -9999 };
+  const landingSpaceCore = { x: -9999, y: -9999 };
+  let landingSpaceW = 0;
+  let landingSpaceH = 0;
+  let landingSpaceDpr = 1;
+
+  function landingSpaceResize() {
+    const box = landingSpaceZone.getBoundingClientRect();
+    landingSpaceW = Math.max(1, Math.floor(box.width));
+    landingSpaceH = Math.max(1, Math.floor(box.height));
+    landingSpaceDpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(landingSpaceW * landingSpaceDpr);
+    canvas.height = Math.floor(landingSpaceH * landingSpaceDpr);
+    canvas.style.width = landingSpaceW + 'px';
+    canvas.style.height = landingSpaceH + 'px';
+    canvas.style.top = landingSpaceZone.scrollTop + 'px';
+    landingSpaceCtx.setTransform(landingSpaceDpr, 0, 0, landingSpaceDpr, 0, 0);
+  }
+
+  function landingSpaceSeed() {
+    landingSpaceStars.length = 0;
+    for (let i = 0; i < LANDING_SPACE_STAR_COUNT; i++) {
+      const x = Math.random() * landingSpaceW;
+      const y = Math.random() * landingSpaceH;
+      landingSpaceStars.push({
+        x,
+        y,
+        homeX: x,
+        homeY: y,
+        r: Math.random() * 1.6 + 0.4,
+        tw: Math.random() * Math.PI * 2,
+        drift: (Math.random() - 0.5) * 0.15,
+      });
+    }
+  }
+
+  function landingSpacePalette() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return dark
+      ? {
+          star: 'rgba(220, 235, 255, 0.9)',
+          warm: 'rgba(255, 140, 90, 0.85)',
+          link: 'rgba(122, 184, 245, 0.16)',
+        }
+      : {
+          star: 'rgba(255, 255, 255, 0.92)',
+          warm: 'rgba(255, 122, 77, 0.9)',
+          link: 'rgba(0, 163, 191, 0.18)',
+        };
+  }
+
+  function landingSpaceTick() {
+    requestAnimationFrame(landingSpaceTick);
+    if (landingSpaceZone.style.display === 'none') return;
+
+    const box = landingSpaceZone.getBoundingClientRect();
+    if (box.width !== landingSpaceW || box.height !== landingSpaceH) {
+      landingSpaceResize();
+    }
+    canvas.style.top = landingSpaceZone.scrollTop + 'px';
+
+    landingSpaceCore.x += (landingSpaceMouse.x - landingSpaceCore.x) * 0.18;
+    landingSpaceCore.y += (landingSpaceMouse.y - landingSpaceCore.y) * 0.18;
+    cursorCore.style.transform =
+      'translate(' +
+      landingSpaceCore.x +
+      'px, ' +
+      landingSpaceCore.y +
+      'px) translate(-50%, -50%)';
+
+    const palette = landingSpacePalette();
+    landingSpaceCtx.clearRect(0, 0, landingSpaceW, landingSpaceH);
+
+    for (const star of landingSpaceStars) {
+      star.homeX += star.drift;
+      if (star.homeX < 0) star.homeX = landingSpaceW;
+      if (star.homeX > landingSpaceW) star.homeX = 0;
+
+      const dx = star.x - landingSpaceCore.x;
+      const dy = star.y - landingSpaceCore.y;
+      const dist = Math.hypot(dx, dy) || 0.0001;
+      if (dist < LANDING_SPACE_WARP_RADIUS) {
+        const force = Math.pow(1 - dist / LANDING_SPACE_WARP_RADIUS, 2) * 14;
+        star.x += (dx / dist) * force;
+        star.y += (dy / dist) * force;
+      } else {
+        star.x += (star.homeX - star.x) * 0.045;
+        star.y += (star.homeY - star.y) * 0.045;
+      }
+      star.tw += 0.02;
+    }
+
+    landingSpaceCtx.lineWidth = 1;
+    landingSpaceCtx.strokeStyle = palette.link;
+    for (let i = 0; i < landingSpaceStars.length; i++) {
+      const a = landingSpaceStars[i];
+      for (let j = i + 1; j < landingSpaceStars.length; j++) {
+        const b = landingSpaceStars[j];
+        const gap = Math.hypot(a.x - b.x, a.y - b.y);
+        if (gap > 78) continue;
+        const midX = (a.x + b.x) / 2 - landingSpaceCore.x;
+        const midY = (a.y + b.y) / 2 - landingSpaceCore.y;
+        if (Math.hypot(midX, midY) < LANDING_SPACE_WARP_RADIUS * 0.7) continue;
+        landingSpaceCtx.globalAlpha = (1 - gap / 78) * 0.7;
+        landingSpaceCtx.beginPath();
+        landingSpaceCtx.moveTo(a.x, a.y);
+        landingSpaceCtx.lineTo(b.x, b.y);
+        landingSpaceCtx.stroke();
+      }
+    }
+    landingSpaceCtx.globalAlpha = 1;
+
+    for (const star of landingSpaceStars) {
+      const near = Math.hypot(
+        star.x - landingSpaceCore.x,
+        star.y - landingSpaceCore.y
+      );
+      const flicker = 0.55 + Math.sin(star.tw) * 0.45;
+      landingSpaceCtx.beginPath();
+      landingSpaceCtx.fillStyle =
+        near < LANDING_SPACE_WARP_RADIUS * 1.15 ? palette.warm : palette.star;
+      landingSpaceCtx.globalAlpha = flicker;
+      landingSpaceCtx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+      landingSpaceCtx.fill();
+    }
+    landingSpaceCtx.globalAlpha = 1;
+  }
+
+  landingSpaceResize();
+  landingSpaceSeed();
+
+  landingSpaceZone.addEventListener(
+    'pointermove',
+    (event) => {
+      const zoneBox = landingSpaceZone.getBoundingClientRect();
+      landingSpaceMouse.x = event.clientX - zoneBox.left;
+      landingSpaceMouse.y = event.clientY - zoneBox.top;
+    },
+    { passive: true }
+  );
+  landingSpaceZone.addEventListener(
+    'pointerleave',
+    () => {
+      landingSpaceMouse.x = -9999;
+      landingSpaceMouse.y = -9999;
+    },
+    { passive: true }
+  );
+
+  requestAnimationFrame(landingSpaceTick);
+  window.addEventListener('resize', landingSpaceResize);
 }

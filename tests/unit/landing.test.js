@@ -29,6 +29,15 @@ describe('Web landing showcase', () => {
     expect(isWebLandingSurface()).toBe(true);
   });
 
+  it('mounts a decorative space canvas on the web showcase', () => {
+    const canvas = document.getElementById('landing-space-canvas');
+    const cursor = document.getElementById('landing-cursor-core');
+    expect(canvas).not.toBeNull();
+    expect(canvas.getAttribute('aria-hidden')).toBe('true');
+    expect(cursor).not.toBeNull();
+    expect(cursor.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('keeps browse, URL, and drop-zone controls available', () => {
     expect(document.getElementById('browse-button')).not.toBeNull();
     expect(document.getElementById('url-input')).not.toBeNull();
@@ -166,6 +175,8 @@ describe('Landing gating on native shells', () => {
     ).toBe(false);
     expect(document.getElementById('landing-hero').hidden).toBe(true);
     expect(document.getElementById('web-sample-section').hidden).toBe(true);
+    expect(document.getElementById('landing-space-canvas')).toBeNull();
+    expect(document.getElementById('landing-cursor-core')).toBeNull();
   });
 
   it('does not enable the showcase on iOS and still uses the native sample bridge', () => {
