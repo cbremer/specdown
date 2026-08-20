@@ -521,7 +521,8 @@ body {
    the drop card stay familiar; the rest is a viewport into a star field. */
 .drop-zone.web-showcase {
     overflow-y: auto;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     justify-content: flex-start;
     -webkit-overflow-scrolling: touch;
     position: relative;
@@ -611,7 +612,7 @@ body {
 .drop-zone.web-showcase .drop-zone-content {
     width: min(960px, 100%);
     margin: 0 auto;
-    text-align: left;
+    text-align: center;
     padding: var(--space-6) var(--space-5);
     border: none;
     cursor: default;
@@ -697,7 +698,7 @@ body {
 }
 
 .landing-lede {
-    margin: 0;
+    margin: 0 auto;
     max-width: 42rem;
     font-size: 1.08rem;
     color: rgba(230, 240, 255, 0.78);
@@ -754,6 +755,7 @@ body {
     backdrop-filter: blur(14px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transition: transform 180ms ease, border-color 180ms ease;
+    text-align: center;
 }
 
 .landing-pillar:hover {
@@ -782,6 +784,7 @@ body {
         linear-gradient(135deg, rgba(255, 122, 77, 0.12), rgba(0, 163, 191, 0.1)),
         rgba(10, 16, 32, 0.62);
     backdrop-filter: blur(14px);
+    text-align: center;
 }
 
 .landing-desktop h3 {
@@ -819,6 +822,8 @@ body {
 .drop-zone.web-showcase .recent-files-section {
     border-top-color: rgba(122, 224, 255, 0.18);
     color: rgba(210, 228, 255, 0.8);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .drop-zone.web-showcase .url-separator,
