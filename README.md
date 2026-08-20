@@ -118,7 +118,7 @@ output from `markdown-viewer/dist/`, so there's one codebase to work on.
 ```bash
 npm install            # install dependencies
 
-npm run dev            # Vite dev server with hot reload (web)
+npm run dev            # Vite dev server — http://localhost:5179/
 npm run build          # production build → markdown-viewer/dist/
 npm run preview        # serve the production build locally
 
