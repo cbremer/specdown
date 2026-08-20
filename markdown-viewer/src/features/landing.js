@@ -214,9 +214,9 @@ function setupLandingSpaceField() {
           link: 'rgba(122, 184, 245, 0.16)',
         }
       : {
-          star: 'rgba(255, 255, 255, 0.92)',
-          warm: 'rgba(255, 122, 77, 0.9)',
-          link: 'rgba(0, 163, 191, 0.18)',
+          star: 'rgba(22, 58, 99, 0.42)',
+          warm: 'rgba(224, 90, 42, 0.8)',
+          link: 'rgba(31, 107, 184, 0.2)',
         };
   }
 
@@ -232,6 +232,7 @@ function setupLandingSpaceField() {
 
     landingSpaceCore.x += (landingSpaceMouse.x - landingSpaceCore.x) * 0.18;
     landingSpaceCore.y += (landingSpaceMouse.y - landingSpaceCore.y) * 0.18;
+    cursorCore.style.top = landingSpaceZone.scrollTop + 'px';
     cursorCore.style.transform =
       'translate(' +
       landingSpaceCore.x +
