@@ -68,8 +68,8 @@ export function isWebLandingSurface() {
 }
 
 /**
- * Clicks on showcase chrome must not open the file picker. The drop card
- * (`.landing-drop-core`) and empty padding still browse.
+ * Clicks on showcase chrome must not open the file picker. The dashed
+ * drop card (`.drop-zone-content`) and empty padding still browse.
  * @param {EventTarget | null} target
  * @returns {boolean}
  */
@@ -176,14 +176,11 @@ function setupLandingSpaceField() {
   let landingSpaceDpr = 1;
 
   function landingSpaceResize() {
-    const box = landingSpaceZone.getBoundingClientRect();
-    landingSpaceW = Math.max(1, Math.floor(box.width));
-    landingSpaceH = Math.max(1, Math.floor(box.height));
+    landingSpaceW = Math.max(1, landingSpaceZone.clientWidth);
+    landingSpaceH = Math.max(1, landingSpaceZone.clientHeight);
     landingSpaceDpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.floor(landingSpaceW * landingSpaceDpr);
     canvas.height = Math.floor(landingSpaceH * landingSpaceDpr);
-    canvas.style.width = landingSpaceW + 'px';
-    canvas.style.height = landingSpaceH + 'px';
     canvas.style.top = landingSpaceZone.scrollTop + 'px';
     landingSpaceCtx.setTransform(landingSpaceDpr, 0, 0, landingSpaceDpr, 0, 0);
   }
@@ -224,8 +221,10 @@ function setupLandingSpaceField() {
     requestAnimationFrame(landingSpaceTick);
     if (landingSpaceZone.style.display === 'none') return;
 
-    const box = landingSpaceZone.getBoundingClientRect();
-    if (box.width !== landingSpaceW || box.height !== landingSpaceH) {
+    if (
+      landingSpaceZone.clientWidth !== landingSpaceW ||
+      landingSpaceZone.clientHeight !== landingSpaceH
+    ) {
       landingSpaceResize();
     }
     canvas.style.top = landingSpaceZone.scrollTop + 'px';

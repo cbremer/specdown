@@ -18,6 +18,17 @@ describe('Web landing showcase', () => {
     loadApp(document);
   });
 
+  it('keeps hero, diagram, and pillars outside the dashed drop card', () => {
+    const card = document.querySelector('.drop-zone-content');
+    expect(card.querySelector('#landing-hero')).toBeNull();
+    expect(card.querySelector('#landing-diagram-host')).toBeNull();
+    expect(card.querySelector('#landing-pillars')).toBeNull();
+    expect(card.querySelector('#landing-desktop')).toBeNull();
+    expect(document.querySelector('#drop-zone > #landing-hero').hidden).toBe(
+      false
+    );
+  });
+
   it('enables the showcase empty state on the web surface', () => {
     const dropZone = document.getElementById('drop-zone');
     expect(dropZone.classList.contains('web-showcase')).toBe(true);
@@ -119,7 +130,7 @@ describe('Web landing click-to-browse', () => {
   it('still opens the file picker from the drop card heading', () => {
     const fileInput = document.getElementById('file-input');
     fileInput.click = jest.fn();
-    const heading = document.querySelector('.landing-drop-core h2');
+    const heading = document.querySelector('.drop-zone-content h2');
     heading.dispatchEvent(new Event('click', { bubbles: true }));
     expect(fileInput.click).toHaveBeenCalledTimes(1);
   });
@@ -179,6 +190,22 @@ describe('Landing gating on native shells', () => {
     expect(document.getElementById('landing-cursor-core')).toBeNull();
   });
 
+  it('keeps showcase chrome outside the dashed card so native empty state stays compact', () => {
+    window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
+    loadHTML(document);
+    loadApp(document);
+
+    const card = document.querySelector('.drop-zone-content');
+    expect(card.querySelector('#landing-hero')).toBeNull();
+    expect(card.querySelector('#landing-pillars')).toBeNull();
+    expect(card.querySelector('#landing-diagram-host')).toBeNull();
+    expect(card.querySelector('#landing-desktop')).toBeNull();
+    expect(card.querySelector('h2').textContent).toBe(
+      'Drop Markdown File Here'
+    );
+    expect(document.querySelector('#drop-zone > #landing-hero')).not.toBeNull();
+  });
+
   it('does not enable the showcase on iOS and still uses the native sample bridge', () => {
     window.iosNative = true;
     window.webkit = {
@@ -205,6 +232,18 @@ describe('Landing gating on native shells', () => {
       data: { name: 'diagram-showcase.md' },
     });
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('Web showcase CSS isolation', () => {
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+
+  it('scopes landing cosmetics to .web-showcase so native empty states stay compact', () => {
+    const unscoped = css.match(/(?:^|\n)\.landing-[a-z-]+ \{/g) || [];
+    expect(unscoped).toEqual([]);
+    expect(css).toContain('.drop-zone.web-showcase .landing-title');
+    expect(css).toContain('align-items: stretch');
+    expect(css).not.toContain('landing-drop-core');
   });
 });
 
