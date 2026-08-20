@@ -15,6 +15,21 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: http: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: http: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
+    <meta name="description" content="A markdown viewer where Mermaid diagrams are first-class — zoom, pan, present, and export. Try it in the browser or download the desktop app.">
+    <link rel="canonical" href="https://cbremer.github.io/specdown/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SpecDown">
+    <meta property="og:title" content="SpecDown — Markdown viewer with interactive Mermaid">
+    <meta property="og:description" content="Zoom, pan, present, and export architecture diagrams instead of squinting at static images. No account. MIT licensed.">
+    <meta property="og:url" content="https://cbremer.github.io/specdown/">
+    <meta property="og:image" content="https://cbremer.github.io/specdown/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="SpecDown — Markdown viewer with interactive Mermaid diagrams">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SpecDown — Markdown viewer with interactive Mermaid">
+    <meta name="twitter:description" content="Zoom, pan, present, and export architecture diagrams instead of squinting at static images. No account. MIT licensed.">
+    <meta name="twitter:image" content="https://cbremer.github.io/specdown/og-image.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
 
@@ -61,24 +76,60 @@
         <!-- Drop Zone (shown when no file is loaded) -->
         <div id="drop-zone" class="drop-zone">
             <div class="drop-zone-content">
-                <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                <h2>Drop Markdown File Here</h2>
-                <p>or click to browse</p>
-                <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
-                <div class="drop-zone-buttons">
-                    <button id="browse-button" class="browse-button">Browse Files</button>
-                    <button id="open-folder-button" class="browse-button browse-button-secondary" style="display: none;">Open Folder</button>
+                <div id="landing-hero" class="landing-hero landing-interactive" hidden>
+                    <p class="landing-eyebrow">Markdown viewer</p>
+                    <h2 class="landing-title">Present the diagram, not a screenshot</h2>
+                    <p class="landing-lede">SpecDown is a markdown viewer where Mermaid diagrams are first-class — zoom, pan, present, and export. No account. No editor chrome.</p>
                 </div>
-                <div id="ios-sample-section" class="sample-section" style="display: none;">
-                    <span class="url-separator">or open a bundled sample</span>
-                    <div class="sample-button-row">
-                        <button id="open-sample-basic" class="sample-button">Open Sample</button>
-                        <button id="open-sample-mermaid" class="sample-button">Open Diagram Showcase</button>
+                <div class="landing-drop-core">
+                    <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h2>Drop Markdown File Here</h2>
+                    <p>or click to browse</p>
+                    <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
+                    <div class="drop-zone-buttons">
+                        <button id="browse-button" class="browse-button">Browse Files</button>
+                        <button id="open-folder-button" class="browse-button browse-button-secondary" style="display: none;">Open Folder</button>
                     </div>
+                    <div id="ios-sample-section" class="sample-section" style="display: none;">
+                        <span class="url-separator">or open a bundled sample</span>
+                        <div class="sample-button-row">
+                            <button id="open-sample-basic" class="sample-button">Open Sample</button>
+                            <button id="open-sample-mermaid" class="sample-button">Open Diagram Showcase</button>
+                        </div>
+                    </div>
+                    <div id="web-sample-section" class="sample-section" hidden>
+                        <span class="url-separator">or try a sample</span>
+                        <div class="sample-button-row">
+                            <button id="open-web-showcase" class="sample-button" type="button">Try diagram showcase</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="landing-diagram-host" class="landing-diagram-host landing-interactive" hidden>
+                    <p class="landing-diagram-caption">Click to expand — pan, zoom, and explore</p>
+                    <div id="landing-diagram" class="landing-diagram"></div>
+                </div>
+                <div id="landing-pillars" class="landing-pillars landing-interactive" hidden>
+                    <article class="landing-pillar">
+                        <h3>Present diagrams</h3>
+                        <p>Fullscreen pan/zoom, a minimap, and presentation mode that steps through every Mermaid in the doc.</p>
+                    </article>
+                    <article class="landing-pillar">
+                        <h3>Open from anywhere</h3>
+                        <p>Drop a file, open a folder, paste a raw URL, or paste a GitHub repo and pick the markdown.</p>
+                    </article>
+                    <article class="landing-pillar">
+                        <h3>Read, don't edit</h3>
+                        <p>TOC, find, split view, annotations, print/PDF. No vault, no account, no editor chrome.</p>
+                    </article>
+                </div>
+                <div id="landing-desktop" class="landing-desktop landing-interactive" hidden>
+                    <h3>Get the desktop app</h3>
+                    <p>Signed &amp; notarized on macOS. Windows and Linux builds on the same Releases page.</p>
+                    <a class="landing-download" href="https://github.com/cbremer/specdown/releases/latest" target="_blank" rel="noopener noreferrer">Download for macOS, Windows, or Linux</a>
                 </div>
                 <div class="url-section">
                     <span class="url-separator">or open from URL</span>

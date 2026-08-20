@@ -103,6 +103,27 @@ export async function processMermaidDiagrams() {
 }
 
 /**
+ * Render one Mermaid diagram into a host element (web landing showcase).
+ * Reuses the same container + expand-to-fullscreen path as document diagrams.
+ * @param {HTMLElement} host
+ * @param {string} mermaidCode
+ * @param {string} [idPrefix]
+ */
+export async function renderStandaloneMermaid(host, mermaidCode, idPrefix) {
+    if (!host || !mermaidCode) return;
+    const mermaid = await loadMermaid();
+    const diagramId = `${idPrefix || 'standalone-diagram'}-${Date.now()}`;
+    try {
+        const { svg } = await mermaid.render(diagramId, mermaidCode);
+        const container = createDiagramContainer(svg, diagramId, mermaidCode);
+        host.replaceChildren(container);
+        initializeInlineDiagram(diagramId);
+    } catch (error) {
+        console.error('Error rendering standalone mermaid diagram:', error);
+    }
+}
+
+/**
  * @param {string} svg
  * @param {string} diagramId
  * @param {string | null} mermaidSource
@@ -586,10 +607,19 @@ export async function reRenderMermaidDiagrams() {
     // Shares the generation counter with processMermaidDiagrams: a new document
     // render invalidates an in-flight theme re-render, and vice versa.
     const generation = ++diagramRenderGeneration;
-    const root = el('markdown-content');
-    if (!root) return;
-    // Get all diagram containers
-    const containers = root.querySelectorAll('.diagram-container');
+    const roots = [];
+    const markdownRoot = el('markdown-content');
+    if (markdownRoot) roots.push(markdownRoot);
+    const dropZoneEl = el('drop-zone');
+    const landingRoot = el('landing-diagram');
+    if (landingRoot && dropZoneEl && dropZoneEl.style.display !== 'none') {
+        roots.push(landingRoot);
+    }
+    if (roots.length === 0) return;
+    // Get all diagram containers (document + visible web landing)
+    const containers = roots.flatMap((root) =>
+        Array.from(root.querySelectorAll('.diagram-container'))
+    );
 
     // Nothing to re-theme means no need to pull in the mermaid engine.
     if (containers.length === 0) return;

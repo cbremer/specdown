@@ -514,6 +514,173 @@ body {
 }
 
 /* ===========================
+   Web showcase empty state
+   =========================== */
+/* Product homepage on GitHub Pages only (`.web-showcase` is added at init on
+   the web surface). Desktop/iOS keep the compact dashed drop-zone. */
+.drop-zone.web-showcase {
+    overflow-y: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+}
+
+.drop-zone.web-showcase .drop-zone-content {
+    width: min(960px, 100%);
+    margin: 0 auto;
+    text-align: left;
+    padding: var(--space-6) var(--space-5);
+    border: none;
+    cursor: default;
+    background-color: transparent;
+    transform: none;
+}
+
+.drop-zone.web-showcase .drop-zone-content:hover {
+    border-color: transparent;
+    background-color: transparent;
+    transform: none;
+}
+
+.drop-zone.web-showcase.drag-over .drop-zone-content {
+    transform: none;
+}
+
+.drop-zone.web-showcase .landing-drop-core {
+    text-align: center;
+    padding: var(--space-6);
+    border: 3px dashed var(--border-color);
+    border-radius: 16px;
+    background-color: var(--bg-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.drop-zone.web-showcase .landing-drop-core:hover {
+    border-color: var(--accent-color);
+    background-color: var(--bg-secondary);
+}
+
+.landing-hero {
+    margin-bottom: var(--space-6);
+}
+
+.landing-eyebrow {
+    margin: 0 0 var(--space-2);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-color);
+}
+
+.landing-title {
+    margin: 0 0 var(--space-3);
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.landing-lede {
+    margin: 0;
+    max-width: 40rem;
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+}
+
+.landing-diagram-host {
+    margin-top: var(--space-6);
+}
+
+.landing-diagram-caption {
+    margin: 0 0 var(--space-3);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.landing-diagram {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-secondary);
+    padding: var(--space-4);
+    overflow: hidden;
+}
+
+.landing-diagram .diagram-container {
+    margin: 0;
+}
+
+.landing-pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.landing-pillar {
+    padding: var(--space-4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-primary);
+}
+
+.landing-pillar h3 {
+    margin: 0 0 var(--space-2);
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.landing-pillar p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.landing-desktop {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-secondary);
+}
+
+.landing-desktop h3 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.05rem;
+    color: var(--text-primary);
+}
+
+.landing-desktop p {
+    margin: 0 0 var(--space-4);
+    color: var(--text-secondary);
+}
+
+.landing-download {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: var(--text-on-accent);
+    text-decoration: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.landing-download:hover {
+    background-color: var(--accent-hover);
+}
+
+@media (max-width: 640px) {
+    .drop-zone.web-showcase .drop-zone-content {
+        padding: var(--space-4);
+    }
+
+    .drop-zone.web-showcase .landing-drop-core {
+        padding: var(--space-5) var(--space-4);
+    }
+}
+
+/* ===========================
    Content Area
    =========================== */
 .content-area {
