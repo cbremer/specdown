@@ -231,6 +231,11 @@ body {
     transform: scale(1.05);
 }
 
+.theme-toggle.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
 /* ===========================
    Drop Zone
    =========================== */
@@ -514,23 +519,14 @@ body {
 }
 
 /* ===========================
-   Web showcase empty state
+   Starfield mode (all surfaces)
    =========================== */
-/* Product homepage on GitHub Pages only (`.web-showcase` is added at init on
-   the web surface). Showcase sections are siblings of `.drop-zone-content`,
-   not children, so desktop/iOS keep the compact dashed card. Do not center
-   overflowing flex items here: a wide Mermaid SVG + `min-width: auto` +
-   `align-items: center` clips the left side and the stack looks right-justified. */
-.drop-zone.web-showcase {
-    overflow-x: hidden;
-    overflow-y: auto;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    text-align: center;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
+/* Optional nebula + stars behind the empty-state drop zone. Toggled via
+   `data-starfield` (header sparkles button + iOS action sheet). Default on
+   for the web showcase, off for desktop/iOS until the user opts in. */
+[data-starfield="on"] .drop-zone {
     isolation: isolate;
+    overflow: hidden;
     background:
         radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.28), transparent 55%),
         radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.22), transparent 50%),
@@ -538,7 +534,7 @@ body {
         #070b18;
 }
 
-.drop-zone.web-showcase::before {
+[data-starfield="on"] .drop-zone::before {
     content: '';
     position: sticky;
     display: block;
@@ -560,7 +556,7 @@ body {
     to { transform: translate3d(-4%, 3%, 0) scale(1.08); }
 }
 
-[data-theme="dark"] .drop-zone.web-showcase {
+[data-theme="dark"][data-starfield="on"] .drop-zone {
     background:
         radial-gradient(ellipse 80% 60% at 12% 8%, rgba(122, 184, 245, 0.16), transparent 55%),
         radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 140, 90, 0.14), transparent 50%),
@@ -568,7 +564,13 @@ body {
         #05060d;
 }
 
-.drop-zone.web-showcase .landing-space-canvas {
+.starfield-canvas,
+.starfield-cursor-core {
+    display: none;
+}
+
+[data-starfield="on"] .starfield-canvas {
+    display: block;
     position: absolute;
     top: 0;
     left: 0;
@@ -578,7 +580,8 @@ body {
     z-index: 0;
 }
 
-.drop-zone.web-showcase .landing-cursor-core {
+[data-starfield="on"] .starfield-cursor-core {
+    display: block;
     position: absolute;
     left: 0;
     top: 0;
@@ -589,7 +592,7 @@ body {
     opacity: 0.9;
 }
 
-.drop-zone.web-showcase .landing-cursor-dot {
+[data-starfield="on"] .starfield-cursor-dot {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -603,7 +606,7 @@ body {
         0 0 48px 16px rgba(255, 122, 77, 0.28);
 }
 
-.drop-zone.web-showcase .landing-cursor-ring {
+[data-starfield="on"] .starfield-cursor-ring {
     position: absolute;
     inset: 18%;
     border-radius: 50%;
@@ -615,6 +618,75 @@ body {
 @keyframes landing-cursor-pulse {
     0%, 100% { transform: scale(1); opacity: 0.7; }
     50% { transform: scale(1.08); opacity: 1; }
+}
+
+[data-starfield="on"] .drop-zone-content {
+    position: relative;
+    z-index: 2;
+}
+
+[data-theme="light"][data-starfield="on"] .drop-zone {
+    background:
+        radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.2), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.16), transparent 50%),
+        radial-gradient(ellipse 60% 70% at 70% 92%, rgba(120, 90, 210, 0.1), transparent 55%),
+        #eef4fb;
+}
+
+[data-theme="light"][data-starfield="on"] .drop-zone::before {
+    box-shadow:
+        0 0 160px 70px rgba(0, 163, 191, 0.1),
+        40vw 30vh 200px 80px rgba(255, 122, 77, 0.08),
+        70vw 80vh 180px 60px rgba(120, 90, 210, 0.08);
+}
+
+[data-theme="light"][data-starfield="on"] .starfield-cursor-dot {
+    box-shadow:
+        0 0 16px 5px rgba(31, 107, 184, 0.35),
+        0 0 40px 14px rgba(255, 122, 77, 0.22);
+}
+
+[data-theme="light"][data-starfield="on"] .starfield-cursor-ring {
+    border-color: rgba(31, 107, 184, 0.38);
+    box-shadow: 0 0 36px rgba(0, 163, 191, 0.18) inset;
+}
+
+@media (max-width: 640px) {
+    [data-starfield="on"] .starfield-cursor-core {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-starfield="on"] .drop-zone::before,
+    [data-starfield="on"] .starfield-cursor-ring {
+        animation: none;
+    }
+
+    [data-starfield="on"] .starfield-cursor-core {
+        display: none;
+    }
+}
+
+/* ===========================
+   Web showcase empty state
+   =========================== */
+/* Product homepage on GitHub Pages only (`.web-showcase` is added at init on
+   the web surface). Showcase sections are siblings of `.drop-zone-content`,
+   not children, so desktop/iOS keep the compact dashed card. Do not center
+   overflowing flex items here: a wide Mermaid SVG + `min-width: auto` +
+   `align-items: center` clips the left side and the stack looks right-justified.
+   The sky itself lives on `[data-starfield="on"]` so native shells can opt in. */
+.drop-zone.web-showcase {
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: center;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    isolation: isolate;
 }
 
 /* Dashed drop card stays the same control as desktop/iOS; only centered in
@@ -843,34 +915,7 @@ body {
     color: #f4fbff;
 }
 
-/* Light theme: same layout and toys, dawn-nebula palette so it isn't a
-   night sky with the lights turned up. */
-[data-theme="light"] .drop-zone.web-showcase {
-    background:
-        radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.2), transparent 55%),
-        radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.16), transparent 50%),
-        radial-gradient(ellipse 60% 70% at 70% 92%, rgba(120, 90, 210, 0.1), transparent 55%),
-        #eef4fb;
-}
-
-[data-theme="light"] .drop-zone.web-showcase::before {
-    box-shadow:
-        0 0 160px 70px rgba(0, 163, 191, 0.1),
-        40vw 30vh 200px 80px rgba(255, 122, 77, 0.08),
-        70vw 80vh 180px 60px rgba(120, 90, 210, 0.08);
-}
-
-[data-theme="light"] .drop-zone.web-showcase .landing-cursor-dot {
-    box-shadow:
-        0 0 16px 5px rgba(31, 107, 184, 0.35),
-        0 0 40px 14px rgba(255, 122, 77, 0.22);
-}
-
-[data-theme="light"] .drop-zone.web-showcase .landing-cursor-ring {
-    border-color: rgba(31, 107, 184, 0.38);
-    box-shadow: 0 0 36px rgba(0, 163, 191, 0.18) inset;
-}
-
+/* Light theme: showcase copy on the dawn sky (sky itself is `[data-starfield]`). */
 [data-theme="light"] .drop-zone.web-showcase .landing-eyebrow {
     color: #17528f;
     border-color: rgba(31, 107, 184, 0.28);
@@ -966,21 +1011,11 @@ body {
     .drop-zone.web-showcase .drop-zone-content {
         padding: var(--space-5) var(--space-4);
     }
-
-    .drop-zone.web-showcase .landing-cursor-core {
-        display: none;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .drop-zone.web-showcase::before,
-    .drop-zone.web-showcase .landing-signal,
-    .drop-zone.web-showcase .landing-cursor-ring {
+    .drop-zone.web-showcase .landing-signal {
         animation: none;
-    }
-
-    .drop-zone.web-showcase .landing-cursor-core {
-        display: none;
     }
 }
 

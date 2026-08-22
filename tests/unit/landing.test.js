@@ -41,8 +41,8 @@ describe('Web landing showcase', () => {
   });
 
   it('mounts a decorative space canvas on the web showcase', () => {
-    const canvas = document.getElementById('landing-space-canvas');
-    const cursor = document.getElementById('landing-cursor-core');
+    const canvas = document.getElementById('starfield-canvas');
+    const cursor = document.getElementById('starfield-cursor-core');
     expect(canvas).not.toBeNull();
     expect(canvas.getAttribute('aria-hidden')).toBe('true');
     expect(cursor).not.toBeNull();
@@ -186,8 +186,8 @@ describe('Landing gating on native shells', () => {
     ).toBe(false);
     expect(document.getElementById('landing-hero').hidden).toBe(true);
     expect(document.getElementById('web-sample-section').hidden).toBe(true);
-    expect(document.getElementById('landing-space-canvas')).toBeNull();
-    expect(document.getElementById('landing-cursor-core')).toBeNull();
+    expect(document.getElementById('starfield-canvas')).toBeNull();
+    expect(document.getElementById('starfield-cursor-core')).toBeNull();
   });
 
   it('keeps showcase chrome outside the dashed card so native empty state stays compact', () => {
