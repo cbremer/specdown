@@ -1,5 +1,5 @@
 /**
- * Unit tests for the cross-surface starfield toggle (starfield.js).
+ * Unit tests for named visual themes (starfield.js).
  */
 
 const { loadHTML, loadApp } = require('../helpers/loadApp');
@@ -8,7 +8,7 @@ require('../mocks/mermaid');
 require('../mocks/panzoom');
 require('../mocks/highlightjs');
 
-describe('Starfield toggle', () => {
+describe('Visual themes', () => {
   beforeEach(() => {
     localStorage.clear();
     loadHTML(document);
@@ -21,99 +21,113 @@ describe('Starfield toggle', () => {
     localStorage.getItem.mockReset();
   });
 
-  it('defaults on for the web surface and mounts the sky canvas', () => {
+  it('defaults to Starfield on the web surface and mounts the sky canvas', () => {
     loadApp(document);
 
-    expect(state.starfieldEnabled).toBe(true);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('on');
+    expect(state.visualTheme).toBe('starfield');
+    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+      'starfield'
+    );
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
-    expect(document.getElementById('starfield-cursor-core')).not.toBeNull();
     expect(
-      document.getElementById('starfield-toggle').getAttribute('aria-pressed')
-    ).toBe('true');
+      document.getElementById('visual-theme-toggle').getAttribute('aria-label')
+    ).toBe('Theme: Starfield');
+    expect(
+      document.querySelectorAll('#visual-theme-menu .visual-theme-option')
+        .length
+    ).toBe(visualThemeCatalog.length);
   });
 
-  it('defaults off on desktop so the compact drop card stays', () => {
+  it('defaults to Default on desktop so the compact drop card stays', () => {
     window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
     loadApp(document);
 
-    expect(state.starfieldEnabled).toBe(false);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('off');
+    expect(state.visualTheme).toBe('default');
+    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+      'default'
+    );
     expect(document.getElementById('starfield-canvas')).toBeNull();
     expect(
       document.getElementById('drop-zone').classList.contains('web-showcase')
     ).toBe(false);
   });
 
-  it('defaults off on iOS and still exposes the action-sheet control', () => {
+  it('defaults to Default on iOS and labels the sheet with the current theme', () => {
     window.iosNative = true;
     window.webkit = {
       messageHandlers: { specdown: { postMessage: jest.fn() } },
     };
     loadApp(document);
 
-    expect(state.starfieldEnabled).toBe(false);
+    expect(state.visualTheme).toBe('default');
     expect(document.getElementById('starfield-canvas')).toBeNull();
-    expect(document.getElementById('ios-starfield-button')).not.toBeNull();
-    expect(document.getElementById('ios-starfield-button').textContent).toBe(
-      'Turn Starfield On'
+    expect(document.getElementById('ios-visual-theme-button').textContent).toBe(
+      'Theme: Default'
     );
   });
 
-  it('toggles on for desktop, persists, and mounts the canvas', () => {
+  it('picks Starfield from the header dropdown on desktop', () => {
     window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
     loadApp(document);
 
-    toggleStarfield();
+    document.getElementById('visual-theme-toggle').click();
+    const option = document.querySelector(
+      '#visual-theme-menu [data-visual-theme="starfield"]'
+    );
+    option.click();
 
-    expect(state.starfieldEnabled).toBe(true);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('on');
-    expect(localStorage.setItem).toHaveBeenCalledWith('starfield', '1');
+    expect(state.visualTheme).toBe('starfield');
+    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+      'starfield'
+    );
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      'visualTheme',
+      'starfield'
+    );
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
-    expect(
-      document.getElementById('starfield-toggle').getAttribute('aria-pressed')
-    ).toBe('true');
   });
 
-  it('honors a stored off preference on the web surface', () => {
+  it('honors a stored Default preference on the web surface', () => {
     localStorage.getItem.mockImplementation((key) =>
-      key === 'starfield' ? '0' : null
+      key === 'visualTheme' ? 'default' : null
     );
     loadApp(document);
 
-    expect(state.starfieldEnabled).toBe(false);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('off');
+    expect(state.visualTheme).toBe('default');
     expect(document.getElementById('starfield-canvas')).toBeNull();
   });
 
-  it('honors a stored on preference on desktop', () => {
+  it('migrates the legacy starfield=1 flag', () => {
     window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
     localStorage.getItem.mockImplementation((key) =>
       key === 'starfield' ? '1' : null
     );
     loadApp(document);
 
-    expect(state.starfieldEnabled).toBe(true);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('on');
+    expect(state.visualTheme).toBe('starfield');
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
   });
 
-  it('setStarfieldEnabled applies an explicit on/off state', () => {
+  it('setVisualTheme applies a named look and ignores unknown ids', () => {
     loadApp(document);
-    setStarfieldEnabled(false);
-    expect(state.starfieldEnabled).toBe(false);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('off');
-    setStarfieldEnabled(true);
-    expect(state.starfieldEnabled).toBe(true);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('on');
+    setVisualTheme('default');
+    expect(state.visualTheme).toBe('default');
+    setVisualTheme('not-a-theme');
+    expect(state.visualTheme).toBe('default');
+    setVisualTheme('starfield');
+    expect(state.visualTheme).toBe('starfield');
   });
 
-  it('turns the sky off from the header button on web', () => {
+  it('cycles themes from the iOS sheet control', () => {
+    window.iosNative = true;
+    window.webkit = {
+      messageHandlers: { specdown: { postMessage: jest.fn() } },
+    };
     loadApp(document);
-    document.getElementById('starfield-toggle').click();
-
-    expect(state.starfieldEnabled).toBe(false);
-    expect(document.documentElement.getAttribute('data-starfield')).toBe('off');
-    expect(localStorage.setItem).toHaveBeenCalledWith('starfield', '0');
+    expect(state.visualTheme).toBe('default');
+    cycleVisualTheme();
+    expect(state.visualTheme).toBe('starfield');
+    cycleVisualTheme();
+    expect(state.visualTheme).toBe('default');
   });
 });

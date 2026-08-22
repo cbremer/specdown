@@ -1,97 +1,167 @@
 // @ts-check
-// Optional nebula + starfield behind the empty-state drop zone.
-// Available on web, desktop, and iOS. Default on for the web showcase,
-// off for native shells until the user toggles it. Persisted as
-// localStorage.starfield = '1' | '0'.
+// Visual themes for the empty-state drop zone. Add an entry to
+// `visualThemeCatalog` and a `[data-visual-theme="<id>"]` CSS block to ship a
+// new look. Starfield is the first non-default theme (nebula + warping stars).
 //
-// Unique prefixes (starfield*): the test harness
+// Default: Starfield on the web showcase, Default on desktop/iOS. Persisted as
+// localStorage.visualTheme. Legacy localStorage.starfield = '1'|'0' is read
+// once as a fallback.
+//
+// Unique prefixes (visualTheme* / starfield*): the test harness
 // (tests/helpers/loadApp.js) flattens every module to global scope.
 
 import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
-import { bridgeNotifyStarfield } from '../platform/bridge.js';
+import { bridgeNotifyVisualTheme } from '../platform/bridge.js';
 
-const STARFIELD_STORAGE_KEY = 'starfield';
-const starfieldEl = (/** @type {string} */ id) => document.getElementById(id);
+const VISUAL_THEME_STORAGE_KEY = 'visualTheme';
+const VISUAL_THEME_LEGACY_KEY = 'starfield';
+const visualThemeEl = (/** @type {string} */ id) => document.getElementById(id);
 
-function starfieldIsWebSurface() {
+/**
+ * Named empty-state looks. Append here when adding a theme — the header
+ * dropdown, iOS sheet cycle, and (manually) the desktop Appearance menu
+ * all read from this list.
+ * @type {ReadonlyArray<{ id: string, label: string, icon: string }>}
+ */
+export const visualThemeCatalog = [
+  { id: 'default', label: 'Default', icon: 'auto' },
+  { id: 'starfield', label: 'Starfield', icon: 'sparkles' },
+];
+
+function visualThemeIsWebSurface() {
   return !isDesktop && !isIOSNative;
 }
 
-function starfieldReadPreference() {
-  const stored = localStorage.getItem(STARFIELD_STORAGE_KEY);
-  if (stored === '1') return true;
-  if (stored === '0') return false;
-  return starfieldIsWebSurface();
+/** @param {string | null} id */
+function visualThemeIsKnown(id) {
+  return !!id && visualThemeCatalog.some((theme) => theme.id === id);
 }
 
-function starfieldUpdateToggle() {
-  const button = starfieldEl('starfield-toggle');
-  if (!button) return;
-  const on = !!state.starfieldEnabled;
-  button.setAttribute('aria-pressed', on ? 'true' : 'false');
-  const label = on
-    ? 'Starfield on (click to turn off)'
-    : 'Starfield off (click to turn on)';
-  button.setAttribute('aria-label', label);
-  button.setAttribute('title', label);
-  button.classList.toggle('active', on);
-  const icon = button.querySelector('.theme-icon');
-  if (icon) {
-    icon.setAttribute('data-icon', 'sparkles');
-    icon.innerHTML = iconSvg('sparkles');
+function visualThemeCurrent() {
+  return visualThemeCatalog.find((theme) => theme.id === state.visualTheme);
+}
+
+function visualThemeReadPreference() {
+  const stored = localStorage.getItem(VISUAL_THEME_STORAGE_KEY);
+  if (visualThemeIsKnown(stored)) return /** @type {string} */ (stored);
+  const legacy = localStorage.getItem(VISUAL_THEME_LEGACY_KEY);
+  if (legacy === '1') return 'starfield';
+  if (legacy === '0') return 'default';
+  return visualThemeIsWebSurface() ? 'starfield' : 'default';
+}
+
+function visualThemeSetMenuOpen(open) {
+  const button = visualThemeEl('visual-theme-toggle');
+  const menu = visualThemeEl('visual-theme-menu');
+  if (!button || !menu) return;
+  menu.hidden = !open;
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function visualThemeFillMenu() {
+  const menu = visualThemeEl('visual-theme-menu');
+  if (!menu || menu.childElementCount > 0) return;
+  for (const theme of visualThemeCatalog) {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'visual-theme-option';
+    option.setAttribute('role', 'option');
+    option.dataset.visualTheme = theme.id;
+    option.textContent = theme.label;
+    option.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setVisualTheme(theme.id);
+      visualThemeSetMenuOpen(false);
+    });
+    menu.appendChild(option);
+  }
+}
+
+function visualThemeUpdatePicker() {
+  const current = visualThemeCurrent() || visualThemeCatalog[0];
+  const button = visualThemeEl('visual-theme-toggle');
+  if (button) {
+    const label = 'Theme: ' + current.label;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    button.classList.toggle('active', current.id !== 'default');
+    const icon = button.querySelector('.theme-icon');
+    if (icon) {
+      icon.setAttribute('data-icon', current.icon);
+      icon.innerHTML = iconSvg(current.icon);
+    }
+  }
+  const menu = visualThemeEl('visual-theme-menu');
+  if (menu) {
+    for (const option of menu.querySelectorAll('.visual-theme-option')) {
+      const selected = option.getAttribute('data-visual-theme') === current.id;
+      option.classList.toggle('active', selected);
+      option.setAttribute('aria-selected', selected ? 'true' : 'false');
+    }
   }
 }
 
 /** @param {boolean} persist */
-function starfieldApply(persist) {
-  document.documentElement.setAttribute(
-    'data-starfield',
-    state.starfieldEnabled ? 'on' : 'off'
-  );
+function visualThemeApply(persist) {
+  document.documentElement.setAttribute('data-visual-theme', state.visualTheme);
   if (persist) {
-    localStorage.setItem(
-      STARFIELD_STORAGE_KEY,
-      state.starfieldEnabled ? '1' : '0'
-    );
+    localStorage.setItem(VISUAL_THEME_STORAGE_KEY, state.visualTheme);
   }
-  starfieldUpdateToggle();
+  visualThemeUpdatePicker();
   syncIOSChrome();
-  bridgeNotifyStarfield(state.starfieldEnabled);
-  if (state.starfieldEnabled) starfieldEnsureField();
+  bridgeNotifyVisualTheme(state.visualTheme);
+  if (state.visualTheme === 'starfield') starfieldEnsureField();
 }
 
 /**
- * @param {boolean} enabled
+ * @param {string} themeId
  */
-export function setStarfieldEnabled(enabled) {
-  state.starfieldEnabled = !!enabled;
-  starfieldApply(true);
+export function setVisualTheme(themeId) {
+  state.visualTheme = visualThemeIsKnown(themeId) ? themeId : 'default';
+  visualThemeApply(true);
+}
+
+/** Cycle Default → Starfield → … (iOS sheet, or a future compact control). */
+export function cycleVisualTheme() {
+  const idx = visualThemeCatalog.findIndex(
+    (theme) => theme.id === state.visualTheme
+  );
+  const next = visualThemeCatalog[(idx + 1) % visualThemeCatalog.length];
+  setVisualTheme(next.id);
 }
 
 /**
- * Resolve the persisted (or surface-default) preference and paint the sky.
+ * Resolve the persisted (or surface-default) theme, paint it, and bind the
+ * header dropdown.
  */
-export function setupStarfield() {
-  state.starfieldEnabled = starfieldReadPreference();
-  starfieldApply(false);
-}
+export function setupVisualTheme() {
+  state.visualTheme = visualThemeReadPreference();
+  visualThemeFillMenu();
+  visualThemeApply(false);
 
-export function toggleStarfield() {
-  setStarfieldEnabled(!state.starfieldEnabled);
+  const button = visualThemeEl('visual-theme-toggle');
+  if (button) {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const menu = visualThemeEl('visual-theme-menu');
+      visualThemeSetMenuOpen(!!(menu && menu.hidden));
+    });
+  }
+  document.addEventListener('click', () => visualThemeSetMenuOpen(false));
 }
 
 /**
  * Starfield + cursor gravity well. Stars spring back to a home position but
  * part around the pointer, leaving a void bubble. Skipped when the canvas
  * has no layout box (jsdom) or the user prefers reduced motion — CSS nebula
- * still paints. Mounted once; later toggles only flip `data-starfield`.
+ * still paints. Mounted once; later theme switches only flip the attribute.
  */
 function starfieldEnsureField() {
-  const dropZone = starfieldEl('drop-zone');
-  if (!dropZone || starfieldEl('starfield-canvas')) return;
+  const dropZone = visualThemeEl('drop-zone');
+  if (!dropZone || visualThemeEl('starfield-canvas')) return;
 
   const canvas = document.createElement('canvas');
   canvas.id = 'starfield-canvas';
@@ -170,7 +240,7 @@ function starfieldEnsureField() {
 
   function starfieldTick() {
     requestAnimationFrame(starfieldTick);
-    if (!state.starfieldEnabled) return;
+    if (state.visualTheme !== 'starfield') return;
     if (starfieldZone.style.display === 'none') return;
 
     if (

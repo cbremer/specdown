@@ -276,18 +276,17 @@ describe('desktop/main.js', () => {
       expect(template.find(m => m.label === 'Window')).toBeDefined();
     });
 
-    it('includes an Appearance menu Starfield Background checkbox', () => {
+    it('includes an Appearance > Theme submenu with Default and Starfield', () => {
       buildMenu();
       const template = Menu.buildFromTemplate.mock.calls[0][0];
       const appearance = template.find(m => m.label === 'Appearance');
       expect(appearance).toBeDefined();
-      const starfield = appearance.submenu.find(
-        item => item.id === 'starfield-toggle'
-      );
-      expect(starfield).toBeDefined();
-      expect(starfield.type).toBe('checkbox');
-      expect(starfield.checked).toBe(false);
-      expect(typeof starfield.click).toBe('function');
+      const themeMenu = appearance.submenu.find(item => item.label === 'Theme');
+      expect(themeMenu).toBeDefined();
+      const ids = themeMenu.submenu.map(item => item.id);
+      expect(ids).toContain('visual-theme-default');
+      expect(ids).toContain('visual-theme-starfield');
+      expect(themeMenu.submenu.every(item => item.type === 'radio')).toBe(true);
     });
 
     it('includes a Help menu with Open Log File', () => {
@@ -318,7 +317,7 @@ describe('desktop/main.js', () => {
       expect(registeredChannels).toContain('unwatch-file');
       expect(registeredChannels).toContain('refresh-file');
       expect(registeredChannels).toContain('open-dropped-path');
-      expect(registeredChannels).toContain('starfield-changed');
+      expect(registeredChannels).toContain('visual-theme-changed');
     });
 
     it('registers a request-open-path handler that ignores non-string paths', () => {

@@ -5,20 +5,19 @@
 
 ## Goal
 
-Let people turn the nebula + starfield on (or off) on web, desktop, and iOS.
-The web showcase stays the product homepage; native empty states stay the
-compact dashed card until the user opts in.
+Named visual themes for the empty-state drop zone, starting with Default and
+Starfield. The catalog is one list (`visualThemeCatalog`) so future looks
+are an entry + a CSS block. Web showcase defaults to Starfield; desktop and
+iOS default to the compact card.
 
 ## Tasks
 
-- [x] Extract the sky into `features/starfield.js` (unique `starfield*` names)
-- [x] Persist `localStorage.starfield` (`1` / `0`); default on for web, off
-      for Electron and iOS
-- [x] Header sparkles toggle next to theme (reachable on iPhone empty state)
-- [x] Desktop Appearance menu checkbox (`Starfield Background`)
-- [x] iOS action-sheet row (`Turn Starfield On/Off`)
-- [x] Scope nebula/canvas CSS to `[data-starfield="on"]` so native shells
-      without the toggle stay the compact card
+- [x] Visual theme catalog in `features/starfield.js` (`default`, `starfield`)
+- [x] Persist `localStorage.visualTheme`; migrate legacy `starfield` 0/1
+- [x] Header Theme button + dropdown (all surfaces)
+- [x] Desktop Appearance → Theme radio submenu
+- [x] iOS action-sheet row cycles `Theme: Default` / `Theme: Starfield`
+- [x] CSS keyed on `[data-visual-theme="<id>"]`
 - [x] Tests for defaults, persist, desktop opt-in, web opt-out
 - [x] `npm test`, `npm run lint`, `npm run typecheck`
 

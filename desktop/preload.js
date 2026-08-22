@@ -135,16 +135,16 @@ contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
-  // Appearance > Starfield Background: apply the checkbox state from the
-  // native menu. The renderer reports back via notifyStarfield so the
-  // checkbox stays in sync with the header button.
-  onSetStarfield: (callback) => {
-    ipcRenderer.on('set-starfield', (_event, enabled) => {
-      callback(enabled);
+  // Appearance > Theme: apply a named visual theme from the native menu.
+  // The renderer reports back via notifyVisualTheme so radio items stay
+  // in sync with the header dropdown.
+  onSetVisualTheme: (callback) => {
+    ipcRenderer.on('set-visual-theme', (_event, themeId) => {
+      callback(themeId);
     });
   },
-  notifyStarfield: (enabled) => {
-    ipcRenderer.send('starfield-changed', enabled);
+  notifyVisualTheme: (themeId) => {
+    ipcRenderer.send('visual-theme-changed', themeId);
   },
 
   // Register a callback for applying custom CSS (Appearance menu or saved theme)

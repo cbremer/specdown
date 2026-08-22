@@ -983,12 +983,14 @@ ipcMain.on('restart-to-update', () => {
   }
 });
 
-// Keep the Appearance > Starfield checkbox in sync when the renderer toggle
-// (header sparkles button) changes the preference.
-ipcMain.on('starfield-changed', (_event, enabled) => {
+// Keep Appearance > Theme radio items in sync with the in-app picker.
+ipcMain.on('visual-theme-changed', (_event, themeId) => {
   const menu = Menu.getApplicationMenu();
-  const item = menu && menu.getMenuItemById('starfield-toggle');
-  if (item) item.checked = !!enabled;
+  if (!menu) return;
+  for (const id of ['default', 'starfield']) {
+    const item = menu.getMenuItemById('visual-theme-' + id);
+    if (item) item.checked = themeId === id;
+  }
 });
 
 // ===========================
@@ -1137,15 +1139,31 @@ function buildMenu() {
         },
         { type: 'separator' },
         {
-          id: 'starfield-toggle',
-          label: 'Starfield Background',
-          type: 'checkbox',
-          checked: false,
-          click: (menuItem) => {
-            if (mainWindow && mainWindow.webContents) {
-              mainWindow.webContents.send('set-starfield', !!menuItem.checked);
-            }
-          },
+          label: 'Theme',
+          submenu: [
+            {
+              id: 'visual-theme-default',
+              label: 'Default',
+              type: 'radio',
+              checked: true,
+              click: () => {
+                if (mainWindow && mainWindow.webContents) {
+                  mainWindow.webContents.send('set-visual-theme', 'default');
+                }
+              },
+            },
+            {
+              id: 'visual-theme-starfield',
+              label: 'Starfield',
+              type: 'radio',
+              checked: false,
+              click: () => {
+                if (mainWindow && mainWindow.webContents) {
+                  mainWindow.webContents.send('set-visual-theme', 'starfield');
+                }
+              },
+            },
+          ],
         },
       ],
     },

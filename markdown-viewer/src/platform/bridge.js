@@ -155,14 +155,14 @@ export function bridgeOnTriggerSearch(cb) {
   nativeBridge()?.onTriggerSearch?.(cb);
 }
 
-/** @param {Parameters<NonNullable<DesktopBridge['onSetStarfield']>>[0]} cb */
-export function bridgeOnSetStarfield(cb) {
-  nativeBridge()?.onSetStarfield?.(cb);
+/** @param {Parameters<NonNullable<DesktopBridge['onSetVisualTheme']>>[0]} cb */
+export function bridgeOnSetVisualTheme(cb) {
+  nativeBridge()?.onSetVisualTheme?.(cb);
 }
 
-/** @param {boolean} enabled */
-export function bridgeNotifyStarfield(enabled) {
-  nativeBridge()?.notifyStarfield?.(enabled);
+/** @param {string} themeId */
+export function bridgeNotifyVisualTheme(themeId) {
+  nativeBridge()?.notifyVisualTheme?.(themeId);
 }
 
 /** @param {Parameters<NonNullable<DesktopBridge['onApplyCustomCss']>>[0]} cb */

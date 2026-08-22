@@ -64,7 +64,7 @@ import {
   toggleTheme,
   configureTheme,
 } from './features/theme.js';
-import { setupStarfield, toggleStarfield } from './features/starfield.js';
+import { setupVisualTheme } from './features/starfield.js';
 import {
   toggleViewMode,
   updateViewToggleButton,
@@ -209,7 +209,7 @@ function init() {
     registerAppCommands();
     setupVersionInfo(APP_VERSION, APP_VERSION_LABEL);
     setupTheme();
-    setupStarfield();
+    setupVisualTheme();
     setupIOSNativeUI();
     setupWebLanding();
     setupToolbarOverflow();
@@ -318,12 +318,9 @@ function setupEventListeners() {
 
     setupDragAndDrop();
 
-    // Theme + starfield toggles (header; iOS also has sheet actions)
+    // Color scheme (light/dark/auto). Visual theme dropdown is bound in
+    // setupVisualTheme(); iOS also has a sheet action that cycles looks.
     themeToggle.addEventListener('click', toggleTheme);
-    const starfieldToggle = $('starfield-toggle');
-    if (starfieldToggle) {
-        starfieldToggle.addEventListener('click', toggleStarfield);
-    }
 
     // View toggle (preview/raw)
     viewToggle.addEventListener('click', toggleViewMode);

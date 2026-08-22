@@ -43,7 +43,7 @@
  * @typedef {object} AppState
  * @property {'light' | 'dark'} currentTheme The resolved, applied theme.
  * @property {'light' | 'dark' | 'auto'} themePreference User choice; 'auto' follows the OS.
- * @property {boolean} starfieldEnabled Nebula + stars behind the empty-state drop zone.
+ * @property {string} visualTheme Named empty-state look (`default`, `starfield`, …).
  * @property {string} currentRawMarkdown Raw source of the active document.
  * @property {'preview' | 'raw'} currentViewMode
  * @property {Tab[]} tabs Open file tabs.
@@ -66,9 +66,9 @@ export const state = {
   themePreference: /** @type {'light' | 'dark' | 'auto'} */ (
     localStorage.getItem('theme') || 'auto'
   ),
-  // Resolved in setupStarfield(): default on for the web showcase, off on
-  // desktop/iOS until the user opts in. Persisted as localStorage.starfield.
-  starfieldEnabled: false,
+  // Resolved in setupVisualTheme(): 'starfield' on the web showcase, 'default'
+  // on desktop/iOS until the user picks a look. Persisted as visualTheme.
+  visualTheme: 'default',
   currentRawMarkdown: '',
   currentViewMode: 'preview', // 'preview' or 'raw'
 

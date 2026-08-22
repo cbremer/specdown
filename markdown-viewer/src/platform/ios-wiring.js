@@ -14,7 +14,7 @@ import { toggleToc } from '../features/toc.js';
 import { toggleViewMode } from '../features/view-mode.js';
 import { toggleSplitView } from '../features/split-view.js';
 import { toggleTheme } from '../features/theme.js';
-import { toggleStarfield } from '../features/starfield.js';
+import { cycleVisualTheme } from '../features/starfield.js';
 import { toggleComments } from '../features/comments.js';
 import { openAnnotationPanel } from '../features/annotations.js';
 import { startPresentation } from '../features/presentation.js';
@@ -166,11 +166,11 @@ export function setupIOSEventListeners() {
     });
   }
 
-  const iosStarfieldButton = iosWiringEl('ios-starfield-button');
-  if (iosStarfieldButton) {
-    iosStarfieldButton.addEventListener('click', () => {
+  const iosVisualThemeButton = iosWiringEl('ios-visual-theme-button');
+  if (iosVisualThemeButton) {
+    iosVisualThemeButton.addEventListener('click', () => {
       closeIOSActionSheet();
-      toggleStarfield();
+      cycleVisualTheme();
     });
   }
 }

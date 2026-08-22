@@ -16,7 +16,7 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { showToast } from '../features/toast.js';
-import { setStarfieldEnabled } from '../features/starfield.js';
+import { setVisualTheme } from '../features/starfield.js';
 import { performPrint, buildPrintableDocument, hasLoadedContent } from './ios-chrome.js';
 import {
   hasDesktopBridge,

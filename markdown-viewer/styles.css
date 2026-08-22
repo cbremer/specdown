@@ -236,6 +236,53 @@ body {
     color: var(--accent-color);
 }
 
+.visual-theme-picker {
+    position: relative;
+}
+
+.visual-theme-menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 200;
+    min-width: 10.5rem;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.visual-theme-menu[hidden] {
+    display: none;
+}
+
+.visual-theme-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.7rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.visual-theme-option:hover,
+.visual-theme-option.active {
+    background: var(--bg-tertiary);
+}
+
+.visual-theme-option.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 /* ===========================
    Drop Zone
    =========================== */
@@ -521,10 +568,10 @@ body {
 /* ===========================
    Starfield mode (all surfaces)
    =========================== */
-/* Optional nebula + stars behind the empty-state drop zone. Toggled via
-   `data-starfield` (header sparkles button + iOS action sheet). Default on
-   for the web showcase, off for desktop/iOS until the user opts in. */
-[data-starfield="on"] .drop-zone {
+/* Optional nebula + stars behind the empty-state drop zone. Driven by
+   `data-visual-theme="starfield"` (header Theme dropdown + desktop Appearance
+   menu + iOS sheet). Default on the web showcase; Default on desktop/iOS. */
+[data-visual-theme="starfield"] .drop-zone {
     isolation: isolate;
     overflow: hidden;
     background:
@@ -534,7 +581,7 @@ body {
         #070b18;
 }
 
-[data-starfield="on"] .drop-zone::before {
+[data-visual-theme="starfield"] .drop-zone::before {
     content: '';
     position: sticky;
     display: block;
@@ -556,7 +603,7 @@ body {
     to { transform: translate3d(-4%, 3%, 0) scale(1.08); }
 }
 
-[data-theme="dark"][data-starfield="on"] .drop-zone {
+[data-theme="dark"][data-visual-theme="starfield"] .drop-zone {
     background:
         radial-gradient(ellipse 80% 60% at 12% 8%, rgba(122, 184, 245, 0.16), transparent 55%),
         radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 140, 90, 0.14), transparent 50%),
@@ -569,7 +616,7 @@ body {
     display: none;
 }
 
-[data-starfield="on"] .starfield-canvas {
+[data-visual-theme="starfield"] .starfield-canvas {
     display: block;
     position: absolute;
     top: 0;
@@ -580,7 +627,7 @@ body {
     z-index: 0;
 }
 
-[data-starfield="on"] .starfield-cursor-core {
+[data-visual-theme="starfield"] .starfield-cursor-core {
     display: block;
     position: absolute;
     left: 0;
@@ -592,7 +639,7 @@ body {
     opacity: 0.9;
 }
 
-[data-starfield="on"] .starfield-cursor-dot {
+[data-visual-theme="starfield"] .starfield-cursor-dot {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -606,7 +653,7 @@ body {
         0 0 48px 16px rgba(255, 122, 77, 0.28);
 }
 
-[data-starfield="on"] .starfield-cursor-ring {
+[data-visual-theme="starfield"] .starfield-cursor-ring {
     position: absolute;
     inset: 18%;
     border-radius: 50%;
@@ -620,12 +667,12 @@ body {
     50% { transform: scale(1.08); opacity: 1; }
 }
 
-[data-starfield="on"] .drop-zone-content {
+[data-visual-theme="starfield"] .drop-zone-content {
     position: relative;
     z-index: 2;
 }
 
-[data-theme="light"][data-starfield="on"] .drop-zone {
+[data-theme="light"][data-visual-theme="starfield"] .drop-zone {
     background:
         radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.2), transparent 55%),
         radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.16), transparent 50%),
@@ -633,37 +680,37 @@ body {
         #eef4fb;
 }
 
-[data-theme="light"][data-starfield="on"] .drop-zone::before {
+[data-theme="light"][data-visual-theme="starfield"] .drop-zone::before {
     box-shadow:
         0 0 160px 70px rgba(0, 163, 191, 0.1),
         40vw 30vh 200px 80px rgba(255, 122, 77, 0.08),
         70vw 80vh 180px 60px rgba(120, 90, 210, 0.08);
 }
 
-[data-theme="light"][data-starfield="on"] .starfield-cursor-dot {
+[data-theme="light"][data-visual-theme="starfield"] .starfield-cursor-dot {
     box-shadow:
         0 0 16px 5px rgba(31, 107, 184, 0.35),
         0 0 40px 14px rgba(255, 122, 77, 0.22);
 }
 
-[data-theme="light"][data-starfield="on"] .starfield-cursor-ring {
+[data-theme="light"][data-visual-theme="starfield"] .starfield-cursor-ring {
     border-color: rgba(31, 107, 184, 0.38);
     box-shadow: 0 0 36px rgba(0, 163, 191, 0.18) inset;
 }
 
 @media (max-width: 640px) {
-    [data-starfield="on"] .starfield-cursor-core {
+    [data-visual-theme="starfield"] .starfield-cursor-core {
         display: none;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    [data-starfield="on"] .drop-zone::before,
-    [data-starfield="on"] .starfield-cursor-ring {
+    [data-visual-theme="starfield"] .drop-zone::before,
+    [data-visual-theme="starfield"] .starfield-cursor-ring {
         animation: none;
     }
 
-    [data-starfield="on"] .starfield-cursor-core {
+    [data-visual-theme="starfield"] .starfield-cursor-core {
         display: none;
     }
 }
@@ -676,7 +723,7 @@ body {
    not children, so desktop/iOS keep the compact dashed card. Do not center
    overflowing flex items here: a wide Mermaid SVG + `min-width: auto` +
    `align-items: center` clips the left side and the stack looks right-justified.
-   The sky itself lives on `[data-starfield="on"]` so native shells can opt in. */
+   The sky itself lives on `[data-visual-theme="starfield"]` so native shells can opt in. */
 .drop-zone.web-showcase {
     overflow-x: hidden;
     overflow-y: auto;
@@ -915,7 +962,7 @@ body {
     color: #f4fbff;
 }
 
-/* Light theme: showcase copy on the dawn sky (sky itself is `[data-starfield]`). */
+/* Light theme: showcase copy on the dawn sky (sky itself is the visual theme). */
 [data-theme="light"] .drop-zone.web-showcase .landing-eyebrow {
     color: #17528f;
     border-color: rgba(31, 107, 184, 0.28);

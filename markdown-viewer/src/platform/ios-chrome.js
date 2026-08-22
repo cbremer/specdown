@@ -488,10 +488,12 @@ export function syncIOSChrome() {
 
   updateIOSSheetButton(el('ios-split-button'), state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
   updateIOSSheetButton(el('ios-theme-button'), state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
+  const visualTheme =
+    state.visualTheme === 'starfield' ? 'Starfield' : 'Default';
   updateIOSSheetButton(
-    el('ios-starfield-button'),
-    state.starfieldEnabled ? 'Turn Starfield Off' : 'Turn Starfield On',
-    !!state.starfieldEnabled
+    el('ios-visual-theme-button'),
+    'Theme: ' + visualTheme,
+    state.visualTheme !== 'default'
   );
 
   const iosSplitButton = /** @type {HTMLButtonElement | null} */ (el('ios-split-button'));
