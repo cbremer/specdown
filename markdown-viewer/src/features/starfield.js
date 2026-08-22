@@ -44,6 +44,7 @@ function starfieldUpdateToggle() {
   }
 }
 
+/** @param {boolean} persist */
 function starfieldApply(persist) {
   document.documentElement.setAttribute(
     'data-starfield',
