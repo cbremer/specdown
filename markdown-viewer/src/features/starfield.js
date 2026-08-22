@@ -53,6 +53,7 @@ function visualThemeReadPreference() {
   return visualThemeIsWebSurface() ? 'starfield' : 'default';
 }
 
+/** @param {boolean} open */
 function visualThemeSetMenuOpen(open) {
   const button = visualThemeEl('visual-theme-toggle');
   const menu = visualThemeEl('visual-theme-menu');
