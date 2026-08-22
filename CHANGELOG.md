@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.181 — 2026-08-22
+
+### Features
+
+- add Aurora and Blueprint empty-state themes
+
 ## v0.0.180 — 2026-08-22
 
 ### Features
