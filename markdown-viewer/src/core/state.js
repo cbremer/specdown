@@ -43,7 +43,7 @@
  * @typedef {object} AppState
  * @property {'light' | 'dark'} currentTheme The resolved, applied theme.
  * @property {'light' | 'dark' | 'auto'} themePreference User choice; 'auto' follows the OS.
- * @property {string} visualTheme Named empty-state look (`default`, `starfield`, …).
+ * @property {string} visualTheme Named empty-state look (`default`, `starfield`, `aurora`, `blueprint`, …).
  * @property {string} currentRawMarkdown Raw source of the active document.
  * @property {'preview' | 'raw'} currentViewMode
  * @property {Tab[]} tabs Open file tabs.

@@ -7,14 +7,15 @@ drop-zone.
 
 ## Timeline
 
-| Date       | Doc                                                                        | Summary                                                                                                                  |
-| ---------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-20 | [spec-web-showcase](2026-08-20-spec-web-showcase.md)                       | Web-only empty-state homepage: hero, live Mermaid, pillars, desktop download, diagram showcase sample; Open Graph unfurl |
-| 2026-08-20 | [spec-feature-copy](2026-08-20-spec-feature-copy.md)                       | LinkedIn-ready positioning, hero feature set, full feature grid, lines to avoid                                          |
-| 2026-08-20 | [spec-article-outlines](2026-08-20-spec-article-outlines.md)               | Flagship LinkedIn article arc, how-I-built-it follow-ups, shorter posts                                                  |
-| 2026-08-20 | [spec-sharing-playbook](2026-08-20-spec-sharing-playbook.md)               | Demo, channels, comment strategy, what not to oversell                                                                   |
-| 2026-08-20 | [tasks-session-01-sharing-kit](2026-08-20-tasks-session-01-sharing-kit.md) | Implement showcase + copy kit + OG card + tests                                                                          |
-| 2026-08-22 | [tasks-session-02-starfield-toggle](2026-08-22-tasks-session-02-starfield-toggle.md) | Named Theme catalog (Default, Starfield) on every surface; scalable for future looks |
+| Date       | Doc                                                                                  | Summary                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-20 | [spec-web-showcase](2026-08-20-spec-web-showcase.md)                                 | Web-only empty-state homepage: hero, live Mermaid, pillars, desktop download, diagram showcase sample; Open Graph unfurl |
+| 2026-08-20 | [spec-feature-copy](2026-08-20-spec-feature-copy.md)                                 | LinkedIn-ready positioning, hero feature set, full feature grid, lines to avoid                                          |
+| 2026-08-20 | [spec-article-outlines](2026-08-20-spec-article-outlines.md)                         | Flagship LinkedIn article arc, how-I-built-it follow-ups, shorter posts                                                  |
+| 2026-08-20 | [spec-sharing-playbook](2026-08-20-spec-sharing-playbook.md)                         | Demo, channels, comment strategy, what not to oversell                                                                   |
+| 2026-08-20 | [tasks-session-01-sharing-kit](2026-08-20-tasks-session-01-sharing-kit.md)           | Implement showcase + copy kit + OG card + tests                                                                          |
+| 2026-08-22 | [tasks-session-02-starfield-toggle](2026-08-22-tasks-session-02-starfield-toggle.md) | Named Theme catalog (Default, Starfield) on every surface; scalable for future looks                                     |
+| 2026-08-22 | [tasks-session-03-aurora-blueprint](2026-08-22-tasks-session-03-aurora-blueprint.md) | Two more empty-state Themes: Aurora (curtains) and Blueprint (spec grid)                                                 |
 
 ## Current status
 
