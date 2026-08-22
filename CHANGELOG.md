@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.184 — 2026-08-22
+
+### Chores
+
+- **deps:** bump highlight.js from 11.11.1 to 11.12.0
+
 ## v0.0.183 — 2026-08-22
 
 ### Chores
