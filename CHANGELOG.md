@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.185 — 2026-08-22
+
+### Chores
+
+- **deps:** bump marked from 18.0.9 to 18.0.10
+
 ## v0.0.184 — 2026-08-22
 
 ### Chores
