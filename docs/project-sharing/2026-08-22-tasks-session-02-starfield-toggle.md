@@ -5,21 +5,30 @@
 
 ## Goal
 
-Named visual themes for the empty-state drop zone, starting with Default and
-Starfield. The catalog is one list (`visualThemeCatalog`) so future looks
-are an entry + a CSS block. Web showcase defaults to Starfield; desktop and
-iOS default to the compact card.
+Named visual **Theme**s for the empty-state drop zone, starting with Default
+and Starfield. The catalog is one list (`visualThemeCatalog` in
+`core/visual-theme-catalog.js`) so a future look is an entry + a CSS block.
+Web showcase defaults to Starfield; desktop and iOS default to the compact
+card. Light/dark/auto stays on the moon button.
 
 ## Tasks
 
-- [x] Visual theme catalog in `features/starfield.js` (`default`, `starfield`)
+- [x] Visual theme catalog (`default`, `starfield`) in `core/visual-theme-catalog.js`
 - [x] Persist `localStorage.visualTheme`; migrate legacy `starfield` 0/1
-- [x] Header Theme button + dropdown (all surfaces)
-- [x] Desktop Appearance → Theme radio submenu
-- [x] iOS action-sheet row cycles `Theme: Default` / `Theme: Starfield`
+- [x] Header Theme button + dropdown (all surfaces); visible "Theme" label
+- [x] Desktop Appearance → Theme radio submenu rebuilt from the renderer catalog
+- [x] iOS action-sheet row cycles `Theme: <label>` from the same catalog
 - [x] CSS keyed on `[data-visual-theme="<id>"]`
-- [x] Tests for defaults, persist, desktop opt-in, web opt-out
+- [x] Tests for defaults, persist, desktop opt-in, catalog rebuild, web opt-out
 - [x] `npm test`, `npm run lint`, `npm run typecheck`
+
+## Adding a theme
+
+1. Append `{ id, label, icon }` to `visualThemeCatalog`
+2. Add a `[data-visual-theme="<id>"]` block in `markdown-viewer/styles.css`
+
+Header, iOS sheet, and desktop Appearance → Theme pick the new row up from
+the catalog (desktop via `visual-theme-catalog` IPC when the renderer starts).
 
 ## Notes
 

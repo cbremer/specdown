@@ -1,7 +1,7 @@
 // @ts-check
 // Web-only empty-state showcase. Desktop and iOS keep the compact drop-zone.
-// The nebula/starfield is a separate toggle (features/starfield.js) shared
-// by every surface.
+// The empty-state look is a Theme picker (features/starfield.js) shared by
+// every surface — Starfield is the first named theme after Default.
 //
 // Named uniquely (landing* prefixes): the test harness
 // (tests/helpers/loadApp.js) flattens every module to global scope.

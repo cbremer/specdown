@@ -146,6 +146,11 @@ contextBridge.exposeInMainWorld('specdown', {
   notifyVisualTheme: (themeId) => {
     ipcRenderer.send('visual-theme-changed', themeId);
   },
+  // Renderer catalog of named empty-state looks. The main process rebuilds
+  // Appearance → Theme from this list so a new theme is one catalog entry.
+  notifyVisualThemeCatalog: (catalog) => {
+    ipcRenderer.send('visual-theme-catalog', catalog);
+  },
 
   // Register a callback for applying custom CSS (Appearance menu or saved theme)
   onApplyCustomCss: (callback) => {

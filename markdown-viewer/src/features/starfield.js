@@ -13,31 +13,25 @@
 import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
+import {
+  visualThemeCatalog,
+  visualThemeIsKnown,
+  visualThemeLabel,
+} from '../core/visual-theme-catalog.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
-import { bridgeNotifyVisualTheme } from '../platform/bridge.js';
+import {
+  bridgeNotifyVisualTheme,
+  bridgeNotifyVisualThemeCatalog,
+} from '../platform/bridge.js';
+
+export { visualThemeCatalog, visualThemeIsKnown, visualThemeLabel };
 
 const VISUAL_THEME_STORAGE_KEY = 'visualTheme';
 const VISUAL_THEME_LEGACY_KEY = 'starfield';
 const visualThemeEl = (/** @type {string} */ id) => document.getElementById(id);
 
-/**
- * Named empty-state looks. Append here when adding a theme — the header
- * dropdown, iOS sheet cycle, and (manually) the desktop Appearance menu
- * all read from this list.
- * @type {ReadonlyArray<{ id: string, label: string, icon: string }>}
- */
-export const visualThemeCatalog = [
-  { id: 'default', label: 'Default', icon: 'auto' },
-  { id: 'starfield', label: 'Starfield', icon: 'sparkles' },
-];
-
 function visualThemeIsWebSurface() {
   return !isDesktop && !isIOSNative;
-}
-
-/** @param {string | null} id */
-function visualThemeIsKnown(id) {
-  return !!id && visualThemeCatalog.some((theme) => theme.id === id);
 }
 
 function visualThemeCurrent() {
@@ -85,7 +79,7 @@ function visualThemeUpdatePicker() {
   const current = visualThemeCurrent() || visualThemeCatalog[0];
   const button = visualThemeEl('visual-theme-toggle');
   if (button) {
-    const label = 'Theme: ' + current.label;
+    const label = 'Theme: ' + visualThemeLabel(current.id);
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
     button.classList.toggle('active', current.id !== 'default');
@@ -113,6 +107,7 @@ function visualThemeApply(persist) {
   }
   visualThemeUpdatePicker();
   syncIOSChrome();
+  bridgeNotifyVisualThemeCatalog(visualThemeCatalog);
   bridgeNotifyVisualTheme(state.visualTheme);
   if (state.visualTheme === 'starfield') starfieldEnsureField();
 }

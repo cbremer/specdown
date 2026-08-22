@@ -33,6 +33,10 @@ describe('Visual themes', () => {
       document.getElementById('visual-theme-toggle').getAttribute('aria-label')
     ).toBe('Theme: Starfield');
     expect(
+      document.querySelector('#visual-theme-toggle .visual-theme-toggle-label')
+        .textContent
+    ).toBe('Theme');
+    expect(
       document.querySelectorAll('#visual-theme-menu .visual-theme-option')
         .length
     ).toBe(visualThemeCatalog.length);
@@ -106,6 +110,28 @@ describe('Visual themes', () => {
 
     expect(state.visualTheme).toBe('starfield');
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
+  });
+
+  it('resolves catalog labels and rejects unknown ids', () => {
+    expect(visualThemeIsKnown('starfield')).toBe(true);
+    expect(visualThemeIsKnown('not-a-theme')).toBe(false);
+    expect(visualThemeLabel('starfield')).toBe('Starfield');
+    expect(visualThemeLabel('not-a-theme')).toBe('Default');
+  });
+
+  it('notifies the desktop shell of the theme catalog', () => {
+    window.specdown = {
+      isDesktop: true,
+      requestFileOpen: jest.fn(),
+      notifyVisualThemeCatalog: jest.fn(),
+      notifyVisualTheme: jest.fn(),
+    };
+    loadApp(document);
+
+    expect(window.specdown.notifyVisualThemeCatalog).toHaveBeenCalledWith(
+      visualThemeCatalog
+    );
+    expect(window.specdown.notifyVisualTheme).toHaveBeenCalledWith('default');
   });
 
   it('setVisualTheme applies a named look and ignores unknown ids', () => {

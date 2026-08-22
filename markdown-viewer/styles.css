@@ -240,6 +240,24 @@ body {
     position: relative;
 }
 
+.visual-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.visual-theme-toggle-label {
+    line-height: 1;
+}
+
+@media (max-width: 520px) {
+    .visual-theme-toggle-label {
+        display: none;
+    }
+}
+
 .visual-theme-menu {
     position: absolute;
     top: calc(100% + 0.4rem);
@@ -570,7 +588,9 @@ body {
    =========================== */
 /* Optional nebula + stars behind the empty-state drop zone. Driven by
    `data-visual-theme="starfield"` (header Theme dropdown + desktop Appearance
-   menu + iOS sheet). Default on the web showcase; Default on desktop/iOS. */
+   menu + iOS sheet). Default on the web showcase; Default on desktop/iOS.
+   A future Theme is a catalog entry plus another `[data-visual-theme="<id>"]`
+   block here. */
 [data-visual-theme="starfield"] .drop-zone {
     isolation: isolate;
     overflow: hidden;

@@ -165,6 +165,15 @@ export function bridgeNotifyVisualTheme(themeId) {
   nativeBridge()?.notifyVisualTheme?.(themeId);
 }
 
+/**
+ * Send the named-theme catalog so the desktop Appearance → Theme menu can
+ * rebuild itself when a new look is added. No-op off the desktop shell.
+ * @param {ReadonlyArray<{ id: string, label: string, icon?: string }>} catalog
+ */
+export function bridgeNotifyVisualThemeCatalog(catalog) {
+  nativeBridge()?.notifyVisualThemeCatalog?.(catalog);
+}
+
 /** @param {Parameters<NonNullable<DesktopBridge['onApplyCustomCss']>>[0]} cb */
 export function bridgeOnApplyCustomCss(cb) {
   nativeBridge()?.onApplyCustomCss?.(cb);

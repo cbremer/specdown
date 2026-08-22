@@ -31,7 +31,7 @@ import {
   bridgeOnTriggerPrint,
   bridgeOnTriggerExportPdf,
   bridgeOnTriggerSearch,
-  bridgeOnSetStarfield,
+  bridgeOnSetVisualTheme,
   bridgeOnApplyCustomCss,
   bridgeOnUpdateDownloaded,
   bridgeRestartToUpdate,
@@ -279,9 +279,9 @@ export function setupDesktopIPC() {
     applyCustomCss(cssContent);
   });
 
-  // Appearance menu: Starfield Background checkbox
-  bridgeOnSetStarfield(function (enabled) {
-    setStarfieldEnabled(!!enabled);
+  // Appearance menu: Theme submenu
+  bridgeOnSetVisualTheme(function (themeId) {
+    setVisualTheme(String(themeId || 'default'));
   });
 
   // Auto-update: a downloaded update is ready — offer a one-click restart.
