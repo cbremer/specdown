@@ -736,6 +736,136 @@ body {
 }
 
 /* ===========================
+   Aurora (CSS-only curtains)
+   =========================== */
+[data-visual-theme="aurora"] .drop-zone {
+    isolation: isolate;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse 90% 50% at 18% 88%, rgba(32, 230, 150, 0.32), transparent 55%),
+        radial-gradient(ellipse 70% 45% at 72% 22%, rgba(70, 190, 255, 0.28), transparent 55%),
+        radial-gradient(ellipse 55% 60% at 92% 78%, rgba(176, 92, 255, 0.24), transparent 50%),
+        #06141c;
+}
+
+[data-visual-theme="aurora"] .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: -10% -20%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        repeating-linear-gradient(
+            118deg,
+            transparent 0 7%,
+            rgba(48, 255, 186, 0.08) 9%,
+            rgba(80, 210, 255, 0.16) 11%,
+            rgba(168, 110, 255, 0.1) 13%,
+            transparent 16%
+        );
+    filter: blur(10px);
+    animation: aurora-sweep 22s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-sweep {
+    from { transform: translate3d(0, 0, 0) skewX(-4deg); }
+    to { transform: translate3d(-6%, 4%, 0) skewX(6deg); }
+}
+
+[data-theme="dark"][data-visual-theme="aurora"] .drop-zone {
+    background:
+        radial-gradient(ellipse 90% 50% at 18% 88%, rgba(32, 230, 150, 0.22), transparent 55%),
+        radial-gradient(ellipse 70% 45% at 72% 22%, rgba(70, 190, 255, 0.18), transparent 55%),
+        radial-gradient(ellipse 55% 60% at 92% 78%, rgba(176, 92, 255, 0.2), transparent 50%),
+        #040b10;
+}
+
+[data-theme="light"][data-visual-theme="aurora"] .drop-zone {
+    background:
+        radial-gradient(ellipse 90% 50% at 18% 88%, rgba(20, 170, 120, 0.18), transparent 55%),
+        radial-gradient(ellipse 70% 45% at 72% 22%, rgba(40, 130, 210, 0.14), transparent 55%),
+        radial-gradient(ellipse 55% 60% at 92% 78%, rgba(140, 70, 210, 0.1), transparent 50%),
+        #eef6f4;
+}
+
+[data-theme="light"][data-visual-theme="aurora"] .drop-zone::before {
+    background:
+        repeating-linear-gradient(
+            118deg,
+            transparent 0 7%,
+            rgba(16, 150, 110, 0.08) 9%,
+            rgba(30, 120, 190, 0.1) 11%,
+            rgba(120, 70, 190, 0.07) 13%,
+            transparent 16%
+        );
+}
+
+[data-visual-theme="aurora"] .drop-zone-content {
+    position: relative;
+    z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-visual-theme="aurora"] .drop-zone::before {
+        animation: none;
+        filter: none;
+    }
+}
+
+/* ===========================
+   Blueprint (spec-sheet grid)
+   =========================== */
+[data-visual-theme="blueprint"] .drop-zone {
+    isolation: isolate;
+    overflow: hidden;
+    background-color: #0b2a4a;
+    background-image:
+        linear-gradient(rgba(120, 200, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 200, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(rgba(120, 200, 255, 0.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 200, 255, 0.22) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    background-position: -1px -1px;
+}
+
+[data-visual-theme="blueprint"] .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    pointer-events: none;
+    z-index: 0;
+    border: 1px solid rgba(150, 220, 255, 0.35);
+    box-shadow:
+        inset 0 0 0 1px rgba(150, 220, 255, 0.12),
+        0 0 80px rgba(40, 140, 220, 0.12);
+}
+
+[data-theme="dark"][data-visual-theme="blueprint"] .drop-zone {
+    background-color: #071d33;
+}
+
+[data-theme="light"][data-visual-theme="blueprint"] .drop-zone {
+    background-color: #eef5fb;
+    background-image:
+        linear-gradient(rgba(20, 80, 140, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 80, 140, 0.1) 1px, transparent 1px),
+        linear-gradient(rgba(20, 80, 140, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 80, 140, 0.2) 1px, transparent 1px);
+}
+
+[data-theme="light"][data-visual-theme="blueprint"] .drop-zone::before {
+    border-color: rgba(20, 80, 140, 0.28);
+    box-shadow:
+        inset 0 0 0 1px rgba(20, 80, 140, 0.08),
+        0 0 60px rgba(20, 80, 140, 0.06);
+}
+
+[data-visual-theme="blueprint"] .drop-zone-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* ===========================
    Web showcase empty state
    =========================== */
 /* Product homepage on GitHub Pages only (`.web-showcase` is added at init on

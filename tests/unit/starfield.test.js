@@ -114,8 +114,12 @@ describe('Visual themes', () => {
 
   it('resolves catalog labels and rejects unknown ids', () => {
     expect(visualThemeIsKnown('starfield')).toBe(true);
+    expect(visualThemeIsKnown('aurora')).toBe(true);
+    expect(visualThemeIsKnown('blueprint')).toBe(true);
     expect(visualThemeIsKnown('not-a-theme')).toBe(false);
     expect(visualThemeLabel('starfield')).toBe('Starfield');
+    expect(visualThemeLabel('aurora')).toBe('Aurora');
+    expect(visualThemeLabel('blueprint')).toBe('Blueprint');
     expect(visualThemeLabel('not-a-theme')).toBe('Default');
   });
 
@@ -144,15 +148,44 @@ describe('Visual themes', () => {
     expect(state.visualTheme).toBe('starfield');
   });
 
-  it('cycles themes from the iOS sheet control', () => {
+  it('applies Aurora and Blueprint without mounting the starfield canvas', () => {
+    window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
+    loadApp(document);
+    setVisualTheme('aurora');
+    expect(state.visualTheme).toBe('aurora');
+    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+      'aurora'
+    );
+    expect(document.getElementById('starfield-canvas')).toBeNull();
+    setVisualTheme('blueprint');
+    expect(state.visualTheme).toBe('blueprint');
+    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+      'blueprint'
+    );
+    expect(document.getElementById('starfield-canvas')).toBeNull();
+  });
+
+  it('lists Aurora and Blueprint in the header Theme menu', () => {
+    loadApp(document);
+    const ids = [
+      ...document.querySelectorAll('#visual-theme-menu .visual-theme-option'),
+    ].map((option) => option.getAttribute('data-visual-theme'));
+    expect(ids).toEqual(visualThemeCatalog.map((theme) => theme.id));
+    expect(ids).toContain('aurora');
+    expect(ids).toContain('blueprint');
+  });
+
+  it('cycles every catalog theme from the iOS sheet control', () => {
     window.iosNative = true;
     window.webkit = {
       messageHandlers: { specdown: { postMessage: jest.fn() } },
     };
     loadApp(document);
     expect(state.visualTheme).toBe('default');
-    cycleVisualTheme();
-    expect(state.visualTheme).toBe('starfield');
+    for (let i = 1; i < visualThemeCatalog.length; i++) {
+      cycleVisualTheme();
+      expect(state.visualTheme).toBe(visualThemeCatalog[i].id);
+    }
     cycleVisualTheme();
     expect(state.visualTheme).toBe('default');
   });
