@@ -16,6 +16,7 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { showToast } from '../features/toast.js';
+import { setStarfieldEnabled } from '../features/starfield.js';
 import { performPrint, buildPrintableDocument, hasLoadedContent } from './ios-chrome.js';
 import {
   hasDesktopBridge,
@@ -30,6 +31,7 @@ import {
   bridgeOnTriggerPrint,
   bridgeOnTriggerExportPdf,
   bridgeOnTriggerSearch,
+  bridgeOnSetStarfield,
   bridgeOnApplyCustomCss,
   bridgeOnUpdateDownloaded,
   bridgeRestartToUpdate,
@@ -275,6 +277,11 @@ export function setupDesktopIPC() {
   // Appearance menu: apply custom CSS theme
   bridgeOnApplyCustomCss(function (cssContent) {
     applyCustomCss(cssContent);
+  });
+
+  // Appearance menu: Starfield Background checkbox
+  bridgeOnSetStarfield(function (enabled) {
+    setStarfieldEnabled(!!enabled);
   });
 
   // Auto-update: a downloaded update is ready — offer a one-click restart.

@@ -14,7 +14,7 @@ drop-zone.
 | 2026-08-20 | [spec-article-outlines](2026-08-20-spec-article-outlines.md)               | Flagship LinkedIn article arc, how-I-built-it follow-ups, shorter posts                                                  |
 | 2026-08-20 | [spec-sharing-playbook](2026-08-20-spec-sharing-playbook.md)               | Demo, channels, comment strategy, what not to oversell                                                                   |
 | 2026-08-20 | [tasks-session-01-sharing-kit](2026-08-20-tasks-session-01-sharing-kit.md) | Implement showcase + copy kit + OG card + tests                                                                          |
-| 2026-08-22 | [tasks-session-02-starfield-toggle](2026-08-22-tasks-session-02-starfield-toggle.md) | Optional starfield on web, desktop, and iOS (default on for the web showcase) |
+| 2026-08-22 | [tasks-session-02-starfield-toggle](2026-08-22-tasks-session-02-starfield-toggle.md) | Optional starfield on every surface: header button, desktop Appearance menu, iOS sheet |
 
 ## Current status
 

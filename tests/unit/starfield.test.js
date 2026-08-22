@@ -98,6 +98,16 @@ describe('Starfield toggle', () => {
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
   });
 
+  it('setStarfieldEnabled applies an explicit on/off state', () => {
+    loadApp(document);
+    setStarfieldEnabled(false);
+    expect(state.starfieldEnabled).toBe(false);
+    expect(document.documentElement.getAttribute('data-starfield')).toBe('off');
+    setStarfieldEnabled(true);
+    expect(state.starfieldEnabled).toBe(true);
+    expect(document.documentElement.getAttribute('data-starfield')).toBe('on');
+  });
+
   it('turns the sky off from the header button on web', () => {
     loadApp(document);
     document.getElementById('starfield-toggle').click();

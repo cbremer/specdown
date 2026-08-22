@@ -276,6 +276,20 @@ describe('desktop/main.js', () => {
       expect(template.find(m => m.label === 'Window')).toBeDefined();
     });
 
+    it('includes an Appearance menu Starfield Background checkbox', () => {
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const appearance = template.find(m => m.label === 'Appearance');
+      expect(appearance).toBeDefined();
+      const starfield = appearance.submenu.find(
+        item => item.id === 'starfield-toggle'
+      );
+      expect(starfield).toBeDefined();
+      expect(starfield.type).toBe('checkbox');
+      expect(starfield.checked).toBe(false);
+      expect(typeof starfield.click).toBe('function');
+    });
+
     it('includes a Help menu with Open Log File', () => {
       buildMenu();
       const template = Menu.buildFromTemplate.mock.calls[0][0];
@@ -304,6 +318,7 @@ describe('desktop/main.js', () => {
       expect(registeredChannels).toContain('unwatch-file');
       expect(registeredChannels).toContain('refresh-file');
       expect(registeredChannels).toContain('open-dropped-path');
+      expect(registeredChannels).toContain('starfield-changed');
     });
 
     it('registers a request-open-path handler that ignores non-string paths', () => {

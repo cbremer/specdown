@@ -135,6 +135,18 @@ contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
+  // Appearance > Starfield Background: apply the checkbox state from the
+  // native menu. The renderer reports back via notifyStarfield so the
+  // checkbox stays in sync with the header button.
+  onSetStarfield: (callback) => {
+    ipcRenderer.on('set-starfield', (_event, enabled) => {
+      callback(enabled);
+    });
+  },
+  notifyStarfield: (enabled) => {
+    ipcRenderer.send('starfield-changed', enabled);
+  },
+
   // Register a callback for applying custom CSS (Appearance menu or saved theme)
   onApplyCustomCss: (callback) => {
     ipcRenderer.on('apply-custom-css', (_event, cssContent) => {

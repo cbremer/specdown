@@ -11,6 +11,7 @@ import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
+import { bridgeNotifyStarfield } from '../platform/bridge.js';
 
 const STARFIELD_STORAGE_KEY = 'starfield';
 const starfieldEl = (/** @type {string} */ id) => document.getElementById(id);
@@ -58,7 +59,16 @@ function starfieldApply(persist) {
   }
   starfieldUpdateToggle();
   syncIOSChrome();
+  bridgeNotifyStarfield(state.starfieldEnabled);
   if (state.starfieldEnabled) starfieldEnsureField();
+}
+
+/**
+ * @param {boolean} enabled
+ */
+export function setStarfieldEnabled(enabled) {
+  state.starfieldEnabled = !!enabled;
+  starfieldApply(true);
 }
 
 /**
@@ -70,8 +80,7 @@ export function setupStarfield() {
 }
 
 export function toggleStarfield() {
-  state.starfieldEnabled = !state.starfieldEnabled;
-  starfieldApply(true);
+  setStarfieldEnabled(!state.starfieldEnabled);
 }
 
 /**

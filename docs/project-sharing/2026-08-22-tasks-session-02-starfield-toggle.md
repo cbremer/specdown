@@ -15,6 +15,7 @@ compact dashed card until the user opts in.
 - [x] Persist `localStorage.starfield` (`1` / `0`); default on for web, off
       for Electron and iOS
 - [x] Header sparkles toggle next to theme (reachable on iPhone empty state)
+- [x] Desktop Appearance menu checkbox (`Starfield Background`)
 - [x] iOS action-sheet row (`Turn Starfield On/Off`)
 - [x] Scope nebula/canvas CSS to `[data-starfield="on"]` so native shells
       without the toggle stay the compact card

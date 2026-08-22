@@ -74,6 +74,8 @@ interface SpecdownDesktopBridge {
   exportPdf?: (payload: { title: string; html: string }) => void;
   onTriggerExportPdf?: (cb: () => void) => void;
   onTriggerSearch?: (cb: () => void) => void;
+  onSetStarfield?: (cb: (enabled: boolean) => void) => void;
+  notifyStarfield?: (enabled: boolean) => void;
   onApplyCustomCss?: (cb: (cssContent: string) => void) => void;
   saveSession?: (tabs: SpecdownSessionTab[]) => void;
   onUpdateDownloaded?: (cb: (info: { version?: string }) => void) => void;

@@ -983,6 +983,14 @@ ipcMain.on('restart-to-update', () => {
   }
 });
 
+// Keep the Appearance > Starfield checkbox in sync when the renderer toggle
+// (header sparkles button) changes the preference.
+ipcMain.on('starfield-changed', (_event, enabled) => {
+  const menu = Menu.getApplicationMenu();
+  const item = menu && menu.getMenuItemById('starfield-toggle');
+  if (item) item.checked = !!enabled;
+});
+
 // ===========================
 // Native Menu
 // ===========================
@@ -1126,6 +1134,18 @@ function buildMenu() {
         {
           label: 'Clear Custom Theme',
           click: () => clearCustomCss(),
+        },
+        { type: 'separator' },
+        {
+          id: 'starfield-toggle',
+          label: 'Starfield Background',
+          type: 'checkbox',
+          checked: false,
+          click: (menuItem) => {
+            if (mainWindow && mainWindow.webContents) {
+              mainWindow.webContents.send('set-starfield', !!menuItem.checked);
+            }
+          },
         },
       ],
     },
