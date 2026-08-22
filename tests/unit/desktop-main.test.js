@@ -50,6 +50,7 @@ jest.mock('electron', () => ({
   Menu: {
     buildFromTemplate: jest.fn((template) => template),
     setApplicationMenu: jest.fn(),
+    getApplicationMenu: jest.fn(() => null),
   },
   dialog: {
     showOpenDialog: jest.fn(),
@@ -93,6 +94,8 @@ const {
   loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
+  applyVisualThemeCatalog,
+  DEFAULT_VISUAL_THEME_CATALOG,
 } = require('../../desktop/main');
 
 describe('desktop/main.js', () => {
@@ -222,6 +225,8 @@ describe('desktop/main.js', () => {
     const { Menu } = require('electron');
 
     beforeEach(() => {
+      applyVisualThemeCatalog(DEFAULT_VISUAL_THEME_CATALOG);
+      Menu.getApplicationMenu.mockReturnValue(null);
       Menu.buildFromTemplate.mockClear();
       Menu.setApplicationMenu.mockClear();
     });
@@ -276,6 +281,55 @@ describe('desktop/main.js', () => {
       expect(template.find(m => m.label === 'Window')).toBeDefined();
     });
 
+    it('includes an Appearance > Theme submenu with Default and Starfield', () => {
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const appearance = template.find(m => m.label === 'Appearance');
+      expect(appearance).toBeDefined();
+      const themeMenu = appearance.submenu.find(item => item.label === 'Theme');
+      expect(themeMenu).toBeDefined();
+      const ids = themeMenu.submenu.map(item => item.id);
+      expect(ids).toContain('visual-theme-default');
+      expect(ids).toContain('visual-theme-starfield');
+      expect(themeMenu.submenu.every(item => item.type === 'radio')).toBe(true);
+    });
+
+    it('rebuilds Appearance > Theme from a renderer catalog', () => {
+      applyVisualThemeCatalog([
+        { id: 'default', label: 'Default' },
+        { id: 'starfield', label: 'Starfield' },
+        { id: 'aurora', label: 'Aurora' },
+      ]);
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const appearance = template.find(m => m.label === 'Appearance');
+      const themeMenu = appearance.submenu.find(item => item.label === 'Theme');
+      expect(themeMenu.submenu.map(item => item.id)).toEqual([
+        'visual-theme-default',
+        'visual-theme-starfield',
+        'visual-theme-aurora',
+      ]);
+      expect(themeMenu.submenu.map(item => item.label)).toEqual([
+        'Default',
+        'Starfield',
+        'Aurora',
+      ]);
+    });
+
+    it('ignores an invalid visual theme catalog from the renderer', () => {
+      applyVisualThemeCatalog('nope');
+      applyVisualThemeCatalog([]);
+      applyVisualThemeCatalog([{ id: '!!!', label: 'Bad' }]);
+      buildMenu();
+      const template = Menu.buildFromTemplate.mock.calls[0][0];
+      const appearance = template.find(m => m.label === 'Appearance');
+      const themeMenu = appearance.submenu.find(item => item.label === 'Theme');
+      expect(themeMenu.submenu.map(item => item.id)).toEqual([
+        'visual-theme-default',
+        'visual-theme-starfield',
+      ]);
+    });
+
     it('includes a Help menu with Open Log File', () => {
       buildMenu();
       const template = Menu.buildFromTemplate.mock.calls[0][0];
@@ -304,6 +358,34 @@ describe('desktop/main.js', () => {
       expect(registeredChannels).toContain('unwatch-file');
       expect(registeredChannels).toContain('refresh-file');
       expect(registeredChannels).toContain('open-dropped-path');
+      expect(registeredChannels).toContain('visual-theme-changed');
+      expect(registeredChannels).toContain('visual-theme-catalog');
+    });
+
+    it('checks Appearance > Theme radios from the live catalog', () => {
+      const { ipcMain, Menu } = require('electron');
+      const items = {
+        'visual-theme-default': { checked: true },
+        'visual-theme-starfield': { checked: false },
+        'visual-theme-aurora': { checked: false },
+      };
+      applyVisualThemeCatalog([
+        { id: 'default', label: 'Default' },
+        { id: 'starfield', label: 'Starfield' },
+        { id: 'aurora', label: 'Aurora' },
+      ]);
+      Menu.getApplicationMenu.mockReturnValue({
+        getMenuItemById: (id) => items[id] || null,
+      });
+      const handler = ipcMain.on.mock.calls.find(
+        (call) => call[0] === 'visual-theme-changed'
+      )[1];
+      handler({}, 'aurora');
+      expect(items['visual-theme-default'].checked).toBe(false);
+      expect(items['visual-theme-starfield'].checked).toBe(false);
+      expect(items['visual-theme-aurora'].checked).toBe(true);
+      applyVisualThemeCatalog(DEFAULT_VISUAL_THEME_CATALOG);
+      Menu.getApplicationMenu.mockReturnValue(null);
     });
 
     it('registers a request-open-path handler that ignores non-string paths', () => {

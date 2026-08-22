@@ -983,6 +983,76 @@ ipcMain.on('restart-to-update', () => {
   }
 });
 
+// Fallback catalog so Appearance → Theme exists before the renderer loads.
+// The renderer catalog (markdown-viewer/src/core/visual-theme-catalog.js) is
+// the source of truth and replaces this list over `visual-theme-catalog`.
+const DEFAULT_VISUAL_THEME_CATALOG = [
+  { id: 'default', label: 'Default' },
+  { id: 'starfield', label: 'Starfield' },
+];
+let visualThemeCatalogItems = DEFAULT_VISUAL_THEME_CATALOG.slice();
+let currentVisualThemeId = 'default';
+
+function normalizeVisualThemeCatalog(raw) {
+  if (!Array.isArray(raw)) return null;
+  const seen = new Set();
+  const next = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+    const label = typeof entry.label === 'string' ? entry.label.trim() : '';
+    if (!id || !label || !/^[a-z][a-z0-9-]*$/i.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    next.push({ id, label });
+  }
+  return next.length > 0 ? next : null;
+}
+
+function applyVisualThemeCatalog(raw) {
+  const next = normalizeVisualThemeCatalog(raw);
+  if (!next) return false;
+  visualThemeCatalogItems = next;
+  if (!visualThemeCatalogItems.some((theme) => theme.id === currentVisualThemeId)) {
+    currentVisualThemeId = visualThemeCatalogItems[0].id;
+  }
+  if (typeof Menu.getApplicationMenu === 'function' && Menu.getApplicationMenu()) {
+    rebuildMenu();
+  }
+  return true;
+}
+
+function buildVisualThemeSubmenu() {
+  return visualThemeCatalogItems.map((theme) => ({
+    id: 'visual-theme-' + theme.id,
+    label: theme.label,
+    type: 'radio',
+    checked: theme.id === currentVisualThemeId,
+    click: () => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('set-visual-theme', theme.id);
+      }
+    },
+  }));
+}
+
+// Renderer catalog of named empty-state looks — rebuild Appearance → Theme.
+ipcMain.on('visual-theme-catalog', (_event, catalog) => {
+  applyVisualThemeCatalog(catalog);
+});
+
+// Keep Appearance > Theme radio items in sync with the in-app picker.
+ipcMain.on('visual-theme-changed', (_event, themeId) => {
+  if (typeof themeId === 'string' && visualThemeCatalogItems.some((theme) => theme.id === themeId)) {
+    currentVisualThemeId = themeId;
+  }
+  const menu = Menu.getApplicationMenu();
+  if (!menu) return;
+  for (const theme of visualThemeCatalogItems) {
+    const item = menu.getMenuItemById('visual-theme-' + theme.id);
+    if (item) item.checked = theme.id === currentVisualThemeId;
+  }
+});
+
 // ===========================
 // Native Menu
 // ===========================
@@ -1126,6 +1196,11 @@ function buildMenu() {
         {
           label: 'Clear Custom Theme',
           click: () => clearCustomCss(),
+        },
+        { type: 'separator' },
+        {
+          label: 'Theme',
+          submenu: buildVisualThemeSubmenu(),
         },
       ],
     },
@@ -1302,4 +1377,6 @@ module.exports = {
   loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
+  applyVisualThemeCatalog,
+  DEFAULT_VISUAL_THEME_CATALOG,
 };

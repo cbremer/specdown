@@ -231,6 +231,76 @@ body {
     transform: scale(1.05);
 }
 
+.theme-toggle.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.visual-theme-picker {
+    position: relative;
+}
+
+.visual-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.visual-theme-toggle-label {
+    line-height: 1;
+}
+
+@media (max-width: 520px) {
+    .visual-theme-toggle-label {
+        display: none;
+    }
+}
+
+.visual-theme-menu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    z-index: 200;
+    min-width: 10.5rem;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.visual-theme-menu[hidden] {
+    display: none;
+}
+
+.visual-theme-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.7rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.visual-theme-option:hover,
+.visual-theme-option.active {
+    background: var(--bg-tertiary);
+}
+
+.visual-theme-option.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 /* ===========================
    Drop Zone
    =========================== */
@@ -511,6 +581,509 @@ body {
 
 .drop-zone.drag-over .drop-zone-overlay {
     display: flex;
+}
+
+/* ===========================
+   Starfield mode (all surfaces)
+   =========================== */
+/* Optional nebula + stars behind the empty-state drop zone. Driven by
+   `data-visual-theme="starfield"` (header Theme dropdown + desktop Appearance
+   menu + iOS sheet). Default on the web showcase; Default on desktop/iOS.
+   A future Theme is a catalog entry plus another `[data-visual-theme="<id>"]`
+   block here. */
+[data-visual-theme="starfield"] .drop-zone {
+    isolation: isolate;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.28), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.22), transparent 50%),
+        radial-gradient(ellipse 60% 70% at 70% 92%, rgba(122, 80, 220, 0.2), transparent 55%),
+        #070b18;
+}
+
+[data-visual-theme="starfield"] .drop-zone::before {
+    content: '';
+    position: sticky;
+    display: block;
+    top: 0;
+    width: 100%;
+    height: 0;
+    flex: 0 0 0;
+    pointer-events: none;
+    z-index: 0;
+    box-shadow:
+        0 0 180px 80px rgba(0, 163, 191, 0.12),
+        40vw 30vh 220px 90px rgba(255, 122, 77, 0.1),
+        70vw 80vh 200px 70px rgba(90, 70, 200, 0.12);
+    animation: landing-nebula-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes landing-nebula-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-4%, 3%, 0) scale(1.08); }
+}
+
+[data-theme="dark"][data-visual-theme="starfield"] .drop-zone {
+    background:
+        radial-gradient(ellipse 80% 60% at 12% 8%, rgba(122, 184, 245, 0.16), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 140, 90, 0.14), transparent 50%),
+        radial-gradient(ellipse 60% 70% at 70% 92%, rgba(80, 50, 160, 0.22), transparent 55%),
+        #05060d;
+}
+
+.starfield-canvas,
+.starfield-cursor-core {
+    display: none;
+}
+
+[data-visual-theme="starfield"] .starfield-canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+[data-visual-theme="starfield"] .starfield-cursor-core {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 220px;
+    height: 220px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+[data-visual-theme="starfield"] .starfield-cursor-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #7ae0ff 35%, #ff8a4d 100%);
+    box-shadow:
+        0 0 18px 6px rgba(122, 224, 255, 0.55),
+        0 0 48px 16px rgba(255, 122, 77, 0.28);
+}
+
+[data-visual-theme="starfield"] .starfield-cursor-ring {
+    position: absolute;
+    inset: 18%;
+    border-radius: 50%;
+    border: 1px solid rgba(122, 224, 255, 0.45);
+    box-shadow: 0 0 40px rgba(0, 163, 191, 0.25) inset;
+    animation: landing-cursor-pulse 3.6s ease-in-out infinite;
+}
+
+@keyframes landing-cursor-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+[data-visual-theme="starfield"] .drop-zone-content {
+    position: relative;
+    z-index: 2;
+}
+
+[data-theme="light"][data-visual-theme="starfield"] .drop-zone {
+    background:
+        radial-gradient(ellipse 80% 60% at 12% 8%, rgba(0, 163, 191, 0.2), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 92% 18%, rgba(255, 122, 77, 0.16), transparent 50%),
+        radial-gradient(ellipse 60% 70% at 70% 92%, rgba(120, 90, 210, 0.1), transparent 55%),
+        #eef4fb;
+}
+
+[data-theme="light"][data-visual-theme="starfield"] .drop-zone::before {
+    box-shadow:
+        0 0 160px 70px rgba(0, 163, 191, 0.1),
+        40vw 30vh 200px 80px rgba(255, 122, 77, 0.08),
+        70vw 80vh 180px 60px rgba(120, 90, 210, 0.08);
+}
+
+[data-theme="light"][data-visual-theme="starfield"] .starfield-cursor-dot {
+    box-shadow:
+        0 0 16px 5px rgba(31, 107, 184, 0.35),
+        0 0 40px 14px rgba(255, 122, 77, 0.22);
+}
+
+[data-theme="light"][data-visual-theme="starfield"] .starfield-cursor-ring {
+    border-color: rgba(31, 107, 184, 0.38);
+    box-shadow: 0 0 36px rgba(0, 163, 191, 0.18) inset;
+}
+
+@media (max-width: 640px) {
+    [data-visual-theme="starfield"] .starfield-cursor-core {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-visual-theme="starfield"] .drop-zone::before,
+    [data-visual-theme="starfield"] .starfield-cursor-ring {
+        animation: none;
+    }
+
+    [data-visual-theme="starfield"] .starfield-cursor-core {
+        display: none;
+    }
+}
+
+/* ===========================
+   Web showcase empty state
+   =========================== */
+/* Product homepage on GitHub Pages only (`.web-showcase` is added at init on
+   the web surface). Showcase sections are siblings of `.drop-zone-content`,
+   not children, so desktop/iOS keep the compact dashed card. Do not center
+   overflowing flex items here: a wide Mermaid SVG + `min-width: auto` +
+   `align-items: center` clips the left side and the stack looks right-justified.
+   The sky itself lives on `[data-visual-theme="starfield"]` so native shells can opt in. */
+.drop-zone.web-showcase {
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: center;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    isolation: isolate;
+}
+
+/* Dashed drop card stays the same control as desktop/iOS; only centered in
+   the sky. Do not stretch it to 960px or strip its border. */
+.drop-zone.web-showcase .drop-zone-content {
+    align-self: center;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 2;
+}
+
+.drop-zone.web-showcase .landing-hero,
+.drop-zone.web-showcase .landing-diagram-host,
+.drop-zone.web-showcase .landing-pillars,
+.drop-zone.web-showcase .landing-desktop {
+    width: min(960px, 100%);
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.drop-zone.web-showcase .landing-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.drop-zone.web-showcase .landing-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 0 var(--space-3);
+    padding: 0.2rem 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #9bebff;
+    border: 1px solid rgba(122, 224, 255, 0.35);
+    border-radius: var(--radius-pill);
+    background: rgba(7, 16, 32, 0.45);
+    backdrop-filter: blur(8px);
+}
+
+.drop-zone.web-showcase .landing-signal {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #7dffb3;
+    box-shadow: 0 0 10px #7dffb3;
+    animation: landing-signal-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes landing-signal-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+}
+
+.drop-zone.web-showcase .landing-title {
+    margin: 0 0 var(--space-3);
+    font-size: clamp(1.85rem, 4.4vw, 2.85rem);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    text-align: center;
+    color: #f4fbff;
+    background: linear-gradient(115deg, #ffffff 10%, #7ae0ff 48%, #ffb089 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 18px rgba(122, 224, 255, 0.28));
+}
+
+.drop-zone.web-showcase .landing-lede {
+    margin: 0 auto;
+    max-width: 42rem;
+    font-size: 1.08rem;
+    text-align: center;
+    color: rgba(230, 240, 255, 0.78);
+}
+
+.drop-zone.web-showcase .landing-kicker {
+    margin: 0 0 var(--space-2);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ffb089;
+}
+
+.drop-zone.web-showcase .landing-diagram-host {
+    margin-top: var(--space-6);
+}
+
+.drop-zone.web-showcase .landing-diagram-caption {
+    margin: 0 0 var(--space-3);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    color: rgba(200, 230, 255, 0.72);
+}
+
+.drop-zone.web-showcase .landing-diagram {
+    border: 1px solid rgba(122, 224, 255, 0.28);
+    border-radius: 18px;
+    background: rgba(8, 14, 28, 0.55);
+    backdrop-filter: blur(14px);
+    padding: var(--space-4);
+    overflow: hidden;
+    min-width: 0;
+    max-width: 100%;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.drop-zone.web-showcase .landing-diagram .diagram-container,
+.drop-zone.web-showcase .landing-diagram .diagram-wrapper {
+    margin: 0;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.drop-zone.web-showcase .landing-pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.drop-zone.web-showcase .landing-pillar {
+    padding: var(--space-5) var(--space-4);
+    border: 1px solid rgba(122, 224, 255, 0.22);
+    border-radius: 18px;
+    background: rgba(10, 16, 32, 0.58);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transition: transform 180ms ease, border-color 180ms ease;
+    text-align: center;
+}
+
+.drop-zone.web-showcase .landing-pillar:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 176, 137, 0.45);
+}
+
+.drop-zone.web-showcase .landing-pillar h3 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.05rem;
+    color: #f4fbff;
+}
+
+.drop-zone.web-showcase .landing-pillar p:not(.landing-kicker) {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(210, 228, 255, 0.72);
+}
+
+.drop-zone.web-showcase .landing-desktop {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-6);
+    padding: var(--space-5);
+    border: 1px solid rgba(255, 176, 137, 0.28);
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(255, 122, 77, 0.12), rgba(0, 163, 191, 0.1)),
+        rgba(10, 16, 32, 0.62);
+    backdrop-filter: blur(14px);
+    text-align: center;
+}
+
+.drop-zone.web-showcase .landing-desktop h3 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.15rem;
+    color: #f4fbff;
+}
+
+.drop-zone.web-showcase .landing-desktop p:not(.landing-kicker) {
+    margin: 0 0 var(--space-4);
+    color: rgba(210, 228, 255, 0.75);
+}
+
+.drop-zone.web-showcase .landing-download {
+    display: inline-block;
+    background: linear-gradient(115deg, #1f6bb8, #00a3bf 55%, #ff7a4d);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.8rem 1.35rem;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 8px 24px rgba(0, 163, 191, 0.35);
+    transition: var(--transition-fast);
+}
+
+.drop-zone.web-showcase .landing-download:hover {
+    background: linear-gradient(115deg, #17528f, #00c2d6 55%, #ff9268);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.drop-zone.web-showcase .url-section,
+.drop-zone.web-showcase .sample-section,
+.drop-zone.web-showcase .recent-files-section {
+    border-top-color: rgba(122, 224, 255, 0.18);
+    color: rgba(210, 228, 255, 0.8);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.drop-zone.web-showcase .url-separator,
+.drop-zone.web-showcase .url-note {
+    color: rgba(180, 210, 235, 0.7);
+}
+
+.drop-zone.web-showcase .url-input-row input {
+    background: rgba(8, 14, 28, 0.65);
+    border-color: rgba(122, 224, 255, 0.28);
+    color: #f4fbff;
+}
+
+/* Light theme: showcase copy on the dawn sky (sky itself is the visual theme). */
+[data-theme="light"] .drop-zone.web-showcase .landing-eyebrow {
+    color: #17528f;
+    border-color: rgba(31, 107, 184, 0.28);
+    background: rgba(255, 255, 255, 0.62);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-signal {
+    background: #1aa35a;
+    box-shadow: 0 0 8px rgba(26, 163, 90, 0.55);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-title {
+    color: #0d1b2a;
+    background: linear-gradient(115deg, #0d1b2a 8%, #1f6bb8 52%, #d65a28 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: none;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-lede {
+    color: #3d4f63;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-kicker {
+    color: #c45c28;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-diagram-caption {
+    color: #4a6078;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-diagram {
+    border-color: rgba(31, 107, 184, 0.18);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+        0 12px 32px rgba(31, 60, 100, 0.08);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-pillar {
+    border-color: rgba(31, 107, 184, 0.16);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 10px 28px rgba(31, 60, 100, 0.07);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-pillar:hover {
+    border-color: rgba(214, 90, 40, 0.4);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-pillar h3 {
+    color: #0d1b2a;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-pillar p:not(.landing-kicker) {
+    color: #4a6078;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-desktop {
+    border-color: rgba(214, 90, 40, 0.28);
+    background:
+        linear-gradient(135deg, rgba(255, 122, 77, 0.1), rgba(0, 163, 191, 0.08)),
+        rgba(255, 255, 255, 0.76);
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-desktop h3 {
+    color: #0d1b2a;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .landing-desktop p:not(.landing-kicker) {
+    color: #4a6078;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .url-section,
+[data-theme="light"] .drop-zone.web-showcase .sample-section,
+[data-theme="light"] .drop-zone.web-showcase .recent-files-section {
+    border-top-color: rgba(31, 107, 184, 0.16);
+    color: #3d4f63;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .url-separator,
+[data-theme="light"] .drop-zone.web-showcase .url-note {
+    color: #5a7188;
+}
+
+[data-theme="light"] .drop-zone.web-showcase .url-input-row input {
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(31, 107, 184, 0.22);
+    color: #0d1b2a;
+}
+
+@media (max-width: 640px) {
+    .drop-zone.web-showcase .drop-zone-content {
+        padding: var(--space-5) var(--space-4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drop-zone.web-showcase .landing-signal {
+        animation: none;
+    }
 }
 
 /* ===========================

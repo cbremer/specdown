@@ -16,6 +16,7 @@ import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
 import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
 import { showToast } from '../features/toast.js';
+import { setVisualTheme } from '../features/starfield.js';
 import { performPrint, buildPrintableDocument, hasLoadedContent } from './ios-chrome.js';
 import {
   hasDesktopBridge,
@@ -30,6 +31,7 @@ import {
   bridgeOnTriggerPrint,
   bridgeOnTriggerExportPdf,
   bridgeOnTriggerSearch,
+  bridgeOnSetVisualTheme,
   bridgeOnApplyCustomCss,
   bridgeOnUpdateDownloaded,
   bridgeRestartToUpdate,
@@ -275,6 +277,11 @@ export function setupDesktopIPC() {
   // Appearance menu: apply custom CSS theme
   bridgeOnApplyCustomCss(function (cssContent) {
     applyCustomCss(cssContent);
+  });
+
+  // Appearance menu: Theme submenu
+  bridgeOnSetVisualTheme(function (themeId) {
+    setVisualTheme(String(themeId || 'default'));
   });
 
   // Auto-update: a downloaded update is ready — offer a one-click restart.

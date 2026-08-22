@@ -74,6 +74,11 @@ interface SpecdownDesktopBridge {
   exportPdf?: (payload: { title: string; html: string }) => void;
   onTriggerExportPdf?: (cb: () => void) => void;
   onTriggerSearch?: (cb: () => void) => void;
+  onSetVisualTheme?: (cb: (themeId: string) => void) => void;
+  notifyVisualTheme?: (themeId: string) => void;
+  notifyVisualThemeCatalog?: (
+    catalog: ReadonlyArray<{ id: string; label: string; icon?: string }>
+  ) => void;
   onApplyCustomCss?: (cb: (cssContent: string) => void) => void;
   saveSession?: (tabs: SpecdownSessionTab[]) => void;
   onUpdateDownloaded?: (cb: (info: { version?: string }) => void) => void;

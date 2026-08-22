@@ -13,6 +13,7 @@ import { trapFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
+import { visualThemeLabel } from '../core/visual-theme-catalog.js';
 import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -488,6 +489,11 @@ export function syncIOSChrome() {
 
   updateIOSSheetButton(el('ios-split-button'), state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
   updateIOSSheetButton(el('ios-theme-button'), state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
+  updateIOSSheetButton(
+    el('ios-visual-theme-button'),
+    'Theme: ' + visualThemeLabel(state.visualTheme),
+    state.visualTheme !== 'default'
+  );
 
   const iosSplitButton = /** @type {HTMLButtonElement | null} */ (el('ios-split-button'));
   const iosPrintButton = /** @type {HTMLButtonElement | null} */ (el('ios-print-button'));

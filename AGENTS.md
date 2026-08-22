@@ -17,7 +17,7 @@ When working with this repo, read and follow `CLAUDE.md` for:
 
 | Service | How to run | Notes |
 |---------|-----------|-------|
-| Web app (dev) | `npm run dev` | Vite dev server with hot reload |
+| Web app (dev) | `npm run dev` | Vite on http://localhost:5179/ (not 5173) |
 | Web app (build) | `npm run build` | Vite build → `markdown-viewer/dist/`; `npm run preview` serves it |
 | Tests | `npm test` | Jest with jsdom; full suite runs in ~4s |
 | Lint | `npm run lint` | ESLint flat config (`eslint.config.js`); must be clean |

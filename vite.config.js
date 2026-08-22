@@ -27,6 +27,17 @@ export default defineConfig({
   root: 'markdown-viewer',
   base: './',
   plugins: [stripCrossorigin],
+  // 5179 instead of Vite's default 5173 so a local `npm run dev` does not
+  // collide with other Vite apps on the same machine.
+  server: {
+    port: 5179,
+    strictPort: true,
+    host: true,
+  },
+  preview: {
+    port: 4179,
+    strictPort: true,
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

@@ -135,6 +135,23 @@ contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
+  // Appearance > Theme: apply a named visual theme from the native menu.
+  // The renderer reports back via notifyVisualTheme so radio items stay
+  // in sync with the header dropdown.
+  onSetVisualTheme: (callback) => {
+    ipcRenderer.on('set-visual-theme', (_event, themeId) => {
+      callback(themeId);
+    });
+  },
+  notifyVisualTheme: (themeId) => {
+    ipcRenderer.send('visual-theme-changed', themeId);
+  },
+  // Renderer catalog of named empty-state looks. The main process rebuilds
+  // Appearance → Theme from this list so a new theme is one catalog entry.
+  notifyVisualThemeCatalog: (catalog) => {
+    ipcRenderer.send('visual-theme-catalog', catalog);
+  },
+
   // Register a callback for applying custom CSS (Appearance menu or saved theme)
   onApplyCustomCss: (callback) => {
     ipcRenderer.on('apply-custom-css', (_event, cssContent) => {

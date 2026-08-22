@@ -64,6 +64,7 @@ import {
   toggleTheme,
   configureTheme,
 } from './features/theme.js';
+import { setupVisualTheme } from './features/starfield.js';
 import {
   toggleViewMode,
   updateViewToggleButton,
@@ -114,6 +115,12 @@ import { setupVersionInfo, checkForUpdates } from './features/version-check.js';
 import { setupDragAndDrop } from './features/drag-drop.js';
 import { setupGlobalKeyboardShortcuts } from './features/keyboard.js';
 import { setupIOSEventListeners } from './platform/ios-wiring.js';
+import {
+  configureLanding,
+  setupWebLanding,
+  isLandingDropClickIgnored,
+  openLandingBundledSample,
+} from './features/landing.js';
 
 // ===========================
 // Constants
@@ -175,6 +182,10 @@ function init() {
         createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>
             createTab(filename, content, filePath, sourceMeta),
     });
+    configureLanding({
+        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>
+            createTab(filename, content, filePath, sourceMeta),
+    });
     configureShareLinks({
         createTab: (/** @type {string} */ filename, /** @type {string} */ md) => createTab(filename, md),
     });
@@ -198,7 +209,9 @@ function init() {
     registerAppCommands();
     setupVersionInfo(APP_VERSION, APP_VERSION_LABEL);
     setupTheme();
+    setupVisualTheme();
     setupIOSNativeUI();
+    setupWebLanding();
     setupToolbarOverflow();
     setupRecentFiles();
     setupWorkspace();
@@ -268,14 +281,25 @@ function setupEventListeners() {
     if (openSampleBasic) {
         openSampleBasic.addEventListener('click', (e) => {
             e.stopPropagation();
-            requestBundledSampleIfAvailable('sample.md');
+            if (requestBundledSampleIfAvailable('sample.md')) return;
+            void openLandingBundledSample('sample.md');
         });
     }
 
     if (openSampleMermaid) {
         openSampleMermaid.addEventListener('click', (e) => {
             e.stopPropagation();
-            requestBundledSampleIfAvailable('diagram-showcase.md');
+            if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
+            void openLandingBundledSample('diagram-showcase.md');
+        });
+    }
+
+    const openWebShowcase = $('open-web-showcase');
+    if (openWebShowcase) {
+        openWebShowcase.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
+            void openLandingBundledSample('diagram-showcase.md');
         });
     }
 
@@ -285,7 +309,7 @@ function setupEventListeners() {
     // Drag and drop
     dropZone.addEventListener('click', (e) => {
         const target = /** @type {HTMLElement | null} */ (e.target);
-        if (target && target.closest('.url-section')) return;
+        if (isLandingDropClickIgnored(target)) return;
         if (e.target === dropZone || (target && target.closest('.drop-zone-content'))) {
             if (requestNativeOpenIfAvailable()) return;
             fileInput.click();
@@ -294,7 +318,8 @@ function setupEventListeners() {
 
     setupDragAndDrop();
 
-    // Theme toggle
+    // Color scheme (light/dark/auto). Visual theme dropdown is bound in
+    // setupVisualTheme(); iOS also has a sheet action that cycles looks.
     themeToggle.addEventListener('click', toggleTheme);
 
     // View toggle (preview/raw)

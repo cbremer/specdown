@@ -39,7 +39,7 @@ describe('Theme Management', () => {
 
       loadApp(document);
 
-      const icon = document.querySelector('.theme-icon');
+      const icon = document.querySelector('#theme-toggle .theme-icon');
       expect(icon.getAttribute('data-icon')).toBe('sun');
     });
 
@@ -48,7 +48,7 @@ describe('Theme Management', () => {
 
       loadApp(document);
 
-      const icon = document.querySelector('.theme-icon');
+      const icon = document.querySelector('#theme-toggle .theme-icon');
       expect(icon.getAttribute('data-icon')).toBe('moon');
     });
   });
@@ -92,7 +92,7 @@ describe('Theme Management', () => {
     });
 
     it('should update theme icon across the cycle', () => {
-      const icon = document.querySelector('.theme-icon');
+      const icon = document.querySelector('#theme-toggle .theme-icon');
 
       // Initially light (moon icon)
       expect(icon.getAttribute('data-icon')).toBe('moon');
@@ -145,7 +145,7 @@ describe('Theme Management', () => {
       // currentTheme should be 'light'
       updateThemeIcon();
 
-      const icon = document.querySelector('.theme-icon');
+      const icon = document.querySelector('#theme-toggle .theme-icon');
       expect(icon.getAttribute('data-icon')).toBe('moon');
     });
 
@@ -153,7 +153,7 @@ describe('Theme Management', () => {
       // Toggle to dark first
       toggleTheme();
 
-      const icon = document.querySelector('.theme-icon');
+      const icon = document.querySelector('#theme-toggle .theme-icon');
       expect(icon.getAttribute('data-icon')).toBe('sun');
     });
   });
@@ -216,7 +216,11 @@ describe('Theme Management', () => {
       // The OS switches to dark; the registered listener re-resolves.
       window.matchMedia = jest
         .fn()
-        .mockReturnValue({ matches: true, addEventListener() {}, addListener() {} });
+        .mockReturnValue({
+          matches: true,
+          addEventListener() {},
+          addListener() {},
+        });
       expect(typeof changeHandler).toBe('function');
       changeHandler();
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
@@ -235,7 +239,11 @@ describe('Theme Management', () => {
       // listener is a no-op and the explicit dark choice stands.
       window.matchMedia = jest
         .fn()
-        .mockReturnValue({ matches: true, addEventListener() {}, addListener() {} });
+        .mockReturnValue({
+          matches: true,
+          addEventListener() {},
+          addListener() {},
+        });
       if (changeHandler) changeHandler();
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
