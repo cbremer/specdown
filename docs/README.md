@@ -11,7 +11,7 @@ Each project gets its own subdirectory:
 | [project-url/](project-url/) | URL-based file opening — load markdown from GitHub or any web URL |
 | [project-modernization/](project-modernization/) | Cross-platform modernization — product/UX/engineering evaluation, vision, phased roadmap |
 | [project-bugfix-wave/](project-bugfix-wave/) | Post-modernization bug fixes & UX polish across web, desktop, and iOS |
-| [project-sharing/](project-sharing/) | Product sharing kit — LinkedIn copy, article outlines, web showcase homepage |
+| [project-sharing/](project-sharing/) | Product sharing kit — LinkedIn copy, article outlines, web showcase homepage; names/press for the HTML era live in [project-html](project-html/2026-08-23-brainstorm-names-and-press.md) |
 | [project-html/](project-html/) | HTML documents — forked viewing runtime next to markdown (planning, council-amended) |
 
 ## Naming Conventions
