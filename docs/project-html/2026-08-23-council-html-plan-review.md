@@ -292,7 +292,7 @@ paths. Recorded now so we do not paint a single global default.
 | "Just open HTML in Chrome; SpecDown should stay markdown." | Chrome has no live reload + mixed workspace + SpecDown print. That *is* the product. We are not competing on being a browser. |
 | "Safe-as-default so we never run scripts." | Makes the feature look broken on dashboards/decks — the files we cited as the reason. Isolation (opaque iframe) is the control, not script-stripping. Safe is the escape hatch. |
 | "Convert to markdown for TOC/Find, preview as HTML." | Two sources of truth. Find wouldn't match the page. Rejected again. |
-| "srcdoc is simpler than blob." | srcdoc + `allow-same-origin` + scripts = XSS. srcdoc without same-origin is viable but worse for later `<base>` / assets. Stick to blob; fix CSP (F1). |
+| "srcdoc/blob is simpler." | They inherit parent CSP; Faithful dies. Host page instead (security addendum). |
 | "Add `allow-same-origin` so parent can read TOC." | Veto stands. Host bridge or hide TOC. |
 | "Skip iOS until TestFlight." | Shared renderer + picker types are cheap. Skipping them is how iPhone becomes a second product. Device smoke stays best-effort. |
 | "Session 01 should include Mermaid-in-HTML so it feels like SpecDown." | Comforting, wrong corpus. Most agent HTML is not a Mermaid document. Enhance stays last. |
@@ -458,3 +458,43 @@ product/UX tighten:
 
 Workspace listing stays one helper on desktop **and** the web
 walk (H2). Do not leave Open Folder kind-skewed.
+
+---
+
+## 9. Addendum — Security seat (same day)
+
+**Verdict on the first spec: reject the blob/srcdoc preview.**
+The fork (do not `innerHTML` into the app origin) still stands.
+
+CSP3: `blob:`, `srcdoc`, `data:`, and `about:blank` **inherit
+the creating document’s policy**. Parent `script-src` is
+`'self' 'unsafe-eval' file: specdown:` — no `'unsafe-inline'`,
+no `https:`. A meta tag in the frame cannot loosen that.
+Adding `frame-src blob:` would show a frame whose scripts
+(including an inlined host) **never run**. Loosening parent
+`script-src` is the Absorb attack.
+
+Blob URLs are also **same-origin with the app**. Opacity is
+only `sandbox` without `allow-same-origin`. The earlier
+“simplest opaque origin” claim was wrong.
+
+**Adopted architecture:** `#html-frame.src` is a bundled
+`html-preview-host.html` (real URL, own CSP). Parent
+`postMessage`s rewritten HTML; the host writes **inside** the
+sandboxed frame. Parent CSP gains `frame-src 'self' file:
+specdown:` only. Never add `'unsafe-inline'` or `blob:` to
+parent `script-src`.
+
+Also adopted:
+
+- Frame→parent messages are **untrusted**. No
+  `specdown-print-ready.html` into `document.write` /
+  `loadFile` / iOS formatter.
+- iOS: reject `WKScriptMessage` unless
+  `frameInfo.isMainFrame`; cancel iframe navigations.
+- Host script lives on the host page, not inlined into
+  attacker HTML (document scripts can impersonate it).
+- `allow-modals` is a Session 02 print question, not a
+  silent add.
+
+F1 (blank blob frame) is superseded: we do not use blob.

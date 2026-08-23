@@ -465,17 +465,14 @@ bridge → parent → existing desktop `openExternal` / web
 `window.open` policy). Empty `allow` denies device permissions.
 
 **Invariant 2b (council F3).** The iframe must not become a
-browser. Preview `src` stays the blob we minted; desktop
+browser. Preview `src` stays the preview-host URL; desktop
 `will-frame-navigate` denies in-frame http(s).
 
-**Invariant 3.** We never combine `srcdoc` (or a blob URL that
-inherits the app origin) with `allow-same-origin` +
-`allow-scripts`. That combination is XSS. The v1 host uses a
-**blob: URL** created from a rewritten document, or a **custom
-protocol** on desktop (`specdown-doc://`), both of which are
-non-app origins. `srcdoc` is allowed only if the iframe stays
-*without* `allow-same-origin` (opaque). Prefer blob/protocol so
-relative URL resolution has a fighting chance in Phase 2.
+**Invariant 3.** Preview is a **bundled host page** (real URL,
+own CSP), not `blob:` / `srcdoc`. Those inherit the parent CSP
+and (for blob) the app origin. `allow-same-origin` + scripts
+on either is XSS. Desktop `specdown-doc://` remains Session 04
+for sibling assets.
 
 **Invariant 4.** The parent talks to the frame only via
 `postMessage` with a strict origin check and a typed message
@@ -492,10 +489,10 @@ HTML **Safe mode** path (Phase 2) and a defense for any HTML we
 **Invariant 6.** CSP: the app's script policy stays as it is
 (`'self' 'unsafe-eval'` for Mermaid; `object-src 'none'`;
 `form-action 'none'`). **The app CSP must gain**
-`frame-src 'self' blob: file: specdown:` — today's `default-src`
-has no `blob:`, so a blob iframe is blocked (council F1). Do not
-add `blob:` to `script-src`. The iframe document gets its **own**
-CSP meta we inject:
+`frame-src 'self' file: specdown:` so the bundled preview host
+can be framed. Do not add `blob:` or `'unsafe-inline'` to parent
+`script-src`. The **preview host page** (not a blob document)
+carries its own CSP:
 
 ```
 default-src 'none';
@@ -851,10 +848,8 @@ looks like our existing product) and wrong (most agent HTML is
 ## 8. Open questions (decide in Session 01 or 02, not in the abstract)
 
 1. **Blob URL vs `srcdoc` vs desktop protocol for v1 preview?**
-   Recommendation: **blob URL on all surfaces in Session 01**
-   (simplest opaque origin). Desktop protocol is Session 04.
-   Avoid `srcdoc` unless blob+base is insufficient for a URL-opened
-   file (then `<base>` on the blob document is enough).
+   **Neither blob nor srcdoc.** Bundled `html-preview-host.html`.
+   Desktop protocol is Session 04.
 2. **Do we sniff `Content-Type` on URL open when the path has no
    extension?** **No in Session 01.** Extension-only. Sniffing
    turns the URL box into a scripted browser. Session 05 if ever.

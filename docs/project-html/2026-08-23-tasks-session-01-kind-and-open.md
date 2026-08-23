@@ -59,8 +59,8 @@ session (council H2).
       `renderMarkdown` wrapper for existing tests.
 - [ ] HTML path does **not** call `marked.parse` (test with a spy).
 - [ ] Stage apply on create / switch / close / raw / empty:
-      hide iframe on markdown, raw, and drop-zone; remount blob
-      on HTML activate; revoke on switch-away and close.
+      hide iframe on markdown, raw, and drop-zone; reload the
+      **preview host** then `specdown-load` on HTML activate.
 - [ ] Desktop `refresh-file` + session restore + recents use
       `isOpenableDocument`.
 
@@ -70,17 +70,21 @@ session (council H2).
       preview flex child; `#markdown-content` and `#html-frame`
       are **siblings** (`sandbox="allow-scripts"`, `allow=""`, no
       same-origin). Do not nest the iframe in `.markdown-content`.
-- [ ] `features/html-host.js` — string export only;
-      `specdown-ready` + external-link intercept (spec §3.5).
-- [ ] `features/html-document.js` — rewrite (CSP, inline host,
-      strip nested frames / meta-refresh / `<base target>` /
-      `javascript:` and `data:text/html` hrefs), blob URL mount,
-      revoke, navigation lock (reset if `src` leaves our blob).
+- [ ] Bundled `markdown-viewer/html-preview-host.html` — own CSP
+      (Faithful `'unsafe-inline' https:`), host script as that
+      page’s `'self'`. `#html-frame.src` is this URL, **not**
+      a blob or srcdoc.
+- [ ] `features/html-document.js` — rewrite (strip author CSP /
+      `<base>` / nested frames / executable hrefs),
+      `postMessage` `specdown-load`, navigation lock (reset if
+      `src` leaves the host URL).
 - [ ] 8 MB cap **on HTML only, at read** (`handleFile` /
-      `openFileByPath` / iOS `openDocument`) — not at rewrite.
-- [ ] `index.html` CSP: add `frame-src 'self' blob: file: specdown:`.
-      Do not add `blob:` to `script-src`. **Static grep** of
-      `index.html` (jsdom `loadApp` copies `<body>` only).
+      `openFileByPath` / iOS `openDocument`; `stat` first).
+- [ ] `index.html` CSP: add `frame-src 'self' file: specdown:`.
+      Do **not** add `blob:` or `'unsafe-inline'` to parent
+      `script-src`. **Static grep** of `index.html`.
+- [ ] iOS: reject `WKScriptMessage` unless
+      `frameInfo.isMainFrame`. Cancel iframe navigations.
 - [ ] CSS: iframe fills the stage (zero SpecDown padding); split
       targets `#document-stage`, not `.markdown-content`;
       `@media print` reset for `#document-stage` (markdown
@@ -151,8 +155,8 @@ session (council H2).
 ## Manual smoke (after gates)
 
 1. `npm run preview` (or `dev`): drop the sample HTML — designed
-   page, not a blank frame (CSP `frame-src` works) and not
-   markdown. Toggle Raw. Open a `.md` in another tab; switch
+   page via the **preview host** (not a blank frame, not
+   markdown). Toggle Raw. Open a `.md` in another tab; switch
    back. Close the last tab — landing, no leftover iframe.
 2. Drop a `.txt` — still rejected. Drop a large `.md` — still
    opens (cap is HTML-only).
