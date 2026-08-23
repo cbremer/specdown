@@ -420,3 +420,41 @@ focus.” Relabel Raw → Source when the control is shared.
 **Reversed from the first pass:** H1 (OS HTML association)
 and H4 (Content-Type sniff) are **not** Session 01. They
 were the launch. Workspace listing (H2) stays.
+
+---
+
+## 8. Addendum — Platform seat (same day)
+
+The fork is right. These gates were still missing after the
+product/UX tighten:
+
+- **Live reload DI.** `configureDesktop`, `configureTabs`, and
+  `configureViewMode` all take `renderMarkdown`. If any stay on
+  the markdown function, a Live save or Raw→Preview runs
+  `marked.parse` on HTML. `refresh-file` still uses
+  `isValidMarkdownFile`. Wire all three + the IPC to
+  `renderDocument(tab)` (kind on the tab, not re-detected).
+- **Stage apply on raw.** `tabs.js` / `view-mode.js` raw paths
+  write `#markdown-content` and return **without** hiding the
+  iframe. Raw-on-HTML leaves the page sitting on the source.
+- **8 MB at read**, not at rewrite (`handleFile` /
+  `openFileByPath` / iOS `openDocument`). Rewrite is too late.
+- **`#document-stage` `@media print` reset in Session 01**
+  even though HTML print is Session 02. New full-height
+  ancestor otherwise reclips markdown Cmd+P (`CLAUDE.md`).
+- **iOS UTI.** Add `public.html` to `LSItemContentTypes` only.
+  Do not redeclare it under `UTImportedTypeDeclarations`. Rank
+  stays Alternate. iPad `ContentView.swift` label can say
+  “Open File”; no new sample button.
+- **Drops stay on `getPathForFile`.** No `file.path` (Electron
+  32+).
+- **Inverted tests** go red for the right reason
+  (`desktop-main.test.js` `.html` false, file-loading toast
+  copy). Update them in the same PR. CSP proof is a **static
+  grep** of `index.html` — `loadApp` copies `<body>` only.
+- **Session 04, if `fileAssociations` land:** macOS
+  `open-file` is not enough; Win/Linux need `process.argv` /
+  `second-instance` or the association is paper.
+
+Workspace listing stays one helper on desktop **and** the web
+walk (H2). Do not leave Open Folder kind-skewed.

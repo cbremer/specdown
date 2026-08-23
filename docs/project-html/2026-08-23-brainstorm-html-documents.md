@@ -784,11 +784,12 @@ No Find-in-page, no host-internal print, no asset protocol.
 Raw, switch to a markdown tab and back, confirm the document cannot
 `alert` in the parent (manual).
 
-### Session 02 — Reader chrome honesty
+### Session 02 — Reader chrome honesty (Print is the wedge)
 
-TOC + Find-via-bridge + Print/PDF snapshot + kind-aware toolbar /
-palette / iOS sheet + file info + live reload verification +
-creator-detect. Hide anything still dishonest.
+Host-internal Print/PDF + kind-aware hiding that survived
+Session 01 + live-reload verification. **Hide Find** unless the
+bridge highlight is real in the same PR (likely hide). Parser
+TOC or hide Contents. No creator-detect. No landing launch.
 
 ### Session 03 — Mixed workspace + links
 

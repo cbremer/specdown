@@ -19,7 +19,7 @@ app origin. Markdown stays the compiler pipeline; HTML is already compiled.
 | 2026-08-23 | [brainstorm-html-documents](2026-08-23-brainstorm-html-documents.md)                         | Three-lens plan (PM / UX / distinguished engineer): why now, what we refuse to become, the runtime fork, security model, feature set, phased roadmap                    |
 | 2026-08-23 | [spec-html-v1](2026-08-23-spec-html-v1.md)                                                   | Technical specification for the document-kind model, sandboxed iframe host, open-path gates, feature compatibility, and the Phase 0–1 implementation surface            |
 | 2026-08-23 | [tasks-session-01-kind-and-open](2026-08-23-tasks-session-01-kind-and-open.md)                | First implementation session: `kind` on tabs, accept `.html`/`.htm` at every open gate, sandboxed faithful preview, raw source, sample, tests                           |
-| 2026-08-23 | [council-html-plan-review](2026-08-23-council-html-plan-review.md)                           | Adversarial council. Thesis holds; Session 01 amended, then tightened again (no OS/PWA HTML handler, no landing launch, extension-only URLs, chrome honesty) |
+| 2026-08-23 | [council-html-plan-review](2026-08-23-council-html-plan-review.md)                           | Adversarial council. Thesis holds; Session 01 amended (CSP, honest chrome, no launch), then platform gates (live-reload DI, print CSS, 8 MB at read, iOS UTI) |
 
 ## Current Status
 

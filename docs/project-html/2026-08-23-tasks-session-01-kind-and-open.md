@@ -30,6 +30,9 @@ session (council H2).
 - Do not assign raw file bytes to parent `innerHTML`.
 - Do not put `allow-same-origin` on the host iframe.
 - Do not call `performPrint()` on an HTML tab.
+- Drops use `getPathForFile` only (no `file.path`).
+- `renderDocument` takes the tab (or explicit `kind`). Do not
+  re-detect at render time.
 
 ## Tasks
 
@@ -48,12 +51,18 @@ session (council H2).
 ### 2. Tab + dispatch + lifecycle
 
 - [ ] Add `kind` to the `Tab` typedef in `core/state.js`.
-- [ ] `createTab` / tab restore sets `kind` from `detectKind`.
+- [ ] `createTab` / tab restore / `window.loadFileContent` set
+      `kind` from `detectKind`.
 - [ ] `renderDocument` dispatches; markdown path unchanged.
+      Wire **all** DI sites: `configureTabs`, `configureDesktop`
+      (live reload), `configureViewMode`. Keep the
+      `renderMarkdown` wrapper for existing tests.
 - [ ] HTML path does **not** call `marked.parse` (test with a spy).
-- [ ] `htmlTeardownFrame()` from `showDropZone`, last-HTML-tab
-      close, and before remount. One iframe, many tabs: activate
-      remounts from `tab.rawMarkdown`.
+- [ ] Stage apply on create / switch / close / raw / empty:
+      hide iframe on markdown, raw, and drop-zone; remount blob
+      on HTML activate; revoke on switch-away and close.
+- [ ] Desktop `refresh-file` + session restore + recents use
+      `isOpenableDocument`.
 
 ### 3. Stage + rewrite + host + CSP
 
@@ -66,14 +75,17 @@ session (council H2).
 - [ ] `features/html-document.js` — rewrite (CSP, inline host,
       strip nested frames / meta-refresh / `<base target>` /
       `javascript:` and `data:text/html` hrefs), blob URL mount,
-      revoke, 8 MB cap **on HTML only**, navigation lock (reset
-      if `src` leaves our blob).
+      revoke, navigation lock (reset if `src` leaves our blob).
+- [ ] 8 MB cap **on HTML only, at read** (`handleFile` /
+      `openFileByPath` / iOS `openDocument`) — not at rewrite.
 - [ ] `index.html` CSP: add `frame-src 'self' blob: file: specdown:`.
-      Do not add `blob:` to `script-src`. Test the production
-      string.
+      Do not add `blob:` to `script-src`. **Static grep** of
+      `index.html` (jsdom `loadApp` copies `<body>` only).
 - [ ] CSS: iframe fills the stage (zero SpecDown padding); split
-      targets `#document-stage`, not `.markdown-content`; no
-      whole-file format of `styles.css`.
+      targets `#document-stage`, not `.markdown-content`;
+      `@media print` reset for `#document-stage` (markdown
+      fallback must not clip); no whole-file format of
+      `styles.css`.
 - [ ] Lone-file toast if rewrite sees relative URLs and there is
       no `baseHref` (sample may suppress).
 - [ ] Test: rewritten HTML contains the CSP meta; stage iframe
@@ -94,9 +106,17 @@ session (council H2).
       `manifest.webmanifest` `file_handlers` (Session 04).
 - [ ] Web `workspace.js` walk lists HTML; empty copy mentions
       Markdown or HTML. Relative link following can wait.
-- [ ] `ios/project.yml` — HTML document type + `public.html`.
+- [ ] `ios/project.yml` — add `public.html` to
+      `LSItemContentTypes` only (do **not** redeclare under
+      `UTImportedTypeDeclarations`). Rank Alternate.
 - [ ] `WebBridge.swift` — picker includes `UTType.html`.
       No iOS sample button.
+- [ ] iPad `ContentView.swift` — label “Open File” is enough;
+      do not add a third sidebar sample.
+- [ ] Update inverted tests in the same PR:
+      `desktop-main.test.js` (`.html` now openable),
+      file-loading toast copy. Landing copy tests stay
+      unchanged. Do not test iframe `load` in jsdom.
 
 ### 5. Raw / split / honest chrome
 
