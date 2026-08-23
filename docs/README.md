@@ -12,6 +12,7 @@ Each project gets its own subdirectory:
 | [project-modernization/](project-modernization/) | Cross-platform modernization — product/UX/engineering evaluation, vision, phased roadmap |
 | [project-bugfix-wave/](project-bugfix-wave/) | Post-modernization bug fixes & UX polish across web, desktop, and iOS |
 | [project-sharing/](project-sharing/) | Product sharing kit — LinkedIn copy, article outlines, web showcase homepage |
+| [project-html/](project-html/) | HTML documents — forked viewing runtime next to markdown (planning) |
 
 ## Naming Conventions
 
@@ -31,3 +32,4 @@ YYYY-MM-DD-<type>-<detail>.md
 - **Desktop (`project-desktop`)**: No remaining features in the current Session 1–4 scope.
 - **URL opening (`project-url`)**: Inline reviewer comments (Google Docs-style) are still unimplemented and intentionally deferred from Session 01.
 - **iOS/iPad (`project-ios`)**: Shell is implemented; latest work adds an adaptive iPadOS split layout while keeping the shared viewer architecture intact.
+- **HTML documents (`project-html`)**: Planning complete. Implementation starts at Session 01 (kind + open + sandboxed preview). Do not convert HTML to markdown and do not inject it into the app origin — fork the document runtime. See [project-html/README.md](project-html/README.md).
