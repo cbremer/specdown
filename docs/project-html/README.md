@@ -19,12 +19,17 @@ app origin. Markdown stays the compiler pipeline; HTML is already compiled.
 | 2026-08-23 | [brainstorm-html-documents](2026-08-23-brainstorm-html-documents.md)                         | Three-lens plan (PM / UX / distinguished engineer): why now, what we refuse to become, the runtime fork, security model, feature set, phased roadmap                    |
 | 2026-08-23 | [spec-html-v1](2026-08-23-spec-html-v1.md)                                                   | Technical specification for the document-kind model, sandboxed iframe host, open-path gates, feature compatibility, and the Phase 0–1 implementation surface            |
 | 2026-08-23 | [tasks-session-01-kind-and-open](2026-08-23-tasks-session-01-kind-and-open.md)                | First implementation session: `kind` on tabs, accept `.html`/`.htm` at every open gate, sandboxed faithful preview, raw source, sample, tests                           |
+| 2026-08-23 | [council-html-plan-review](2026-08-23-council-html-plan-review.md)                           | Adversarial council (security / product / UX / platform). Thesis holds; Session 01 amended (CSP `frame-src`, print XSS, navigation lock, honest chrome, workspace listing) |
 
 ## Current Status
 
-**Planning complete; implementation not started.** Session 01 is scoped
-and ready to pick up from
-[tasks-session-01-kind-and-open](2026-08-23-tasks-session-01-kind-and-open.md).
+**Planning complete and council-amended; implementation not started.**
+The fork thesis survived review. Session 01 is ready only from the
+**amended** spec + checklist — the first draft would have shipped a
+blank iframe (parent CSP), a lying Print button, and markdown-only
+folders. Start at
+[tasks-session-01-kind-and-open](2026-08-23-tasks-session-01-kind-and-open.md)
+after reading the [council](2026-08-23-council-html-plan-review.md).
 
 The north-star one-liner this project is aiming at:
 
