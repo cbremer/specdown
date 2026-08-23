@@ -151,9 +151,12 @@ in Finder / Explorer "Open with" for `.html`. The in-app dialog
 can still open them. The OS-open job in the brainstorm ("this
 is the home surface") would be false for a full release cycle.
 
-**Amendment:** Session 01 adds an HTML `fileAssociations` entry
-(`html`, `htm`, `text/html`, role Viewer). Do not put a space
-in any `artifactName` (existing regression).
+**Amendment (first pass):** Session 01 adds an HTML
+`fileAssociations` entry.
+
+**Reversed (product seat):** OS/PWA HTML handler is an identity
+event. Slip `fileAssociations` and `file_handlers` to Session 04.
+In-app dialog filter “HTML” is enough for Session 01.
 
 ### H2 — Workspace listing must move into Session 01
 
@@ -203,9 +206,12 @@ code always `createTab(filename, markdown)` and filename from the
 path (`untitled.md` for `/`). A gist or `raw` URL without `.html`
 would render as markdown garbage.
 
-**Amendment:** Session 01 — `handleUrl` passes
-`response.headers.get('content-type')` into `detectKind(filename,
-contentType)`. Extension still wins.
+**Amendment (first pass):** Session 01 — `handleUrl` passes
+`Content-Type` into `detectKind`.
+
+**Reversed (product seat):** Session 01 is extension-only.
+Content-Type sniff + Faithful is a new trust model. Remote HTML
+waits for Session 05 with Safe-as-default.
 
 ### H5 — 8 MB cap must be HTML-only
 
@@ -338,14 +344,15 @@ pillar.
 
 1. **Blob vs srcdoc vs protocol for v1?** Blob + `frame-src` fix.
    Protocol remains Session 04. Avoid srcdoc.
-2. **Sniff Content-Type on extensionless URLs?** Yes (H4).
-   Do not sniff bytes of `.md` files.
+2. **Sniff Content-Type on extensionless URLs?** **No in
+   Session 01** (product addendum). Extension-only. Sniffing
+   turns the existing URL box into a scripted browser. Session 05
+   ships Safe-default for remote ingress if URL HTML is fetched.
 3. **`.htm`?** Yes.
-4. **Default Faithful or Safe?** Local Faithful. URL default
-   Safe when the toggle exists (Session 05). Session 01: one
-   sandboxed Faithful path.
-5. **iOS in Session 01?** Shared renderer + `public.html` +
-   picker + capability-aware sheet. No TestFlight dependency.
+4. **Default Faithful or Safe?** Local Faithful. Remote HTML is
+   not a Session 01 job. When URL HTML ships, default **Safe**.
+5. **iOS in Session 01?** Shared renderer + picker `UTType.html`.
+   No sample button, no TestFlight dependency.
 
 ---
 
@@ -364,7 +371,6 @@ extension and put it in an iframe" without:
 - hiding every chrome control that still walks
   `#markdown-content`,
 - listing HTML in workspaces,
-- registering the OS file association,
 - specifying iframe teardown,
 - forbidding same-origin print of Faithful HTML.
 
@@ -377,3 +383,40 @@ argument against F1–F3 in this file first.
 amended spec. Do not open a "just the iframe" spike that
 skips F1 or H6 — that spike would look broken and teach
 the wrong lesson about the fork.
+
+---
+
+## 7. Addendum — Product + UX seats (same day)
+
+Independent seats pushed back on the *first* council pass
+where it still launched HTML as a product. Adopted:
+
+**Product (right phase with caveats).** Sessions 01–04 are
+one bet. Kill/pause if after Session 02 the desktop demo is
+not “local HTML + Live chip + print.” Do not change the
+one-liner. Do not register SpecDown as a system/PWA HTML
+handler in Session 01 (`fileAssociations` and
+`file_handlers` slip to Session 04). Session 01 URL path is
+**extension-only** (`.html`/`.htm`); no `Content-Type` sniff.
+Decks, prototypes, and “apps with filters” are not success
+metrics. Session 02 is Print, not Find. Expand the no-list:
+no localhost/`ws:` in document CSP, no cookie jar, no
+default-app claim, nested frames stay stripped (no “revisit”).
+
+**UX (will feel broken unless chrome honesty is the slice).**
+`documentCapabilities` must gate toolbar, palette
+`isAvailable`, iOS sheet, **and** `⌘F`/`⌘P`. `performPrint()`
+returns immediately on HTML — no `window.print()` fallback.
+On HTML render/switch: clear TOC, close search, force
+annotate **off**, hide iframe on Raw. `#document-stage` is
+the flex preview child — do **not** nest `#html-frame` inside
+`.markdown-content` (prose padding imprisons the page). Split
+CSS targets the stage. Lone-file relative-URL toast in
+Session 01. No landing copy change, no second/third sample
+button (sample file is QA-only). Host key-forward for
+⌘K/⌘F/⌘P/`?`/Esc, or document “click the filename to return
+focus.” Relabel Raw → Source when the control is shared.
+
+**Reversed from the first pass:** H1 (OS HTML association)
+and H4 (Content-Type sniff) are **not** Session 01. They
+were the launch. Workspace listing (H2) stays.

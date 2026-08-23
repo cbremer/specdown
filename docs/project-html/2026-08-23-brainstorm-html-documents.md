@@ -855,18 +855,15 @@ looks like our existing product) and wrong (most agent HTML is
    Avoid `srcdoc` unless blob+base is insufficient for a URL-opened
    file (then `<base>` on the blob document is enough).
 2. **Do we sniff `Content-Type` on URL open when the path has no
-   extension?** Recommendation: yes, `text/html` → html, otherwise
-   markdown (today's behavior). Don't sniff bytes for `<!DOCTYPE
-   html>` on `.md` files — extension wins.
+   extension?** **No in Session 01.** Extension-only. Sniffing
+   turns the URL box into a scripted browser. Session 05 if ever.
 3. **`.htm`?** Yes. Cost is one string in a list. Agents and
    Windows tools still emit it.
-4. **Default Faithful or Safe?** Faithful. Safe-as-default makes
-   the feature look broken on the exact files we are targeting.
-   Unknown-URL downloads could later default Safe; local files
-   the user dropped are a different trust level.
-5. **Is iOS in Session 01?** Shared renderer yes; `public.html`
-   registration yes (it's a plist/picker change, not TestFlight).
-   Device smoke is best-effort.
+4. **Default Faithful or Safe?** Local Faithful. Session 01 does
+   not fetch remote HTML by Content-Type. When URL HTML ships,
+   default Safe (council product seat).
+5. **Is iOS in Session 01?** Shared renderer + picker types.
+   No sample button. Device smoke is best-effort.
 
 ---
 
