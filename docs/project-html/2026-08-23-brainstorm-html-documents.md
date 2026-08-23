@@ -7,6 +7,11 @@ iOS/iPadOS (WKWebView shell)
 **Decision already taken:** **fork the document runtime.** Do not convert
 HTML to markdown. Do not feed HTML through `marked` + `#markdown-content`.
 
+**Council (same day):** thesis held; Session 01 was not implementation-ready.
+Amendments live in
+[council-html-plan-review](2026-08-23-council-html-plan-review.md)
+and are folded into the spec + Session 01 checklist.
+
 This is a three-lens plan for making SpecDown honest about the files AI
 systems actually emit in 2026. It is written to the same standard as the
 modernization evaluation
@@ -448,14 +453,20 @@ Not on web, not in Electron, not in WKWebView.
 **Invariant 2.** The preview frame is isolated:
 
 ```
-sandbox="allow-scripts allow-forms"
+sandbox="allow-scripts"
+allow=""
 ```
 
 No `allow-same-origin`. No `allow-top-navigation`. No
+`allow-forms` in v1 (injected CSP is `form-action 'none'`). No
 `allow-popups` in v1 (external links are rewritten to
 `target="_blank" rel="noopener"` and intercepted by the host
 bridge → parent → existing desktop `openExternal` / web
-`window.open` policy).
+`window.open` policy). Empty `allow` denies device permissions.
+
+**Invariant 2b (council F3).** The iframe must not become a
+browser. Preview `src` stays the blob we minted; desktop
+`will-frame-navigate` denies in-frame http(s).
 
 **Invariant 3.** We never combine `srcdoc` (or a blob URL that
 inherits the app origin) with `allow-same-origin` +
@@ -478,10 +489,13 @@ the HTML faithful path (it would strip the document). It *is* the
 HTML **Safe mode** path (Phase 2) and a defense for any HTML we
 *do* inject into the parent (we should inject none).
 
-**Invariant 6.** CSP: the app's meta CSP stays as it is (scripts
-`'self' 'unsafe-eval'` for Mermaid; `object-src 'none'`;
-`form-action 'none'`). The iframe document gets its **own** CSP
-meta we inject:
+**Invariant 6.** CSP: the app's script policy stays as it is
+(`'self' 'unsafe-eval'` for Mermaid; `object-src 'none'`;
+`form-action 'none'`). **The app CSP must gain**
+`frame-src 'self' blob: file: specdown:` — today's `default-src`
+has no `blob:`, so a blob iframe is blocked (council F1). Do not
+add `blob:` to `script-src`. The iframe document gets its **own**
+CSP meta we inject:
 
 ```
 default-src 'none';
@@ -759,9 +773,12 @@ Sessions are implementation-sized, one PR each, rebase-and-merge.
 ### Session 01 — Kind + open + sandbox (this project's first code)
 
 See
-[`2026-08-23-tasks-session-01-kind-and-open.md`](2026-08-23-tasks-session-01-kind-and-open.md).
+[`2026-08-23-tasks-session-01-kind-and-open.md`](2026-08-23-tasks-session-01-kind-and-open.md)
+and the [council amendments](2026-08-23-council-html-plan-review.md).
 Ship the fork's skeleton: detect, accept, isolate, raw, tests,
-sample. No workspace, no Find-in-page, no protocol.
+sample, **parent `frame-src`**, **workspace listing**, **honest
+chrome** (Print hidden), **iframe teardown**, **navigation lock**.
+No Find-in-page, no host-internal print, no asset protocol.
 
 **Demo:** drop `html-showcase.html`, see the designed page, toggle
 Raw, switch to a markdown tab and back, confirm the document cannot
@@ -775,8 +792,9 @@ creator-detect. Hide anything still dishonest.
 
 ### Session 03 — Mixed workspace + links
 
-Scan union, sidebar icons or quiet kind mark, relative links both
-ways, repo browser HTML, lone-file asset toast.
+Listing already shipped in Session 01. This session is relative
+links both ways, repo browser HTML, lone-file asset toast, quiet
+kind mark in the sidebar.
 
 ### Session 04 — Desktop asset protocol + web folder assets
 
@@ -787,7 +805,8 @@ real for multi-file agent output.
 ### Session 05 — Safe mode + trust UX
 
 Per-tab Faithful/Safe, toast + ⋮ copy, Safe = no scripts +
-DOMPurify (real library tests). Default stays Faithful.
+DOMPurify (real library tests). Default: **Faithful for local
+files, Safe for URL-opened HTML** (council H10).
 
 ### Session 06 — Enhance (only if Session 01–04 got used)
 
