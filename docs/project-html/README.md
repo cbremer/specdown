@@ -20,6 +20,7 @@ app origin. Markdown stays the compiler pipeline; HTML is already compiled.
 | 2026-08-23 | [spec-html-v1](2026-08-23-spec-html-v1.md)                                                   | Technical specification for the document-kind model, sandboxed iframe host, open-path gates, feature compatibility, and the Phase 0–1 implementation surface            |
 | 2026-08-23 | [tasks-session-01-kind-and-open](2026-08-23-tasks-session-01-kind-and-open.md)                | First implementation session: `kind` on tabs, accept `.html`/`.htm` at every open gate, sandboxed faithful preview, raw source, sample, tests                           |
 | 2026-08-23 | [council-html-plan-review](2026-08-23-council-html-plan-review.md)                           | Four-seat council. Fork holds; blob/srcdoc preview **rejected** (CSP inheritance). Host page + untrusted postMessage. Session 01 is a skeleton, not a launch. |
+| 2026-08-23 | [brainstorm-names-and-press](2026-08-23-brainstorm-names-and-press.md)                     | Naming/tagline council: keep SpecDown; HTML-era lede; press release A (today) and embargoed B (after Live + print) |
 
 ## Current Status
 
