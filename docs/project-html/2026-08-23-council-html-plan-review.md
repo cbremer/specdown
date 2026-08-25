@@ -498,3 +498,25 @@ Also adopted:
   silent add.
 
 F1 (blank blob frame) is superseded: we do not use blob.
+
+---
+
+## 9. Addendum — Staging rail (2026-08-25)
+
+The council told Session 01 not to *launch*. It did not say
+how to keep that code off the Release pipeline. Merge-to-`main`
+is Pages + version bump + `latest*.yml`. That is production.
+
+**Adopted** in [spec-html-staging](2026-08-25-spec-html-staging.md):
+
+- Session 00 (flag default off, `*:html` scripts, CI artifact)
+  is the first code PR, into **`main`**.
+- Sessions 01–04 are PRs into integration branch **`html`**.
+- Kill/pause still happens after the Session 02 demo — on
+  **staging** (`desktop:html`), not on github.io.
+- Do not host a staging app at `/specdown/html-staging/` (PWA
+  service worker scope).
+- The compile-time flag keeps `.html` rejected on production
+  builds; it does **not** isolate `#document-stage` CSS. Git
+  isolation is what protects the live app until go/no-go.
+

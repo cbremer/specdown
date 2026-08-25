@@ -766,8 +766,21 @@ From `CLAUDE.md` and the retrospective, applied to this project:
 ## 6. Phased roadmap
 
 Sessions are implementation-sized, one PR each, rebase-and-merge.
+**Session 00 → `main`. Sessions 01–04 → integration branch `html`.**
+Do not merge the runtime to `main` until the Session 02 staging
+demo passes. Merge-to-`main` is a Release. Contract:
+[spec-html-staging](2026-08-25-spec-html-staging.md).
 
-### Session 01 — Kind + open + sandbox (this project's first code)
+### Session 00 — Staging rail (first code, onto `main`)
+
+See
+[`2026-08-25-tasks-session-00-staging-rail.md`](2026-08-25-tasks-session-00-staging-rail.md).
+Compile-time flag default **off**, `dev:html` / `preview:html` /
+`desktop:html`, CI artifact, create branch `html`. No open gates,
+no iframe, no CSP change. This is how we avoid shipping a
+half-fork to Pages and auto-update.
+
+### Session 01 — Kind + open + sandbox (first HTML runtime, onto `html`)
 
 See
 [`2026-08-23-tasks-session-01-kind-and-open.md`](2026-08-23-tasks-session-01-kind-and-open.md)
@@ -777,16 +790,18 @@ sample, **parent `frame-src`**, **workspace listing**, **honest
 chrome** (Print hidden), **iframe teardown**, **navigation lock**.
 No Find-in-page, no host-internal print, no asset protocol.
 
-**Demo:** drop `html-showcase.html`, see the designed page, toggle
-Raw, switch to a markdown tab and back, confirm the document cannot
-`alert` in the parent (manual).
+**Demo (HTML-on staging only):** drop `html-showcase.html`, see the
+designed page, toggle Raw, switch to a markdown tab and back,
+confirm the document cannot `alert` in the parent (manual). Also
+run the markdown golden path (Present + Print) on the same build.
 
 ### Session 02 — Reader chrome honesty (Print is the wedge)
 
-Host-internal Print/PDF + kind-aware hiding that survived
-Session 01 + live-reload verification. **Hide Find** unless the
-bridge highlight is real in the same PR (likely hide). Parser
-TOC or hide Contents. No creator-detect. No landing launch.
+Still a PR into **`html`**. Host-internal Print/PDF + kind-aware
+hiding that survived Session 01 + live-reload verification.
+**Hide Find** unless the bridge highlight is real in the same
+PR (likely hide). Parser TOC or hide Contents. No creator-detect.
+No landing launch.
 
 ### Session 03 — Mixed workspace + links
 
@@ -813,14 +828,15 @@ Skip if we have no evidence anyone wants it.
 
 ### Sequencing rationale
 
-Open+sandbox first because every later feature is unsafe or
-lying without it. Reader chrome second because a frame without
-Find/Print is Chrome. Workspace third because that is the job
-in §2.2. Assets fourth because they are the hard desktop
-problem and must not block the single-file 80% case. Safe mode
-fifth because we need Faithful in the world before we know the
-toggle's label. Enhance last — it is a differentiator, not the
-reason to exist.
+Staging rail (Session 00) before any render-path change because
+`main` is a Release. Open+sandbox next because every later
+feature is unsafe or lying without it. Reader chrome second
+because a frame without Find/Print is Chrome. Workspace third
+because that is the job in §2.2. Assets fourth because they are
+the hard desktop problem and must not block the single-file 80%
+case. Safe mode fifth because we need Faithful in the world
+before we know the toggle's label. Enhance last — it is a
+differentiator, not the reason to exist.
 
 Do **not** start with Mermaid-in-HTML. That is comforting (it
 looks like our existing product) and wrong (most agent HTML is
@@ -832,7 +848,8 @@ looks like our existing product) and wrong (most agent HTML is
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| We ship XSS via `srcdoc` + same-origin | High if anyone "just wants TOC to be easy" | Invariants 2–3; code review checklist in the spec; a test that fails if `allow-same-origin` appears next to `allow-scripts` on the host iframe |
+| Merge to `main` auto-ships Pages + DMG auto-update | High if Session 01 is a normal PR | Staging rail: Session 00 on `main`, runtime on `html`, flag off in production builds, go/no-go after Session 02 demo |
+| `#document-stage` clips markdown print even with HTML gates off | High | Flag does not isolate layout; golden-path Print on the HTML branch before `html` → `main` |
 | We become a bad browser (navigation, CDNs, popups) | Medium (feature requests will ask) | Product "no" list; relative document links open tabs |
 | Print regresses to viewport clip | Medium (new full-height ancestor) | Reuse `buildPrintableDocument`; add HTML to the print regression notes |
 | Jest is green, production sandbox is not | High (harness + mocks) | Manual smoke; real-attribute test; no Safe-mode claims from passthrough purify |
