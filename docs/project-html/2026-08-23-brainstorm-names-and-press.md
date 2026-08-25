@@ -41,6 +41,27 @@ embargoed until the HTML wedge is real — shipping B after
 Session 01 (a sandboxed iframe) would be the landing launch
 the council already killed.
 
+**Under research (not a rename):** **Specular** and **Lantern**
+stay on the shortlist as interesting options. Shipping name
+remains SpecDown until that research lands.
+
+**Interesting lines (not swapping the live hero, not replacing
+the HTML-era lede):**
+
+- **Present the diagram, not a screenshot.** Already the
+  landing title. Still the differentiator. HTML is an input;
+  the aha is still the diagram you can fly through.
+- **Specs you can stand in front of.** Present as a room, not
+  a file. Does not say markdown or HTML, so it survives the
+  format fork. Pairs with Lectern. Short enough for a wordmark
+  subtitle or OG.
+- **SpecDown — Diagrams you can present.** Wordmark subtitle.
+  Same job as the landing title, quieter. Fine on a DMG,
+  About panel, or OG without the “screenshot” contrast.
+- **SpecDown — The spec reader.** Wordmark subtitle. Names
+  the job. Survives HTML. Soft enough to live under the
+  wordmark forever.
+
 ---
 
 ## 1. Product seat — what the name is for
@@ -104,7 +125,7 @@ is a guess — no trademark or domain search was run.
 |---|---|---|
 | SpecRead | 3 | Honest. Sounds like a feature, not a product. |
 | SpecView | 2.5 | “View” is chrome-adjacent; easy to confuse with file preview. |
-| Specular | 3 | “To look.” Pretty. People will say *speck-you-ler* or think lighting. |
+| **Specular** | 4 | **Under research.** Spec + *speculum* / specular — to look, a mirror highlight. Keeps “spec” in the word. Risks: *SPECK-yə-lər* vs *speck-YOU-lər*; 3D “specular highlight”; lighting/graphics products. |
 | Inspect | 1 | Taken, sounds like DevTools. |
 | Speclight | 2 | Spotlight clone energy. |
 
@@ -112,7 +133,8 @@ is a guess — no trademark or domain search was run.
 
 | Name | Score | Note |
 |---|---|---|
-| **Lectern** | 4 | You stand at it and present the diagram. Not a browser. Hard to spell; explain once. |
+| **Lantern** | 4 | **Under research.** Light for the page you are reading. Easy to say and spell. Warm, not a browser. Distinct from Lectern. Risks: crowded word (lamps, restaurants, other apps); no “spec” in the name. |
+| **Lectern** | 4 | You stand at it and present the diagram. Not a browser. Hard to spell; explain once. Do not confuse with Lantern. |
 | **Folio** | 3.5 | A set of leaves — md + html in one workspace. Crowded word (Vercel, legal, browsers). |
 | Codex | 3 | Book of many quires. Also every AI company in 2024. |
 | Dossier | 3 | Review vibe. A bit spy / HR. |
@@ -146,15 +168,25 @@ SpecDown AI, BriefAI, Rendered, Sideview, House Lights.
 
 ### Shortlist if we ever rename
 
-1. **SpecDown** (stay)
-2. **Afterwrite** — best *new* word for the job
-3. **Lectern** — best *old* word for the room
-4. **Faircopy** — if we want print/PDF in the name’s bones
-5. **Folio** — if workspace (mixed md+html) becomes the story
+1. **SpecDown** (stay / ship today)
+2. **Specular** — under research (spec family; “to look”)
+3. **Lantern** — under research (reading light; easy to say)
+4. **Afterwrite** — best *new* invented word for the job
+5. **Lectern** — the stand you present from (not Lantern)
+6. **Faircopy** / **Folio** — print bones / mixed workspace
 
-**Chair recommendation:** stay SpecDown. If a rename PR ever
-opens, the debate is Afterwrite vs Lectern, not a committee of
-twenty.
+**Chair recommendation:** ship as SpecDown. Specular and
+Lantern stay interesting; they are research, not a decision.
+If a rename PR ever opens, those two are in the room with
+Afterwrite — not a committee of twenty.
+
+### Research notes (Specular, Lantern)
+
+Not done here: trademark, domain, GitHub org/repo, App Store
+collision, how it sounds in a room, how it looks in a DMG
+title (`Specular Desktop` vs `Lantern Desktop` vs today’s
+`Specdown Desktop`). A later `project-rename` session should
+check those before anyone touches `package.json` `name`.
 
 ---
 
@@ -167,15 +199,28 @@ or “seamless.”
 ### Now (existing product — ship these)
 
 1. **Present the diagram, not a screenshot.**  
-   *(Already the landing title. Keep.)*
+   *(Already the landing title. **Keeper.** Still true after
+   HTML: the wedge is the other file, not a new aha.)*
 2. **A markdown viewer where Mermaid diagrams are first-class.**  
-   *(Already the lede. Keep.)*
+   *(Already the lede. Keep until HTML Session 02.)*
 3. **Not an editor. The reading and presenting layer.**  
    *(From the copy kit contrast. Good on a slide.)*
 4. **Zoom, pan, present, export — your architecture is a place
    you can fly through.**  
    *(Landing lede, slightly tightened.)*
-5. **Specs you can stand in front of.**
+5. **Specs you can stand in front of.**  
+   *(**Keeper / under research.** Present mode as a room you
+   stand in — the meeting, not the PNG. Format-agnostic, so it
+   still works when the file is HTML. Pairs with Lectern.
+   Risks: conference-slogan energy; does not name the diagram
+   unless you already know Present exists. Fine as a subtitle
+   or a second breath under the landing title.)*
+
+**Do not retire #1 to make room for #5, or the reverse.** They
+do different jobs: #1 is the product claim (diagrams, not
+screenshots). #5 is the feeling (you are in the room with the
+spec). The HTML-era lede (#6) is a third job (both files).
+Keep all three in the kit.
 
 ### After HTML is real (wedge shipped)
 
@@ -201,8 +246,14 @@ Use **one** of these as the new lede. Do not stack them.
 
 ### Subtitles (under the wordmark)
 
-- SpecDown — Diagrams you can present
-- SpecDown — The spec reader
+Keepers first — these are ok. The rest stay in the kit.
+
+- **SpecDown — Diagrams you can present** *(keeper: quiet
+  version of the landing claim)*
+- **SpecDown — The spec reader** *(keeper: the job, format-
+  agnostic)*
+- SpecDown — Present the diagram, not a screenshot
+- SpecDown — Specs you can stand in front of
 - SpecDown — Read the spec. Fly the diagram.
 - SpecDown — Markdown & HTML, still a viewer
 - SpecDown — After the agent writes
@@ -407,11 +458,18 @@ Free, no account: https://cbremer.github.io/specdown
 
 ## 8. What we are not deciding
 
-- No repo rename.
-- No landing hero change in HTML Session 01.
+- No repo rename. Specular and Lantern stay interesting;
+  they are research, not a ship name.
+- No landing hero change in HTML Session 01. The live title
+  stays **Present the diagram, not a screenshot.** Keeper
+  subtitles **Diagrams you can present** and **The spec
+  reader** stay in the kit, not on the homepage, until
+  someone deliberately A/Bs them. **Specs you can stand in
+  front of** likewise.
 - No trademark/domain work in this PR.
 - No “SpecDown AI” experiment, even as an A/B.
 
-If someone wants Afterwrite or Lectern, that is a **new**
-project folder (`project-rename`) with a real availability
-check — not a drive-by in the HTML implementation PRs.
+If someone wants Afterwrite, Lectern, Specular, or Lantern,
+that is a **new** project folder (`project-rename`) with a
+real availability check — not a drive-by in the HTML
+implementation PRs.
