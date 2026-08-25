@@ -16,6 +16,14 @@ how-I-built-it outlines.
 first-class — zoom, pan, present, and export — so architecture docs stop being
 tiny static images.
 
+**Also interesting (not swapping the one-liner):** *Present the diagram, not a
+screenshot* is already the landing title — keep it. *Specs you can stand in
+front of* is a format-agnostic second breath (Present as a room). Wordmark
+subtitles that are ok: *SpecDown — Diagrams you can present* and
+*SpecDown — The spec reader*. HTML-era lede, when the wedge ships: *The reader
+for specs — markdown, diagrams, and the HTML your agent just wrote.* Full kit:
+[names and press](../project-html/2026-08-23-brainstorm-names-and-press.md).
+
 **Contrast:** Typora and Obsidian edit. GitHub preview is static. SpecDown is
 the reading and presenting layer.
 
