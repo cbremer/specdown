@@ -1,17 +1,23 @@
 # Session 01 — Document kind, open gates, sandboxed HTML preview
 
-**Date:** 2026-08-23
-**Status:** Ready to implement (**council-amended**)
-**Spec:** [spec-html-v1](2026-08-23-spec-html-v1.md)
+**Date:** 2026-08-23 (staging rail: 2026-08-25)
+**Status:** Ready to implement (**council-amended**) — **after
+Session 00**. Base branch **`html`**, not `main`.
+**Spec:** [spec-html-v1](2026-08-23-spec-html-v1.md) ·
+[staging](2026-08-25-spec-html-staging.md)
 **Brainstorm:** [brainstorm-html-documents](2026-08-23-brainstorm-html-documents.md)
 **Council:** [council-html-plan-review](2026-08-23-council-html-plan-review.md)
+**Previous:** [Session 00](2026-08-25-tasks-session-00-staging-rail.md)
 
 ## Goal
 
-Land the **runtime fork's skeleton** in one PR: SpecDown can open
-`.html` / `.htm` on every ingress, preview the page in a sandboxed
-iframe (document scripts never run in the app origin), and still
-render markdown exactly as today.
+Land the **runtime fork's skeleton** in one PR **on `html`**:
+SpecDown (HTML-on build) can open `.html` / `.htm` on every
+ingress, preview the page in a sandboxed iframe (document
+scripts never run in the app origin), and still render markdown
+exactly as today. This PR must **not** merge to `main` (that
+would ship a Release). Dogfood with `npm run dev:html` /
+`preview:html` / `desktop:html`.
 
 Out of this session: TOC/Find/Print-for-HTML, workspace *link*
 following, asset protocol, Safe mode, Mermaid-in-HTML, annotations,
@@ -20,6 +26,13 @@ session (council H2).
 
 ## Preconditions
 
+- [Session 00](2026-08-25-tasks-session-00-staging-rail.md) is on
+  `main` and branch `html` exists. This PR’s base is `html`.
+- Build/test HTML-on: `VITE_HTML_DOCUMENTS` / `npm run dev:html`.
+  Keep a flag-**off** CI job green (markdown gates + CSP source
+  unchanged on that job — if this session changes source
+  `index.html` CSP, the transform must still leave flag-off
+  builds without `frame-src`, per the staging spec).
 - Read the spec §2–6 and the council F1–F3 fatals before touching
   the render path.
 - Unique top-level names (`htmlDetectKind`, `htmlRewriteDocument`,
@@ -80,9 +93,15 @@ session (council H2).
       `src` leaves the host URL).
 - [ ] 8 MB cap **on HTML only, at read** (`handleFile` /
       `openFileByPath` / iOS `openDocument`; `stat` first).
-- [ ] `index.html` CSP: add `frame-src 'self' file: specdown:`.
-      Do **not** add `blob:` or `'unsafe-inline'` to parent
-      `script-src`. **Static grep** of `index.html`.
+- [ ] Parent CSP: HTML-on **builds** add
+      `frame-src 'self' file: specdown:` (Vite transform or
+      equivalent). Do **not** add `blob:` or `'unsafe-inline'`
+      to parent `script-src`. Source `index.html` on a flag-off
+      grep still has **no** `frame-src` until the production
+      flip — test both the source file and the HTML-on `dist`
+      CSP. `#document-stage` may exist on this branch (layout
+      is not flag-gated); markdown Print golden path is
+      mandatory.
 - [ ] iOS: reject `WKScriptMessage` unless
       `frameInfo.isMainFrame`. Cancel iframe navigations.
 - [ ] CSS: iframe fills the stage (zero SpecDown padding); split
@@ -147,14 +166,19 @@ session (council H2).
 
 ### 7. Quality gates
 
-- [ ] `npm test` green.
+- [ ] `npm test` green (flag-off **and** HTML-on, once CI
+      matrix exists).
 - [ ] `npm run lint` zero warnings.
 - [ ] `npm run typecheck` clean.
 - [ ] Prettier only on files this session touches.
 
 ## Manual smoke (after gates)
 
-1. `npm run preview` (or `dev`): drop the sample HTML — designed
+Run **`preview:html` / `dev:html` / `desktop:html`**, not the
+flag-off scripts (those must still reject `.html`). Also run the
+staging spec’s **markdown golden path** on the same SHA.
+
+1. `npm run preview:html` (or `dev:html`): drop the sample HTML — designed
    page via the **preview host** (not a blank frame, not
    markdown). Toggle Raw. Open a `.md` in another tab; switch
    back. Close the last tab — landing, no leftover iframe.
@@ -173,9 +197,10 @@ session (council H2).
 
 ## Done when
 
-- HTML opens on web + desktop + iOS picker types and is *visible*
-  (CSP does not blank the stage).
-- Markdown regression is zero.
+- HTML opens on web + desktop + iOS picker types **in the HTML-on
+  build** and is *visible* (CSP does not blank the stage).
+- Flag-off build still rejects `.html`; markdown golden path is
+  green (including Print not clipped).
 - Security checklist in the spec is all checked for this PR.
 - Chrome is honest (no Print-on-empty-content).
-- One commit, one PR.
+- One commit, one PR, into **`html`**. Not `main`.
