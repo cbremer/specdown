@@ -17,8 +17,8 @@
 
 /**
  * Whether this build compiled the HTML-documents runtime on.
- * Default is false (production-shaped). Session 01 will gate open
- * paths on this; Session 00 only exposes the helper.
+ * Default is false (production-shaped). Session 01 gates open paths
+ * (`.html` / `.htm`) on this; flag-off builds still reject HTML.
  * @returns {boolean}
  */
 export function htmlDocumentsEnabled() {

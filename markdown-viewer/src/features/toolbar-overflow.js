@@ -18,6 +18,7 @@ import {
   exportActivePdf,
 } from '../platform/desktop.js';
 import { openFileInfoSheet } from './file-info.js';
+import { htmlActiveCapabilities } from '../core/document-kind.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -60,7 +61,7 @@ const OVERFLOW_ACTIONS = [
   {
     label: 'Export as PDF',
     run: () => exportActivePdf(),
-    isAvailable: () => isDesktop,
+    isAvailable: () => isDesktop && htmlActiveCapabilities().print,
   },
   { targetId: 'view-toggle', label: 'Toggle raw / preview' },
 ];

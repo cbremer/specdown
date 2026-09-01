@@ -24,6 +24,12 @@ import {
   closeIOSActionSheet,
   closeIOSTocSheet,
 } from '../platform/ios-chrome.js';
+import {
+  htmlDetectKind,
+  htmlRejectedOpenToast,
+} from '../core/document-kind.js';
+import { htmlDocumentsEnabled } from '../core/html-flag.js';
+import { htmlApplyStage, htmlHideFrame } from './html-document.js';
 
 /** @typedef {import('../core/state.js').Tab} Tab */
 
@@ -66,9 +72,13 @@ export function configureTabs(deps) {
   if (typeof deps.renderMarkdown === 'function')
     renderDoc = /** @type {typeof renderDoc} */ (deps.renderMarkdown);
   if (typeof deps.updateWatchToggle === 'function')
-    refreshWatchUI = /** @type {typeof refreshWatchUI} */ (deps.updateWatchToggle);
+    refreshWatchUI = /** @type {typeof refreshWatchUI} */ (
+      deps.updateWatchToggle
+    );
   if (typeof deps.saveDesktopSession === 'function')
-    persistSession = /** @type {typeof persistSession} */ (deps.saveDesktopSession);
+    persistSession = /** @type {typeof persistSession} */ (
+      deps.saveDesktopSession
+    );
   if (typeof deps.startWatchingFilePath === 'function')
     beginWatch = /** @type {typeof beginWatch} */ (deps.startWatchingFilePath);
   if (typeof deps.stopWatchingFilePath === 'function')
@@ -105,7 +115,9 @@ export function renderTabBar() {
     if (hasChanges) classes.push('tab-has-changes');
     html += `<div class="${classes.join(' ')}" data-tab-id="${tab.id}">`;
     if (tab.watching) {
-      const dotTitle = hasChanges ? 'File changed on disk' : 'Watching for changes';
+      const dotTitle = hasChanges
+        ? 'File changed on disk'
+        : 'Watching for changes';
       html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
     }
     html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
@@ -153,9 +165,14 @@ export function renderTabBar() {
  */
 export function createTab(filename, content, filePath, sourceMeta) {
   if (state.tabs.length >= MAX_TABS) {
-    showToast('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.', {
-      type: 'warning',
-    });
+    showToast(
+      'Maximum of ' +
+        MAX_TABS +
+        ' tabs reached. Close a tab to open another file.',
+      {
+        type: 'warning',
+      }
+    );
     return;
   }
 
@@ -163,6 +180,11 @@ export function createTab(filename, content, filePath, sourceMeta) {
   saveActiveTabState();
 
   const id = ++state.nextTabId;
+  const detected = htmlDetectKind(filename);
+  if (detected === 'html' && !htmlDocumentsEnabled()) {
+    showToast(htmlRejectedOpenToast(), { type: 'warning' });
+    return;
+  }
   /** @type {Tab} */
   const tab = {
     id,
@@ -174,6 +196,7 @@ export function createTab(filename, content, filePath, sourceMeta) {
     watching: !!(isDesktop && filePath),
     hasUnseenChanges: false,
     sourceMeta: sourceMeta || null,
+    kind: detected || 'markdown',
   };
   state.tabs.push(tab);
   state.activeTabId = id;
@@ -212,6 +235,8 @@ export async function switchTab(id) {
     if (state.tocVisible) {
       toggleToc(false);
     }
+    htmlHideFrame();
+    markdownContent.hidden = false;
     state.currentRawMarkdown = tab.rawMarkdown;
     state.currentViewMode = 'raw';
     const escaped = tab.rawMarkdown
@@ -264,13 +289,19 @@ export async function closeTab(id) {
       if (state.tocVisible) {
         toggleToc(false);
       }
+      htmlHideFrame();
+      const markdownContentEl = el('markdown-content');
+      if (markdownContentEl) markdownContentEl.hidden = false;
       state.currentRawMarkdown = newTab.rawMarkdown;
       state.currentViewMode = 'raw';
       const escaped = newTab.rawMarkdown
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-      setHtml('markdown-content', `<pre class="raw-markdown"><code>${escaped}</code></pre>`);
+      setHtml(
+        'markdown-content',
+        `<pre class="raw-markdown"><code>${escaped}</code></pre>`
+      );
       setText('file-name', newTab.filename);
       setDisplay('drop-zone', 'none');
       setDisplay('content-area', 'flex');
@@ -292,6 +323,7 @@ export function showDropZone() {
   closeIOSTocSheet();
 
   // Clear content
+  htmlApplyStage('empty');
   setHtml('markdown-content', '');
   setText('file-name', '');
   const fileInput = /** @type {HTMLInputElement | null} */ (el('file-input'));

@@ -2140,7 +2140,8 @@ body {
 
     .app-container,
     .content-area,
-    .content-main {
+    .content-main,
+    #document-stage {
         display: block !important;
         overflow: visible !important;
         height: auto !important;
@@ -2161,6 +2162,10 @@ body {
     }
 
     .split-raw-pane {
+        display: none !important;
+    }
+
+    #html-frame {
         display: none !important;
     }
 
@@ -2426,13 +2431,38 @@ body {
     min-width: 0;
 }
 
-.content-main .markdown-content {
+#document-stage {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+#document-stage > #markdown-content {
     flex: 1;
     min-width: 0;
 }
 
-/* Split view: preview + raw side by side */
-.content-main.split-active .markdown-content {
+#html-frame {
+    border: 0;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+}
+
+#html-frame[hidden],
+#markdown-content[hidden] {
+    display: none !important;
+}
+
+/* Split view: preview + raw side by side. Size the stage, not .markdown-content. */
+.content-main.split-active #document-stage {
     flex: 1;
     border-right: 1px solid var(--border-color);
 }
@@ -3648,7 +3678,7 @@ mark.search-highlight-current {
         flex-direction: column;
     }
 
-    .content-main.split-active .markdown-content {
+    .content-main.split-active #document-stage {
         border-right: none;
         border-bottom: 1px solid var(--border-color);
     }

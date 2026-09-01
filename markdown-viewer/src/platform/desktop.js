@@ -14,10 +14,19 @@ import { isDesktop } from '../core/platform.js';
 import { createTab, closeTab, renderTabBar } from '../features/tabs.js';
 import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
-import { recordRecentFile, renderRecentFiles } from '../features/recent-files.js';
+import {
+  recordRecentFile,
+  renderRecentFiles,
+} from '../features/recent-files.js';
 import { showToast } from '../features/toast.js';
 import { setVisualTheme } from '../features/starfield.js';
-import { performPrint, buildPrintableDocument, hasLoadedContent } from './ios-chrome.js';
+import {
+  performPrint,
+  buildPrintableDocument,
+  hasLoadedContent,
+} from './ios-chrome.js';
+import { htmlActiveCapabilities } from '../core/document-kind.js';
+import { htmlHideFrame } from '../features/html-document.js';
 import {
   hasDesktopBridge,
   bridgeWatchFile,
@@ -60,7 +69,10 @@ export function updateWatchToggle() {
   const watchToggle = el('watch-toggle');
   if (!watchToggle) return;
 
-  const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
 
   if (!isDesktop || !tab || !tab.filePath) {
     watchToggle.style.display = 'none';
@@ -135,7 +147,10 @@ export function stopWatchingFilePath(filePath) {
 
 export function toggleWatching() {
   if (!isDesktop) return;
-  const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
   if (!tab || !tab.filePath) return;
 
   tab.watching = !tab.watching;
@@ -156,7 +171,10 @@ export function toggleWatching() {
 // live reload, minus the watcher.
 export function refreshActiveFileFromDisk() {
   if (!isDesktop) return;
-  const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
   if (!tab || !tab.filePath) return;
   bridgeRequestRefreshFile(tab.filePath);
 }
@@ -166,11 +184,15 @@ export function refreshActiveFileFromDisk() {
 // shell, which renders it offscreen and writes the PDF via printToPDF.
 export async function exportActivePdf() {
   if (!isDesktop || !hasDesktopBridge() || !hasLoadedContent()) return;
+  if (!htmlActiveCapabilities().print) return;
   const html = await buildPrintableDocument();
   if (!html) return;
   const fileNameEl = el('file-name');
   bridgeExportPdf({
-    title: fileNameEl && fileNameEl.textContent ? fileNameEl.textContent : 'Specdown Document',
+    title:
+      fileNameEl && fileNameEl.textContent
+        ? fileNameEl.textContent
+        : 'Specdown Document',
     html,
   });
 }
@@ -183,7 +205,11 @@ export function setupDesktopIPC() {
     createTab(fileData.filename, fileData.content, fileData.filePath);
     // Remember the path so the in-app recent-files list can reopen it later.
     if (fileData.filePath) {
-      recordRecentFile({ type: 'path', ref: fileData.filePath, title: fileData.filename });
+      recordRecentFile({
+        type: 'path',
+        ref: fileData.filePath,
+        title: fileData.filename,
+      });
       renderRecentFiles();
     }
   });
@@ -203,7 +229,9 @@ export function setupDesktopIPC() {
   // same file was open twice and the active copy wasn't the first: the handler
   // took the background branch and never refreshed the view.
   bridgeOnFileChanged(async function (fileData) {
-    const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath);
+    const matchingTabs = state.tabs.filter(
+      (t) => t.filePath === fileData.filePath
+    );
     if (matchingTabs.length === 0) return;
 
     for (const tab of matchingTabs) {
@@ -221,6 +249,8 @@ export function setupDesktopIPC() {
       const savedScrollTop = markdownContent.scrollTop;
 
       if (activeTab.viewMode === 'raw') {
+        htmlHideFrame();
+        markdownContent.hidden = false;
         state.currentRawMarkdown = fileData.content;
         const escaped = fileData.content
           .replace(/&/g, '&amp;')
@@ -258,7 +288,7 @@ export function setupDesktopIPC() {
 
   // Native menu: File > Print
   bridgeOnTriggerPrint(function () {
-    performPrint();
+    if (htmlActiveCapabilities().print) performPrint();
   });
 
   // Native menu: File > Export as PDF
@@ -269,7 +299,11 @@ export function setupDesktopIPC() {
   // Native menu: Edit > Find
   bridgeOnTriggerSearch(function () {
     const contentArea = el('content-area');
-    if (contentArea && contentArea.style.display !== 'none') {
+    if (
+      contentArea &&
+      contentArea.style.display !== 'none' &&
+      htmlActiveCapabilities().find
+    ) {
       openSearch();
     }
   });

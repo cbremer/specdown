@@ -15,12 +15,18 @@ import { escapeHtml } from '../core/utils.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
 import { visualThemeLabel } from '../core/visual-theme-catalog.js';
 import { hasDesktopBridge, bridgeRequestFileOpen } from './bridge.js';
+import {
+  htmlActiveKind,
+  htmlActiveCapabilities,
+} from '../core/document-kind.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
 // The iOS WKScriptMessage bridge, present only inside the native shell.
 const iosHandler = () =>
-  window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.specdown;
+  window.webkit &&
+  window.webkit.messageHandlers &&
+  window.webkit.messageHandlers.specdown;
 
 export function setupIOSNativeUI() {
   document.body.classList.toggle('ios-native', isIOSNative);
@@ -29,8 +35,14 @@ export function setupIOSNativeUI() {
   if (iosSampleSection) {
     iosSampleSection.style.display = isIOSNative ? '' : 'none';
   }
-  document.body.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
-  document.documentElement.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
+  document.body.classList.toggle(
+    'ios-pad',
+    isIOSNative && state.iosLayoutMode === 'pad'
+  );
+  document.documentElement.classList.toggle(
+    'ios-pad',
+    isIOSNative && state.iosLayoutMode === 'pad'
+  );
   syncIOSChrome();
 }
 
@@ -63,12 +75,18 @@ export function requestBundledSampleIfAvailable(sampleName) {
 /** The active document's display title, for print/export headers. */
 function printableTitle() {
   const fileName = el('file-name');
-  return fileName && fileName.textContent ? fileName.textContent : 'Specdown Document';
+  return fileName && fileName.textContent
+    ? fileName.textContent
+    : 'Specdown Document';
 }
 
 export function hasLoadedContent() {
   const contentArea = el('content-area');
-  return !!(contentArea && contentArea.style.display !== 'none' && state.currentRawMarkdown);
+  return !!(
+    contentArea &&
+    contentArea.style.display !== 'none' &&
+    state.currentRawMarkdown
+  );
 }
 
 /** Per-sheet focus-trap release fns, keyed by element id. @type {Map<string, () => void>} */
@@ -142,6 +160,11 @@ function updateIOSSheetButton(button, label, active) {
 //   - fallback → bare window.print() plus the @media print CSS, only if the
 //                paths above are unavailable
 export async function performPrint() {
+  // Session 01: HTML print is hidden. Do not clone #markdown-content or fall
+  // through to window.print() on the viewport-fixed shell.
+  if (htmlActiveKind() === 'html') {
+    return;
+  }
   try {
     const iosPrintHandler = iosHandler();
     if (isIOSNative && iosPrintHandler && hasLoadedContent()) {
@@ -155,7 +178,10 @@ export async function performPrint() {
       return;
     }
   } catch (error) {
-    console.error('Print pipeline failed, falling back to window.print():', error);
+    console.error(
+      'Print pipeline failed, falling back to window.print():',
+      error
+    );
   }
   window.print();
 }
@@ -218,7 +244,10 @@ window.setIOSLayoutMode = function (/** @type {string} */ mode) {
   state.iosLayoutMode = mode === 'pad' ? 'pad' : 'phone';
   if (isIOSNative) {
     document.body.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
-    document.documentElement.classList.toggle('ios-pad', state.iosLayoutMode === 'pad');
+    document.documentElement.classList.toggle(
+      'ios-pad',
+      state.iosLayoutMode === 'pad'
+    );
     if (state.iosLayoutMode === 'pad') {
       closeIOSActionSheet();
       closeIOSTocSheet();
@@ -233,7 +262,9 @@ window.setIOSLayoutMode = function (/** @type {string} */ mode) {
 // stored source; on any failure the on-screen clone is kept for that diagram.
 /** @param {HTMLElement} printRoot */
 async function rerenderPrintDiagramsLight(printRoot) {
-  const darkSvgs = printRoot.querySelectorAll('.diagram-wrapper svg[data-mermaid-source]');
+  const darkSvgs = printRoot.querySelectorAll(
+    '.diagram-wrapper svg[data-mermaid-source]'
+  );
   if (darkSvgs.length === 0) return;
   let printMermaid;
   try {
@@ -269,7 +300,10 @@ async function rerenderPrintDiagramsLight(printRoot) {
           node.replaceWith(lightSvg);
         }
       } catch (error) {
-        console.error('Print diagram re-render failed, keeping on-screen copy:', error);
+        console.error(
+          'Print diagram re-render failed, keeping on-screen copy:',
+          error
+        );
       }
     }
   } finally {
@@ -290,12 +324,18 @@ export async function buildPrintableDocument() {
   const markdownContent = el('markdown-content');
   const title = printableTitle();
   if (!markdownContent) return '';
-  const printableContent = /** @type {HTMLElement} */ (markdownContent.cloneNode(true));
+  const printableContent = /** @type {HTMLElement} */ (
+    markdownContent.cloneNode(true)
+  );
 
   printableContent
-    .querySelectorAll('.diagram-expand, .annotation-popover, .search-highlight, .search-highlight-current, .code-copy-btn')
+    .querySelectorAll(
+      '.diagram-expand, .annotation-popover, .search-highlight, .search-highlight-current, .code-copy-btn'
+    )
     .forEach((element) => element.remove());
-  printableContent.querySelectorAll('.annotation-badge').forEach((badge) => badge.remove());
+  printableContent
+    .querySelectorAll('.annotation-badge')
+    .forEach((badge) => badge.remove());
   printableContent.querySelectorAll('.has-annotation').forEach((element) => {
     element.classList.remove('has-annotation');
   });
@@ -461,42 +501,85 @@ export function syncIOSChrome() {
   if (!isIOSNative) return;
 
   const hasContent = hasLoadedContent();
-  const showActionBar = (hasContent || state.tabs.length > 0) && state.iosLayoutMode !== 'pad';
-  const canShowContents = hasContent && state.currentViewMode === 'preview' && state.tocEntries.length > 0;
+  const showActionBar =
+    (hasContent || state.tabs.length > 0) && state.iosLayoutMode !== 'pad';
+  const caps = htmlActiveCapabilities();
+  const canShowContents =
+    hasContent &&
+    caps.toc &&
+    state.currentViewMode === 'preview' &&
+    state.tocEntries.length > 0;
 
   const iosActionBar = el('ios-action-bar');
   if (iosActionBar) {
     iosActionBar.style.display = showActionBar ? 'grid' : 'none';
   }
 
-  const iosContentsButton = /** @type {HTMLButtonElement | null} */ (el('ios-contents-button'));
+  const iosContentsButton = /** @type {HTMLButtonElement | null} */ (
+    el('ios-contents-button')
+  );
   if (iosContentsButton) {
+    iosContentsButton.style.display = caps.toc ? '' : 'none';
     iosContentsButton.disabled = !canShowContents;
     iosContentsButton.classList.toggle('active', state.tocVisible);
   }
 
-  const iosViewButton = /** @type {HTMLButtonElement | null} */ (el('ios-view-button'));
+  const iosViewButton = /** @type {HTMLButtonElement | null} */ (
+    el('ios-view-button')
+  );
   if (iosViewButton) {
     iosViewButton.disabled = !hasContent;
     iosViewButton.classList.toggle('active', state.currentViewMode === 'raw');
-    updateIOSActionButtonLabel(iosViewButton, state.currentViewMode === 'preview' ? 'Raw' : 'Preview');
+    const rawLabel = htmlActiveKind() === 'html' ? 'Source' : 'Raw';
+    updateIOSActionButtonLabel(
+      iosViewButton,
+      state.currentViewMode === 'preview' ? rawLabel : 'Preview'
+    );
   }
 
-  const iosMoreButton = /** @type {HTMLButtonElement | null} */ (el('ios-more-button'));
+  const iosMoreButton = /** @type {HTMLButtonElement | null} */ (
+    el('ios-more-button')
+  );
   if (iosMoreButton) {
     iosMoreButton.disabled = !hasContent;
   }
 
-  updateIOSSheetButton(el('ios-split-button'), state.splitViewActive ? 'Hide Split View' : 'Show Split View', state.splitViewActive);
-  updateIOSSheetButton(el('ios-theme-button'), state.currentTheme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode', false);
+  updateIOSSheetButton(
+    el('ios-split-button'),
+    state.splitViewActive ? 'Hide Split View' : 'Show Split View',
+    state.splitViewActive
+  );
+  updateIOSSheetButton(
+    el('ios-theme-button'),
+    state.currentTheme === 'light'
+      ? 'Switch to Dark Mode'
+      : 'Switch to Light Mode',
+    false
+  );
   updateIOSSheetButton(
     el('ios-visual-theme-button'),
     'Theme: ' + visualThemeLabel(state.visualTheme),
     state.visualTheme !== 'default'
   );
 
-  const iosSplitButton = /** @type {HTMLButtonElement | null} */ (el('ios-split-button'));
-  const iosPrintButton = /** @type {HTMLButtonElement | null} */ (el('ios-print-button'));
-  if (iosSplitButton) iosSplitButton.disabled = !hasContent;
-  if (iosPrintButton) iosPrintButton.disabled = !hasContent;
+  const iosSplitButton = /** @type {HTMLButtonElement | null} */ (
+    el('ios-split-button')
+  );
+  const iosPrintButton = /** @type {HTMLButtonElement | null} */ (
+    el('ios-print-button')
+  );
+  if (iosSplitButton) {
+    iosSplitButton.style.display = caps.split ? '' : 'none';
+    iosSplitButton.disabled = !hasContent;
+  }
+  if (iosPrintButton) {
+    iosPrintButton.style.display = caps.print ? '' : 'none';
+    iosPrintButton.disabled = !hasContent || !caps.print;
+  }
+  const iosCommentsButton = el('ios-comments-button');
+  if (iosCommentsButton)
+    iosCommentsButton.style.display = caps.authoredComments ? '' : 'none';
+  const iosAnnotateButton = el('ios-annotations-button');
+  if (iosAnnotateButton)
+    iosAnnotateButton.style.display = caps.annotate ? '' : 'none';
 }

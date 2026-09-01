@@ -85,16 +85,22 @@ describe('flag-off product surface', () => {
     expect(indexHtml).toMatch(/Content-Security-Policy/);
   });
 
-  it('index.html has no html-frame or document-stage', () => {
-    expect(indexHtml).not.toMatch(/html-frame/);
-    expect(indexHtml).not.toMatch(/document-stage/);
+  it('index.html has a document-stage sibling iframe (layout is not flag-gated)', () => {
+    expect(indexHtml).toMatch(/id="document-stage"/);
+    expect(indexHtml).toMatch(/id="html-frame"/);
+    expect(indexHtml).toMatch(/sandbox="allow-scripts"/);
+    expect(indexHtml).not.toMatch(/allow-same-origin/);
   });
 
-  it('loaded document body has no html-frame or document-stage', () => {
+  it('loaded document body has html-frame as a sibling of markdown-content', () => {
     loadHTML(document);
-    expect(document.getElementById('html-frame')).toBeNull();
-    expect(document.getElementById('document-stage')).toBeNull();
-    expect(document.querySelector('#html-frame, #document-stage')).toBeNull();
+    const frame = document.getElementById('html-frame');
+    const md = document.getElementById('markdown-content');
+    const stage = document.getElementById('document-stage');
+    expect(frame).not.toBeNull();
+    expect(stage).not.toBeNull();
+    expect(md.parentElement).toBe(stage);
+    expect(frame.parentElement).toBe(stage);
   });
 
   it('file-loading still rejects .html and .htm', () => {

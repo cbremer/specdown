@@ -1,10 +1,23 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  dialog,
+  ipcMain,
+  globalShortcut,
+  shell,
+} = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const chokidar = require('chokidar');
 
-const VALID_EXTENSIONS = ['.md', '.markdown'];
+const MARKDOWN_EXTENSIONS = ['.md', '.markdown'];
+const HTML_EXTENSIONS = ['.html', '.htm'];
+/** Documented openable set (md, markdown, html, htm). Ingress flag-gates HTML. */
+const OPENABLE_EXTENSIONS = ['.md', '.markdown', '.html', '.htm'];
+const VALID_EXTENSIONS = MARKDOWN_EXTENSIONS;
+const HTML_MAX_BYTES = 8 * 1024 * 1024;
 const MAX_RECENT_FILES = 15;
 
 // Session 01 will AND this with HTML extensions in the open gate.
@@ -14,6 +27,54 @@ const MAX_RECENT_FILES = 15;
 // renderer (`htmlDocumentsEnabled` / Vite define).
 function htmlDocumentsEnabledMain() {
   return process.env.VITE_HTML_DOCUMENTS === 'true';
+}
+
+function isHtmlExtension(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return HTML_EXTENSIONS.includes(ext);
+}
+
+function isOpenableDocument(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (MARKDOWN_EXTENSIONS.includes(ext)) return true;
+  if (HTML_EXTENSIONS.includes(ext) && htmlDocumentsEnabledMain()) return true;
+  return false;
+}
+
+/** @deprecated Session 01: use isOpenableDocument. Kept as an alias. */
+function isValidMarkdownFile(filePath) {
+  return isOpenableDocument(filePath);
+}
+
+/**
+ * Subframe navigation lock (council F3). Allow the bundled preview host;
+ * http(s) opens in the system browser; everything else is denied.
+ * @param {string} url
+ * @returns {{ allow: boolean, openExternal: boolean }}
+ */
+function htmlFrameNavigateDecision(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { allow: false, openExternal: false };
+  }
+  const protocol = parsed.protocol;
+  if (/\/html-preview-host\.html$/i.test(parsed.pathname)) {
+    return { allow: true, openExternal: false };
+  }
+  if (protocol === 'http:' || protocol === 'https:') {
+    return { allow: false, openExternal: true };
+  }
+  if (protocol === 'about:') return { allow: true, openExternal: false };
+  if (protocol === 'file:') {
+    const decoded = decodeURIComponent(url).replace(/\\/g, '/');
+    if (decoded.includes('/markdown-viewer/dist/')) {
+      return { allow: true, openExternal: false };
+    }
+    return { allow: false, openExternal: false };
+  }
+  return { allow: false, openExternal: false };
 }
 
 const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
@@ -156,7 +217,9 @@ function initAutoUpdater() {
     // restart-to-update). The native OS notification from checkForUpdatesAndNotify
     // still fires as a fallback when the window isn't focused.
     if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('update-downloaded', { version: info && info.version });
+      mainWindow.webContents.send('update-downloaded', {
+        version: info && info.version,
+      });
     }
   });
 
@@ -224,7 +287,10 @@ function showManualUpdateCheckError(err) {
   // A 404 on the update feed usually means a release was just published and
   // its platform artifacts are still building/notarizing (the release record
   // appears minutes before the assets do). Say that instead of dumping HTTP.
-  if (/cannot find latest[^\s]*\.yml/i.test(detail) || /HttpError: 404/.test(detail)) {
+  if (
+    /cannot find latest[^\s]*\.yml/i.test(detail) ||
+    /HttpError: 404/.test(detail)
+  ) {
     dialog.showMessageBox({
       type: 'info',
       message: 'The newest release is still being packaged',
@@ -297,7 +363,8 @@ function initStore() {
   };
 
   store = {
-    get: (key, fallback) => (Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback),
+    get: (key, fallback) =>
+      Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback,
     set: (key, value) => {
       data[key] = value;
       write();
@@ -325,7 +392,8 @@ function addRecentFile(filePath) {
   let recent = store.get('recentFiles', []);
   recent = recent.filter((p) => p !== filePath);
   recent.unshift(filePath);
-  if (recent.length > MAX_RECENT_FILES) recent = recent.slice(0, MAX_RECENT_FILES);
+  if (recent.length > MAX_RECENT_FILES)
+    recent = recent.slice(0, MAX_RECENT_FILES);
   store.set('recentFiles', recent);
   rebuildMenu();
 }
@@ -343,14 +411,16 @@ function restoreSession() {
   if (!store) return;
   const session = store.get('session', { tabs: [] });
   for (const tabInfo of session.tabs) {
-    if (tabInfo.filePath && isValidMarkdownFile(tabInfo.filePath)) {
+    if (tabInfo.filePath && isOpenableDocument(tabInfo.filePath)) {
       openFileByPath(tabInfo.filePath);
     }
   }
 }
 
 function createWindow() {
-  const bounds = store ? store.get('windowBounds', { width: 1200, height: 800 }) : { width: 1200, height: 800 };
+  const bounds = store
+    ? store.get('windowBounds', { width: 1200, height: 800 })
+    : { width: 1200, height: 800 };
 
   mainWindow = new BrowserWindow({
     width: bounds.width,
@@ -387,6 +457,18 @@ function createWindow() {
     if (protocol === 'http:' || protocol === 'https:') {
       shell.openExternal(url);
     }
+  });
+
+  mainWindow.webContents.on('will-frame-navigate', (event) => {
+    const url = event.url;
+    if (event.isMainFrame) return;
+    const decision = htmlFrameNavigateDecision(url);
+    if (decision.openExternal) {
+      event.preventDefault();
+      shell.openExternal(url);
+      return;
+    }
+    if (!decision.allow) event.preventDefault();
   });
 
   // Block any attempt by the renderer to open a new BrowserWindow, but route
@@ -433,11 +515,6 @@ function createWindow() {
 // ===========================
 // File Open Logic
 // ===========================
-function isValidMarkdownFile(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return VALID_EXTENSIONS.includes(ext);
-}
-
 function readMarkdownFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const filename = path.basename(filePath);
@@ -481,9 +558,19 @@ function buildFileMetadata(filePath) {
 }
 
 function openFileByPath(filePath) {
-  if (!isValidMarkdownFile(filePath)) return;
+  if (!isOpenableDocument(filePath)) return;
 
   try {
+    if (isHtmlExtension(filePath)) {
+      const stats = fs.statSync(filePath);
+      if (stats.size > HTML_MAX_BYTES) {
+        dialog.showErrorBox(
+          'File too large',
+          'HTML files larger than 8 MB cannot be opened.'
+        );
+        return;
+      }
+    }
     const fileData = readMarkdownFile(filePath);
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('file-opened', fileData);
@@ -497,13 +584,20 @@ function openFileByPath(filePath) {
 async function showOpenDialog() {
   if (!mainWindow) return;
 
+  const htmlOn = htmlDocumentsEnabledMain();
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Open Markdown File',
+    title: htmlOn ? 'Open File' : 'Open Markdown File',
     properties: ['openFile', 'multiSelections'],
-    filters: [
-      { name: 'Markdown Files', extensions: ['md', 'markdown'] },
-      { name: 'All Files', extensions: ['*'] },
-    ],
+    filters: htmlOn
+      ? [
+          { name: 'Markdown', extensions: ['md', 'markdown'] },
+          { name: 'HTML', extensions: ['html', 'htm'] },
+          { name: 'All Files', extensions: ['*'] },
+        ]
+      : [
+          { name: 'Markdown Files', extensions: ['md', 'markdown'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
   });
 
   if (result.canceled || !result.filePaths.length) return;
@@ -520,8 +614,19 @@ async function showOpenDialog() {
 // is bounded (depth + count) and skips noisy directories so a large repo can't
 // hang the main process or flood the renderer.
 const WORKSPACE_IGNORE_DIRS = new Set([
-  'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
-  'coverage', '.next', '.cache', '.vite', '.idea', '.vscode',
+  'node_modules',
+  '.git',
+  '.svn',
+  '.hg',
+  'dist',
+  'build',
+  'out',
+  'coverage',
+  '.next',
+  '.cache',
+  '.vite',
+  '.idea',
+  '.vscode',
 ]);
 const WORKSPACE_MAX_DEPTH = 8;
 const WORKSPACE_MAX_FILES = 2000;
@@ -535,7 +640,8 @@ function scanWorkspace(rootDir) {
   const out = [];
 
   const walk = (dir, depth) => {
-    if (depth > WORKSPACE_MAX_DEPTH || out.length >= WORKSPACE_MAX_FILES) return;
+    if (depth > WORKSPACE_MAX_DEPTH || out.length >= WORKSPACE_MAX_FILES)
+      return;
 
     let entries;
     try {
@@ -554,7 +660,7 @@ function scanWorkspace(rootDir) {
       if (entry.isDirectory()) {
         if (WORKSPACE_IGNORE_DIRS.has(name)) continue;
         walk(full, depth + 1);
-      } else if (entry.isFile() && isValidMarkdownFile(name)) {
+      } else if (entry.isFile() && isOpenableDocument(name)) {
         out.push({
           path: full,
           relPath: path.relative(rootDir, full),
@@ -597,7 +703,8 @@ async function showOpenFolderDialog() {
 function isInsideAnyWorkspace(targetPath) {
   for (const root of workspaceRoots) {
     const rel = path.relative(root, targetPath);
-    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) return true;
+    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel)))
+      return true;
   }
   return false;
 }
@@ -655,8 +762,8 @@ function openRelativeFromFile(fromPath, href) {
 // We also don't capture `webContents` in the event closure anymore: if
 // the renderer is reloaded (View > Reload), a captured reference becomes
 // stale. Instead we look up `mainWindow.webContents` lazily at event time.
-const watchers = new Map();          // filePath → { dir }
-const dirWatchers = new Map();       // dir → { watcher, files: Map<basename, filePath> }
+const watchers = new Map(); // filePath → { dir }
+const dirWatchers = new Map(); // dir → { watcher, files: Map<basename, filePath> }
 
 function watchFile(filePath, _webContents) {
   if (watchers.has(filePath)) return; // already watching
@@ -692,7 +799,9 @@ function watchFile(filePath, _webContents) {
     // for a handful of files and it works everywhere.
     const usePolling = process.env.SPECDOWN_WATCH_POLLING === '1';
     if (usePolling) {
-      logInfo(`Chokidar polling mode enabled for ${dir} (SPECDOWN_WATCH_POLLING=1)`);
+      logInfo(
+        `Chokidar polling mode enabled for ${dir} (SPECDOWN_WATCH_POLLING=1)`
+      );
     }
 
     const watcher = chokidar.watch(dir, {
@@ -865,7 +974,10 @@ async function exportPdfFromHtml(payload) {
     printable = await loadPrintableWindow(payload.html);
   } catch (err) {
     logError('Failed to prepare document for PDF export', err);
-    dialog.showErrorBox('Export as PDF failed', 'The document could not be prepared for export.');
+    dialog.showErrorBox(
+      'Export as PDF failed',
+      'The document could not be prepared for export.'
+    );
     return;
   }
   const { printWindow, cleanup } = printable;
@@ -944,7 +1056,7 @@ ipcMain.handle('get-file-metadata', (_event, filePath) => {
 // file-changed channel a watcher event uses, so the renderer updates the
 // open tab in place (scroll preserved, "Updated" chip flash).
 ipcMain.on('refresh-file', (_event, filePath) => {
-  if (typeof filePath !== 'string' || !isValidMarkdownFile(filePath)) return;
+  if (typeof filePath !== 'string' || !isOpenableDocument(filePath)) return;
   try {
     const fileData = readMarkdownFile(filePath);
     const wc = mainWindow && mainWindow.webContents;
@@ -1011,7 +1123,8 @@ function normalizeVisualThemeCatalog(raw) {
     if (!entry || typeof entry !== 'object') continue;
     const id = typeof entry.id === 'string' ? entry.id.trim() : '';
     const label = typeof entry.label === 'string' ? entry.label.trim() : '';
-    if (!id || !label || !/^[a-z][a-z0-9-]*$/i.test(id) || seen.has(id)) continue;
+    if (!id || !label || !/^[a-z][a-z0-9-]*$/i.test(id) || seen.has(id))
+      continue;
     seen.add(id);
     next.push({ id, label });
   }
@@ -1022,10 +1135,15 @@ function applyVisualThemeCatalog(raw) {
   const next = normalizeVisualThemeCatalog(raw);
   if (!next) return false;
   visualThemeCatalogItems = next;
-  if (!visualThemeCatalogItems.some((theme) => theme.id === currentVisualThemeId)) {
+  if (
+    !visualThemeCatalogItems.some((theme) => theme.id === currentVisualThemeId)
+  ) {
     currentVisualThemeId = visualThemeCatalogItems[0].id;
   }
-  if (typeof Menu.getApplicationMenu === 'function' && Menu.getApplicationMenu()) {
+  if (
+    typeof Menu.getApplicationMenu === 'function' &&
+    Menu.getApplicationMenu()
+  ) {
     rebuildMenu();
   }
   return true;
@@ -1052,7 +1170,10 @@ ipcMain.on('visual-theme-catalog', (_event, catalog) => {
 
 // Keep Appearance > Theme radio items in sync with the in-app picker.
 ipcMain.on('visual-theme-changed', (_event, themeId) => {
-  if (typeof themeId === 'string' && visualThemeCatalogItems.some((theme) => theme.id === themeId)) {
+  if (
+    typeof themeId === 'string' &&
+    visualThemeCatalogItems.some((theme) => theme.id === themeId)
+  ) {
     currentVisualThemeId = themeId;
   }
   const menu = Menu.getApplicationMenu();
@@ -1070,40 +1191,45 @@ function buildMenu() {
   const isMac = process.platform === 'darwin';
   const recent = getRecentFiles();
 
-  const recentSubmenu = recent.length === 0
-    ? [{ label: 'No Recent Files', enabled: false }]
-    : [
-        ...recent.map((filePath) => ({
-          label: path.basename(filePath),
-          sublabel: filePath,
-          click: () => openFileByPath(filePath),
-        })),
-        { type: 'separator' },
-        {
-          label: 'Clear Recent Files',
-          click: () => {
-            if (store) store.set('recentFiles', []);
-            rebuildMenu();
+  const recentSubmenu =
+    recent.length === 0
+      ? [{ label: 'No Recent Files', enabled: false }]
+      : [
+          ...recent.map((filePath) => ({
+            label: path.basename(filePath),
+            sublabel: filePath,
+            click: () => openFileByPath(filePath),
+          })),
+          { type: 'separator' },
+          {
+            label: 'Clear Recent Files',
+            click: () => {
+              if (store) store.set('recentFiles', []);
+              rebuildMenu();
+            },
           },
-        },
-      ];
+        ];
 
   const template = [
     // macOS app menu
-    ...(isMac ? [{
-      label: app.name,
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        { role: 'services' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideOthers' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' },
-      ],
-    }] : []),
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     // File menu
     {
       label: 'File',
@@ -1151,10 +1277,7 @@ function buildMenu() {
             }
           },
         },
-        ...(isMac ? [] : [
-          { type: 'separator' },
-          { role: 'quit' },
-        ]),
+        ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
       ],
     },
     // Edit menu (macOS standard)
@@ -1220,12 +1343,9 @@ function buildMenu() {
       submenu: [
         { role: 'minimize' },
         { role: 'zoom' },
-        ...(isMac ? [
-          { type: 'separator' },
-          { role: 'front' },
-        ] : [
-          { role: 'close' },
-        ]),
+        ...(isMac
+          ? [{ type: 'separator' }, { role: 'front' }]
+          : [{ role: 'close' }]),
       ],
     },
     // Help menu — diagnostics live here so issues are reportable.
@@ -1254,7 +1374,8 @@ function buildMenu() {
               }
               // shell.openPath returns Promise<string>: '' on success, an
               // error message string on failure. Both arms need handling.
-              shell.openPath(logFilePath)
+              shell
+                .openPath(logFilePath)
                 .then((result) => {
                   if (result) {
                     logError('Failed to open log file', new Error(result));
@@ -1368,6 +1489,11 @@ app.on('open-file', (event, filePath) => {
 // Export for testing
 module.exports = {
   isValidMarkdownFile,
+  isOpenableDocument,
+  htmlFrameNavigateDecision,
+  OPENABLE_EXTENSIONS,
+  HTML_EXTENSIONS,
+  HTML_MAX_BYTES,
   armManualUpdateCheck,
   showManualUpdateCheckError,
   readMarkdownFile,

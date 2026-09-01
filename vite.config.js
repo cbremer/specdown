@@ -1,4 +1,11 @@
 import { defineConfig } from 'vite';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const {
+  htmlInjectParentFrameSrc,
+  htmlInjectFileAccept,
+} = require('./scripts/html-build-transform.js');
 
 // Strips the `crossorigin` attribute Vite stamps onto the generated
 // <script>/<link> tags. Over file:// (iOS WKWebView), crossorigin triggers a
@@ -9,6 +16,16 @@ const stripCrossorigin = {
   name: 'strip-crossorigin',
   transformIndexHtml(html) {
     return html.replace(/\s+crossorigin(?:=("|')[^"']*\1)?/g, '');
+  },
+};
+
+// HTML-on builds only: frame the bundled preview host, and accept .html/.htm.
+// Source index.html stays without frame-src (flag-off grep). Never blob: or
+// 'unsafe-inline' on parent script-src.
+const htmlDocumentsIndexTransform = {
+  name: 'html-documents-index',
+  transformIndexHtml(html) {
+    return htmlInjectFileAccept(htmlInjectParentFrameSrc(html));
   },
 };
 
@@ -38,7 +55,10 @@ export default defineConfig(({ mode }) => {
     define: {
       __HTML_DOCUMENTS_ENABLED__: htmlDocumentsEnabledDefine ? 'true' : 'false',
     },
-    plugins: [stripCrossorigin],
+    plugins: [
+      stripCrossorigin,
+      ...(htmlDocumentsEnabledDefine ? [htmlDocumentsIndexTransform] : []),
+    ],
     // 5179 instead of Vite's default 5173 so a local `npm run dev` does not
     // collide with other Vite apps on the same machine.
     server: {

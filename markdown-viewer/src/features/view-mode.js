@@ -6,6 +6,8 @@ import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
 import { toggleToc } from './toc.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
+import { htmlActiveKind } from '../core/document-kind.js';
+import { htmlHideFrame } from './html-document.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -29,17 +31,23 @@ export function toggleViewMode() {
     if (state.tocVisible) {
       toggleToc(false);
     }
-    // Show raw markdown in a pre/code block
+    htmlHideFrame();
+    markdownContent.hidden = false;
+    // Show raw source in a pre/code block
     const escaped = state.currentRawMarkdown
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    markdownContent.innerHTML = '<pre class="raw-markdown"><code>' + escaped + '</code></pre>';
+    markdownContent.innerHTML =
+      '<pre class="raw-markdown"><code>' + escaped + '</code></pre>';
   } else {
     state.currentViewMode = 'preview';
     // Re-render the preview
     const fileName = el('file-name');
-    renderPreview(state.currentRawMarkdown, fileName ? fileName.textContent : '');
+    renderPreview(
+      state.currentRawMarkdown,
+      fileName ? fileName.textContent : ''
+    );
     return; // render handles the rest
   }
 
@@ -59,7 +67,8 @@ export function updateViewToggleButton() {
   const label = viewToggle.querySelector('.view-toggle-label');
   const icon = viewToggle.querySelector('.view-toggle-icon');
   if (state.currentViewMode === 'preview') {
-    if (label) label.textContent = 'Raw';
+    if (label)
+      label.textContent = htmlActiveKind() === 'html' ? 'Source' : 'Raw';
     if (icon) icon.innerHTML = iconSvg('code');
     viewToggle.classList.remove('active');
   } else {

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpecDown HTML showcase</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --ink: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-2: #a78bfa;
+        --line: #334155;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background:
+          radial-gradient(
+            1200px 600px at 10% -10%,
+            #1d4ed8 0%,
+            transparent 55%
+          ),
+          radial-gradient(900px 500px at 100% 0%, #6d28d9 0%, transparent 50%),
+          var(--bg);
+        color: var(--ink);
+        line-height: 1.55;
+      }
+      header.hero {
+        padding: 3rem 1.5rem 2rem;
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        color: var(--accent);
+        margin: 0 0 0.75rem;
+      }
+      h1 {
+        font-size: 2.4rem;
+        line-height: 1.15;
+        margin: 0 0 0.75rem;
+      }
+      .lede {
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 40rem;
+      }
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 0 1.5rem 4rem;
+      }
+      section {
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 1.25rem 1.4rem;
+        margin: 1rem 0;
+      }
+      h2 {
+        margin: 0 0 0.6rem;
+        font-size: 1.25rem;
+      }
+      .callout {
+        border-left: 4px solid var(--accent-2);
+        padding: 0.2rem 0 0.2rem 1rem;
+        color: var(--muted);
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin: 0.75rem 0 1rem;
+      }
+      .tabs label {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.25rem 0.8rem;
+        font-size: 0.85rem;
+      }
+      .tabs input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #panel-layout,
+      #panel-security {
+        display: none;
+      }
+      #tab-layout:checked ~ .tabs label[for='tab-layout'],
+      #tab-security:checked ~ .tabs label[for='tab-security'] {
+        background: var(--accent);
+        color: #0f172a;
+        border-color: var(--accent);
+      }
+      #tab-layout:checked ~ #panel-layout,
+      #tab-security:checked ~ #panel-security {
+        display: block;
+      }
+      footer {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 0 1.5rem 3rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <p class="eyebrow">SpecDown sample</p>
+      <h1>A designed HTML page, still a SpecDown document</h1>
+      <p class="lede">
+        This file is QA-only: drop it on an HTML-on build to confirm the
+        sandboxed preview host, Raw/Split, and tab switching. It makes no
+        network requests.
+      </p>
+    </header>
+    <main>
+      <section>
+        <h2>What you should see</h2>
+        <p>
+          A layout with a header, sections, and CSS-only tabs — not Times New
+          Roman lorem. Scripts in other HTML files run inside the opaque iframe,
+          never in the SpecDown origin.
+        </p>
+      </section>
+      <input id="tab-layout" type="radio" name="showcase-tab" checked />
+      <input id="tab-security" type="radio" name="showcase-tab" />
+      <div class="tabs">
+        <label for="tab-layout">Layout</label>
+        <label for="tab-security">Isolation</label>
+      </div>
+      <section id="panel-layout">
+        <h2>Layout notes</h2>
+        <p class="callout">
+          Headings here exist so Session 02 TOC has something to outline.
+          Relative asset URLs are omitted on purpose.
+        </p>
+        <p>
+          Split view should show this source on one side and this page on the
+          other. Raw should hide the iframe.
+        </p>
+      </section>
+      <section id="panel-security">
+        <h2>Isolation notes</h2>
+        <p>
+          <code>window.parent.specdown</code> must not be readable from this
+          document. Print, Find, Contents, Present, Annotate, and Comments stay
+          hidden until they are honest for HTML.
+        </p>
+      </section>
+    </main>
+    <footer>
+      SpecDown HTML showcase — bundled sample, not a landing or iOS button.
+    </footer>
+  </body>
+</html>

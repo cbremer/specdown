@@ -29,6 +29,7 @@
  * @property {boolean} watching
  * @property {boolean} hasUnseenChanges
  * @property {TabSourceMeta | null} [sourceMeta]
+ * @property {'markdown' | 'html'} [kind] Document runtime. Default markdown.
  */
 
 /**

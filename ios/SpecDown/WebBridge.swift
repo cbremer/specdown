@@ -44,6 +44,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
+        guard message.frameInfo.isMainFrame else {
+            print("[Bridge] Ignoring non-main-frame script message")
+            return
+        }
         guard
             let body = message.body as? [String: Any],
             let action = body["action"] as? String
@@ -145,7 +149,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         presentDocumentPicker()
     }
 
-    /// Read a markdown file URL (security-scoped) and hand its content to the
+    private static let htmlMaxBytes = 8 * 1024 * 1024
+
+    /// Read a markdown/HTML file URL (security-scoped) and hand its content to the
     /// web layer. Shared by the document picker and by external opens — Files
     /// "Open in place", the share sheet, and "Open With… Specdown" — routed here
     /// via SwiftUI's `.onOpenURL`.
@@ -157,8 +163,22 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             }
         }
 
+        let ext = url.pathExtension.lowercased()
+        let isHtml = ext == "html" || ext == "htm"
+
         do {
+            if isHtml {
+                let values = try url.resourceValues(forKeys: [.fileSizeKey])
+                if let size = values.fileSize, size > Self.htmlMaxBytes {
+                    print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                    return
+                }
+            }
             let data = try Data(contentsOf: url)
+            if isHtml && data.count > Self.htmlMaxBytes {
+                print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                return
+            }
             guard let content = String(data: data, encoding: .utf8) else {
                 print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
                 return
@@ -206,7 +226,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     // MARK: - Native integrations
 
     private func presentDocumentPicker() {
-        let types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
+        let types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml, .html]
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
         picker.delegate = self
         picker.allowsMultipleSelection = false
