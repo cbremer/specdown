@@ -5,6 +5,41 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.186 — 2026-09-01
+
+### Features
+
+- Add HTML staging rail so runtime work cannot ship as a release
+
+### Bug Fixes
+
+- Fix nested backticks in the editorial-diagrams brainstorm table
+
+### Documentation
+
+- brainstorm viewing diagram-design HTML in SpecDown (#223)
+- add HTML staging rail so runtime work cannot ship as a release
+- keep Specular, Lantern, and four tagline options in the kit
+- link sharing kit to HTML names and press council
+- council names, taglines, and press drafts
+- reject blob/srcdoc preview; use a bundled host page
+- add platform-seat gates to Session 01
+- tighten Session 01 after product and UX council seats
+- council-amend the HTML plan (CSP, print XSS, honest chrome)
+- plan HTML documents as a forked viewer runtime
+
+### Chores
+
+- **deps:** bump mermaid from 11.17.0 to 11.17.2
+- **deps-dev:** bump the dev-dependencies group with 3 updates
+- **deps:** bump dompurify from 3.4.13 to 3.4.14
+- **deps:** bump marked from 18.0.10 to 18.0.11
+
+### Other Changes
+
+- Launch desktop:html via a Node wrapper so the env var is portable
+- Limit html-staging.yml GITHUB_TOKEN to contents:read and actions:write
+
 ## v0.0.185 — 2026-08-22
 
 ### Chores
