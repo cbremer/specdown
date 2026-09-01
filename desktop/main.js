@@ -8,6 +8,7 @@ const {
   shell,
 } = require('electron');
 const path = require('path');
+const { fileURLToPath } = require('url');
 const fs = require('fs');
 const os = require('os');
 const chokidar = require('chokidar');
@@ -98,7 +99,7 @@ function htmlFrameNavigateDecision(url) {
   if (protocol === 'file:') {
     let targetPath;
     try {
-      targetPath = path.fileURLToPath(parsed.href);
+      targetPath = fileURLToPath(parsed.href);
     } catch {
       return { allow: false, openExternal: false };
     }
