@@ -81,14 +81,18 @@ function htmlIsRelativeUrl(value) {
 
 /**
  * @param {string} value
+ * @param {boolean} htmlAllowRelativeUrls
  * @returns {string}
  */
-function htmlNeutralizeUrl(value) {
+function htmlNeutralizeUrl(value, htmlAllowRelativeUrls) {
   const v = String(value || '').trim();
   if (!v) return v;
   if (v.startsWith('#')) return v;
   if (v.startsWith('//')) return '#';
   if (HTML_DANGEROUS_PROTOCOL.test(v)) return '#';
+  // Session 01 omits <base>. Relative URLs would otherwise resolve against
+  // the preview host (dist / file:), which is local probing — rewrite to #.
+  if (!htmlAllowRelativeUrls && htmlIsRelativeUrl(v)) return '#';
   return v;
 }
 
@@ -104,9 +108,10 @@ const HTML_URL_ATTRS = [
 
 /**
  * @param {Document} doc
- * @returns {boolean} whether any relative URL survived neutralization
+ * @param {boolean} htmlAllowRelativeUrls
+ * @returns {boolean} whether any relative URL was present (toast if no base)
  */
-function htmlRewriteUrls(doc) {
+function htmlRewriteUrls(doc, htmlAllowRelativeUrls) {
   let sawRelative = false;
   const nodes = doc.querySelectorAll('*');
   for (const node of nodes) {
@@ -114,7 +119,7 @@ function htmlRewriteUrls(doc) {
       if (!node.hasAttribute(attr)) continue;
       const raw = node.getAttribute(attr) || '';
       if (htmlIsRelativeUrl(raw)) sawRelative = true;
-      const next = htmlNeutralizeUrl(raw);
+      const next = htmlNeutralizeUrl(raw, htmlAllowRelativeUrls);
       if (next !== raw) node.setAttribute(attr, next);
     }
     if (node.hasAttribute('srcset')) {
@@ -163,7 +168,7 @@ export function htmlRewriteDocument(raw, opts) {
     parsed.querySelectorAll(tag).forEach((el) => el.remove());
   }
 
-  const sawRelative = htmlRewriteUrls(parsed);
+  const sawRelative = htmlRewriteUrls(parsed, !!options.baseHref);
 
   let head = parsed.head;
   if (!head) {

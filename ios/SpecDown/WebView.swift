@@ -155,7 +155,8 @@ struct WebView: UIViewRepresentable {
         private func isHtmlPreviewHost(_ url: URL) -> Bool {
             let scheme = url.scheme?.lowercased() ?? ""
             guard scheme == BundleSchemeHandler.scheme else { return false }
-            return url.path.hasSuffix("/html-preview-host.html") || url.path == "/html-preview-host.html"
+            let path = url.standardized.path
+            return path.hasSuffix("/html-preview-host.html") || path == "/html-preview-host.html"
         }
 
         private func shouldOpenExternallyInPlace(_ navigationAction: WKNavigationAction, url: URL) -> Bool {

@@ -104,6 +104,8 @@ declare global {
     };
     /** Set by the app; called by the native shell to load file content. */
     loadFileContent?: (content: string, filename: string) => void;
+    /** Set by the app; called by the iOS shell to show an in-app error toast. */
+    specdownNativeError?: (message: string) => void;
     /** Set by the app; called by the iOS shell to switch theme. */
     setTheme?: (theme: string) => void;
     /** Set by the app; called by the iOS shell on layout-class changes. */

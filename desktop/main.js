@@ -8,6 +8,7 @@ const {
   shell,
 } = require('electron');
 const path = require('path');
+const { fileURLToPath } = require('url');
 const fs = require('fs');
 const os = require('os');
 const chokidar = require('chokidar');
@@ -47,6 +48,35 @@ function isValidMarkdownFile(filePath) {
 }
 
 /**
+ * Absolute path of the bundled preview host — same dist directory
+ * `createWindow` passes to `loadFile(.../markdown-viewer/dist/index.html)`.
+ * @returns {string}
+ */
+function htmlBundledPreviewHostPath() {
+  return path.resolve(
+    __dirname,
+    '..',
+    'markdown-viewer',
+    'dist',
+    'html-preview-host.html'
+  );
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+function htmlSameResolvedPath(a, b) {
+  const left = path.resolve(a);
+  const right = path.resolve(b);
+  if (process.platform === 'win32') {
+    return left.toLowerCase() === right.toLowerCase();
+  }
+  return left === right;
+}
+
+/**
  * Subframe navigation lock (council F3). Allow the bundled preview host;
  * http(s) opens in the system browser; everything else is denied.
  * @param {string} url
@@ -60,16 +90,20 @@ function htmlFrameNavigateDecision(url) {
     return { allow: false, openExternal: false };
   }
   const protocol = parsed.protocol;
-  if (/\/html-preview-host\.html$/i.test(parsed.pathname)) {
-    return { allow: true, openExternal: false };
-  }
+  // Scheme first: a remote URL whose path happens to look like the host
+  // page must never load in-frame.
+  if (protocol === 'about:') return { allow: true, openExternal: false };
   if (protocol === 'http:' || protocol === 'https:') {
     return { allow: false, openExternal: true };
   }
-  if (protocol === 'about:') return { allow: true, openExternal: false };
   if (protocol === 'file:') {
-    const decoded = decodeURIComponent(url).replace(/\\/g, '/');
-    if (decoded.includes('/markdown-viewer/dist/')) {
+    let targetPath;
+    try {
+      targetPath = fileURLToPath(parsed.href);
+    } catch {
+      return { allow: false, openExternal: false };
+    }
+    if (htmlSameResolvedPath(targetPath, htmlBundledPreviewHostPath())) {
       return { allow: true, openExternal: false };
     }
     return { allow: false, openExternal: false };
@@ -1491,6 +1525,7 @@ module.exports = {
   isValidMarkdownFile,
   isOpenableDocument,
   htmlFrameNavigateDecision,
+  htmlBundledPreviewHostPath,
   OPENABLE_EXTENSIONS,
   HTML_EXTENSIONS,
   HTML_MAX_BYTES,

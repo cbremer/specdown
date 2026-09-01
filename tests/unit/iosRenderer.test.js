@@ -169,4 +169,13 @@ describe('iOS renderer integration', () => {
     expect(cssContent).toMatch(/\.ios-action-bar[^}]*env\(safe-area-inset-left/);
     expect(cssContent).toMatch(/\.ios-action-bar[^}]*env\(safe-area-inset-right/);
   });
+
+  it('shows an in-app toast when the native shell reports an error', () => {
+    expect(typeof window.specdownNativeError).toBe('function');
+    window.specdownNativeError('HTML files larger than 8 MB cannot be opened.');
+    const toast = document.querySelector('.toast');
+    expect(toast).not.toBeNull();
+    expect(toast.textContent).toMatch(/8 MB/);
+    expect(toast.getAttribute('role')).toBe('alert');
+  });
 });

@@ -72,11 +72,13 @@ jest.mock('electron', () => ({
 }));
 
 const os = require('os');
+const { pathToFileURL } = require('url');
 
 const {
   isValidMarkdownFile,
   isOpenableDocument,
   htmlFrameNavigateDecision,
+  htmlBundledPreviewHostPath,
   OPENABLE_EXTENSIONS,
   readMarkdownFile,
   buildFileMetadata,
@@ -1058,11 +1060,15 @@ describe('desktop/main.js', () => {
   });
 
   describe('htmlFrameNavigateDecision', () => {
-    it('allows the preview host and about:blank', () => {
+    const bundledHostUrl = pathToFileURL(htmlBundledPreviewHostPath()).href;
+
+    it('allows only the bundled preview host and about:blank', () => {
+      expect(htmlFrameNavigateDecision(bundledHostUrl)).toEqual({
+        allow: true,
+        openExternal: false,
+      });
       expect(
-        htmlFrameNavigateDecision(
-          'file:///tmp/markdown-viewer/dist/html-preview-host.html'
-        )
+        htmlFrameNavigateDecision(`${bundledHostUrl}?specdown-host=1`)
       ).toEqual({ allow: true, openExternal: false });
       expect(htmlFrameNavigateDecision('about:blank')).toEqual({
         allow: true,
@@ -1075,6 +1081,44 @@ describe('desktop/main.js', () => {
         allow: false,
         openExternal: true,
       });
+    });
+
+    it('never allows a remote URL even if the path looks like the host page', () => {
+      expect(
+        htmlFrameNavigateDecision('https://evil.example/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: true });
+      expect(
+        htmlFrameNavigateDecision('http://evil.example/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: true });
+    });
+
+    it('denies a lookalike host page outside the bundled dist', () => {
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/html-preview-host.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+    });
+
+    it('denies file: traversal out of markdown-viewer/dist', () => {
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/../secret.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/../html-preview-host.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision('file:///tmp/other/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/%2e%2e/secret.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
     });
 
     it('denies javascript and data URLs', () => {
