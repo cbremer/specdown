@@ -10,6 +10,13 @@ on:
     branches: [html]
   workflow_dispatch:
 
+# Limit GITHUB_TOKEN: checkout + npm, and upload-artifact only.
+# Do not grant contents:write (this workflow must not version-bump
+# or push to main).
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   html-staging:
     name: HTML-on web artifact
