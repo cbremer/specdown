@@ -5,6 +5,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "desktop": "npm run build && electron .",
+    "desktop:html": "npm run build:html && VITE_HTML_DOCUMENTS=true electron .",
     "desktop:build": "npm run build && electron-builder",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -20,8 +21,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "vite",
+    "dev:html": "vite --mode html",
     "build": "vite build && node scripts/copy-static.js",
+    "build:html": "vite build --mode html && node scripts/copy-static.js",
     "preview": "vite preview",
+    "preview:html": "npm run build:html && vite preview --mode html",
     "version": "node scripts/sync-version.js && git add markdown-viewer/src/main.js"
   },
   "keywords": [

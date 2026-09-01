@@ -74,6 +74,32 @@ describe('File Handling', () => {
       }, 10);
     });
 
+    it('should reject .html files with a warning toast', () => {
+      const file = new File(['<p>no</p>'], 'note.html', { type: 'text/html' });
+
+      handleFile(file);
+
+      expect(global.alert).not.toHaveBeenCalled();
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      expect(toast.textContent).toBe(
+        'Please select a valid Markdown file (.md or .markdown)'
+      );
+      expect(toast.classList.contains('toast-warning')).toBe(true);
+    });
+
+    it('should reject .htm files with a warning toast', () => {
+      const file = new File(['<p>no</p>'], 'note.htm', { type: 'text/html' });
+
+      handleFile(file);
+
+      const toast = document.querySelector('.toast');
+      expect(toast).not.toBeNull();
+      expect(toast.textContent).toBe(
+        'Please select a valid Markdown file (.md or .markdown)'
+      );
+    });
+
     it('should reject .txt files with a warning toast', () => {
       const file = new File(['Test content'], 'test.txt', { type: 'text/plain' });
 

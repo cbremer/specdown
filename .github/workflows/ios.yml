@@ -2,7 +2,7 @@ name: iOS Build
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, html, "claude/**"]
     paths:
       - "ios/**"
       - "markdown-viewer/**"

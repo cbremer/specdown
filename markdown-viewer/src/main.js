@@ -17,6 +17,7 @@ import 'highlight.js/styles/github-dark.css';
 
 // Internal modules (Phase 1 split — extracting cohesive units out of this entry).
 import { isDesktop, isIOSNative } from './core/platform.js';
+import { htmlDocumentsEnabled } from './core/html-flag.js';
 import { state } from './core/state.js';
 import { revealHtmlComments } from './core/utils.js';
 import { configureMarked } from './core/render-config.js';
@@ -177,6 +178,10 @@ const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present
 // Initialization
 // ===========================
 function init() {
+    // Keep the helper in the module graph so Vite cannot DCE it.
+    // Session 01 gates open paths on this; Session 00 does not.
+    const htmlDocumentsEnabledAtBoot = htmlDocumentsEnabled();
+    void htmlDocumentsEnabledAtBoot;
     configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
     configureFileLoading({
         createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>

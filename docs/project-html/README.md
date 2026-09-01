@@ -26,17 +26,19 @@ app origin. Markdown stays the compiler pipeline; HTML is already compiled.
 
 ## Current Status
 
-**Planning complete (council-amended + staging rail). HTML runtime
-not started.** Merge-to-`main` is a GitHub Release + Pages deploy —
-Session 01 must not go there first.
+**Session 00 staging rail is implemented** (flag default off,
+`*:html` scripts, `html-staging.yml` artifact). HTML runtime is
+**not** started. Merge-to-`main` is a GitHub Release + Pages
+deploy — Session 01 must not go there.
 
-**Next code:** [Session 00](2026-08-25-tasks-session-00-staging-rail.md)
-onto `main`, then create branch `html`. Then
-[Session 01](2026-08-23-tasks-session-01-kind-and-open.md) onto `html`
-from the [amended spec](2026-08-23-spec-html-v1.md) and
-[council](2026-08-23-council-html-plan-review.md).
+**After this lands on `main`:** create and push branch `html`
+from that tip (see Session 00 “After merge”). Then
+[Session 01](2026-08-23-tasks-session-01-kind-and-open.md) onto
+`html` from the [amended spec](2026-08-23-spec-html-v1.md) and
+[council](2026-08-23-council-html-plan-review.md). Do not open
+Session 01 against `main`.
 
-### How to dogfood (after Session 00)
+### How to dogfood
 
 Production-shaped (what users get): `npm run dev` / `build` / `desktop`.
 HTML-on staging: `npm run dev:html` / `preview:html` / `desktop:html`.

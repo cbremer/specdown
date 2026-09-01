@@ -94,6 +94,7 @@ const {
   loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
+  htmlDocumentsEnabledMain,
   applyVisualThemeCatalog,
   DEFAULT_VISUAL_THEME_CATALOG,
 } = require('../../desktop/main');
@@ -108,6 +109,35 @@ describe('desktop/main.js', () => {
     it('does not include other extensions', () => {
       expect(VALID_EXTENSIONS).not.toContain('.txt');
       expect(VALID_EXTENSIONS).not.toContain('.html');
+      expect(VALID_EXTENSIONS).not.toContain('.htm');
+    });
+  });
+
+  describe('htmlDocumentsEnabledMain', () => {
+    const originalFlag = process.env.VITE_HTML_DOCUMENTS;
+
+    afterEach(() => {
+      if (originalFlag === undefined) {
+        delete process.env.VITE_HTML_DOCUMENTS;
+      } else {
+        process.env.VITE_HTML_DOCUMENTS = originalFlag;
+      }
+    });
+
+    it('is off by default', () => {
+      delete process.env.VITE_HTML_DOCUMENTS;
+      expect(htmlDocumentsEnabledMain()).toBe(false);
+    });
+
+    it('is on when VITE_HTML_DOCUMENTS is the string true', () => {
+      process.env.VITE_HTML_DOCUMENTS = 'true';
+      expect(htmlDocumentsEnabledMain()).toBe(true);
+    });
+
+    it('does not open .html even when the flag is on', () => {
+      process.env.VITE_HTML_DOCUMENTS = 'true';
+      expect(isValidMarkdownFile('/path/to/file.html')).toBe(false);
+      expect(isValidMarkdownFile('/path/to/file.htm')).toBe(false);
     });
   });
 

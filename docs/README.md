@@ -33,12 +33,10 @@ YYYY-MM-DD-<type>-<detail>.md
 - **Desktop (`project-desktop`)**: No remaining features in the current Session 1–4 scope.
 - **URL opening (`project-url`)**: Inline reviewer comments (Google Docs-style) are still unimplemented and intentionally deferred from Session 01.
 - **iOS/iPad (`project-ios`)**: Shell is implemented; latest work adds an adaptive iPadOS split layout while keeping the shared viewer architecture intact.
-- **HTML documents (`project-html`)**: Planning complete
-  ([council-amended](project-html/2026-08-23-council-html-plan-review.md)
-  + [staging rail](project-html/2026-08-25-spec-html-staging.md)).
-  First code is [Session 00](project-html/2026-08-25-tasks-session-00-staging-rail.md)
-  onto `main` (flag off, no gates). HTML runtime is Session 01+
-  onto branch `html`, not `main`. Do not convert HTML to markdown
-  and do not inject it into the app origin — fork the document
-  runtime. See [project-html/README.md](project-html/README.md).
+- **HTML documents (`project-html`)**: [Session 00](project-html/2026-08-25-tasks-session-00-staging-rail.md)
+  staging rail is on `main` (flag default off, no gates). HTML
+  runtime is Session 01+ onto branch `html`, not `main`. Do not
+  convert HTML to markdown and do not inject it into the app
+  origin — fork the document runtime. See
+  [project-html/README.md](project-html/README.md).
 - **Editorial diagrams (`project-editorial-diagrams`)**: Brainstorm only. SpecDown would view diagram-design HTML (extract SVG → existing diagram chrome); it would not generate diagrams or replace Mermaid.
