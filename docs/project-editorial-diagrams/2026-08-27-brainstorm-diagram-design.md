@@ -19,7 +19,7 @@ They look like competitors. They aren't.
 | Job | An **agent skill** that *authors* a diagram | A **viewer** that *presents* a document |
 | Input | A prompt, a `.drawio`, or a Mermaid block | A `.md` / `.markdown` file (drop, URL, workspace, GitHub) |
 | Output | One self-contained `.html` (inline SVG; optional `.svg` / `.png` export) | Interactive reading surface: TOC, find, annotations, print, presentation |
-| Diagram model | Finished drawing. Layout, type ramp, and brand tokens are authored into the SVG. | Live render. A fenced ` ```mermaid ` block is compiled at view time by the Mermaid engine. |
+| Diagram model | Finished drawing. Layout, type ramp, and brand tokens are authored into the SVG. | Live render. A fenced mermaid code block is compiled at view time by the Mermaid engine. |
 | Design stance | One accent, 4px grid, hairlines, no shadows, density 4/10. Brand from your site. | Mermaid's default / dark themes, system UI fonts, expand-to-explore chrome. |
 | Runtime | None required. Open the HTML in a browser. Motion is optional and pinned. | Vite bundle + DOMPurify + lazy Mermaid + Panzoom. CSP forbids arbitrary scripts. |
 
