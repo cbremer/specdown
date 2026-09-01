@@ -5,7 +5,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "desktop": "npm run build && electron .",
-    "desktop:html": "npm run build:html && VITE_HTML_DOCUMENTS=true electron .",
+    "desktop:html": "npm run build:html && node scripts/desktop-html.js",
     "desktop:build": "npm run build && electron-builder",
     "test": "jest",
     "test:watch": "jest --watch",
