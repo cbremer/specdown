@@ -60,16 +60,16 @@ function htmlFrameNavigateDecision(url) {
     return { allow: false, openExternal: false };
   }
   const protocol = parsed.protocol;
-  if (/\/html-preview-host\.html$/i.test(parsed.pathname)) {
-    return { allow: true, openExternal: false };
-  }
+  // Scheme first: a remote page named like the host must never load in-frame.
   if (protocol === 'http:' || protocol === 'https:') {
     return { allow: false, openExternal: true };
   }
   if (protocol === 'about:') return { allow: true, openExternal: false };
   if (protocol === 'file:') {
-    const decoded = decodeURIComponent(url).replace(/\\/g, '/');
-    if (decoded.includes('/markdown-viewer/dist/')) {
+    const normalized = path
+      .normalize(decodeURIComponent(parsed.pathname))
+      .replace(/\\/g, '/');
+    if (/\/markdown-viewer\/dist\/html-preview-host\.html$/i.test(normalized)) {
       return { allow: true, openExternal: false };
     }
     return { allow: false, openExternal: false };

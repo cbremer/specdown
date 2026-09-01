@@ -290,6 +290,18 @@ window.loadFileContent = function (content, filename) {
   createTab(filename, content);
 };
 
+// iOS API: native shells cannot use window.alert(); surface errors in-app.
+window.specdownToast = function (message, type) {
+  const toastType =
+    type === 'error' ||
+    type === 'success' ||
+    type === 'info' ||
+    type === 'warning'
+      ? type
+      : 'warning';
+  showToast(String(message || ''), { type: toastType });
+};
+
 // ===========================
 // Event Listeners
 // ===========================

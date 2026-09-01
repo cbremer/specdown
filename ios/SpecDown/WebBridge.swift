@@ -171,12 +171,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 let values = try url.resourceValues(forKeys: [.fileSizeKey])
                 if let size = values.fileSize, size > Self.htmlMaxBytes {
                     print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                    showWebToast("HTML files larger than 8 MB cannot be opened.")
                     return
                 }
             }
             let data = try Data(contentsOf: url)
             if isHtml && data.count > Self.htmlMaxBytes {
                 print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                showWebToast("HTML files larger than 8 MB cannot be opened.")
                 return
             }
             guard let content = String(data: data, encoding: .utf8) else {
@@ -191,6 +193,15 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func openBundledSampleFromSidebar(named fileName: String) {
         loadBundledSample(named: fileName)
+    }
+
+    /// In-app toast via the shared viewer (native alert/prompt are ignored in WKWebView).
+    private func showWebToast(_ message: String) {
+        evaluateJavaScript(
+            function: "window.specdownToast",
+            arguments: [message, "warning"],
+            context: "specdownToast"
+        )
     }
 
     private func evaluateJavaScript(function: String, arguments: [Any], context: String) {

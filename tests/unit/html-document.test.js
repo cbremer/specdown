@@ -70,6 +70,33 @@ describe('htmlRewriteDocument', () => {
     expect(out).not.toMatch(/href="\/\//);
     expect(out).toMatch(/href="#keep"/);
   });
+
+  it('neutralizes relative URLs when no baseHref is set', () => {
+    const out = htmlRewriteDocument(
+      '<img src="./secret.png"><link href="style.css"><a href="/abs">x</a>'
+    );
+    expect(out).not.toMatch(/secret\.png/);
+    expect(out).not.toMatch(/style\.css/);
+    expect(out).not.toMatch(/href="\/abs"/);
+  });
+
+  it('keeps relative URLs when baseHref is injected', () => {
+    const out = htmlRewriteDocument('<img src="./ok.png">', {
+      baseHref: 'specdown-asset://doc/',
+    });
+    expect(out).toMatch(/src="\.\/ok\.png"/);
+    expect(out).toMatch(/<base href="specdown-asset:\/\/doc\/"/);
+  });
+
+  it('specdownToast surfaces native-shell errors in-app', () => {
+    window.specdownToast(
+      'HTML files larger than 8 MB cannot be opened.',
+      'warning'
+    );
+    const toast = document.querySelector('.toast');
+    expect(toast).not.toBeNull();
+    expect(toast.textContent).toMatch(/8 MB/);
+  });
 });
 
 describe('preview host + stage iframe', () => {

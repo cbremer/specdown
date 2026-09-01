@@ -1087,5 +1087,25 @@ describe('desktop/main.js', () => {
         openExternal: false,
       });
     });
+
+    it('does not allow a remote page named like the preview host', () => {
+      expect(
+        htmlFrameNavigateDecision('https://evil.example/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: true });
+    });
+
+    it('does not allow other file: paths under dist or path traversal', () => {
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/../secret.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision('file:///tmp/markdown-viewer/dist/other.html')
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision('file:///tmp/evil/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: false });
+    });
   });
 });
