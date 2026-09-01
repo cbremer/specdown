@@ -1,8 +1,8 @@
 # Session 01 — Document kind, open gates, sandboxed HTML preview
 
 **Date:** 2026-08-23 (staging rail: 2026-08-25)
-**Status:** Ready to implement (**council-amended**) — **after
-Session 00**. Base branch **`html`**, not `main`.
+**Status:** Implemented on branch `html` (council-amended) — after
+Session 00. Base branch **`html`**, not `main`.
 **Spec:** [spec-html-v1](2026-08-23-spec-html-v1.md) ·
 [staging](2026-08-25-spec-html-staging.md)
 **Brainstorm:** [brainstorm-html-documents](2026-08-23-brainstorm-html-documents.md)
@@ -19,9 +19,9 @@ exactly as today. This PR must **not** merge to `main` (that
 would ship a Release). Dogfood with `npm run dev:html` /
 `preview:html` / `desktop:html`.
 
-Out of this session: TOC/Find/Print-for-HTML, workspace *link*
+Out of this session: TOC/Find/Print-for-HTML, workspace _link_
 following, asset protocol, Safe mode, Mermaid-in-HTML, annotations,
-repo browser HTML search. Workspace **listing** *is* in this
+repo browser HTML search. Workspace **listing** _is_ in this
 session (council H2).
 
 ## Preconditions
@@ -198,7 +198,7 @@ staging spec’s **markdown golden path** on the same SHA.
 ## Done when
 
 - HTML opens on web + desktop + iOS picker types **in the HTML-on
-  build** and is *visible* (CSP does not blank the stage).
+  build** and is _visible_ (CSP does not blank the stage).
 - Flag-off build still rejects `.html`; markdown golden path is
   green (including Print not clipped).
 - Security checklist in the spec is all checked for this PR.

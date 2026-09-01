@@ -97,6 +97,19 @@ struct WebView: UIViewRepresentable {
                 return
             }
 
+            let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
+            if !isMainFrame {
+                if isHtmlPreviewHost(url) {
+                    decisionHandler(.allow)
+                    return
+                }
+                if isAllowedScheme(url) {
+                    UIApplication.shared.open(url)
+                }
+                decisionHandler(.cancel)
+                return
+            }
+
             if shouldOpenExternallyInPlace(navigationAction, url: url) {
                 UIApplication.shared.open(url)
                 decisionHandler(.cancel)
@@ -137,6 +150,12 @@ struct WebView: UIViewRepresentable {
                 UIApplication.shared.open(url)
             }
             return nil
+        }
+
+        private func isHtmlPreviewHost(_ url: URL) -> Bool {
+            let scheme = url.scheme?.lowercased() ?? ""
+            guard scheme == BundleSchemeHandler.scheme else { return false }
+            return url.path.hasSuffix("/html-preview-host.html") || url.path == "/html-preview-host.html"
         }
 
         private func shouldOpenExternallyInPlace(_ navigationAction: WKNavigationAction, url: URL) -> Bool {

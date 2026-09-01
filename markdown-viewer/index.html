@@ -47,7 +47,7 @@
     <script type="module" src="/src/main.js"></script>
 </head>
 <body>
-    <a class="skip-link" href="#markdown-content">Skip to content</a>
+    <a class="skip-link" href="#document-stage">Skip to content</a>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
@@ -248,7 +248,14 @@
 
                 <!-- Main content pane (preview + optional raw split) -->
                 <div id="content-main" class="content-main">
-                    <div id="markdown-content" class="markdown-content" tabindex="-1" role="main"></div>
+                    <div id="document-stage" tabindex="-1" role="main">
+                        <div id="markdown-content" class="markdown-content" tabindex="-1"></div>
+                        <iframe id="html-frame"
+                                hidden
+                                sandbox="allow-scripts"
+                                allow=""
+                                title=""></iframe>
+                    </div>
                     <div id="split-raw-pane" class="split-raw-pane" style="display: none;">
                         <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
                     </div>

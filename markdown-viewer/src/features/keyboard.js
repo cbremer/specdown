@@ -20,6 +20,7 @@ import { closeOverflowMenu, isOverflowMenuOpen } from './toolbar-overflow.js';
 import { closeFullscreen, updateZoomUI, resetToFit } from './diagrams.js';
 import { openSearch, closeSearch } from './search.js';
 import { performPrint } from '../platform/ios-chrome.js';
+import { htmlActiveCapabilities } from '../core/document-kind.js';
 
 // True when the event target is a text-entry element, so global single-key
 // shortcuts (like "?") don't fire while the user is typing.
@@ -80,7 +81,11 @@ export function setupGlobalKeyboardShortcuts() {
     }
     // Cmd/Ctrl+F — open search
     if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-      if (contentArea && contentArea.style.display !== 'none') {
+      if (
+        contentArea &&
+        contentArea.style.display !== 'none' &&
+        htmlActiveCapabilities().find
+      ) {
         e.preventDefault();
         openSearch();
       }
@@ -88,7 +93,11 @@ export function setupGlobalKeyboardShortcuts() {
     }
     // Cmd/Ctrl+P — print
     if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
-      if (contentArea && contentArea.style.display !== 'none') {
+      if (
+        contentArea &&
+        contentArea.style.display !== 'none' &&
+        htmlActiveCapabilities().print
+      ) {
         e.preventDefault();
         performPrint();
       }

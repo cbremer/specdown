@@ -77,7 +77,8 @@ function annHeadingTrail(target, root) {
   for (const h of headings) {
     if (h === target) break;
     // Only headings positioned before the target contribute to its path.
-    if (!(target.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
+    if (!(target.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_PRECEDING))
+      continue;
     const level = Number(h.tagName.charAt(1));
     while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
     stack.push({ level, text: annBlockText(h) });
@@ -148,17 +149,23 @@ function annResolve(ctx, note) {
         (i) => annHash(annHeadingTrail(ctx.blocks[i], ctx.root)) === a.path
       );
       const pool = pathMatches.length ? pathMatches : bucket;
-      if (typeof a.ordinal === 'number' && a.ordinal >= 0 && a.ordinal < pool.length) {
+      if (
+        typeof a.ordinal === 'number' &&
+        a.ordinal >= 0 &&
+        a.ordinal < pool.length
+      ) {
         return { idx: pool[a.ordinal], reason: 'fp' };
       }
       return { idx: pool[0], reason: 'fp' };
     }
     // Anchor existed but the fingerprint is gone — the block's text was edited.
-    if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'fallback' };
+    if (annValidIdx(ctx, note.legacyIdx))
+      return { idx: note.legacyIdx, reason: 'fallback' };
     return { idx: -1, reason: 'missing' };
   }
   // v1 note (no anchor): position it, then renderAnnotations upgrades it.
-  if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'legacy' };
+  if (annValidIdx(ctx, note.legacyIdx))
+    return { idx: note.legacyIdx, reason: 'legacy' };
   return { idx: -1, reason: 'missing' };
 }
 
@@ -192,7 +199,12 @@ function annReadStore() {
   } catch {
     return { version: STORE_VERSION, files: {} };
   }
-  if (parsed && parsed.version === STORE_VERSION && parsed.files && typeof parsed.files === 'object') {
+  if (
+    parsed &&
+    parsed.version === STORE_VERSION &&
+    parsed.files &&
+    typeof parsed.files === 'object'
+  ) {
     return /** @type {Store} */ (parsed);
   }
   return annMigrate(parsed);
@@ -209,7 +221,9 @@ function annMigrate(parsed) {
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
     for (const [file, notes] of Object.entries(parsed)) {
       if (!notes || typeof notes !== 'object') continue;
-      const arr = annLegacyToNotes(/** @type {Record<string, string>} */ (notes));
+      const arr = annLegacyToNotes(
+        /** @type {Record<string, string>} */ (notes)
+      );
       if (arr.length) store.files[file] = arr;
     }
   }
@@ -241,7 +255,10 @@ function annWriteStore(store) {
     for (const [file, notes] of Object.entries(store.files || {})) {
       if (Array.isArray(notes) && notes.length) files[file] = notes;
     }
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ version: STORE_VERSION, files }));
+    localStorage.setItem(
+      ANNOTATIONS_KEY,
+      JSON.stringify({ version: STORE_VERSION, files })
+    );
   } catch {
     // localStorage quota exceeded — silently ignore.
   }
@@ -317,7 +334,8 @@ function annNormalizeImportedNote(raw) {
  */
 function annSameNote(a, b) {
   if (a.text !== b.text) return false;
-  if (a.anchor && b.anchor) return a.anchor.fp === b.anchor.fp && a.anchor.ordinal === b.anchor.ordinal;
+  if (a.anchor && b.anchor)
+    return a.anchor.fp === b.anchor.fp && a.anchor.ordinal === b.anchor.ordinal;
   return a.legacyIdx === b.legacyIdx;
 }
 
@@ -337,12 +355,16 @@ export function importAnnotations(jsonText) {
     return false;
   }
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
-    showToast('Import failed: unexpected annotations format.', { type: 'error' });
+    showToast('Import failed: unexpected annotations format.', {
+      type: 'error',
+    });
     return false;
   }
 
   const incomingFiles =
-    incoming.version === STORE_VERSION && incoming.files && typeof incoming.files === 'object'
+    incoming.version === STORE_VERSION &&
+    incoming.files &&
+    typeof incoming.files === 'object'
       ? incoming.files
       : annMigrate(incoming).files;
 
@@ -350,7 +372,9 @@ export function importAnnotations(jsonText) {
   let fileCount = 0;
   for (const [file, notes] of Object.entries(incomingFiles)) {
     if (!Array.isArray(notes)) continue;
-    const merged = Array.isArray(store.files[file]) ? store.files[file].slice() : [];
+    const merged = Array.isArray(store.files[file])
+      ? store.files[file].slice()
+      : [];
     for (const candidate of notes) {
       const note = annNormalizeImportedNote(candidate);
       if (!note) continue;
@@ -363,12 +387,16 @@ export function importAnnotations(jsonText) {
   try {
     annWriteStore(store);
   } catch {
-    showToast('Import failed: could not save (storage full?).', { type: 'error' });
+    showToast('Import failed: could not save (storage full?).', {
+      type: 'error',
+    });
     return false;
   }
 
   if (annotationKey) renderAnnotations(annotationKey);
-  showToast(`Imported annotations for ${fileCount} document(s).`, { type: 'success' });
+  showToast(`Imported annotations for ${fileCount} document(s).`, {
+    type: 'success',
+  });
   return true;
 }
 
@@ -382,7 +410,8 @@ export function importAnnotationsFromFile() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => importAnnotations(String(reader.result || ''));
-    reader.onerror = () => showToast('Could not read the file.', { type: 'error' });
+    reader.onerror = () =>
+      showToast('Could not read the file.', { type: 'error' });
     reader.readAsText(file);
   });
   input.click();
@@ -402,12 +431,32 @@ export function toggleAnnotationMode() {
 
   if (annotationMode && annotationKey) {
     attachAnnotationHandlers();
-    showToast('Annotation mode on — double-click any paragraph or heading to add a note.', {
-      type: 'info',
-    });
+    showToast(
+      'Annotation mode on — double-click any paragraph or heading to add a note.',
+      {
+        type: 'info',
+      }
+    );
   } else {
     detachAnnotationHandlers();
   }
+}
+
+/** Force annotate off (HTML tabs). Unique name for the eval harness. */
+export function htmlForceAnnotationOff() {
+  if (annotationMode) {
+    annotationMode = false;
+    const btn = document.getElementById('annotation-toggle');
+    if (btn) btn.classList.remove('active');
+    detachAnnotationHandlers();
+  }
+  const panel = document.getElementById('annotation-panel');
+  if (panel) {
+    panel.classList.remove('open');
+    panel.style.display = 'none';
+  }
+  const listToggle = document.getElementById('annotation-list-toggle');
+  if (listToggle) listToggle.classList.remove('active');
 }
 
 function attachAnnotationHandlers() {
@@ -496,7 +545,8 @@ function attachAnnotationBadge(element, note, orphaned) {
   element.classList.toggle('annotation-orphaned', orphaned);
 
   const badge = document.createElement('span');
-  badge.className = 'annotation-badge' + (orphaned ? ' annotation-badge-orphaned' : '');
+  badge.className =
+    'annotation-badge' + (orphaned ? ' annotation-badge-orphaned' : '');
   badge.title = orphaned
     ? `${note.text}\n(the anchored text changed — best-guess location)`
     : note.text;
@@ -544,12 +594,22 @@ function ensureEditor() {
  */
 function openAnnotationEditor(target) {
   const backdrop = ensureEditor();
-  const textarea = /** @type {HTMLTextAreaElement} */ (backdrop.querySelector('.annotation-editor-input'));
-  const deleteBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-delete'));
-  const saveBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-save'));
-  const cancelBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-cancel'));
+  const textarea = /** @type {HTMLTextAreaElement} */ (
+    backdrop.querySelector('.annotation-editor-input')
+  );
+  const deleteBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-delete')
+  );
+  const saveBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-save')
+  );
+  const cancelBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-cancel')
+  );
 
-  const existing = target.id ? annFileNotes(annotationKey).find((n) => n.id === target.id) : null;
+  const existing = target.id
+    ? annFileNotes(annotationKey).find((n) => n.id === target.id)
+    : null;
   textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
   backdrop.style.display = 'flex';
@@ -685,10 +745,14 @@ export function renderAnnotationPanel() {
   // Resolve each note to a block, then order rows by document position
   // (unresolved notes sink to the bottom).
   const rows = notes.map((note) => {
-    const r = ctx ? annResolve(ctx, note) : { idx: -1, reason: /** @type {const} */ ('missing') };
+    const r = ctx
+      ? annResolve(ctx, note)
+      : { idx: -1, reason: /** @type {const} */ ('missing') };
     return { note, idx: r.idx, reason: r.reason };
   });
-  rows.sort((a, b) => (a.idx < 0 ? Infinity : a.idx) - (b.idx < 0 ? Infinity : b.idx));
+  rows.sort(
+    (a, b) => (a.idx < 0 ? Infinity : a.idx) - (b.idx < 0 ? Infinity : b.idx)
+  );
 
   for (const row of rows) {
     const { note, idx, reason } = row;
@@ -706,8 +770,11 @@ export function renderAnnotationPanel() {
     note_.textContent = note.text;
     const ctxEl = document.createElement('span');
     ctxEl.className = 'annotation-list-context';
-    ctxEl.textContent = snippet || (reason === 'missing' ? '(text not found)' : '(moved or edited)');
-    if (reason === 'fallback' || reason === 'missing') ctxEl.classList.add('annotation-list-context-orphaned');
+    ctxEl.textContent =
+      snippet ||
+      (reason === 'missing' ? '(text not found)' : '(moved or edited)');
+    if (reason === 'fallback' || reason === 'missing')
+      ctxEl.classList.add('annotation-list-context-orphaned');
     jump.append(note_, ctxEl);
     jump.addEventListener('click', () => jumpToAnnotation(note.id));
 

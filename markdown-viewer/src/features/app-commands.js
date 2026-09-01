@@ -33,6 +33,7 @@ import {
   exportActivePdf,
 } from '../platform/desktop.js';
 import { state } from '../core/state.js';
+import { htmlActiveCapabilities } from '../core/document-kind.js';
 
 // The modifier glyph shown in command hints — ⌘ on Apple platforms, Ctrl else.
 const CMD_MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl';
@@ -83,28 +84,29 @@ export function registerAppCommands() {
       title: 'Toggle raw / preview',
       keywords: ['markdown', 'source', 'code'],
       run: () => toggleViewMode(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().raw,
     },
     {
       id: 'toggle-toc',
       title: 'Toggle table of contents',
       keywords: ['outline', 'headings', 'contents'],
       run: () => toggleToc(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().toc,
     },
     {
       id: 'toggle-comments',
       title: 'Show / hide HTML comments',
       keywords: ['comments', 'hidden', 'html', 'reveal'],
       run: () => toggleComments(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () =>
+        isDocumentOpen() && htmlActiveCapabilities().authoredComments,
     },
     {
       id: 'toggle-split',
       title: 'Toggle split view',
       keywords: ['preview', 'raw', 'side'],
       run: () => toggleSplitView(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().split,
     },
     {
       id: 'toggle-annotate',
@@ -114,14 +116,14 @@ export function registerAppCommands() {
         toggleAnnotationMode();
         syncIOSChrome();
       },
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().annotate,
     },
     {
       id: 'show-annotations',
       title: 'Show annotations list',
       keywords: ['notes', 'annotations', 'panel', 'comments'],
       run: () => openAnnotationPanel(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().annotate,
     },
     {
       id: 'find',
@@ -129,7 +131,7 @@ export function registerAppCommands() {
       hint: CMD_MOD + ' F',
       keywords: ['search'],
       run: () => openSearch(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().find,
     },
     {
       id: 'print',
@@ -137,7 +139,7 @@ export function registerAppCommands() {
       hint: CMD_MOD + ' P',
       keywords: ['pdf', 'export', 'save'],
       run: () => performPrint(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().print,
     },
     {
       id: 'export-pdf',
@@ -145,7 +147,8 @@ export function registerAppCommands() {
       hint: CMD_MOD + ' ⇧ E',
       keywords: ['pdf', 'save', 'export', 'file', 'print'],
       run: () => exportActivePdf(),
-      isAvailable: () => isDesktop && isDocumentOpen(),
+      isAvailable: () =>
+        isDesktop && isDocumentOpen() && htmlActiveCapabilities().print,
     },
     {
       id: 'present-diagrams',
@@ -158,7 +161,10 @@ export function registerAppCommands() {
         'diagram',
       ],
       run: () => startPresentation(),
-      isAvailable: () => isDocumentOpen() && hasPresentableDiagrams(),
+      isAvailable: () =>
+        isDocumentOpen() &&
+        htmlActiveCapabilities().present &&
+        hasPresentableDiagrams(),
     },
     {
       id: 'export-annotations',
@@ -189,9 +195,21 @@ export function registerAppCommands() {
     {
       id: 'file-info',
       title: 'Show file info',
-      keywords: ['metadata', 'path', 'location', 'directory', 'created', 'modified', 'owner', 'size', 'creator', 'generated', 'generator'],
+      keywords: [
+        'metadata',
+        'path',
+        'location',
+        'directory',
+        'created',
+        'modified',
+        'owner',
+        'size',
+        'creator',
+        'generated',
+        'generator',
+      ],
       run: () => openFileInfoSheet(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => isDocumentOpen() && htmlActiveCapabilities().fileInfo,
     },
     {
       id: 'shortcuts',

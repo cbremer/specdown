@@ -74,6 +74,7 @@ targets:
             LSItemContentTypes:
               - net.daringfireball.markdown
               - public.plain-text
+              - public.html
         UTImportedTypeDeclarations:
           - UTTypeIdentifier: net.daringfireball.markdown
             UTTypeDescription: Markdown Document

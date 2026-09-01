@@ -15,6 +15,10 @@ import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
 import { showToast } from './toast.js';
 import {
+  htmlIsOpenableFilename,
+  htmlEmptyWorkspaceToast,
+} from '../core/document-kind.js';
+import {
   hasDesktopBridge,
   bridgeRequestOpenPath,
   bridgeRequestOpenFolder,
@@ -28,8 +32,19 @@ const MARKDOWN_LINK_RE = /\.(md|markdown)$/i;
 
 // Bounds + noise filter for the web directory scan (mirrors the desktop scan).
 const WS_WEB_IGNORE = new Set([
-  'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
-  'coverage', '.next', '.cache', '.vite', '.idea', '.vscode',
+  'node_modules',
+  '.git',
+  '.svn',
+  '.hg',
+  'dist',
+  'build',
+  'out',
+  'coverage',
+  '.next',
+  '.cache',
+  '.vite',
+  '.idea',
+  '.vscode',
 ]);
 const WS_MAX_DEPTH = 8;
 const WS_MAX_FILES = 2000;
@@ -68,14 +83,18 @@ let workspaceOpenFile = () => {};
  *           openFile?: (name: string, content: string, relPath: string) => void }} [deps]
  */
 export function configureWorkspace(deps) {
-  if (deps && typeof deps.openPath === 'function') workspaceOpenPath = deps.openPath;
-  if (deps && typeof deps.openFile === 'function') workspaceOpenFile = deps.openFile;
+  if (deps && typeof deps.openPath === 'function')
+    workspaceOpenPath = deps.openPath;
+  if (deps && typeof deps.openFile === 'function')
+    workspaceOpenFile = deps.openFile;
 }
 
 /** Whether the browser supports the File System Access directory picker. */
 function isWebFolderSupported() {
-  return typeof window !== 'undefined' &&
-    typeof /** @type {any} */ (window).showDirectoryPicker === 'function';
+  return (
+    typeof window !== 'undefined' &&
+    typeof (/** @type {any} */ (window).showDirectoryPicker) === 'function'
+  );
 }
 
 /**
@@ -110,9 +129,18 @@ async function scanDirectoryHandle(dirHandle, prefix, out, depth) {
     if (out.length >= WS_MAX_FILES) break;
     if (entry.kind === 'directory') {
       if (entry.name.startsWith('.') || WS_WEB_IGNORE.has(entry.name)) continue;
-      await scanDirectoryHandle(entry, `${prefix}${entry.name}/`, out, depth + 1);
-    } else if (entry.kind === 'file' && MARKDOWN_LINK_RE.test(entry.name)) {
-      out.push({ name: entry.name, relPath: `${prefix}${entry.name}`, handle: entry });
+      await scanDirectoryHandle(
+        entry,
+        `${prefix}${entry.name}/`,
+        out,
+        depth + 1
+      );
+    } else if (entry.kind === 'file' && htmlIsOpenableFilename(entry.name)) {
+      out.push({
+        name: entry.name,
+        relPath: `${prefix}${entry.name}`,
+        handle: entry,
+      });
     }
   }
 }
@@ -136,7 +164,7 @@ async function pickWebFolder() {
   }
   files.sort((a, b) => a.relPath.localeCompare(b.relPath));
   if (files.length === 0) {
-    showToast('No markdown files found in that folder.', { type: 'warning' });
+    showToast(htmlEmptyWorkspaceToast(), { type: 'warning' });
   }
   applyWorkspace({ root: dirHandle.name || '', files });
 }
@@ -160,7 +188,10 @@ export async function tryOpenDroppedFolder(dataTransfer) {
   // Synchronous: grab the handle promises before the event is consumed.
   const handlePromises = [];
   for (const item of items) {
-    if (item.kind === 'file' && typeof (/** @type {any} */ (item).getAsFileSystemHandle) === 'function') {
+    if (
+      item.kind === 'file' &&
+      typeof (/** @type {any} */ (item).getAsFileSystemHandle) === 'function'
+    ) {
       handlePromises.push(/** @type {any} */ (item).getAsFileSystemHandle());
     }
   }
@@ -190,7 +221,7 @@ export async function tryOpenDroppedFolder(dataTransfer) {
   }
   files.sort((a, b) => a.relPath.localeCompare(b.relPath));
   if (files.length === 0) {
-    showToast('No markdown files found in that folder.', { type: 'warning' });
+    showToast(htmlEmptyWorkspaceToast(), { type: 'warning' });
   }
   applyWorkspace({ root: dirHandle.name || '', files });
   return true;
@@ -213,7 +244,9 @@ export function applyWorkspace(workspace) {
   // Only auto-open when nothing is already open, so re-scanning while reading
   // doesn't yank the user off their current document.
   if (state.tabs.length === 0) {
-    const readme = workspaceFiles.find((f) => /^readme\.(md|markdown)$/i.test(f.name));
+    const readme = workspaceFiles.find((f) =>
+      /^readme\.(md|markdown)$/i.test(f.name)
+    );
     openWorkspaceEntry(readme || workspaceFiles[0]);
   }
 }
@@ -248,7 +281,10 @@ async function readHandleAndOpen(entry) {
 
 /** The active tab's file path, or '' when none (desktop). */
 function activeWorkspacePath() {
-  const tab = state.activeTabId !== null ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+  const tab =
+    state.activeTabId !== null
+      ? state.tabs.find((t) => t.id === state.activeTabId)
+      : null;
   return tab && tab.filePath ? tab.filePath : '';
 }
 
@@ -259,14 +295,22 @@ function activeWorkspacePath() {
  * @returns {Array<{type:'dir',name:string,relPath:string,children:any[]} | {type:'file',name:string,relPath:string,file:WorkspaceFile}>}
  */
 export function buildWorkspaceTree(files) {
-  const rootDir = { dirs: /** @type {Record<string, any>} */ ({}), files: /** @type {WorkspaceFile[]} */ ([]) };
+  const rootDir = {
+    dirs: /** @type {Record<string, any>} */ ({}),
+    files: /** @type {WorkspaceFile[]} */ ([]),
+  };
   for (const f of files) {
     const parts = f.relPath.split('/').filter(Boolean);
     let cur = rootDir;
     for (let i = 0; i < parts.length - 1; i++) {
       const seg = parts[i];
       if (!cur.dirs[seg]) {
-        cur.dirs[seg] = { name: seg, relPath: parts.slice(0, i + 1).join('/'), dirs: {}, files: [] };
+        cur.dirs[seg] = {
+          name: seg,
+          relPath: parts.slice(0, i + 1).join('/'),
+          dirs: {},
+          files: [],
+        };
       }
       cur = cur.dirs[seg];
     }
@@ -275,12 +319,26 @@ export function buildWorkspaceTree(files) {
   /** @param {any} node @returns {any[]} */
   const serialize = (node) => {
     const dirs = Object.values(node.dirs)
-      .sort((/** @type {any} */ a, /** @type {any} */ b) => a.name.localeCompare(b.name))
-      .map((/** @type {any} */ d) => ({ type: 'dir', name: d.name, relPath: d.relPath, children: serialize(d) }));
+      .sort((/** @type {any} */ a, /** @type {any} */ b) =>
+        a.name.localeCompare(b.name)
+      )
+      .map((/** @type {any} */ d) => ({
+        type: 'dir',
+        name: d.name,
+        relPath: d.relPath,
+        children: serialize(d),
+      }));
     const fileNodes = node.files
       .slice()
-      .sort((/** @type {any} */ a, /** @type {any} */ b) => a.name.localeCompare(b.name))
-      .map((/** @type {any} */ f) => ({ type: 'file', name: f.name, relPath: f.relPath, file: f }));
+      .sort((/** @type {any} */ a, /** @type {any} */ b) =>
+        a.name.localeCompare(b.name)
+      )
+      .map((/** @type {any} */ f) => ({
+        type: 'file',
+        name: f.name,
+        relPath: f.relPath,
+        file: f,
+      }));
     return [...dirs, ...fileNodes];
   };
   return serialize(rootDir);
@@ -294,14 +352,18 @@ export function buildWorkspaceTree(files) {
  * @returns {string}
  */
 export function resolveRelativeRelPath(fromRelPath, href) {
-  let clean = String(href || '').split('#')[0].split('?')[0];
+  let clean = String(href || '')
+    .split('#')[0]
+    .split('?')[0];
   try {
     clean = decodeURIComponent(clean);
   } catch {
     // leave as-is on bad encoding
   }
   if (!clean) return '';
-  const stack = String(fromRelPath || '').split('/').slice(0, -1);
+  const stack = String(fromRelPath || '')
+    .split('/')
+    .slice(0, -1);
   for (const part of clean.split('/')) {
     if (part === '' || part === '.') continue;
     if (part === '..') {

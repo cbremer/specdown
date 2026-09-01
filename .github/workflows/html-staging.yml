@@ -46,6 +46,26 @@ jobs:
       - name: Build HTML-on dist
         run: npm run build:html
 
+      - name: Assert HTML-on parent CSP
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('markdown-viewer/dist/index.html', 'utf8');
+            const m = html.match(/Content-Security-Policy[^>]*content=\"([^\"]*)\"/i);
+            if (!m) throw new Error('missing CSP');
+            const csp = m[1];
+            if (!/frame-src 'self'/.test(csp)) throw new Error('missing frame-src self');
+            if (/frame-src[^;]*blob:/.test(csp)) throw new Error('frame-src must not include blob:');
+            if (/script-src[^;]*blob:/.test(csp)) throw new Error('script-src must not include blob:');
+            if (/script-src[^;]*'unsafe-inline'/.test(csp)) throw new Error('script-src must not include unsafe-inline');
+            if (!fs.existsSync('markdown-viewer/dist/html-preview-host.html')) {
+              throw new Error('missing html-preview-host.html');
+            }
+            if (!fs.existsSync('markdown-viewer/dist/html-preview-host.js')) {
+              throw new Error('missing html-preview-host.js');
+            }
+          "
+
       - name: Upload html-staging-web
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

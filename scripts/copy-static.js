@@ -28,3 +28,14 @@ for (const entry of fs.readdirSync(samplesSrc)) {
 }
 
 console.log('Copied samples/ into dist/samples/');
+
+// Preview host (Session 01): not referenced from index.html, so Vite does
+// not emit it. Copy next to dist/index.html for web / desktop / iOS.
+const distRoot = path.join(root, 'dist');
+fs.mkdirSync(distRoot, { recursive: true });
+for (const hostFile of ['html-preview-host.html', 'html-preview-host.js']) {
+  const src = path.join(root, hostFile);
+  if (!fs.existsSync(src)) continue;
+  fs.copyFileSync(src, path.join(distRoot, hostFile));
+  console.log('Copied ' + hostFile + ' into dist/');
+}

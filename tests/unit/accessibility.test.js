@@ -19,12 +19,12 @@ describe('Accessibility', () => {
     it('is the first focusable element and targets the main content', () => {
       const skip = document.querySelector('.skip-link');
       expect(skip).not.toBeNull();
-      expect(skip.getAttribute('href')).toBe('#markdown-content');
+      expect(skip.getAttribute('href')).toBe('#document-stage');
       expect(skip.textContent).toMatch(/skip/i);
     });
 
     it('points at a focusable main content region', () => {
-      const target = document.getElementById('markdown-content');
+      const target = document.getElementById('document-stage');
       expect(target).not.toBeNull();
       expect(target.getAttribute('tabindex')).toBe('-1');
       expect(target.getAttribute('role')).toBe('main');
@@ -64,7 +64,10 @@ describe('Accessibility', () => {
       ];
       for (const [btnId, labelClass] of cases) {
         const btn = document.getElementById(btnId);
-        const visible = btn.querySelector('.' + labelClass).textContent.trim().toLowerCase();
+        const visible = btn
+          .querySelector('.' + labelClass)
+          .textContent.trim()
+          .toLowerCase();
         const accessible = btn.getAttribute('aria-label').toLowerCase();
         expect(accessible).toContain(visible);
       }

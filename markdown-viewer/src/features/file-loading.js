@@ -8,8 +8,14 @@ import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 import { recordRecentFile, renderRecentFiles } from './recent-files.js';
 import { bridgeGetPathForFile } from '../platform/bridge.js';
+import {
+  htmlIsOpenableFilename,
+  htmlExceedsReadCap,
+  htmlRejectedOpenToast,
+  htmlFileInputAccept,
+  htmlDetectKind,
+} from '../core/document-kind.js';
 
-const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
 // Named uniquely (not a bare `openTab`): the test harness
@@ -27,6 +33,12 @@ export function configureFileLoading(deps) {
   }
 }
 
+/** Widen or restore `#file-input` accept for the running build. */
+export function htmlApplyFileInputAccept() {
+  const input = /** @type {HTMLInputElement | null} */ (el('file-input'));
+  if (input) input.accept = htmlFileInputAccept();
+}
+
 /** @param {Event} e */
 export function handleFileSelect(e) {
   const input = /** @type {HTMLInputElement} */ (e.target);
@@ -42,11 +54,15 @@ export function handleFileSelect(e) {
 
 /** @param {File} file */
 export function handleFile(file) {
-  // Validate file type
-  const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  if (!htmlIsOpenableFilename(file.name)) {
+    showToast(htmlRejectedOpenToast(), { type: 'warning' });
+    return;
+  }
 
-  if (!VALID_EXTENSIONS.includes(fileExtension)) {
-    showToast('Please select a valid Markdown file (.md or .markdown)', { type: 'warning' });
+  if (htmlExceedsReadCap(file.size, file.name)) {
+    showToast('HTML files larger than 8 MB cannot be opened.', {
+      type: 'warning',
+    });
     return;
   }
 
@@ -122,7 +138,9 @@ export async function handleUrl(url) {
   const urlInput = /** @type {HTMLInputElement | null} */ (el('url-input'));
 
   // Check if this is a GitHub repo URL to show the file browser
-  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(url);
+  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(
+    url
+  );
   if (isRepoBrowserUrl) {
     const handled = await handleRepoUrl(url, {
       clearError: clearUrlError,
@@ -138,6 +156,16 @@ export async function handleUrl(url) {
   const fetchUrl = normalizeMarkdownUrl(url);
   const filename = getFilenameFromUrl(url);
 
+  // Session 01: extension-only. Extensionless URLs stay markdown (no
+  // Content-Type sniff). .html/.htm is accepted only when the HTML flag is on.
+  if (
+    htmlDetectKind(filename) === 'html' &&
+    !htmlIsOpenableFilename(filename)
+  ) {
+    showUrlError(htmlRejectedOpenToast());
+    return;
+  }
+
   try {
     const response = await fetch(fetchUrl, { credentials: 'omit' });
     if (!response.ok) {
@@ -145,6 +173,10 @@ export async function handleUrl(url) {
       return;
     }
     const markdown = await response.text();
+    if (htmlExceedsReadCap(new Blob([markdown]).size, filename)) {
+      showUrlError('HTML files larger than 8 MB cannot be opened.');
+      return;
+    }
     if (urlInput) urlInput.value = '';
     // Record the source URL so the File info sheet can show where it came from.
     openTabFromFile(filename, markdown, null, { url });

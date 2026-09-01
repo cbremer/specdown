@@ -229,3 +229,27 @@ describe('Desktop print + PDF export routing', () => {
     );
   });
 });
+
+describe('HTML performPrint is a no-op', () => {
+  beforeEach(() => {
+    global.__HTML_DOCUMENTS_ENABLED__ = true;
+    process.env.VITE_HTML_DOCUMENTS = 'true';
+    loadHTML(document);
+    loadApp(document);
+    window.print = jest.fn();
+  });
+
+  afterEach(() => {
+    delete global.__HTML_DOCUMENTS_ENABLED__;
+    delete process.env.VITE_HTML_DOCUMENTS;
+  });
+
+  it('does not clone #markdown-content or fall back to window.print()', async () => {
+    createTab('page.html', '<h1>HTML doc</h1>');
+    const md = document.getElementById('markdown-content');
+    md.innerHTML = '<p>leftover markdown must not be printed</p>';
+    await performPrint();
+    expect(window.print).not.toHaveBeenCalled();
+    expect(document.querySelector('iframe[aria-hidden="true"]')).toBeNull();
+  });
+});
