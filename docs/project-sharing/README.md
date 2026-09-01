@@ -16,6 +16,7 @@ drop-zone.
 | 2026-08-20 | [tasks-session-01-sharing-kit](2026-08-20-tasks-session-01-sharing-kit.md)           | Implement showcase + copy kit + OG card + tests                                                                          |
 | 2026-08-22 | [tasks-session-02-starfield-toggle](2026-08-22-tasks-session-02-starfield-toggle.md) | Named Theme catalog (Default, Starfield) on every surface; scalable for future looks                                     |
 | 2026-08-22 | [tasks-session-03-aurora-blueprint](2026-08-22-tasks-session-03-aurora-blueprint.md) | Two more empty-state Themes: Aurora (curtains) and Blueprint (spec grid)                                                 |
+| 2026-08-23 | [HTML names and press](../project-html/2026-08-23-brainstorm-names-and-press.md)     | Naming council, taglines, press A / embargoed B. Keepers: Specular, Lantern; *Present the diagram…* / *Specs you can stand in front of.*; subtitles *Diagrams you can present* / *The spec reader*. |
 
 ## Current status
 
@@ -25,6 +26,9 @@ on by default for the web homepage; Default on desktop/iOS until opted in).
 Add a future look by appending to `visualThemeCatalog` plus a CSS block. The
 web app is unchanged as a **viewer** — drop, browse, URL, GitHub repo, folder
 (Chromium), and session restore still open documents the same way.
+
+Names and press drafts for the HTML era live with that project:
+[`../project-html/2026-08-23-brainstorm-names-and-press.md`](../project-html/2026-08-23-brainstorm-names-and-press.md).
 
 ## Naming conventions
 
