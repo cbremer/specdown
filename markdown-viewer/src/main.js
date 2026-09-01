@@ -290,6 +290,12 @@ window.loadFileContent = function (content, filename) {
   createTab(filename, content);
 };
 
+// iOS API: native shell errors (e.g. HTML over the 8 MB cap). WKWebView
+// ignores window.alert(); surface them with the in-app toast instead.
+window.specdownNativeError = function (message) {
+  showToast(String(message || ''), { type: 'error' });
+};
+
 // ===========================
 // Event Listeners
 // ===========================

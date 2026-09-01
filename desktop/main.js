@@ -60,16 +60,26 @@ function htmlFrameNavigateDecision(url) {
     return { allow: false, openExternal: false };
   }
   const protocol = parsed.protocol;
-  if (/\/html-preview-host\.html$/i.test(parsed.pathname)) {
-    return { allow: true, openExternal: false };
-  }
+  // Scheme first: a remote URL whose path happens to look like the host
+  // page must never load in-frame.
+  if (protocol === 'about:') return { allow: true, openExternal: false };
   if (protocol === 'http:' || protocol === 'https:') {
     return { allow: false, openExternal: true };
   }
-  if (protocol === 'about:') return { allow: true, openExternal: false };
   if (protocol === 'file:') {
-    const decoded = decodeURIComponent(url).replace(/\\/g, '/');
-    if (decoded.includes('/markdown-viewer/dist/')) {
+    let pathname;
+    try {
+      pathname = decodeURIComponent(parsed.pathname).replace(/\\/g, '/');
+    } catch {
+      return { allow: false, openExternal: false };
+    }
+    const normalized = path.posix.normalize(pathname);
+    if (normalized.includes('..')) {
+      return { allow: false, openExternal: false };
+    }
+    const isHostPage = /\/html-preview-host\.html$/i.test(normalized);
+    const inDist = normalized.includes('/markdown-viewer/dist/');
+    if (isHostPage && inDist) {
       return { allow: true, openExternal: false };
     }
     return { allow: false, openExternal: false };

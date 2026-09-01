@@ -1077,6 +1077,36 @@ describe('desktop/main.js', () => {
       });
     });
 
+    it('never allows a remote URL even if the path looks like the host page', () => {
+      expect(
+        htmlFrameNavigateDecision('https://evil.example/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: true });
+      expect(
+        htmlFrameNavigateDecision('http://evil.example/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: true });
+    });
+
+    it('denies file: traversal out of markdown-viewer/dist', () => {
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/../secret.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/../html-preview-host.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision('file:///tmp/other/html-preview-host.html')
+      ).toEqual({ allow: false, openExternal: false });
+      expect(
+        htmlFrameNavigateDecision(
+          'file:///tmp/markdown-viewer/dist/%2e%2e/secret.html'
+        )
+      ).toEqual({ allow: false, openExternal: false });
+    });
+
     it('denies javascript and data URLs', () => {
       expect(htmlFrameNavigateDecision('javascript:alert(1)')).toEqual({
         allow: false,

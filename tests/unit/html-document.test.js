@@ -70,6 +70,34 @@ describe('htmlRewriteDocument', () => {
     expect(out).not.toMatch(/href="\/\//);
     expect(out).toMatch(/href="#keep"/);
   });
+
+  it('rewrites relative URLs to # unless a baseHref is injected', () => {
+    const out = htmlRewriteDocument(
+      '<a href="./page.html">a</a>' +
+        '<a href="../up.html">b</a>' +
+        '<img src="/abs.png">' +
+        '<a href="style.css">s</a>' +
+        '<a href="https://example.com/ok">c</a>' +
+        '<a href="#keep">k</a>'
+    );
+    expect(out).not.toMatch(/\.\//);
+    expect(out).not.toMatch(/\.\.\//);
+    expect(out).not.toMatch(/src="\/abs\.png"/);
+    expect(out).not.toMatch(/href="style\.css"/);
+    expect(out).toMatch(/href="https:\/\/example.com\/ok"/);
+    expect(out).toMatch(/href="#keep"/);
+
+    const withBase = htmlRewriteDocument(
+      '<a href="./page.html">a</a>' +
+        '<img src="../x.png">' +
+        '<a href="javascript:alert(1)">x</a>',
+      { baseHref: 'https://cdn.example/docs/' }
+    );
+    expect(withBase).toMatch(/<base /i);
+    expect(withBase).toMatch(/href="\.\/page\.html"/);
+    expect(withBase).toMatch(/src="\.\.\/x\.png"/);
+    expect(withBase).not.toMatch(/javascript:/i);
+  });
 });
 
 describe('preview host + stage iframe', () => {

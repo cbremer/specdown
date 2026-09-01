@@ -26,6 +26,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private var pendingTheme: String?
     private var pendingLayoutMode: String?
     private var pendingFile: PendingFile?
+    private var pendingNativeError: String?
 
     private let defaults = UserDefaults.standard
     private enum Keys {
@@ -107,6 +108,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             pendingFile = nil
             loadFile(name: file.name, content: file.content)
         }
+        if let message = pendingNativeError {
+            pendingNativeError = nil
+            notifyWebError(message)
+        }
     }
 
     func pageWillLoad() {
@@ -150,6 +155,21 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     }
 
     private static let htmlMaxBytes = 8 * 1024 * 1024
+    private static let htmlTooLargeMessage = "HTML files larger than 8 MB cannot be opened."
+
+    /// Surface a native-side failure in the web UI. WKWebView ignores
+    /// `window.alert()`, so this calls the in-app toast callback.
+    private func notifyWebError(_ message: String) {
+        guard pageLoaded else {
+            pendingNativeError = message
+            return
+        }
+        evaluateJavaScript(
+            function: "window.specdownNativeError",
+            arguments: [message],
+            context: "specdownNativeError"
+        )
+    }
 
     /// Read a markdown/HTML file URL (security-scoped) and hand its content to the
     /// web layer. Shared by the document picker and by external opens — Files
@@ -171,12 +191,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 let values = try url.resourceValues(forKeys: [.fileSizeKey])
                 if let size = values.fileSize, size > Self.htmlMaxBytes {
                     print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                    notifyWebError(Self.htmlTooLargeMessage)
                     return
                 }
             }
             let data = try Data(contentsOf: url)
             if isHtml && data.count > Self.htmlMaxBytes {
                 print("[Bridge] HTML file exceeds 8 MB cap: \(url.lastPathComponent)")
+                notifyWebError(Self.htmlTooLargeMessage)
                 return
             }
             guard let content = String(data: data, encoding: .utf8) else {
