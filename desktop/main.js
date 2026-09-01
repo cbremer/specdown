@@ -47,6 +47,35 @@ function isValidMarkdownFile(filePath) {
 }
 
 /**
+ * Absolute path of the bundled preview host — same dist directory
+ * `createWindow` passes to `loadFile(.../markdown-viewer/dist/index.html)`.
+ * @returns {string}
+ */
+function htmlBundledPreviewHostPath() {
+  return path.resolve(
+    __dirname,
+    '..',
+    'markdown-viewer',
+    'dist',
+    'html-preview-host.html'
+  );
+}
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+function htmlSameResolvedPath(a, b) {
+  const left = path.resolve(a);
+  const right = path.resolve(b);
+  if (process.platform === 'win32') {
+    return left.toLowerCase() === right.toLowerCase();
+  }
+  return left === right;
+}
+
+/**
  * Subframe navigation lock (council F3). Allow the bundled preview host;
  * http(s) opens in the system browser; everything else is denied.
  * @param {string} url
@@ -67,19 +96,13 @@ function htmlFrameNavigateDecision(url) {
     return { allow: false, openExternal: true };
   }
   if (protocol === 'file:') {
-    let pathname;
+    let targetPath;
     try {
-      pathname = decodeURIComponent(parsed.pathname).replace(/\\/g, '/');
+      targetPath = path.fileURLToPath(parsed.href);
     } catch {
       return { allow: false, openExternal: false };
     }
-    const normalized = path.posix.normalize(pathname);
-    if (normalized.includes('..')) {
-      return { allow: false, openExternal: false };
-    }
-    const isHostPage = /\/html-preview-host\.html$/i.test(normalized);
-    const inDist = normalized.includes('/markdown-viewer/dist/');
-    if (isHostPage && inDist) {
+    if (htmlSameResolvedPath(targetPath, htmlBundledPreviewHostPath())) {
       return { allow: true, openExternal: false };
     }
     return { allow: false, openExternal: false };
@@ -1501,6 +1524,7 @@ module.exports = {
   isValidMarkdownFile,
   isOpenableDocument,
   htmlFrameNavigateDecision,
+  htmlBundledPreviewHostPath,
   OPENABLE_EXTENSIONS,
   HTML_EXTENSIONS,
   HTML_MAX_BYTES,
