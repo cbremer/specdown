@@ -136,6 +136,18 @@ describe('default scripts stay flag-off', () => {
     expect(pkg.scripts.desktop).not.toMatch(/html|VITE_HTML/);
   });
 
+  it('desktop:html sets the env via a Node wrapper', () => {
+    expect(pkg.scripts['desktop:html']).toBe(
+      'npm run build:html && node scripts/desktop-html.js'
+    );
+    const wrapper = fs.readFileSync(
+      path.join(repoRoot, 'scripts/desktop-html.js'),
+      'utf8'
+    );
+    expect(wrapper).toMatch(/VITE_HTML_DOCUMENTS = 'true'/);
+    expect(wrapper).toMatch(/require\('electron'\)/);
+  });
+
   it('fileAssociations stay markdown-only', () => {
     const exts = pkg.build.fileAssociations.flatMap((a) => a.ext);
     expect(exts).toEqual(['md', 'markdown']);
