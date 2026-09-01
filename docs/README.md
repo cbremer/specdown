@@ -13,6 +13,7 @@ Each project gets its own subdirectory:
 | [project-bugfix-wave/](project-bugfix-wave/) | Post-modernization bug fixes & UX polish across web, desktop, and iOS |
 | [project-sharing/](project-sharing/) | Product sharing kit — LinkedIn copy, article outlines, web showcase homepage; names/press for the HTML era live in [project-html](project-html/2026-08-23-brainstorm-names-and-press.md) |
 | [project-html/](project-html/) | HTML documents — forked viewing runtime; staging rail before any merge to `main` |
+| [project-editorial-diagrams/](project-editorial-diagrams/) | Viewer integration for diagram-design HTML/SVG (brainstorm; not built) |
 
 ## Naming Conventions
 
@@ -40,3 +41,4 @@ YYYY-MM-DD-<type>-<detail>.md
   onto branch `html`, not `main`. Do not convert HTML to markdown
   and do not inject it into the app origin — fork the document
   runtime. See [project-html/README.md](project-html/README.md).
+- **Editorial diagrams (`project-editorial-diagrams`)**: Brainstorm only. SpecDown would view diagram-design HTML (extract SVG → existing diagram chrome); it would not generate diagrams or replace Mermaid.
