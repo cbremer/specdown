@@ -6,6 +6,16 @@ const chokidar = require('chokidar');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
+
+// Session 01 will AND this with HTML extensions in the open gate.
+// Session 00 only exposes the helper so tests can stub it — `.html`
+// stays rejected. Electron main is not Vite-bundled; `desktop:html`
+// sets VITE_HTML_DOCUMENTS=true so this cannot disagree with the
+// renderer (`htmlDocumentsEnabled` / Vite define).
+function htmlDocumentsEnabledMain() {
+  return process.env.VITE_HTML_DOCUMENTS === 'true';
+}
+
 const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
 
 // Only platforms whose shipped binaries are code-signed may auto-update.
@@ -1377,6 +1387,7 @@ module.exports = {
   loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
+  htmlDocumentsEnabledMain,
   applyVisualThemeCatalog,
   DEFAULT_VISUAL_THEME_CATALOG,
 };

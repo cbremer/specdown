@@ -114,4 +114,8 @@ declare global {
   // import; in production it is undefined until the engine is loaded.
   // eslint-disable-next-line no-var
   var mermaid: unknown | undefined;
+
+  // Vite `define` inlines this as true | false. Undeclared under the Jest
+  // eval harness — htmlDocumentsEnabled() uses typeof first.
+  const __HTML_DOCUMENTS_ENABLED__: boolean | undefined;
 }

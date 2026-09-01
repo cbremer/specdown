@@ -31,6 +31,8 @@ module.exports = [
         ...globals.browser,
         // Native bridges injected by the desktop/iOS shells.
         webkit: 'readonly',
+        // Vite `define` identifier (html-flag.js). Undeclared under Jest.
+        __HTML_DOCUMENTS_ENABLED__: 'readonly',
       },
     },
     rules: {

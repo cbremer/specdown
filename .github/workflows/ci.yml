@@ -5,7 +5,7 @@ name: CI
 # and on pushes to the integration branches.
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, html, "claude/**"]
   pull_request:
 
 jobs:
