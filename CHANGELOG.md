@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.192 — 2026-09-14
+
+- Normalize alternate app icon geometry and clean extraction edges
+
 ## v0.0.191 — 2026-09-11
 
 ### Features
