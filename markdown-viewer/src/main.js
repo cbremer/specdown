@@ -88,8 +88,7 @@ import {
 } from './features/presentation.js';
 import {
   configureRecentFiles,
-  renderRecentFiles,
-  clearRecentFiles,
+  setupRecentFiles,
   restoreLastSession,
 } from './features/recent-files.js';
 import { enhanceCodeBlocks } from './features/code-copy.js';
@@ -254,18 +253,6 @@ function openRecentEntry(entry) {
         return;
     }
     handleUrl(entry.ref);
-}
-
-function setupRecentFiles() {
-    renderRecentFiles();
-    const clearBtn = $('recent-files-clear');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            clearRecentFiles();
-            renderRecentFiles();
-        });
-    }
 }
 
 // iOS API: called by Swift shell to load a file (Session 2+)

@@ -173,6 +173,7 @@ describe('URL Handling', () => {
       const errorEl = document.getElementById('url-error');
       expect(errorEl.style.display).not.toBe('none');
       expect(errorEl.textContent).toMatch(/404/);
+      expect(document.querySelector('.toast-error')).toBeNull();
     });
 
     it('shows a CORS error message when fetch throws a network error', async () => {
@@ -183,7 +184,57 @@ describe('URL Handling', () => {
       const errorEl = document.getElementById('url-error');
       expect(errorEl.style.display).not.toBe('none');
       expect(errorEl.textContent).toMatch(/cross-origin/i);
+      expect(document.querySelector('.toast-error')).toBeNull();
     });
+
+    it.each([
+      [
+        'HTTP failure',
+        () => Promise.resolve({ ok: false, status: 404 }),
+        /404/,
+      ],
+      [
+        'network failure',
+        () => Promise.reject(new TypeError('Failed to fetch')),
+        /cross-origin/i,
+      ],
+    ])(
+      'announces a recent URL %s while retaining the open document',
+      async (_name, fetchResult, message) => {
+        createTab('current.md', '# Keep this document');
+        const currentTabId = state.activeTabId;
+        recordRecentFile({
+          ref: 'https://example.com/unavailable.md',
+          title: 'unavailable.md',
+        });
+        global.fetch.mockImplementation(fetchResult);
+
+        document.getElementById('header-more-toggle').click();
+        document.getElementById('open-recent-button').click();
+        document.querySelector('.recent-file-item').click();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+          'https://example.com/unavailable.md',
+          { credentials: 'omit' }
+        );
+        expect(document.querySelector('.recent-files-overlay')).toBeNull();
+        const toast = document.querySelector('.toast-error[role="alert"]');
+        expect(toast).not.toBeNull();
+        expect(toast.textContent).toMatch(message);
+        expect(toast.closest('#drop-zone')).toBeNull();
+        expect(document.body.contains(toast)).toBe(true);
+        expect(document.getElementById('drop-zone').style.display).toBe('none');
+        expect(document.getElementById('url-error').style.display).toBe('none');
+        expect(document.getElementById('content-area').style.display).not.toBe(
+          'none'
+        );
+        expect(state.activeTabId).toBe(currentTabId);
+        expect(state.tabs).toHaveLength(1);
+        expect(state.tabs[0].rawMarkdown).toBe('# Keep this document');
+      }
+    );
 
     it('clears a previous error when called with a valid URL that succeeds', async () => {
       // First call — produce an error

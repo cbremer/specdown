@@ -1,13 +1,4 @@
 /* Bookmark controls use the shared color tokens on every surface. */
-.bookmark-save-button {
-  /* Match adjacent icon-bearing actions even though this control is text-only. */
-  align-self: stretch;
-}
-#bookmarks-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
 .bookmarks-dialog button {
   font: inherit;
   color: var(--text-primary);
@@ -28,8 +19,10 @@
   background: rgb(0 0 0 / 40%);
   display: grid;
   place-items: center;
-  padding: max(1rem, env(safe-area-inset-top)) 1rem
-    max(1rem, env(safe-area-inset-bottom));
+  padding: calc(1rem + env(safe-area-inset-top, 0px))
+    calc(1rem + env(safe-area-inset-right, 0px))
+    calc(1rem + env(safe-area-inset-bottom, 0px))
+    calc(1rem + env(safe-area-inset-left, 0px));
 }
 .bookmarks-dialog {
   width: min(620px, 100%);

@@ -216,17 +216,31 @@ body {
 }
 
 .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
     background: var(--bg-tertiary);
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 0.5rem 1rem;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
     transition: var(--transition);
 }
 
-.theme-toggle:hover {
+.theme-icon {
+    display: inline-flex;
+}
+
+.theme-toggle:hover,
+.theme-toggle.active:hover {
     background: var(--accent-color);
+    color: var(--text-on-accent);
     border-color: var(--accent-color);
     transform: scale(1.05);
 }
@@ -236,16 +250,10 @@ body {
     color: var(--accent-color);
 }
 
-.visual-theme-picker {
+.visual-theme-picker,
+.header-more-picker {
     position: relative;
-}
-
-.visual-theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 600;
+    display: flex;
 }
 
 .visual-theme-toggle-label {
@@ -253,6 +261,15 @@ body {
 }
 
 @media (max-width: 520px) {
+    .app-header {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .header-controls {
+        margin-left: auto;
+    }
+
     .visual-theme-toggle-label {
         display: none;
     }
@@ -306,6 +323,7 @@ body {
    =========================== */
 .drop-zone {
     flex: 1;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -333,6 +351,22 @@ body {
     border-color: var(--accent-color);
     background-color: var(--bg-secondary);
     transform: scale(1.05);
+}
+
+/* Native welcome cards fit the available window in every visual theme.
+   Scroll the card instead of the decorative backdrop; the web showcase
+   already scrolls its full stack of sections on the drop zone. */
+.drop-zone:not(.web-showcase) .drop-zone-content {
+    min-width: 0;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: clamp(1rem, 3vmin, 1.5rem);
+    transform: none;
+}
+
+.drop-zone:not(.web-showcase) .drop-zone-buttons .browse-button {
+    padding-inline: 1.25rem;
 }
 
 .drop-zone-icon {
@@ -406,12 +440,11 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* Secondary open paths (URL / samples / recents) are visually demoted so the
+/* Secondary open paths (URL / samples) are visually demoted so the
    first-run screen has ONE primary action (Browse) — everything else reads as
    an alternative, separated by a hairline and slightly muted until hovered. */
 .url-section,
-.sample-section,
-.recent-files-section {
+.sample-section {
     border-top: 1px solid var(--border-color);
     padding-top: var(--space-4);
     opacity: 0.85;
@@ -420,8 +453,7 @@ body {
 
 .url-section:hover,
 .url-section:focus-within,
-.sample-section:hover,
-.recent-files-section:hover {
+.sample-section:hover {
     opacity: 1;
 }
 
@@ -455,6 +487,7 @@ body {
 
 .url-input-row input[type="url"] {
     flex: 1;
+    min-width: 0;
     padding: 0.55rem 0.85rem;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -502,43 +535,84 @@ body {
 }
 
 /* ===========================
-   Recent Files (drop zone)
+   Recent Files dialog
    =========================== */
-.recent-files-section {
-    margin-top: 1.25rem;
-    width: 100%;
-    max-width: 420px;
+.recent-files-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: grid;
+    place-items: center;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) calc(1rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px));
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.recent-files-dialog {
+    width: min(34rem, 100%);
+    min-width: 0;
+    max-height: min(34rem, 100%);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
 }
 
 .recent-files-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.recent-files-header h2 {
+    font-size: 1.2rem;
 }
 
 .recent-files-clear {
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 0.75rem;
+    font: inherit;
+    font-size: 0.85rem;
     cursor: pointer;
-    padding: 0.1rem 0.3rem;
+    padding: 0.4rem 0.3rem;
     border-radius: var(--radius-sm);
+    align-self: flex-start;
+    flex-shrink: 0;
 }
 
-.recent-files-clear:hover {
+.recent-files-clear:hover:not(:disabled) {
     color: var(--accent-color);
     text-decoration: underline;
 }
 
+.recent-files-clear:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 .recent-files-list {
     list-style: none;
-    margin: 0.4rem 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
+    min-height: 0;
+    min-width: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.recent-files-list[hidden] {
+    display: none;
 }
 
 .recent-file-item {
@@ -1093,8 +1167,7 @@ body {
 }
 
 .drop-zone.web-showcase .url-section,
-.drop-zone.web-showcase .sample-section,
-.drop-zone.web-showcase .recent-files-section {
+.drop-zone.web-showcase .sample-section {
     border-top-color: rgba(122, 224, 255, 0.18);
     color: rgba(210, 228, 255, 0.8);
     margin-left: auto;
@@ -1187,8 +1260,7 @@ body {
 }
 
 [data-theme="light"] .drop-zone.web-showcase .url-section,
-[data-theme="light"] .drop-zone.web-showcase .sample-section,
-[data-theme="light"] .drop-zone.web-showcase .recent-files-section {
+[data-theme="light"] .drop-zone.web-showcase .sample-section {
     border-top-color: rgba(31, 107, 184, 0.16);
     color: #3d4f63;
 }
@@ -1305,7 +1377,8 @@ body {
     color: var(--text-on-accent);
 }
 
-.overflow-menu {
+.overflow-menu,
+.header-more-menu {
     position: absolute;
     top: calc(100% + 0.4rem);
     right: 0;
@@ -1320,7 +1393,12 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-.overflow-menu-item {
+.header-more-menu[hidden] {
+    display: none;
+}
+
+.overflow-menu-item,
+.header-more-menu-item {
     text-align: left;
     background: transparent;
     border: none;
@@ -1331,7 +1409,8 @@ body {
     cursor: pointer;
 }
 
-.overflow-menu-item:hover {
+.overflow-menu-item:hover,
+.header-more-menu-item:hover {
     background-color: var(--accent-color);
     color: var(--text-on-accent);
 }
@@ -1343,7 +1422,6 @@ body {
    treatment. Per-button rules elsewhere carry only the real deviations:
    annotate-active orange, the count badges, and the view-toggle icon
    typography. (Live-reload state lives on the .watch-chip by the filename.) */
-.bookmark-save-button,
 .workspace-toggle-button,
 .toc-toggle-button,
 .split-toggle-button,
@@ -1372,7 +1450,6 @@ body {
     padding: 0.5rem 0.9rem;
 }
 
-.bookmark-save-button:hover,
 .workspace-toggle-button:hover,
 .workspace-toggle-button.active,
 .toc-toggle-button:hover,

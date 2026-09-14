@@ -19,6 +19,50 @@ describe('Toolbar overflow menu', () => {
 
   afterEach(() => {
     if (isOverflowMenuOpen()) closeOverflowMenu();
+    if (isBookmarksOpen()) closeBookmarks();
+  });
+
+  it('keeps the app Bookmarks button while removing the document Bookmark shortcut', () => {
+    expect(document.getElementById('bookmark-button')).toBeNull();
+    expect(
+      document.querySelector('.app-header #bookmarks-button')
+    ).not.toBeNull();
+  });
+
+  it('bookmarks an opened document through More and recalls it from the app Bookmarks button', async () => {
+    const content = '# Menu bookmark\n\nA document worth returning to.';
+    createTab('menu-bookmark.md', content);
+    document.getElementById('overflow-toggle').click();
+    const bookmarkAction = [
+      ...document.querySelectorAll('.overflow-menu-item'),
+    ].find((item) => item.textContent === 'Bookmark this file');
+    expect(bookmarkAction).toBeDefined();
+    bookmarkAction.click();
+
+    expect(isOverflowMenuOpen()).toBe(false);
+    expect(getBookmarks()).toHaveLength(1);
+    expect(getBookmarks()[0]).toMatchObject({
+      title: 'menu-bookmark.md',
+      filename: 'menu-bookmark.md',
+      type: 'copy',
+      content,
+    });
+    closeBookmarks();
+    await closeTab(state.activeTabId);
+    expect(state.tabs).toHaveLength(0);
+
+    document.getElementById('bookmarks-button').click();
+    expect(isBookmarksOpen()).toBe(true);
+    const savedDocument = document.querySelector('.bookmark-open');
+    expect(savedDocument.textContent).toBe('menu-bookmark.md');
+    savedDocument.click();
+
+    expect(state.tabs).toHaveLength(1);
+    expect(state.tabs[0]).toMatchObject({
+      filename: 'menu-bookmark.md',
+      rawMarkdown: content,
+    });
+    expect(isBookmarksOpen()).toBe(false);
   });
 
   it('opens a menu of action items anchored in the toolbar', () => {

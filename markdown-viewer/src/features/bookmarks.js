@@ -69,13 +69,22 @@ function bookmarkStorageError() {
   );
 }
 
+/** Native sample URLs cannot be fetched again as remote bookmarks.
+ * @param {import('../core/state.js').Tab} tab
+ */
+function bookmarkReusableUrl(tab) {
+  const url = tab.sourceMeta?.url;
+  return url && /^https?:\/\//i.test(url) ? url : null;
+}
+
 /** @param {import('../core/state.js').Tab} tab @param {Bookmark[]} entries */
 function bookmarkForTab(tab, entries) {
+  const url = bookmarkReusableUrl(tab);
   return entries.find((b) =>
     tab.filePath
       ? b.type === 'path' && b.ref === tab.filePath
-      : tab.sourceMeta?.url
-        ? b.type === 'url' && b.ref === tab.sourceMeta.url
+      : url
+        ? b.type === 'url' && b.ref === url
         : b.id === tab.sourceMeta?.bookmarkId ||
           (b.type === 'copy' &&
             b.filename === tab.filename &&
@@ -96,7 +105,8 @@ export function bookmarkCurrentFile() {
       showToast('This document is already bookmarked.', { type: 'info' });
       return;
     }
-    const type = tab.filePath ? 'path' : tab.sourceMeta?.url ? 'url' : 'copy';
+    const url = bookmarkReusableUrl(tab);
+    const type = tab.filePath ? 'path' : url ? 'url' : 'copy';
     if (type === 'copy' && tab.rawMarkdown.length > BOOKMARK_COPY_LIMIT) {
       showToast(
         'This file is too large for a saved copy (1 million characters maximum). Open it in the desktop app to bookmark its location.',
@@ -117,7 +127,7 @@ export function bookmarkCurrentFile() {
         title: tab.filename,
         filename: tab.filename,
         type,
-        ref: tab.filePath || tab.sourceMeta?.url || '',
+        ref: tab.filePath || url || '',
         ...(type === 'copy' ? { content: tab.rawMarkdown } : {}),
         savedAt: Date.now(),
       },
@@ -524,7 +534,4 @@ export function setupBookmarks() {
   document
     .getElementById('bookmarks-button')
     ?.addEventListener('click', openBookmarks);
-  document
-    .getElementById('bookmark-button')
-    ?.addEventListener('click', bookmarkCurrentFile);
 }
