@@ -2,9 +2,10 @@
 
 Bundled icon choices for the native SpecDown shells. The original remains the default.
 
-| Date | Document | Summary |
-| --- | --- | --- |
-| 2026-09-10 | [Session 01](2026-09-10-tasks-session-01-native-icon-picker.md) | Native icon selection, bundled assets, persistence, and validation |
+| Date       | Document                                                        | Summary                                                                 |
+| ---------- | --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 2026-09-10 | [Session 01](2026-09-10-tasks-session-01-native-icon-picker.md) | Native icon selection, bundled assets, persistence, and validation      |
+| 2026-09-13 | [Session 02](2026-09-13-tasks-session-02-normalize-icons.md)    | Centered artwork, cleaned alpha edges, reproducible desktop/iOS exports |
 
 ## Try it
 
@@ -18,7 +19,14 @@ The desktop uses bundled PNGs in `desktop/icons`, already covered by electron-bu
 
 ## Artwork
 
-The six concepts were generated and cleaned in this task. Desktop uses transparent PNG exports; iOS uses opaque navy-backed exports. The runtime assets are committed in `desktop/icons` and `ios/SpecDown/Assets.xcassets`. These are raster concepts; review them at native Home Screen and Dock size before deciding on permanent branding.
+The six concepts use versioned 1254-pixel masters in `build/app-icon-sources`.
+Desktop uses transparent PNG exports; iOS uses opaque navy-backed exports.
+All alternatives match Original's 824-pixel maximum visible dimension on a
+1024-pixel canvas, centered without stretching. The exporter removes extraction
+fringes and stray low-opacity pixels. See the source folder's README for rebuild
+instructions and provenance, and [size review](2026-09-13-icon-size-review.html)
+for light/dark previews. The old `output/specdown-icons` exploration kit is not
+the source of truth for the normalized assets.
 
 ## Build
 
