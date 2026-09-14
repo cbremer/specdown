@@ -41,7 +41,6 @@ const LANDING_CLICK_IGNORE_SELECTOR = [
   'select',
   'label',
   '.url-section',
-  '.recent-files-section',
   '.sample-section',
   '.landing-interactive',
   '.diagram-container',

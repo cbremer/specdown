@@ -18,6 +18,7 @@ import {
   exportActivePdf,
 } from '../platform/desktop.js';
 import { openFileInfoSheet } from './file-info.js';
+import { bookmarkCurrentFile } from './bookmarks.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -33,8 +34,7 @@ const overflowHasDesktopFileTab = () => {
   return !!(tab && tab.filePath);
 };
 
-// True when a document is open — the precondition for the File info entry
-// (it needs an active tab to describe).
+// File info and bookmarking both require an active document.
 const overflowHasOpenDocument = () => state.activeTabId !== null;
 
 /** @type {Array<{ label: string, targetId?: string, run?: () => void, isAvailable?: () => boolean }>} */
@@ -49,7 +49,11 @@ const OVERFLOW_ACTIONS = [
     run: () => refreshActiveFileFromDisk(),
     isAvailable: overflowHasDesktopFileTab,
   },
-  { targetId: 'bookmark-button', label: 'Bookmark this file' },
+  {
+    label: 'Bookmark this file',
+    run: bookmarkCurrentFile,
+    isAvailable: overflowHasOpenDocument,
+  },
   { targetId: 'workspace-toggle', label: 'Workspace files' },
   { targetId: 'toc-toggle', label: 'Table of contents' },
   { targetId: 'split-toggle', label: 'Split view' },

@@ -102,6 +102,53 @@ describe('Bookmarks', () => {
     expect(state.tabs[0].sourceMeta.bookmarkId).toBe(entry.id);
   });
 
+  it.each([
+    'file:///Applications/SpecDown/samples/diagram-showcase.md',
+    'specdown://app/samples/diagram-showcase.md',
+  ])(
+    'saves a native sample origin as a reusable copy without corrupting existing bookmarks (%s)',
+    async (sampleUrl) => {
+      doc('Remote.md', '# Remote', null, {
+        url: 'https://example.com/remote.md',
+      });
+      bookmarkCurrentFile();
+      const existing = getBookmarks()[0];
+      closeBookmarks();
+
+      const content = '# Bundled diagram showcase\n\nPreserve this sample.';
+      doc('diagram-showcase.md', content, null, { url: sampleUrl });
+      bookmarkCurrentFile();
+      const entries = getBookmarks();
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toEqual(existing);
+      expect(entries[1]).toMatchObject({
+        type: 'copy',
+        ref: '',
+        filename: 'diagram-showcase.md',
+        content,
+      });
+      expect(JSON.parse(localStorage.getItem('specdown-bookmarks-v1'))).toEqual(
+        entries
+      );
+
+      bookmarkCurrentFile();
+      expect(getBookmarks()).toHaveLength(2);
+      expect(getBookmarks()[1].id).toBe(entries[1].id);
+      closeBookmarks();
+      state.tabs = [];
+      state.activeTabId = null;
+      await recallBookmark(entries[1].id);
+
+      expect(state.tabs).toHaveLength(1);
+      expect(state.tabs[0]).toMatchObject({
+        filename: 'diagram-showcase.md',
+        rawMarkdown: content,
+        sourceMeta: { bookmarkId: entries[1].id },
+      });
+      expect(getBookmarks()[0]).toEqual(existing);
+    }
+  );
+
   it('keeps distinct copies with the same filename and different contents', () => {
     doc('notes.md', '# One');
     bookmarkCurrentFile();

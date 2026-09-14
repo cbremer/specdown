@@ -16,6 +16,9 @@ folder tracks the smaller fixes that follow.
 | 2026-07-22 | [brainstorm-diagram-inline-static-ux](2026-07-22-brainstorm-diagram-inline-static-ux.md) | Diagrams read like control panels — options + decision to render them as static document content |
 | 2026-07-22 | [tasks-session-05](2026-07-22-tasks-session-05-diagram-inline-static-ux.md) | Static inline diagrams: fixed 500px card + 8-button toolbar + always-armed panzoom replaced by natural-size rendering with an on-demand fullscreen explore mode |
 | 2026-07-24 | [tasks-session-06](2026-07-24-tasks-session-06-minimap-empty-canvas.md) | Fullscreen minimap rendered an empty box — panzoom's inline transform was serialized into the rasterized SVG, pushing content off-canvas |
+| 2026-09-13 | [tasks-session-07](2026-09-13-tasks-session-07-welcome-layout.md) | Make native welcome cards fit and scroll consistently across all themes; restore dark-mode header contrast |
+| 2026-09-14 | [tasks-session-08](2026-09-14-tasks-session-08-recent-dialog.md) | Keep the welcome screen compact by moving expanded history behind an Open Recent dialog |
+| 2026-09-14 | [tasks-session-09](2026-09-14-tasks-session-09-document-bookmark-menu.md) | Move document bookmarking into More actions and keep the app-header collection button |
 
 ## Status
 

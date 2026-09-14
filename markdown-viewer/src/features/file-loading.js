@@ -97,6 +97,11 @@ function getFilenameFromUrl(url) {
 
 /** @param {string} message */
 function showUrlError(message) {
+  const urlDropZone = el('drop-zone');
+  if (urlDropZone && getComputedStyle(urlDropZone).display === 'none') {
+    showToast(message, { type: 'error' });
+    return;
+  }
   const urlError = el('url-error');
   if (!urlError) return;
   urlError.textContent = message;
@@ -148,7 +153,7 @@ export async function handleUrl(url) {
     if (urlInput) urlInput.value = '';
     // Record the source URL so the File info sheet can show where it came from.
     openTabFromFile(filename, markdown, null, { url });
-    // Remember this URL for one-click re-open from the drop zone.
+    // Remember this URL for one-click re-open from Open Recent.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();
   } catch {
