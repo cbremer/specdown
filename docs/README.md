@@ -16,6 +16,7 @@ Each project gets its own subdirectory:
 | [project-editorial-diagrams/](project-editorial-diagrams/) | Viewer integration for diagram-design HTML/SVG (brainstorm; not built) |
 | [project-bookmarks/](project-bookmarks/) | Persistent document bookmarks, saved copies, and moved-file recovery |
 | [project-app-icons/](project-app-icons/) | Native desktop and iOS icon switching |
+| [project-appstore/](project-appstore/) | iPhone/iPad and native Mac App Store release preparation — execution plan, task tracker, native QA and kickoff prompts |
 
 ## Naming Conventions
 
