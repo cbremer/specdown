@@ -1,0 +1,19 @@
+{
+  "platform": "iOS/iPadOS",
+  "status": "DRAFT — owner review required; name/category pending D01",
+  "name": "SpecDown",
+  "name_fallback_if_taken": "SpecDown: Markdown & Mermaid",
+  "subtitle": "Markdown & Mermaid viewer",
+  "promotional_text": "Open any Markdown file and see it beautifully rendered — with live Mermaid diagrams, tables, highlighted code and Dark Mode. Free, private, no account.",
+  "description": "SpecDown is a fast, clean viewer for Markdown files — built for specs, design docs, READMEs and notes that include diagrams.\n\nOpen a file from the Files app, iCloud Drive, or any app's share sheet, and SpecDown renders it instantly: headings, lists, tables, links, images and syntax-highlighted code — plus Mermaid diagrams drawn right in the document.\n\nMERMAID DIAGRAMS, RENDERED LIVE\n• Flowcharts, sequence diagrams, state diagrams, Gantt charts and more\n• Tap a diagram to open it fullscreen, then zoom and pan\n• Diagrams follow your light or dark appearance\n\nMADE FOR READING TECHNICAL DOCS\n• Clean typography for long documents\n• Tables and code blocks with syntax highlighting\n• Table of contents to jump between sections\n• Switch to the raw Markdown source at any time\n• Open several documents in tabs\n\nOPEN FILES YOUR WAY\n• Browse the Files app, including iCloud Drive\n• Open With… and the share sheet from other apps\n• Open a Markdown file from a web or GitHub link\n• Bookmarks and recent files to get back quickly\n\nON IPHONE AND IPAD\n• Adaptive layout with an iPad sidebar\n• Light and Dark Mode\n• Choose from several alternate app icons\n\nPRIVATE BY DESIGN\nSpecDown has no accounts, ads, analytics or tracking. Your documents stay on your device; the app only goes online when you open a link or a document that references web images.",
+  "keywords": "md,diagram,flowchart,readme,reader,docs,spec,uml,sequence,gantt,notes,github,architecture",
+  "whats_new": "First release of SpecDown for iPhone and iPad.",
+  "primary_category": "Developer Tools",
+  "secondary_category": "Productivity",
+  "copyright": "2026 Christopher Bremer",
+  "support_url": "https://cbremer.github.io/specdown/support.html",
+  "marketing_url": "https://cbremer.github.io/specdown/",
+  "privacy_policy_url": "https://cbremer.github.io/specdown/privacy.html",
+  "age_rating_expected": "4+ (owner must answer questionnaire; unrestricted web access question requires care — see app-privacy-answers.md)",
+  "price": "Free (pending D03)"
+}
