@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "source_sha": "b9ea26454e963ca68b5424039d1cae1fd59074c0",
+  "status": "DRAFT (pre-freeze; not AS-035 candidate)",
+  "sets": {
+    "iphone": {
+      "slot": "iPhone 6.9\"",
+      "count": 5,
+      "images": [
+        {
+          "file": "screenshots/iphone/en-US/01-system-architecture.png",
+          "raw": "iphone-light-system-architecture.png",
+          "title": "Mermaid diagrams, rendered live",
+          "subtitle": "Flowcharts straight from your Markdown",
+          "size": [1320, 2868],
+          "sha256": "5f353d62dafdaca2b7f7c3a957de35322ec1e5ccc2edc18471b44c2bf1bc8af4"
+        },
+        {
+          "file": "screenshots/iphone/en-US/02-sign-in-flow.png",
+          "raw": "iphone-light-sign-in-flow.png",
+          "title": "Sequence diagrams on the go",
+          "subtitle": "Tap any diagram to zoom and pan",
+          "size": [1320, 2868],
+          "sha256": "85e15dc8db7601dd434bb77bc1186bad58f4e8dd493d64d1cae2b0af035d3956"
+        },
+        {
+          "file": "screenshots/iphone/en-US/03-api-reference.png",
+          "raw": "iphone-light-api-reference.png",
+          "title": "Tables and highlighted code",
+          "subtitle": "Clean typography for technical docs",
+          "size": [1320, 2868],
+          "sha256": "477084988d6d4ab3752ca990b3f4ccf48acb8c29b15a7535e20ae01aa3852e5e"
+        },
+        {
+          "file": "screenshots/iphone/en-US/04-order-lifecycle.png",
+          "raw": "iphone-light-order-lifecycle.png",
+          "title": "State diagrams and more",
+          "subtitle": "Flowchart, sequence, state, Gantt",
+          "size": [1320, 2868],
+          "sha256": "31f96b6acdf25c33f6558992f6eb2ab989cdf8094b283e0dd3451558c2ddb092"
+        },
+        {
+          "file": "screenshots/iphone/en-US/05-system-architecture.png",
+          "raw": "iphone-dark-system-architecture.png",
+          "title": "Beautiful in Dark Mode",
+          "subtitle": "Follows your system appearance",
+          "size": [1320, 2868],
+          "sha256": "7f96226d7f4a640215340994fdc7159fa98bc1747a6c314f5d86e7ea15492bcb"
+        }
+      ]
+    },
+    "ipad": {
+      "slot": "iPad 13\"",
+      "count": 5,
+      "images": [
+        {
+          "file": "screenshots/ipad/en-US/01-system-architecture.png",
+          "raw": "ipad-light-system-architecture.png",
+          "title": "Mermaid diagrams, rendered live",
+          "subtitle": "Flowcharts straight from your Markdown",
+          "size": [2064, 2752],
+          "sha256": "b672ab6ae7e2e0d6328c92758bdcff8e961b1f12858467bab5f33c3e7f13d1df"
+        },
+        {
+          "file": "screenshots/ipad/en-US/02-release-plan.png",
+          "raw": "ipad-light-release-plan.png",
+          "title": "Gantt charts in your notes",
+          "subtitle": "Plan the work right beside the docs",
+          "size": [2064, 2752],
+          "sha256": "ff33c6ae36fdaf341aff13ec7fbd2bd5bf8a023a0fcf56d5c88d299453157b05"
+        },
+        {
+          "file": "screenshots/ipad/en-US/03-api-reference.png",
+          "raw": "ipad-light-api-reference.png",
+          "title": "Tables and highlighted code",
+          "subtitle": "Clean typography for technical docs",
+          "size": [2064, 2752],
+          "sha256": "6da848838fc1288a0272ed2a439c386c587c607cbac6953c1cfd4eb1d916b50d"
+        },
+        {
+          "file": "screenshots/ipad/en-US/04-sign-in-flow.png",
+          "raw": "ipad-light-sign-in-flow.png",
+          "title": "Sequence diagrams, crystal clear",
+          "subtitle": "Tap any diagram to zoom and pan",
+          "size": [2064, 2752],
+          "sha256": "e8af49c42087fde29046de1ac37d54f01f6ec4fe0ab3e147c3a1334ff4def3ab"
+        },
+        {
+          "file": "screenshots/ipad/en-US/05-order-lifecycle.png",
+          "raw": "ipad-dark-order-lifecycle.png",
+          "title": "Beautiful in Dark Mode",
+          "subtitle": "Follows your system appearance",
+          "size": [2064, 2752],
+          "sha256": "e992687bb93c99751d13acff30fe98fde99354e239f283188c6cdc363d635290"
+        }
+      ]
+    },
+    "mac": {
+      "slot": "Mac 16:10",
+      "count": 5,
+      "images": [
+        {
+          "file": "screenshots/mac/en-US/01-split-system-architecture.png",
+          "raw": "mac-light-split-system-architecture.png",
+          "title": "Source and preview, side by side",
+          "subtitle": "Split view for your Markdown files",
+          "size": [2880, 1800],
+          "sha256": "cc85f2f6a43845e585c78256b788faa9b505e6640b09defef0ff01db6d775ca7"
+        },
+        {
+          "file": "screenshots/mac/en-US/02-system-architecture.png",
+          "raw": "mac-light-system-architecture.png",
+          "title": "Mermaid diagrams, rendered live",
+          "subtitle": "Flowcharts straight from your Markdown",
+          "size": [2880, 1800],
+          "sha256": "d84b67d5075e999063687d00eb83c983337bfde1cd5410d2b44aeba42a252bb0"
+        },
+        {
+          "file": "screenshots/mac/en-US/03-release-plan.png",
+          "raw": "mac-light-release-plan.png",
+          "title": "Gantt charts in your notes",
+          "subtitle": "Plan the work right beside the docs",
+          "size": [2880, 1800],
+          "sha256": "91a73011cc27a81c3aa062c98f4b5018bb35067b240b50f7ddc231e84c7c1706"
+        },
+        {
+          "file": "screenshots/mac/en-US/04-api-reference.png",
+          "raw": "mac-light-api-reference.png",
+          "title": "Tables and highlighted code",
+          "subtitle": "Clean typography for technical docs",
+          "size": [2880, 1800],
+          "sha256": "9072dde16261b86f39ae95a2b69dc79cd1c14102d1c89a4748fe91a69227eab3"
+        },
+        {
+          "file": "screenshots/mac/en-US/05-order-lifecycle.png",
+          "raw": "mac-dark-order-lifecycle.png",
+          "title": "Beautiful in Dark Mode",
+          "subtitle": "Follows your system appearance",
+          "size": [2880, 1800],
+          "sha256": "793537822a3d3dd201b5ac02638bb2894d74fdb3fad45682f3450ffa5cf19990"
+        }
+      ]
+    }
+  }
+}

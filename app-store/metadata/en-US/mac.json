@@ -1,0 +1,18 @@
+{
+  "platform": "macOS (Mac App Store)",
+  "status": "DRAFT — provisional until the sandboxed MAS build proves each Mac feature (AS-021..026); name/category pending D01/D02",
+  "name": "SpecDown",
+  "name_fallback_if_taken": "SpecDown: Markdown & Mermaid",
+  "subtitle": "Markdown & Mermaid viewer",
+  "promotional_text": "A fast, native-feeling Markdown viewer with live Mermaid diagrams, split source view, tabs and Dark Mode. Free, private, no account.",
+  "description": "SpecDown is a fast, clean viewer for Markdown files — built for specs, design docs, READMEs and notes that include diagrams.\n\nDouble-click a .md file or drag it onto SpecDown and it renders instantly: headings, tables, links, images and syntax-highlighted code, plus Mermaid diagrams drawn right in the document.\n\nMERMAID DIAGRAMS, RENDERED LIVE\n• Flowcharts, sequence diagrams, state diagrams, Gantt charts and more\n• Open any diagram fullscreen to zoom and pan\n• Diagrams follow your light or dark appearance\n\nBUILT FOR TECHNICAL WRITING\n• Split view: Markdown source beside the rendered preview\n• Table of contents for long documents\n• Tabs for working across several files\n• Presentation mode to step through a document\n• Print or export to PDF\n\n[VERIFY IN SANDBOX BEFORE KEEPING] Live reload when the file changes on disk • Workspace folders • Custom CSS themes\n\nPRIVATE BY DESIGN\nSpecDown has no accounts, ads, analytics or tracking. Your documents stay on your Mac; the app only goes online when you open a link or a document that references web images.",
+  "keywords": "md,diagram,flowchart,readme,reader,docs,spec,uml,sequence,gantt,github,architecture,preview",
+  "whats_new": "First release of SpecDown on the Mac App Store.",
+  "primary_category": "Developer Tools",
+  "secondary_category": "Productivity",
+  "copyright": "2026 Christopher Bremer",
+  "support_url": "https://cbremer.github.io/specdown/support.html",
+  "marketing_url": "https://cbremer.github.io/specdown/",
+  "privacy_policy_url": "https://cbremer.github.io/specdown/privacy.html",
+  "price": "Free (pending D03)"
+}
