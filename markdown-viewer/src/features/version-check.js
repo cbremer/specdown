@@ -9,12 +9,11 @@ import { bridgeDesktopPlatform } from '../platform/bridge.js';
 /**
  * Fill in the header version label.
  * @param {string} version
- * @param {string} label e.g. 'alpha'
  */
-export function setupVersionInfo(version, label) {
+export function setupVersionInfo(version) {
   const versionLabel = document.getElementById('version-label');
   if (versionLabel) {
-    versionLabel.textContent = 'v' + version + ' (' + label + ')';
+    versionLabel.textContent = 'v' + version;
   }
 }
 
