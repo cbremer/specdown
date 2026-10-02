@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.194 — 2026-10-02
+
+### Bug Fixes
+
+- drop the alpha label from the header version (#258)
+
 ## v0.0.193 — 2026-09-14
 
 ### Bug Fixes
