@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.196 — 2026-10-12
+
+- add privacy and support pages; move site URLs to specdown.mosaicpando.com
+
 ## v0.0.195 — 2026-10-12
 
 ### Features
