@@ -16,7 +16,7 @@ struct ContentView: View {
                     ipadSidebar
                 } detail: {
                     viewerSurface
-                        .navigationTitle(bridge.hasLoadedDocument ? bridge.currentDocumentName : "Specdown")
+                        .navigationTitle(bridge.hasLoadedDocument ? bridge.currentDocumentName : "SpecDown")
                         .navigationBarTitleDisplayMode(.inline)
                 }
                 .navigationSplitViewStyle(.balanced)
@@ -36,7 +36,7 @@ struct ContentView: View {
                 bridge.applyLayoutMode(usesPadShell ? "pad" : "phone")
             }
             // Markdown files opened from outside the app — Files "Open in place",
-            // the share sheet, or "Open With… Specdown" — arrive here.
+            // the share sheet, or "Open With… SpecDown" — arrive here.
             .onOpenURL { url in
                 bridge.openDocument(at: url)
             }
@@ -96,6 +96,6 @@ struct ContentView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationTitle("Specdown")
+        .navigationTitle("SpecDown")
     }
 }

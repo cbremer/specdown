@@ -9,7 +9,7 @@ import UniformTypeIdentifiers
 @MainActor
 final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private static let bundledSamplesSubdirectory = "dist/samples"
-    private static let defaultPrintJobName = "Specdown Document"
+    private static let defaultPrintJobName = "SpecDown Document"
 
     private struct PendingFile {
         let name: String
@@ -18,7 +18,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     weak var webView: WKWebView?
 
-    @Published private(set) var currentDocumentName = "Specdown Document"
+    @Published private(set) var currentDocumentName = "SpecDown Document"
     @Published private(set) var recentFiles: [String]
     @Published private(set) var hasLoadedDocument = false
     @Published var showsAppIconPicker = false
@@ -154,7 +154,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Read a markdown file URL (security-scoped) and hand its content to the
     /// web layer. Shared by the document picker and by external opens — Files
-    /// "Open in place", the share sheet, and "Open With… Specdown" — routed here
+    /// "Open in place", the share sheet, and "Open With… SpecDown" — routed here
     /// via SwiftUI's `.onOpenURL`.
     func openDocument(at url: URL) {
         let granted = url.startAccessingSecurityScopedResource()
