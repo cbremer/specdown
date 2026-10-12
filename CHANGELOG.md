@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.201 — 2026-10-12
+
+- keep the header clear of the Dynamic Island on device
+
 ## v0.0.200 — 2026-10-12
 
 - app-store: recapture screenshots without header version (build 1.0 (2))
