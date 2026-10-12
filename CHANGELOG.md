@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.200 — 2026-10-12
+
+- app-store: recapture screenshots without header version (build 1.0 (2))
+
 ## v0.0.199 — 2026-10-12
 
 - show App Store version in About; stamp versions from build settings
