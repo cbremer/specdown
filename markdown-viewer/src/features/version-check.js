@@ -6,15 +6,25 @@
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { bridgeDesktopPlatform } from '../platform/bridge.js';
 
+let versionCheckCurrent = '';
+/** @type {{ version: string, url: string } | null} */
+let versionCheckUpdate = null;
+
 /**
- * Fill in the header version label.
+ * Record the running version (shown in the About dialog, not the header).
  * @param {string} version
  */
 export function setupVersionInfo(version) {
-  const versionLabel = document.getElementById('version-label');
-  if (versionLabel) {
-    versionLabel.textContent = 'v' + version;
-  }
+  versionCheckCurrent = version;
+}
+
+export function getAppVersion() {
+  return versionCheckCurrent;
+}
+
+/** @returns {{ version: string, url: string } | null} */
+export function getAvailableUpdate() {
+  return versionCheckUpdate;
 }
 
 /**
@@ -42,18 +52,17 @@ export function checkForUpdates({ version, repo, repoUrl }) {
       if (!data || !data.tag_name) return;
       const latest = data.tag_name.replace(/^v/, '');
       if (latest !== version) {
-        const updateEl = document.getElementById('version-update');
-        if (updateEl) {
-          const releaseUrl = data.html_url || repoUrl + '/releases/latest';
-          const link = document.createElement('a');
-          link.href = releaseUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'v' + latest + ' available';
-          updateEl.textContent = '';
-          updateEl.appendChild(link);
-          updateEl.style.display = '';
-        }
+        versionCheckUpdate = {
+          version: latest,
+          url: data.html_url || repoUrl + '/releases/latest',
+        };
+        // Surface it quietly: a dot on the ⋮ toggle and a hint on the About item.
+        const versionCheckToggle =
+          document.getElementById('header-more-toggle');
+        if (versionCheckToggle) versionCheckToggle.classList.add('has-update');
+        const versionCheckAbout = document.getElementById('about-button');
+        if (versionCheckAbout)
+          versionCheckAbout.textContent = 'About SpecDown (update available)';
       }
     })
     .catch(function () {
