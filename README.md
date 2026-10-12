@@ -57,7 +57,7 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 ## Use it
 
 ### Web
-The hosted app lives at **<https://cbremer.github.io/specdown>**. Open it, drop in a
+The hosted app lives at **<https://specdown.mosaicpando.com>**. Open it, drop in a
 markdown file (or open one from a URL), and go. Click **Install** in your browser to
 add it as a PWA — it then works offline.
 
