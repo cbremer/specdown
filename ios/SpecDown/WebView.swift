@@ -165,7 +165,7 @@ struct WebView: UIViewRepresentable {
             loadErrorPage(
                 in: webView,
                 title: "Unable to load viewer",
-                message: "Specdown couldn't load its bundled viewer content. Please relaunch the app or reinstall it if this keeps happening."
+                message: "SpecDown couldn't load its bundled viewer content. Please relaunch the app or reinstall it if this keeps happening."
             )
         }
 

@@ -45,7 +45,7 @@ targets:
     info:
       path: SpecDown/Info.plist
       properties:
-        CFBundleDisplayName: Specdown
+        CFBundleDisplayName: SpecDown
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         # SpecDown uses only standard HTTPS/TLS, so it is exempt from U.S. export
