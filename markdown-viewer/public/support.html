@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpecDown Support</title>
+    <meta
+      name="description"
+      content="Help and contact for SpecDown, the Markdown viewer with live Mermaid diagrams."
+    />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1d2433;
+        --muted: #5b6578;
+        --bg: #ffffff;
+        --link: #1f6bb8;
+        --rule: #e3e7ee;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #e6e9ef;
+          --muted: #a3acbd;
+          --bg: #11161f;
+          --link: #6fb0f0;
+          --rule: #2a3140;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 48px 20px 64px;
+      }
+      h1 {
+        font-size: 2rem;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 32px 0 8px;
+      }
+      .meta {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      a {
+        color: var(--link);
+      }
+      footer {
+        margin-top: 48px;
+        padding-top: 16px;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>SpecDown Support</h1>
+      <p class="meta">
+        A Markdown viewer with live Mermaid diagrams for iPhone, iPad, Mac and
+        the web.
+      </p>
+
+      <h2>Getting started</h2>
+      <ul>
+        <li>
+          <strong>Open a file:</strong> tap <strong>Open</strong> (iPhone),
+          <strong>Open Markdown File</strong> (iPad sidebar) or choose
+          <strong>File → Open…</strong> (Mac) and pick any
+          <code>.md</code> file, including files in iCloud Drive.
+        </li>
+        <li>
+          <strong>From other apps:</strong> use
+          <strong>Open With… → SpecDown</strong> or the share sheet.
+        </li>
+        <li>
+          <strong>From the web:</strong> paste a web or GitHub link to a
+          Markdown file on the start screen.
+        </li>
+        <li>
+          <strong>Try it:</strong> open the bundled
+          <strong>Diagram Showcase</strong> to see every diagram type.
+        </li>
+      </ul>
+
+      <h2>Common questions</h2>
+      <ul>
+        <li>
+          <strong>A diagram shows an error.</strong> SpecDown uses Mermaid
+          syntax; check that the diagram's code block starts with
+          <code>```mermaid</code>.
+        </li>
+        <li>
+          <strong>Images don't appear.</strong> Web images need an internet
+          connection; images referenced by a relative path must be reachable
+          from the file's location.
+        </li>
+        <li>
+          <strong>An enterprise GitHub link doesn't open.</strong> Some
+          enterprise instances require sign-in, which SpecDown doesn't support.
+        </li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        Email
+        <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a> or
+        report a problem at
+        <a href="https://github.com/cbremer/specdown/issues"
+          >github.com/cbremer/specdown/issues</a
+        >.
+      </p>
+      <footer>
+        <a href="./">SpecDown</a> · <a href="privacy.html">Privacy</a> ·
+        <a href="support.html">Support</a> ·
+        <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -250,13 +250,13 @@ describe('Web showcase CSS isolation', () => {
 describe('Open Graph social card', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
-  it('declares Open Graph and Twitter tags with absolute GitHub Pages URLs', () => {
+  it('declares Open Graph and Twitter tags with absolute site URLs', () => {
     expect(html).toContain('property="og:image"');
-    expect(html).toContain('https://cbremer.github.io/specdown/og-image.png');
+    expect(html).toContain('https://specdown.mosaicpando.com/og-image.png');
     expect(html).toContain('property="og:title"');
     expect(html).toContain('name="twitter:card"');
     expect(html).toContain('summary_large_image');
-    expect(html).toContain('https://cbremer.github.io/specdown/');
+    expect(html).toContain('https://specdown.mosaicpando.com/');
   });
 
   it('ships a 1200x630 PNG social card in public/', () => {
