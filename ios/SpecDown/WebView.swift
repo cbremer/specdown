@@ -12,10 +12,14 @@ struct WebView: UIViewRepresentable {
         let handler = WeakMessageHandler(bridge)
         config.userContentController.add(handler, name: "specdown")
 
-        // Inject iOS detection flag before page load
+        // Inject iOS detection flag before page load, plus the App Store
+        // marketing version so About shows "Version 1.0 (<web build>)".
+        let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+            .filter { $0.isNumber || $0 == "." }
         let iosScript = WKUserScript(
             source: """
                 window.iosNative = true;
+                window.specdownAppVersion = "\(appVersion)";
                 window.specdownIOS = {
                     requestFileOpen: function() {
                         window.webkit.messageHandlers.specdown.postMessage({ action: 'openFilePicker' });

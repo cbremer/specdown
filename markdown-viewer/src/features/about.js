@@ -73,7 +73,11 @@ export function openAboutDialog() {
   const version = document.createElement('p');
   version.id = 'about-version';
   version.className = 'about-version';
-  version.textContent = 'Version ' + getAppVersion();
+  // Native shells with their own store version show it first, web build after.
+  const aboutStoreVersion = window.specdownAppVersion;
+  version.textContent = aboutStoreVersion
+    ? 'Version ' + aboutStoreVersion + ' (' + getAppVersion() + ')'
+    : 'Version ' + getAppVersion();
   dialog.appendChild(version);
 
   const update = getAvailableUpdate();

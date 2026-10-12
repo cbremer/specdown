@@ -59,6 +59,19 @@ describe('About SpecDown', () => {
     );
   });
 
+  it('shows the App Store version first inside the iOS app', () => {
+    setupVersionInfo('0.0.196');
+    window.specdownAppVersion = '1.0';
+    try {
+      openAboutDialog();
+      expect(document.getElementById('about-version').textContent).toBe(
+        'Version 1.0 (0.0.196)'
+      );
+    } finally {
+      delete window.specdownAppVersion;
+    }
+  });
+
   it('closes on Escape and on Done', () => {
     openAboutDialog();
     document

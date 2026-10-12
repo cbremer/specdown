@@ -97,6 +97,8 @@ declare global {
     specdown?: SpecdownDesktopBridge;
     /** Truthy inside the iOS/iPadOS WKWebView shell. */
     iosNative?: boolean;
+    /** App Store marketing version (e.g. "1.0"), injected by the iOS shell. */
+    specdownAppVersion?: string;
     /** WKWebView message-handler namespace (iOS only). */
     webkit?: {
       messageHandlers?: {
