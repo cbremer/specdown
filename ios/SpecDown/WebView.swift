@@ -51,7 +51,7 @@ struct WebView: UIViewRepresentable {
         let schemeHandler = BundleSchemeHandler()
         config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
 
-        let webView = WKWebView(frame: .zero, configuration: config)
+        let webView = SafeAreaWebView(frame: .zero, configuration: config)
         // Use .scrollableAxes to expose safe area insets to CSS env() variables without
         // automatic content inset adjustments. This allows CSS to handle Dynamic Island
         // and notch areas via env(safe-area-inset-*) while preventing double-insets.
@@ -112,6 +112,7 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             bridge.pageDidLoad()
+            (webView as? SafeAreaWebView)?.pushSafeAreaInsets()
         }
 
         func webView(
@@ -232,6 +233,36 @@ private class WeakMessageHandler: NSObject, WKScriptMessageHandler {
 /// Serves the bundled Vite build (dist/) over a custom URL scheme so the page
 /// has a real same-origin context. WKWebView will not execute ES-module scripts
 /// loaded from file://, so the app must not be served via loadFileURL.
+// MARK: - SafeAreaWebView
+
+/// Mirrors the native safe-area insets into CSS custom properties
+/// (--native-safe-top/right/bottom/left). WebKit's env(safe-area-inset-*)
+/// alone proved unreliable on device (iOS 27.2 left the header under the
+/// Dynamic Island), so the CSS takes the larger of the two.
+final class SafeAreaWebView: WKWebView {
+    override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        pushSafeAreaInsets()
+    }
+
+    func pushSafeAreaInsets() {
+        // The view's own insets: full device insets on iPhone (the web view
+        // ignores the safe area), ~0 on iPad where it already sits below the bar.
+        let insets = safeAreaInsets
+        let script = """
+            (function () {
+              var s = document.documentElement && document.documentElement.style;
+              if (!s) return;
+              s.setProperty('--native-safe-top', '\(insets.top)px');
+              s.setProperty('--native-safe-right', '\(insets.right)px');
+              s.setProperty('--native-safe-bottom', '\(insets.bottom)px');
+              s.setProperty('--native-safe-left', '\(insets.left)px');
+            })();
+            """
+        evaluateJavaScript(script, completionHandler: nil)
+    }
+}
+
 final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
     static let scheme = "specdown"
     static let host = "app"
