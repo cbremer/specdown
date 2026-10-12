@@ -14,6 +14,7 @@ must be recaptured from the frozen candidate; copy must be rechecked against it.
 | `metadata/review-notes.md`                 | App Review notes (no login needed)                                                               | AS-036     |
 | `metadata/privacy-policy.md`, `support.md` | Page drafts with `[PLACEHOLDERS]` for owner facts                                                | AS-037     |
 | `metadata/app-privacy-answers.md`          | Proposed App Privacy / encryption / age answers with code evidence                               | AS-040     |
+| `screenshots/iphone63/en-US/`              | **Required** iPhone 6.1"/6.3" slot, 1206×2622 (iPhone 17 Pro simulator)                          | AS-039     |
 | `screenshots/<platform>/en-US/`            | Captioned Store images: iPhone 6.9" 1320×2868, iPad 13" 2064×2752, Mac 2880×1800 (RGB, no alpha) | AS-039     |
 | `screenshots/asset-index.json`             | Source SHA, raw capture, caption and SHA-256 per image                                           | AS-039     |
 | `compose-screenshots.py`                   | Regenerates the captioned sets from raw captures                                                 | AS-039     |
