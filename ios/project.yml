@@ -1,7 +1,7 @@
 name: SpecDown
 
 options:
-  bundleIdPrefix: com.cbremer
+  bundleIdPrefix: com.mosaicpando
   deploymentTarget:
     iOS: "16.0"
   xcodeVersion: "16.0"
@@ -33,6 +33,10 @@ targets:
     # the Xcode project so dist/ exists.
 
     settings:
+      # Permanent once the App Store Connect record exists. Universal purchase
+      # (docs/project-appstore, decision D02): the Mac App Store build must use
+      # this same bundle ID.
+      PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown
       PRODUCT_NAME: Specdown
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-flat AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal"
