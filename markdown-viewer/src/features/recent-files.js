@@ -92,8 +92,22 @@ export function setupRecentFiles() {
     ) {
       recentKeyEvent.preventDefault();
       recentKeyEvent.stopPropagation();
-      recentSetHeaderMenuOpen(true);
-      recentMenuItem.focus();
+      // Closed: open on the first item. Open: move between items, wrapping.
+      const recentItems = /** @type {HTMLElement[]} */ ([
+        ...recentHeaderMenu.querySelectorAll('[role="menuitem"]'),
+      ]);
+      const recentAt = recentItems.indexOf(
+        /** @type {HTMLElement} */ (document.activeElement)
+      );
+      if (recentHeaderMenu.hidden || recentAt === -1) {
+        recentSetHeaderMenuOpen(true);
+        recentMenuItem.focus();
+      } else {
+        const recentStep = recentKeyEvent.key === 'ArrowDown' ? 1 : -1;
+        recentItems[
+          (recentAt + recentStep + recentItems.length) % recentItems.length
+        ].focus();
+      }
     } else if (!recentHeaderMenu.hidden && recentKeyEvent.key === 'Escape') {
       recentKeyEvent.preventDefault();
       recentKeyEvent.stopPropagation();

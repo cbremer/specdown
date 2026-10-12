@@ -3741,3 +3741,62 @@ mark.search-highlight-current {
         display: none;
     }
 }
+
+/* ===========================
+   About Dialog (header ⋮ menu)
+   =========================== */
+.about-tagline {
+    margin: 0 0 0.5rem;
+    color: var(--text-secondary);
+}
+
+.about-version {
+    margin: 0 0 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.about-update {
+    margin: -0.25rem 0 0.75rem;
+}
+
+.about-links {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.about-links li {
+    padding: 0.3rem 0;
+}
+
+.about-sheet a {
+    color: var(--accent-color);
+}
+
+.about-done {
+    display: block;
+    margin-left: auto;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+}
+
+/* Quiet "update available" marker on the ⋮ toggle (web, Windows, Linux). */
+#header-more-toggle.has-update {
+    position: relative;
+}
+
+#header-more-toggle.has-update::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--accent-color, #1f6bb8);
+}
