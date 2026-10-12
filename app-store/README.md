@@ -4,7 +4,7 @@ Draft listing copy, screenshots and review material for the iPhone/iPad App Stor
 Mac App Store. Plan and tracker: [docs/project-appstore](../docs/project-appstore/).
 
 **Status: DRAFT, pre-freeze.** Everything here was produced from `main` at
-`b9ea264` (v0.0.193) on 2026-09-29, before any candidate freeze (AS-035). Screenshots
+`2b5c835` (v0.0.194) plus the bundle ID change (#266), recaptured 2026-10-12, before any candidate freeze (AS-035). Screenshots
 must be recaptured from the frozen candidate; copy must be rechecked against it.
 
 | Path                                       | What                                                                                             | Plan task  |
@@ -31,9 +31,8 @@ must be recaptured from the frozen candidate; copy must be rechecked against it.
 
 ## Review risks found while capturing (fix before freeze)
 
-1. **"v0.0.193 (alpha)" is shown in the header on every screen** (all platforms). App
-   Review rejects apps presented as beta/demo (Guideline 2.2). Hide the alpha label and
-   in-app version-check link in Store builds.
+1. ~~"v0.0.193 (alpha)" shown in the header on every screen~~ — fixed in #258; the
+   recaptured screenshots show `v0.0.194`.
 2. **Desktop wording on iOS start screen:** "Drop Markdown File Here / or click to browse".
 3. **Start screen duplicates:** "Open Diagram Showcase" and "Try diagram showcase" both
    appear; "App Icon" sits under "or open a bundled sample".

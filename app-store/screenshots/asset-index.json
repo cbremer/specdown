@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "source_sha": "b9ea26454e963ca68b5424039d1cae1fd59074c0",
+  "source_sha": "2b5c835 (main, v0.0.194) + bundle ID (PR #266) + SpecDown display name (iPad set, PR #267)",
   "status": "DRAFT (pre-freeze; not AS-035 candidate)",
   "sets": {
     "iphone": {
@@ -13,7 +13,7 @@
           "title": "Mermaid diagrams, rendered live",
           "subtitle": "Flowcharts straight from your Markdown",
           "size": [1320, 2868],
-          "sha256": "5f353d62dafdaca2b7f7c3a957de35322ec1e5ccc2edc18471b44c2bf1bc8af4"
+          "sha256": "e79e04baa80b0a7bc3d3a18e3525d9d867a075b63b0ae9cb621e8e079f1753f7"
         },
         {
           "file": "screenshots/iphone/en-US/02-sign-in-flow.png",
@@ -21,7 +21,7 @@
           "title": "Sequence diagrams on the go",
           "subtitle": "Tap any diagram to zoom and pan",
           "size": [1320, 2868],
-          "sha256": "85e15dc8db7601dd434bb77bc1186bad58f4e8dd493d64d1cae2b0af035d3956"
+          "sha256": "730ad043c4298872703a0eb9ab49df8a7671d87d59cef1a60ba9d7341f2012e6"
         },
         {
           "file": "screenshots/iphone/en-US/03-api-reference.png",
@@ -29,7 +29,7 @@
           "title": "Tables and highlighted code",
           "subtitle": "Clean typography for technical docs",
           "size": [1320, 2868],
-          "sha256": "477084988d6d4ab3752ca990b3f4ccf48acb8c29b15a7535e20ae01aa3852e5e"
+          "sha256": "4d0c90af4fbbaf271f668067080f073f5bd4b3ba4d267ccf52dc52b67d494295"
         },
         {
           "file": "screenshots/iphone/en-US/04-order-lifecycle.png",
@@ -37,7 +37,7 @@
           "title": "State diagrams and more",
           "subtitle": "Flowchart, sequence, state, Gantt",
           "size": [1320, 2868],
-          "sha256": "31f96b6acdf25c33f6558992f6eb2ab989cdf8094b283e0dd3451558c2ddb092"
+          "sha256": "4d7cbc44d5983886935239c4f7d5239b847add562b896fc47a3ca6498f431b97"
         },
         {
           "file": "screenshots/iphone/en-US/05-system-architecture.png",
@@ -45,7 +45,7 @@
           "title": "Beautiful in Dark Mode",
           "subtitle": "Follows your system appearance",
           "size": [1320, 2868],
-          "sha256": "7f96226d7f4a640215340994fdc7159fa98bc1747a6c314f5d86e7ea15492bcb"
+          "sha256": "9f6f96c32796c1ed009403424568f92288429931f0e415be774b5762e179e626"
         }
       ]
     },
@@ -59,7 +59,7 @@
           "title": "Mermaid diagrams, rendered live",
           "subtitle": "Flowcharts straight from your Markdown",
           "size": [2064, 2752],
-          "sha256": "b672ab6ae7e2e0d6328c92758bdcff8e961b1f12858467bab5f33c3e7f13d1df"
+          "sha256": "0eec7ff28790c34497554c33fe3aab47ba710a92fa3a48bf29ee5635b6b9fac8"
         },
         {
           "file": "screenshots/ipad/en-US/02-release-plan.png",
@@ -67,7 +67,7 @@
           "title": "Gantt charts in your notes",
           "subtitle": "Plan the work right beside the docs",
           "size": [2064, 2752],
-          "sha256": "ff33c6ae36fdaf341aff13ec7fbd2bd5bf8a023a0fcf56d5c88d299453157b05"
+          "sha256": "b1093fb64de0132a47df2bce2c30adf42ea449e4131331e9b628fe81608922f2"
         },
         {
           "file": "screenshots/ipad/en-US/03-api-reference.png",
@@ -75,7 +75,7 @@
           "title": "Tables and highlighted code",
           "subtitle": "Clean typography for technical docs",
           "size": [2064, 2752],
-          "sha256": "6da848838fc1288a0272ed2a439c386c587c607cbac6953c1cfd4eb1d916b50d"
+          "sha256": "185b0a0ad2588e520f8ed6cc552fd6c4e12eac5f94a3e5dc7fb29d93b1ddf582"
         },
         {
           "file": "screenshots/ipad/en-US/04-sign-in-flow.png",
@@ -83,7 +83,7 @@
           "title": "Sequence diagrams, crystal clear",
           "subtitle": "Tap any diagram to zoom and pan",
           "size": [2064, 2752],
-          "sha256": "e8af49c42087fde29046de1ac37d54f01f6ec4fe0ab3e147c3a1334ff4def3ab"
+          "sha256": "87a83d8d29eeb15c0d5fe76c8782a4b84736d03808c583f306a13567e5543810"
         },
         {
           "file": "screenshots/ipad/en-US/05-order-lifecycle.png",
@@ -91,7 +91,7 @@
           "title": "Beautiful in Dark Mode",
           "subtitle": "Follows your system appearance",
           "size": [2064, 2752],
-          "sha256": "e992687bb93c99751d13acff30fe98fde99354e239f283188c6cdc363d635290"
+          "sha256": "9733f7af207a2060c9343da1feea4301f982fcafa94244b3c850b65ca5a17650"
         }
       ]
     },
@@ -105,7 +105,7 @@
           "title": "Source and preview, side by side",
           "subtitle": "Split view for your Markdown files",
           "size": [2880, 1800],
-          "sha256": "cc85f2f6a43845e585c78256b788faa9b505e6640b09defef0ff01db6d775ca7"
+          "sha256": "e1a44ada2975947dc3d1330bbc3735d2fc0c13b58db883e572641400967778e5"
         },
         {
           "file": "screenshots/mac/en-US/02-system-architecture.png",
@@ -113,7 +113,7 @@
           "title": "Mermaid diagrams, rendered live",
           "subtitle": "Flowcharts straight from your Markdown",
           "size": [2880, 1800],
-          "sha256": "d84b67d5075e999063687d00eb83c983337bfde1cd5410d2b44aeba42a252bb0"
+          "sha256": "6038b3785b731c1c18afc5a860ce8731ae0dad4fe51191b8ac7e412d7e11ce38"
         },
         {
           "file": "screenshots/mac/en-US/03-release-plan.png",
@@ -121,7 +121,7 @@
           "title": "Gantt charts in your notes",
           "subtitle": "Plan the work right beside the docs",
           "size": [2880, 1800],
-          "sha256": "91a73011cc27a81c3aa062c98f4b5018bb35067b240b50f7ddc231e84c7c1706"
+          "sha256": "2f63f186346b12d334fe2d031d60de507385bd5eca1dee1f11b9fc2bfa2c6a0a"
         },
         {
           "file": "screenshots/mac/en-US/04-api-reference.png",
@@ -129,7 +129,7 @@
           "title": "Tables and highlighted code",
           "subtitle": "Clean typography for technical docs",
           "size": [2880, 1800],
-          "sha256": "9072dde16261b86f39ae95a2b69dc79cd1c14102d1c89a4748fe91a69227eab3"
+          "sha256": "e2dd4bc2f8635010af6ec5769dc009ae1860128bad7ccb122adaaa323c78f379"
         },
         {
           "file": "screenshots/mac/en-US/05-order-lifecycle.png",
@@ -137,7 +137,7 @@
           "title": "Beautiful in Dark Mode",
           "subtitle": "Follows your system appearance",
           "size": [2880, 1800],
-          "sha256": "793537822a3d3dd201b5ac02638bb2894d74fdb3fad45682f3450ffa5cf19990"
+          "sha256": "08346044171f302a4d58f79bb7fd56b0fb1c300f5a96f60d8bb6b1fc1d1c2522"
         }
       ]
     }

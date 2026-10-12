@@ -1,6 +1,6 @@
 {
   "platform": "macOS (Mac App Store)",
-  "status": "DRAFT — provisional until the sandboxed MAS build proves each Mac feature (AS-021..026); name/category pending D01/D02",
+  "status": "DRAFT — provisional until the sandboxed MAS build proves each Mac feature (AS-021..026); name/category pending D01",
   "name": "SpecDown",
   "name_fallback_if_taken": "SpecDown: Markdown & Mermaid",
   "subtitle": "Markdown & Mermaid viewer",
@@ -11,8 +11,10 @@
   "primary_category": "Developer Tools",
   "secondary_category": "Productivity",
   "copyright": "2026 Christopher Bremer",
-  "support_url": "https://cbremer.github.io/specdown/support.html",
-  "marketing_url": "https://cbremer.github.io/specdown/",
-  "privacy_policy_url": "https://cbremer.github.io/specdown/privacy.html",
-  "price": "Free (pending D03)"
+  "support_url": "https://specdown.mosaicpando.com/support.html",
+  "marketing_url": "https://specdown.mosaicpando.com/",
+  "privacy_policy_url": "https://specdown.mosaicpando.com/privacy.html",
+  "price": "Free (pending D03)",
+  "bundle_id": "com.mosaicpando.specdown (universal purchase, D02 accepted)",
+  "urls_note": "Proposed: mosaicpando.com (being purchased) pointed at GitHub Pages. Pages not yet published (D08)."
 }
