@@ -3046,8 +3046,10 @@ mark.search-highlight-current {
     -webkit-tap-highlight-color: rgba(74, 144, 226, 0.18);
 }
 
+/* Safe area: the larger of WebKit's env() inset and the inset the iOS shell
+   measures natively (--native-safe-*, set by SafeAreaWebView). */
 .ios-native .app-header {
-    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) 0.75rem calc(1rem + env(safe-area-inset-left, 0px));
+    padding: calc(0.75rem + max(env(safe-area-inset-top, 0px), var(--native-safe-top, 0px))) calc(1rem + max(env(safe-area-inset-right, 0px), var(--native-safe-right, 0px))) 0.75rem calc(1rem + max(env(safe-area-inset-left, 0px), var(--native-safe-left, 0px)));
 }
 
 .ios-native .version-update,
