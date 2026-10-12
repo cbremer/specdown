@@ -20,12 +20,21 @@ FONT = '/System/Library/Fonts/SFNS.ttf'
 
 PLATFORMS = {
     # slot: App Store Connect display type; size: required pixel dimensions
-    'iphone': {'slot': 'iPhone 6.9"', 'size': (1320, 2868), 'head': 560, 'title': 104, 'sub': 58, 'radius': 64},
+    # Required slot as of 2026-10: "iPhone with Dynamic Island (medium display)", 6.1"/6.3".
+    'iphone63': {'slot': 'iPhone 6.3" (required)', 'size': (1206, 2622), 'head': 520, 'title': 96, 'sub': 54, 'radius': 60},
+    'iphone': {'slot': 'iPhone 6.9" (optional large display)', 'size': (1320, 2868), 'head': 560, 'title': 104, 'sub': 58, 'radius': 64},
     'ipad': {'slot': 'iPad 13"', 'size': (2064, 2752), 'head': 440, 'title': 110, 'sub': 60, 'radius': 40},
     'mac': {'slot': 'Mac 16:10', 'size': (2880, 1800), 'head': 330, 'title': 104, 'sub': 56, 'radius': 28},
 }
 
 SCENES = {
+    'iphone63': [
+        ('iphone63-light-system-architecture', 'Mermaid diagrams, rendered live', 'Flowcharts straight from your Markdown'),
+        ('iphone63-light-sign-in-flow', 'Sequence diagrams on the go', 'Tap any diagram to zoom and pan'),
+        ('iphone63-light-api-reference', 'Tables and highlighted code', 'Clean typography for technical docs'),
+        ('iphone63-light-order-lifecycle', 'State diagrams and more', 'Flowchart, sequence, state, Gantt'),
+        ('iphone63-dark-system-architecture', 'Beautiful in Dark Mode', 'Follows your system appearance'),
+    ],
     'iphone': [
         ('iphone-light-system-architecture', 'Mermaid diagrams, rendered live', 'Flowcharts straight from your Markdown'),
         ('iphone-light-sign-in-flow', 'Sequence diagrams on the go', 'Tap any diagram to zoom and pan'),
