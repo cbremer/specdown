@@ -66,6 +66,12 @@ interface SpecdownDesktopBridge {
     filePath: string
   ) => Promise<SpecdownFileMetadata | null> | SpecdownFileMetadata | null;
   getPathForFile?: (file: File) => string;
+  /** Mac App Store build: a by-path open had no sandbox access. */
+  onFileAccessNeeded?: (
+    cb: (info: { filePath: string; filename: string }) => void
+  ) => void;
+  /** Re-grant access to a file through the open panel, then open it. */
+  requestGrantAccess?: (filePath: string) => void;
   openDroppedPath?: (absPath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;
   onCloseTab?: (cb: () => void) => void;

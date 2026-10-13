@@ -24,6 +24,8 @@ describe('Desktop renderer integration', () => {
       onApplyCustomCss: jest.fn(),
       saveSession: jest.fn(),
       requestRefreshFile: jest.fn(),
+      onFileAccessNeeded: jest.fn(),
+      requestGrantAccess: jest.fn(),
     };
 
     loadHTML(document);
@@ -171,6 +173,25 @@ describe('Desktop renderer integration', () => {
       createTab('remote.md', '# Remote', null);
       refreshActiveFileFromDisk();
       expect(window.specdown.requestRefreshFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Mac App Store sandbox recovery', () => {
+    it('offers Locate… for a file whose access was lost, and re-grants on click', () => {
+      const deliver = window.specdown.onFileAccessNeeded.mock.calls[0][0];
+      deliver({ filePath: '/Users/me/plan.md', filename: 'plan.md' });
+      const toast = document.querySelector('.toast');
+      expect(toast.textContent).toContain('SpecDown needs permission to open “plan.md”.');
+      const locate = toast.querySelector('button');
+      expect(locate.textContent).toBe('Locate…');
+      locate.click();
+      expect(window.specdown.requestGrantAccess).toHaveBeenCalledWith('/Users/me/plan.md');
+    });
+
+    it('ignores a malformed notice', () => {
+      const deliver = window.specdown.onFileAccessNeeded.mock.calls[0][0];
+      deliver(null);
+      expect(document.querySelector('.toast')).toBeNull();
     });
   });
 

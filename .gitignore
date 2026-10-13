@@ -25,3 +25,7 @@ test-results.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Mac App Store native module (built by scripts/build-mas-native.js)
+desktop/native/mas-bookmarks/build/
+desktop/native/mas-bookmarks/*.node

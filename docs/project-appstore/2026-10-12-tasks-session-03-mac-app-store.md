@@ -7,9 +7,9 @@ Connect change, upload or submission.
 
 - [x] AS-021: launched a sandboxed Electron 44 MAS spike; proved/disproved each
       access mechanism and wrote the [access contract](mas-interface.md).
-- [ ] AS-024: separate the MAS channel from the direct (Developer ID) channel —
+- [x] AS-024: separate the MAS channel from the direct (Developer ID) channel —
       no electron-updater, no update UI, no GitHub release polling in MAS.
-- [ ] AS-022/023: durable grants (native security-scoped bookmarks), balanced
+- [x] AS-022/023 (code + unit tests; native QA pending): durable grants (native security-scoped bookmarks), balanced
       access, polling watch, folder/CSS grants, recovery UX, migration.
 - [ ] AS-026: `mas` / `mas-dev` electron-builder targets, justified
       entitlements, local sandbox build + QA evidence.

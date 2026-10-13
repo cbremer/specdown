@@ -89,12 +89,31 @@ contextBridge.exposeInMainWorld('specdown', {
   // Absolute filesystem path for a dragged-in File. Electron removed the
   // legacy File.path property (v32+); webUtils.getPathForFile is the
   // sanctioned replacement and is only callable from the preload context.
+  // The resolved path is also reported to the main process: a File the user
+  // dropped or picked is a sandbox grant in the Mac App Store build, and main
+  // persists it (a no-op for the direct build).
   getPathForFile: (file) => {
+    let filePath;
     try {
-      return webUtils.getPathForFile(file) || '';
+      filePath = webUtils.getPathForFile(file) || '';
     } catch {
       return '';
     }
+    if (filePath) ipcRenderer.send('note-user-picked-path', filePath);
+    return filePath;
+  },
+
+  // Mac App Store build: a file could not be opened because the sandbox has
+  // no (or no longer valid) access to it. The renderer offers "Locate…".
+  onFileAccessNeeded: (callback) => {
+    ipcRenderer.on('file-access-needed', (_event, info) => {
+      callback(info);
+    });
+  },
+
+  // Re-grant access to a file via the open panel, then open it.
+  requestGrantAccess: (filePath) => {
+    ipcRenderer.send('request-grant-access', filePath);
   },
 
   // Open a dropped file/folder by absolute path: the main process stats it

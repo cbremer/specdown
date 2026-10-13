@@ -109,6 +109,12 @@ export function bridgeGetPathForFile(file) {
   return nativeBridge()?.getPathForFile?.(file) || '';
 }
 
+/** @param {string} filePath Ask the shell to re-grant (Mac App Store sandbox)
+ * access to a file through its open panel, then open it. */
+export function bridgeRequestGrantAccess(filePath) {
+  nativeBridge()?.requestGrantAccess?.(filePath);
+}
+
 /** @param {string} absPath Open a dropped file/folder by absolute path: the
  * shell stats it and routes to file-opened or workspace-opened. */
 export function bridgeOpenDroppedPath(absPath) {
@@ -186,6 +192,11 @@ export function bridgeNotifyVisualThemeCatalog(catalog) {
 /** @param {Parameters<NonNullable<DesktopBridge['onApplyCustomCss']>>[0]} cb */
 export function bridgeOnApplyCustomCss(cb) {
   nativeBridge()?.onApplyCustomCss?.(cb);
+}
+
+/** @param {Parameters<NonNullable<DesktopBridge['onFileAccessNeeded']>>[0]} cb */
+export function bridgeOnFileAccessNeeded(cb) {
+  nativeBridge()?.onFileAccessNeeded?.(cb);
 }
 
 /** @param {Parameters<NonNullable<DesktopBridge['onUpdateDownloaded']>>[0]} cb */
