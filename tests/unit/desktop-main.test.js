@@ -97,7 +97,12 @@ const {
   htmlDocumentsEnabledMain,
   applyVisualThemeCatalog,
   DEFAULT_VISUAL_THEME_CATALOG,
+  APP_INDEX_URL,
 } = require('../../desktop/main');
+
+// IPC is only honored from the bundled viewer's main frame.
+const trustedFrame = { url: APP_INDEX_URL };
+const trustedEvent = { senderFrame: trustedFrame, sender: { mainFrame: trustedFrame } };
 
 describe('desktop/main.js', () => {
   describe('VALID_EXTENSIONS', () => {
@@ -410,7 +415,7 @@ describe('desktop/main.js', () => {
       const handler = ipcMain.on.mock.calls.find(
         (call) => call[0] === 'visual-theme-changed'
       )[1];
-      handler({}, 'aurora');
+      handler(trustedEvent, 'aurora');
       expect(items['visual-theme-default'].checked).toBe(false);
       expect(items['visual-theme-starfield'].checked).toBe(false);
       expect(items['visual-theme-aurora'].checked).toBe(true);
@@ -425,9 +430,9 @@ describe('desktop/main.js', () => {
       const handler = call[1];
       // No window is open in this test harness, so a valid path is a safe
       // no-op; the contract we assert is that bad input never throws.
-      expect(() => handler({}, undefined)).not.toThrow();
-      expect(() => handler({}, '')).not.toThrow();
-      expect(() => handler({}, '/tmp/does-not-exist.md')).not.toThrow();
+      expect(() => handler(trustedEvent, undefined)).not.toThrow();
+      expect(() => handler(trustedEvent, '')).not.toThrow();
+      expect(() => handler(trustedEvent, '/tmp/does-not-exist.md')).not.toThrow();
     });
 
     it('registers request-open-folder and request-open-relative handlers', () => {
@@ -440,10 +445,10 @@ describe('desktop/main.js', () => {
     it('request-open-relative tolerates malformed payloads', () => {
       const { ipcMain } = require('electron');
       const handler = ipcMain.on.mock.calls.find(c => c[0] === 'request-open-relative')[1];
-      expect(() => handler({}, undefined)).not.toThrow();
-      expect(() => handler({}, {})).not.toThrow();
-      expect(() => handler({}, { fromPath: '', href: '' })).not.toThrow();
-      expect(() => handler({}, { fromPath: '/a/b.md', href: '../c.md' })).not.toThrow();
+      expect(() => handler(trustedEvent, undefined)).not.toThrow();
+      expect(() => handler(trustedEvent, {})).not.toThrow();
+      expect(() => handler(trustedEvent, { fromPath: '', href: '' })).not.toThrow();
+      expect(() => handler(trustedEvent, { fromPath: '/a/b.md', href: '../c.md' })).not.toThrow();
     });
 
     it('registers the export-pdf handler (printing stays in the renderer)', () => {
@@ -824,21 +829,21 @@ describe('desktop/main.js', () => {
     });
 
     it('opens a dropped markdown file like a native open (recents recorded)', () => {
-      getHandler()(null, path.join(dropDir, 'notes.md'));
+      getHandler()(trustedEvent, path.join(dropDir, 'notes.md'));
       expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(dropDir, 'notes.md'));
       // A plain file must not be registered as a workspace root.
       expect(workspaceRoots.size).toBe(0);
     });
 
     it('registers a dropped directory as a workspace root (relative-link containment)', () => {
-      getHandler()(null, dropDir);
+      getHandler()(trustedEvent, dropDir);
       expect(workspaceRoots.has(dropDir)).toBe(true);
       expect(app.addRecentDocument).not.toHaveBeenCalled();
     });
 
     it('ignores non-string and nonexistent paths', () => {
-      expect(() => getHandler()(null, 42)).not.toThrow();
-      expect(() => getHandler()(null, path.join(dropDir, 'missing.md'))).not.toThrow();
+      expect(() => getHandler()(trustedEvent, 42)).not.toThrow();
+      expect(() => getHandler()(trustedEvent, path.join(dropDir, 'missing.md'))).not.toThrow();
       expect(app.addRecentDocument).not.toHaveBeenCalled();
       expect(workspaceRoots.size).toBe(0);
     });
@@ -924,8 +929,7 @@ describe('desktop/main.js', () => {
 describe('Bookmark file reads', () => {
   const { ipcMain } = require('electron');
   const readBookmark = ipcMain.handle.mock.calls.find(([channel]) => channel === 'read-bookmarked-file')[1];
-  const frame = {};
-  const event = { senderFrame: frame, sender: { mainFrame: frame } };
+  const event = trustedEvent;
 
   afterEach(() => {
     fs.promises.stat.mockRestore?.();
