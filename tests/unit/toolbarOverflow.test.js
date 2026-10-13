@@ -110,13 +110,13 @@ describe('Toolbar overflow menu', () => {
     expect(labels).toContain('Toggle raw / preview');
   });
 
-  it('offers "Show author comments" only when the comments feature is active', () => {
+  it('offers "Show / hide HTML comments" only when the comments feature is active', () => {
     // comments-toggle is feature-gated via inline display (hidden by default).
     openOverflowMenu();
     let labels = Array.from(
       document.querySelectorAll('.overflow-menu-item')
     ).map((i) => i.textContent);
-    expect(labels).not.toContain('Show author comments');
+    expect(labels).not.toContain('Show / hide HTML comments');
     closeOverflowMenu();
 
     document.getElementById('comments-toggle').style.display = '';
@@ -124,7 +124,7 @@ describe('Toolbar overflow menu', () => {
     labels = Array.from(document.querySelectorAll('.overflow-menu-item')).map(
       (i) => i.textContent
     );
-    expect(labels).toContain('Show author comments');
+    expect(labels).toContain('Show / hide HTML comments');
   });
 
   it('no longer lists the old Watch entry (state lives on the Live chip)', () => {

@@ -17,12 +17,35 @@ let commentsHidden = (() => {
   }
 })();
 
-/** Apply the current visibility to the content + toggle button. */
+/** Number of revealed HTML comments in the current document. */
+let commentsCount = 0;
+
+/** Apply the current visibility to the content + toggle buttons. */
 function applyCommentsVisibility() {
   const content = cEl('markdown-content');
   if (content) content.classList.toggle('comments-hidden', commentsHidden);
+  const action = commentsHidden ? 'Show HTML comments' : 'Hide HTML comments';
   const btn = cEl('comments-toggle');
-  if (btn) btn.classList.toggle('active', !commentsHidden); // active = showing
+  if (btn) {
+    btn.classList.toggle('active', !commentsHidden); // active = showing
+    btn.setAttribute('title', action);
+    btn.setAttribute('aria-label', action);
+  }
+  // iOS More sheet: say exactly what a tap does, and grey it out when the
+  // document has no HTML comments (a vague "Toggle Comments" looked broken).
+  const iosBtn = /** @type {HTMLButtonElement | null} */ (
+    cEl('ios-comments-button')
+  );
+  if (iosBtn) {
+    iosBtn.disabled = commentsCount === 0;
+    iosBtn.textContent =
+      commentsCount === 0
+        ? 'No HTML Comments'
+        : (commentsHidden ? 'Show' : 'Hide') +
+          ' HTML Comments (' +
+          commentsCount +
+          ')';
+  }
 }
 
 /** Toggle comment visibility and persist the choice. */
@@ -47,6 +70,7 @@ export function refreshCommentsUI() {
   const count = content
     ? content.querySelectorAll('.html-comment-block').length
     : 0;
+  commentsCount = count;
   if (btn) {
     btn.style.display = count > 0 ? '' : 'none';
     const countEl = btn.querySelector('.comments-toggle-count');
