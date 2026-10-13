@@ -190,6 +190,10 @@ describe('Mac App Store build: sandbox file access', () => {
   let file;
   let main;
 
+  const masTrustedEvent = () => {
+    const frame = { url: main.APP_INDEX_URL };
+    return { senderFrame: frame, sender: { mainFrame: frame } };
+  };
   const ipcHandler = (channel) =>
     loadedElectron.ipcMain.on.mock.calls
       .filter((c) => c[0] === channel)
@@ -211,25 +215,25 @@ describe('Mac App Store build: sandbox file access', () => {
 
   it('does not read a raw path that has no sandbox grant (old state migration)', () => {
     const read = jest.spyOn(fs, 'readFileSync');
-    ipcHandler('request-open-path')(null, file);
+    ipcHandler('request-open-path')(masTrustedEvent(), file);
     expect(read).not.toHaveBeenCalledWith(file, expect.anything());
     expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
   });
 
   it('persists a dropped file as a grant, then opens it', () => {
-    ipcHandler('open-dropped-path')(null, file);
+    ipcHandler('open-dropped-path')(masTrustedEvent(), file);
     expect(mockNativeBookmarks.createBookmark).toHaveBeenCalledWith(file);
     expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
     // The same path now opens by reference (recents / session restore).
     loadedElectron.app.addRecentDocument.mockClear();
-    ipcHandler('request-open-path')(null, file);
+    ipcHandler('request-open-path')(masTrustedEvent(), file);
     expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
   });
 
   it('records paths the preload resolved from user-picked Files', () => {
-    ipcHandler('note-user-picked-path')(null, file);
+    ipcHandler('note-user-picked-path')(masTrustedEvent(), file);
     expect(main.fileAccess.hasGrant(file)).toBe(true);
-    ipcHandler('note-user-picked-path')(null, 'relative.md');
+    ipcHandler('note-user-picked-path')(masTrustedEvent(), 'relative.md');
     expect(main.fileAccess.hasGrant('relative.md')).toBe(false);
   });
 

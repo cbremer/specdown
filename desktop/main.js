@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell, nativeImage } = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const fs = require('fs');
 const os = require('os');
 const chokidar = require('chokidar');
@@ -20,6 +21,71 @@ function htmlDocumentsEnabledMain() {
 }
 
 const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
+
+// The only page allowed in the app window, and the only page whose IPC is
+// trusted. Anything else — a crafted link to a local .html file, a remote
+// page — must never reach the native bridge (Electron security checklist #13).
+const APP_INDEX_PATH = path.join(__dirname, '..', 'markdown-viewer', 'dist', 'index.html');
+const APP_INDEX_URL = pathToFileURL(APP_INDEX_PATH).href;
+const EXTERNAL_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
+
+/** Decoded file path of a file: URL, or null for anything else. */
+function fileUrlPathname(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'file:' ? decodeURIComponent(parsed.pathname) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True only for the bundled viewer page (query/hash ignored). */
+function isAppPageUrl(url) {
+  const pathname = fileUrlPathname(url);
+  return pathname !== null && pathname === fileUrlPathname(APP_INDEX_URL);
+}
+
+/**
+ * Where a main-window navigation or window.open may go: 'allow' (the bundled
+ * viewer itself), 'external' (http/https/mailto, handed to the system), or
+ * 'deny' (everything else, including other file: URLs).
+ */
+function routeNavigation(url) {
+  if (isAppPageUrl(url)) return 'allow';
+  try {
+    return EXTERNAL_LINK_PROTOCOLS.has(new URL(url).protocol) ? 'external' : 'deny';
+  } catch {
+    return 'deny';
+  }
+}
+
+/** IPC is trusted only from the main frame of the bundled viewer page. */
+function isTrustedIpcSender(event) {
+  const frame = event && event.senderFrame;
+  if (!frame || !event.sender || frame !== event.sender.mainFrame) return false;
+  return isAppPageUrl(frame.url);
+}
+
+function onTrustedIpc(channel, handler) {
+  ipcMain.on(channel, (event, ...args) => {
+    if (!isTrustedIpcSender(event)) {
+      logInfo(`Blocked IPC "${channel}" from an untrusted sender.`);
+      return;
+    }
+    handler(event, ...args);
+  });
+}
+
+function handleTrustedIpc(channel, handler) {
+  // async: invoke() always gets a promise, trusted or not.
+  ipcMain.handle(channel, async (event, ...args) => {
+    if (!isTrustedIpcSender(event)) {
+      logInfo(`Blocked IPC "${channel}" from an untrusted sender.`);
+      return null;
+    }
+    return handler(event, ...args);
+  });
+}
 
 // 'mas' (Mac App Store) or 'direct' (Developer ID DMG/ZIP). See distribution.js.
 const DISTRIBUTION_CHANNEL = getDistributionChannel();
@@ -396,6 +462,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // The preload only exposes the bridge when the page is this URL.
+      additionalArguments: [`--specdown-app-url=${APP_INDEX_URL}`],
     },
   });
 
@@ -403,42 +471,22 @@ function createWindow() {
 
   // Loads the Vite build output. `npm run desktop` / `desktop:build` run the
   // web build first so this file exists.
-  mainWindow.loadFile(
-    path.join(__dirname, '..', 'markdown-viewer', 'dist', 'index.html')
-  );
+  mainWindow.loadFile(APP_INDEX_PATH);
 
-  // Prevent the renderer from navigating away from the bundled local file.
-  // This guards against malicious content (e.g. a crafted markdown link)
-  // driving the main-frame URL to an external site inside the Electron shell.
-  // Genuine external links (http/https) are instead handed to the system
-  // browser via shell.openExternal so they are not silently dropped.
+  // Keep the window on the bundled viewer. A crafted markdown link must not
+  // drive it to another page — a remote site, or a local .html file that
+  // would otherwise inherit the preload's native bridge. External links
+  // (http/https/mailto) go to the system; everything else is dropped.
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    let protocol;
-    try {
-      protocol = new URL(url).protocol;
-    } catch {
-      event.preventDefault();
-      return;
-    }
-    if (protocol === 'file:') return;
+    const route = routeNavigation(url);
+    if (route === 'allow') return;
     event.preventDefault();
-    if (protocol === 'http:' || protocol === 'https:') {
-      shell.openExternal(url);
-    }
+    if (route === 'external') shell.openExternal(url);
   });
 
-  // Block any attempt by the renderer to open a new BrowserWindow, but route
-  // external http/https links to the system browser via shell.openExternal
-  // rather than dropping them. Anything else is denied outright.
+  // Never open another BrowserWindow from the renderer.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      const { protocol } = new URL(url);
-      if (protocol === 'http:' || protocol === 'https:') {
-        shell.openExternal(url);
-      }
-    } catch {
-      // Malformed URL — deny without opening anything.
-    }
+    if (routeNavigation(url) === 'external') shell.openExternal(url);
     return { action: 'deny' };
   });
 
@@ -1039,54 +1087,53 @@ async function exportPdfFromHtml(payload) {
 // ===========================
 // IPC Handlers
 // ===========================
-ipcMain.on('request-file-open', () => {
+onTrustedIpc('request-file-open', () => {
   showOpenDialog();
 });
 
 // Export the standalone printable document as a PDF file.
-ipcMain.on('export-pdf', (_event, payload) => {
+onTrustedIpc('export-pdf', (_event, payload) => {
   exportPdfFromHtml(payload);
 });
 
 // Re-open a recent file by path (from the renderer's in-app recent-files list).
 // openFileByPath validates the extension and handles read errors, so a stale
 // or moved path is a safe no-op.
-ipcMain.on('request-open-path', (_event, filePath) => {
+onTrustedIpc('request-open-path', (_event, filePath) => {
   if (typeof filePath === 'string' && filePath) {
     openFileByPath(filePath);
   }
 });
 
 // Workspace: open a folder picker and scan it for markdown files.
-ipcMain.on('request-open-folder', () => {
+onTrustedIpc('request-open-folder', () => {
   showOpenFolderDialog();
 });
 
 // Workspace: open a relative link clicked inside a workspace document.
-ipcMain.on('request-open-relative', (_event, payload) => {
+onTrustedIpc('request-open-relative', (_event, payload) => {
   if (payload && typeof payload === 'object') {
     openRelativeFromFile(payload.fromPath, payload.href);
   }
 });
 
-ipcMain.on('close-active-tab', () => {
+onTrustedIpc('close-active-tab', () => {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('close-tab');
   }
 });
 
-ipcMain.on('watch-file', (event, filePath) => {
+onTrustedIpc('watch-file', (event, filePath) => {
   watchFile(filePath, event.sender);
 });
 
-ipcMain.on('unwatch-file', (_event, filePath) => {
+onTrustedIpc('unwatch-file', (_event, filePath) => {
   unwatchFile(filePath);
 });
 
 // Request/response lets bookmarks recover from moved or inaccessible files.
-ipcMain.handle('read-bookmarked-file', async (event, filePath) => {
-  if (event.senderFrame !== event.sender.mainFrame ||
-      typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
+handleTrustedIpc('read-bookmarked-file', async (_event, filePath) => {
+  if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
       !isValidMarkdownFile(filePath)) return null;
   try {
     const access = await fileAccess.withAccessAsync(filePath, async (p) => {
@@ -1102,7 +1149,7 @@ ipcMain.handle('read-bookmarked-file', async (event, filePath) => {
 });
 
 // File info sheet: return on-disk metadata using request/response IPC.
-ipcMain.handle('get-file-metadata', (_event, filePath) => {
+handleTrustedIpc('get-file-metadata', (_event, filePath) => {
   if (typeof filePath !== 'string' || !filePath) return null;
   const access = fileAccess.withAccess(filePath, buildFileMetadata);
   return access.ok ? access.value : null;
@@ -1111,7 +1158,7 @@ ipcMain.handle('get-file-metadata', (_event, filePath) => {
 // Manual "Reload from disk": re-read the file and reply over the same
 // file-changed channel a watcher event uses, so the renderer updates the
 // open tab in place (scroll preserved, "Updated" chip flash).
-ipcMain.on('refresh-file', (_event, filePath) => {
+onTrustedIpc('refresh-file', (_event, filePath) => {
   if (typeof filePath !== 'string' || !isValidMarkdownFile(filePath)) return;
   try {
     const access = fileAccess.withAccess(filePath, readMarkdownFile);
@@ -1134,7 +1181,7 @@ ipcMain.on('refresh-file', (_event, filePath) => {
 // the legacy File.path). A markdown file opens like any native open (real
 // file-backed tab: live reload + Reload from disk); a directory becomes a
 // full desktop workspace (real paths, relative-link navigation, containment).
-ipcMain.on('open-dropped-path', (_event, absPath) => {
+onTrustedIpc('open-dropped-path', (_event, absPath) => {
   if (typeof absPath !== 'string' || !absPath) return;
   let stats;
   try {
@@ -1156,7 +1203,7 @@ ipcMain.on('open-dropped-path', (_event, absPath) => {
 // (drag-and-drop, the bookmarks "Locate file" picker) so the Mac App Store
 // build can persist that grant. Paths the user never granted cannot be
 // bookmarked — the sandbox refuses — so this cannot widen access.
-ipcMain.on('note-user-picked-path', (_event, absPath) => {
+onTrustedIpc('note-user-picked-path', (_event, absPath) => {
   if (typeof absPath === 'string' && path.isAbsolute(absPath)) {
     fileAccess.noteUserIntent(absPath, 'file');
   }
@@ -1164,17 +1211,17 @@ ipcMain.on('note-user-picked-path', (_event, absPath) => {
 
 // "Locate…" from the file-access-needed toast: re-grant a file the sandbox
 // build has no (or no longer valid) access to, then open it.
-ipcMain.on('request-grant-access', (_event, filePath) => {
+onTrustedIpc('request-grant-access', (_event, filePath) => {
   requestGrantAccess(filePath);
 });
 
 // Session save: renderer sends tab state when it changes
-ipcMain.on('save-session', (_event, tabs) => {
+onTrustedIpc('save-session', (_event, tabs) => {
   saveSession(tabs);
 });
 
 // Renderer's "Restart now" toast asks the shell to install the downloaded update.
-ipcMain.on('restart-to-update', () => {
+onTrustedIpc('restart-to-update', () => {
   if (autoUpdaterRef && channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL)) {
     autoUpdaterRef.quitAndInstall();
   }
@@ -1233,12 +1280,12 @@ function buildVisualThemeSubmenu() {
 }
 
 // Renderer catalog of named empty-state looks — rebuild Appearance → Theme.
-ipcMain.on('visual-theme-catalog', (_event, catalog) => {
+onTrustedIpc('visual-theme-catalog', (_event, catalog) => {
   applyVisualThemeCatalog(catalog);
 });
 
 // Keep Appearance > Theme radio items in sync with the in-app picker.
-ipcMain.on('visual-theme-changed', (_event, themeId) => {
+onTrustedIpc('visual-theme-changed', (_event, themeId) => {
   if (typeof themeId === 'string' && visualThemeCatalogItems.some((theme) => theme.id === themeId)) {
     currentVisualThemeId = themeId;
   }
@@ -1577,6 +1624,10 @@ module.exports = {
   isSignedUpdatePlatform,
   initAutoUpdater,
   DISTRIBUTION_CHANNEL,
+  APP_INDEX_URL,
+  isAppPageUrl,
+  routeNavigation,
+  isTrustedIpcSender,
   fileAccess,
   pollWatchers,
   requestGrantAccess,

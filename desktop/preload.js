@@ -4,7 +4,26 @@
 
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
-contextBridge.exposeInMainWorld('specdown', {
+// Expose the bridge only to the bundled viewer page. The main process passes
+// that page's URL; any other page that somehow loads in this window (main also
+// blocks such navigation) gets no native capability. Main validates every IPC
+// sender independently, so this is defense in depth.
+function isBundledViewerPage(href = globalThis.location.href, argv = process.argv) {
+  const arg = argv.find((a) => a.startsWith('--specdown-app-url='));
+  if (!arg) return false;
+  try {
+    const expected = new URL(arg.slice('--specdown-app-url='.length));
+    const actual = new URL(href);
+    return (
+      actual.protocol === 'file:' &&
+      decodeURIComponent(actual.pathname) === decodeURIComponent(expected.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   isDesktop: true,
 
   // OS platform of the shell (Node's process.platform: 'darwin', 'win32',
@@ -198,3 +217,6 @@ contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('restart-to-update');
   },
 });
+
+// For tests (Node require); harmless in the Electron preload.
+module.exports = { isBundledViewerPage };
