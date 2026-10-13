@@ -79,3 +79,53 @@ describe('web keeps annotations and recents', () => {
     expect(document.getElementById('open-recent-button').hidden).toBe(false);
   });
 });
+
+describe('iOS 1.0 reviewer-facing fixes', () => {
+  beforeEach(() => {
+    window.iosNative = true;
+    window.webkit = {
+      messageHandlers: { specdown: { postMessage: jest.fn() } },
+    };
+    loadHTML(document);
+    loadApp(document);
+  });
+  afterEach(() => {
+    delete window.iosNative;
+    delete window.webkit;
+  });
+
+  it('uses touch wording on the start screen', () => {
+    expect(document.querySelector('.drop-zone-content h2').textContent).toBe(
+      'Open a Markdown File'
+    );
+    expect(
+      document.querySelector('.drop-zone-content > p').textContent
+    ).toMatch(/^Tap Browse Files/);
+  });
+
+  it('shows native file errors as a toast', () => {
+    window.specdownShowError('notes.md couldn’t be opened.');
+    const toast = document.querySelector('#toast-region .toast');
+    expect(toast.textContent).toContain('couldn’t be opened');
+  });
+
+  it('hides diagram download and copy-link controls on iOS', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '../../markdown-viewer/styles.css'),
+      'utf8'
+    );
+    expect(css).toMatch(
+      /\.ios-native \.fullscreen-controls \.export-svg,\s*\.ios-native \.fullscreen-controls \.export-png,\s*\.ios-native \.fullscreen-controls \.share-diagram\s*\{\s*display: none;/
+    );
+  });
+});
+
+describe('document styles', () => {
+  it('forbids <style> blocks when sanitizing rendered Markdown', () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, '../../markdown-viewer/src/main.js'),
+      'utf8'
+    );
+    expect(src).toMatch(/FORBID_TAGS:\s*\['style'\]/);
+  });
+});

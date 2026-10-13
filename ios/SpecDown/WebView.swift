@@ -108,7 +108,10 @@ struct WebView: UIViewRepresentable {
                 return
             }
 
-            decisionHandler(.allow)
+            // Only the bundled viewer (and blank/srcdoc subframes) may load in
+            // the web view; scripted navigations, file: URLs and remote pages
+            // are refused so nothing else inherits the native message handler.
+            decisionHandler(isAllowedInWebView(url) ? .allow : .cancel)
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -147,9 +150,16 @@ struct WebView: UIViewRepresentable {
 
         private func shouldOpenExternallyInPlace(_ navigationAction: WKNavigationAction, url: URL) -> Bool {
             navigationAction.navigationType == .linkActivated
-                && navigationAction.targetFrame?.isMainFrame == true
                 && !url.isFileURL
                 && isAllowedScheme(url)
+        }
+
+        private func isAllowedInWebView(_ url: URL) -> Bool {
+            let scheme = url.scheme?.lowercased() ?? ""
+            if scheme == BundleSchemeHandler.scheme {
+                return url.host == BundleSchemeHandler.host
+            }
+            return url.absoluteString == "about:blank" || url.absoluteString == "about:srcdoc"
         }
 
         private func shouldOpenInNewWindow(_ navigationAction: WKNavigationAction, url: URL) -> Bool {
