@@ -21,6 +21,7 @@ import { toggleComments } from '../features/comments.js';
 import { openAnnotationPanel } from '../features/annotations.js';
 import { startPresentation } from '../features/presentation.js';
 import { openFileInfoSheet } from '../features/file-info.js';
+import { openSearch } from '../features/search.js';
 
 const iosWiringEl = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -36,6 +37,9 @@ export function setupIOSEventListeners() {
   }
   iosWiringEl('ios-bookmark-button')?.addEventListener('click', () => { closeIOSActionSheet(); bookmarkCurrentFile(); });
   iosWiringEl('ios-bookmarks-button')?.addEventListener('click', () => { closeIOSActionSheet(); openBookmarks(); });
+  // Find has no other entry point in the phone-style layout (the document
+  // header's search button is hidden there), so offer it in the sheet.
+  iosWiringEl('ios-find-button')?.addEventListener('click', () => { closeIOSActionSheet(); openSearch(); });
   const iosOpenButton = iosWiringEl('ios-open-button');
   const iosContentsButton = /** @type {HTMLButtonElement | null} */ (
     iosWiringEl('ios-contents-button')
