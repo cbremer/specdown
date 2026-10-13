@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.205 — 2026-10-13
+
+### Features
+
+- **desktop:** sandbox file grants for the Mac App Store build (AS-022/023)
+
 ## v0.0.204 — 2026-10-13
 
 - stop the keyboard from shoving the page under the Dynamic Island
