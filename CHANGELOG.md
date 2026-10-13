@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.204 — 2026-10-13
+
+- stop the keyboard from shoving the page under the Dynamic Island
+
 ## v0.0.203 — 2026-10-13
 
 ### Features
