@@ -3,6 +3,7 @@
 // without a reusable reference retain a clearly labeled snapshot instead.
 import { state } from '../core/state.js';
 import { trapFocus } from '../core/focus-trap.js';
+import { platformIsTouchFirst } from '../core/platform.js';
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import {
   bridgeGetPathForFile,
@@ -181,7 +182,8 @@ export function removeBookmark(id) {
   try {
     bookmarkPersist(getBookmarks().filter((b) => b.id !== id));
     bookmarkRenderList();
-    document.getElementById('bookmark-search')?.focus();
+    if (!platformIsTouchFirst())
+      document.getElementById('bookmark-search')?.focus();
     showToast('Bookmark removed. The original file was not deleted.', {
       type: 'info',
     });
@@ -527,7 +529,14 @@ export function openBookmarks() {
   document.body.append(overlay);
   bookmarkRenderList();
   bookmarkReleaseFocus = trapFocus(dialog);
-  search.focus();
+  // Touch devices: focus the dialog, not the search field, so opening
+  // Bookmarks doesn't pop the keyboard (which shifts the iOS web view).
+  if (platformIsTouchFirst()) {
+    dialog.tabIndex = -1;
+    dialog.focus({ preventScroll: true });
+  } else {
+    search.focus();
+  }
 }
 
 export function setupBookmarks() {

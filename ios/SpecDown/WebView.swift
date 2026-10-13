@@ -240,6 +240,33 @@ private class WeakMessageHandler: NSObject, WKScriptMessageHandler {
 /// alone proved unreliable on device (iOS 27.2 left the header under the
 /// Dynamic Island), so the CSS takes the larger of the two.
 final class SafeAreaWebView: WKWebView {
+    override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+        super.init(frame: frame, configuration: configuration)
+        // When a text field takes focus, iOS scrolls the whole web view up to
+        // keep it above the keyboard, and nothing scrolls it back afterwards —
+        // leaving the header under the Dynamic Island. The page never scrolls
+        // at the document level, so restore the origin when the keyboard goes.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardDidHide),
+            name: UIResponder.keyboardDidHideNotification,
+            object: nil
+        )
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+
+    @objc private func keyboardDidHide(_ notification: Notification) {
+        // Leave a deliberate pinch-zoom alone; otherwise snap back to the top.
+        guard scrollView.zoomScale <= scrollView.minimumZoomScale + 0.01 else { return }
+        let rest = CGPoint(x: -scrollView.adjustedContentInset.left, y: -scrollView.adjustedContentInset.top)
+        if scrollView.contentOffset != rest {
+            scrollView.setContentOffset(rest, animated: true)
+        }
+    }
+
     override func safeAreaInsetsDidChange() {
         super.safeAreaInsetsDidChange()
         pushSafeAreaInsets()

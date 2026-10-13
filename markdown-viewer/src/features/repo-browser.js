@@ -6,6 +6,7 @@
 // supplies the URL-error UI hooks and the file-selection handler.
 
 import { trapFocus } from '../core/focus-trap.js';
+import { platformIsTouchFirst } from '../core/platform.js';
 import { iconSvg } from '../core/icons.js';
 import { escapeHtml } from '../core/utils.js';
 
@@ -167,7 +168,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
         item.style.display = path.includes(q) ? '' : 'none';
       });
     });
-    filterInput.focus();
+    if (!platformIsTouchFirst()) filterInput.focus();
   }
 
   panel.querySelectorAll('.repo-browser-item').forEach((item) => {

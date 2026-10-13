@@ -32,6 +32,36 @@ describe('Bookmarks', () => {
     return tab;
   }
 
+  describe('focus on open', () => {
+    const realMatchMedia = window.matchMedia;
+    afterEach(() => {
+      closeBookmarks();
+      window.matchMedia = realMatchMedia;
+    });
+    const pointer = (coarse) => {
+      window.matchMedia = (q) => ({
+        matches: coarse && q.includes('coarse'),
+        addEventListener() {},
+        removeEventListener() {},
+      });
+    };
+
+    it('focuses the search field with a mouse/keyboard', () => {
+      pointer(false);
+      openBookmarks();
+      expect(document.activeElement.id).toBe('bookmark-search');
+    });
+
+    it('does not pop the keyboard on touch devices', () => {
+      pointer(true);
+      openBookmarks();
+      expect(document.activeElement.id).not.toBe('bookmark-search');
+      expect(
+        document.activeElement.classList.contains('bookmarks-dialog')
+      ).toBe(true);
+    });
+  });
+
   it('saves when randomUUID is unavailable', () => {
     const original = crypto.randomUUID;
     crypto.randomUUID = undefined;
