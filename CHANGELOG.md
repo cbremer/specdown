@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.210 — 2026-10-13
+
+- close review findings before App Store submission
+
 ## v0.0.209 — 2026-10-13
 
 - hide annotations and recent files for 1.0 (back in 1.1)
