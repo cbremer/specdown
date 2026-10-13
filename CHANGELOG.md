@@ -5,6 +5,19 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.212 — 2026-10-13
+
+### Bug Fixes
+
+- **mas:** require macOS 13, Electron 44's minimum
+- **mas:** keep every file of a moved folder reachable
+- **mas:** keep grants from a Finder cold start
+- **desktop:** keep the native bridge on the bundled viewer only
+
+### Tests
+
+- anchor the .claude ignore patterns to the repo root
+
 ## v0.0.211 — 2026-10-13
 
 - app-store: note the web-content HTTP exception in review notes
