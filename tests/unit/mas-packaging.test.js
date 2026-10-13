@@ -111,6 +111,13 @@ describe('Mac App Store build config', () => {
     expect(floor).toBe('13.0');
   });
 
+  it('packages the Store build for Intel and Apple silicon', () => {
+    // The CLI target (`--mac mas`) overrides the config's arch list, so the
+    // script must ask for universal explicitly or it builds the host arch only.
+    expect(pkg.scripts['desktop:mas']).toMatch(/--mac mas --universal\b/);
+    expect(pkg.scripts['desktop:mas']).toContain('build-mas-native.js');
+  });
+
   it('has an artifact name without spaces', () => {
     expect(mas.mac.artifactName).not.toMatch(/ /);
   });

@@ -7,7 +7,7 @@
     "desktop": "npm run build && electron .",
     "desktop:html": "npm run build:html && node scripts/desktop-html.js",
     "desktop:build": "npm run build && electron-builder",
-    "desktop:mas": "npm run build && node scripts/build-mas-native.js && electron-builder --config electron-builder.mas.js --mac mas",
+    "desktop:mas": "npm run build && node scripts/build-mas-native.js && electron-builder --config electron-builder.mas.js --mac mas --universal",
     "desktop:mas-dev": "npm run build && node scripts/build-mas-native.js && electron-builder --config electron-builder.mas.js --mac mas-dev --arm64",
     "test": "jest",
     "test:watch": "jest --watch",
