@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.203 — 2026-10-13
+
+### Features
+
+- **desktop:** keep updates out of the Mac App Store build (AS-024)
+
+### Documentation
+
+- **appstore:** record MAS sandbox spike and access contract (AS-021)
+
 ## v0.0.202 — 2026-10-13
 
 ### Bug Fixes
