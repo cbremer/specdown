@@ -76,6 +76,7 @@ function createDirectAccess() {
     withAccessAsync: async (target, fn) => ({ ok: true, path: target, value: await fn(target) }),
     hold: (target) => ({ path: target, release: () => {} }),
     forget: () => {},
+    flushPendingGrants: () => false,
     hasGrant: () => true,
   };
 }
@@ -107,14 +108,26 @@ function createMasAccess(deps) {
   /** @type {Map<string, 'file'|'folder'>} */
   const sessionGrants = new Map();
 
+  // Grants recorded before the state store exists. A Finder double-click
+  // that cold-starts the app delivers open-file before app.whenReady(), i.e.
+  // before main.js can create the store; without this the bookmark would be
+  // dropped and the file would need "Locate…" after the next relaunch.
+  /** @type {Record<string, { kind: 'file'|'folder', bookmark: string, savedAt: number }> | null} */
+  let masUnsavedGrants = null;
+
   function loadGrants() {
     const store = getStore();
-    return readMasGrants(store ? store.get(MAS_GRANTS_KEY, undefined) : undefined);
+    const loaded = readMasGrants(store ? store.get(MAS_GRANTS_KEY, undefined) : undefined);
+    if (masUnsavedGrants) loaded.entries = { ...loaded.entries, ...masUnsavedGrants };
+    return loaded;
   }
 
   function saveGrants(entries) {
     const store = getStore();
-    if (!store) return;
+    if (!store) {
+      masUnsavedGrants = { ...entries };
+      return;
+    }
     if (!loadGrants().writable) {
       logInfo('MAS grant store has an unknown version; keeping grants for this session only.');
       return;
@@ -123,6 +136,7 @@ function createMasAccess(deps) {
     const capped = {};
     for (const key of keys.slice(0, MAS_GRANTS_MAX)) capped[key] = entries[key];
     store.set(MAS_GRANTS_KEY, { version: MAS_GRANTS_VERSION, entries: capped });
+    masUnsavedGrants = null;
   }
 
   /** Exact grant for target, else the closest granted ancestor folder. */
@@ -299,6 +313,13 @@ function createMasAccess(deps) {
       if (!entries[target]) return;
       delete entries[target];
       saveGrants(entries);
+    },
+
+    /** Persist grants recorded before the store existed (call once it does). */
+    flushPendingGrants() {
+      if (!masUnsavedGrants || !getStore()) return false;
+      saveGrants(loadGrants().entries);
+      return true;
     },
 
     /** Whether target is covered by a persisted or session grant. */

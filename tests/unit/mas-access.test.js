@@ -304,6 +304,61 @@ describe('createMasAccess', () => {
     expect(access.withAccess(FILE, (p) => p).ok).toBe(true);
   });
 
+  describe('Finder cold start (grant before the state store exists)', () => {
+    it('keeps the grant and persists it once the store is ready', () => {
+      let ready = null;
+      const coldStart = createMasAccess({
+        getStore: () => ready,
+        native,
+        now: () => 5,
+      });
+      native.live.add(FILE);
+      // open-file arrives before app.whenReady(): no store yet.
+      expect(coldStart.noteUserIntent(FILE, 'file')).toBe(true);
+      expect(coldStart.hasGrant(FILE)).toBe(true);
+
+      ready = makeStore({
+        [MAS_GRANTS_KEY]: {
+          version: MAS_GRANTS_VERSION,
+          entries: {
+            '/older.md': {
+              kind: 'file',
+              bookmark: 'b64:/older.md',
+              savedAt: 1,
+            },
+          },
+        },
+      });
+      expect(coldStart.flushPendingGrants()).toBe(true);
+      expect(Object.keys(ready.data[MAS_GRANTS_KEY].entries).sort()).toEqual(
+        ['/older.md', FILE].sort()
+      );
+      expect(coldStart.flushPendingGrants()).toBe(false); // nothing left
+
+      // Relaunch: only the persisted bookmark remains.
+      native.live.clear();
+      const relaunched = createMasAccess({ getStore: () => ready, native });
+      expect(relaunched.withAccess(FILE, (p) => p).ok).toBe(true);
+    });
+
+    it('a later save also carries the early grant', () => {
+      let ready = null;
+      const coldStart = createMasAccess({ getStore: () => ready, native });
+      native.live.add(FILE);
+      coldStart.noteUserIntent(FILE, 'file');
+      ready = makeStore();
+      native.live.add('/second.md');
+      coldStart.noteUserIntent('/second.md', 'file');
+      expect(Object.keys(ready.data[MAS_GRANTS_KEY].entries).sort()).toEqual(
+        ['/second.md', FILE].sort()
+      );
+    });
+
+    it('is a no-op on the direct channel', () => {
+      expect(createDirectAccess().flushPendingGrants()).toBe(false);
+    });
+  });
+
   describe('Electron fallback (no native module)', () => {
     it('verifies access because Electron grants nothing for stale bookmarks', () => {
       store.data[MAS_GRANTS_KEY] = {
