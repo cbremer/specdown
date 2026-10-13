@@ -90,6 +90,27 @@ describe('Mac App Store build config', () => {
     );
   });
 
+  it('requires the macOS version the bundled Electron actually supports', () => {
+    // On macOS, read the Electron runtime's own floor so an Electron upgrade
+    // can't drift; CI on Linux has no Electron.app and checks the constant.
+    const electronPlist = path.join(
+      ROOT,
+      'node_modules/electron/dist/Electron.app/Contents/Info.plist'
+    );
+    const electronMin = fs.existsSync(electronPlist)
+      ? fs
+          .readFileSync(electronPlist, 'utf8')
+          .match(
+            /<key>LSMinimumSystemVersion<\/key>\s*<string>([^<]+)<\/string>/
+          )
+      : null;
+    const floor = electronMin ? electronMin[1] : '13.0';
+    for (const target of [mas.mac, mas.mas, mas.masDev]) {
+      expect(target.minimumSystemVersion).toBe(floor);
+    }
+    expect(floor).toBe('13.0');
+  });
+
   it('has an artifact name without spaces', () => {
     expect(mas.mac.artifactName).not.toMatch(/ /);
   });
