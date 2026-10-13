@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld('specdown', {
   // skipping its GitHub-API version poll where electron-updater owns updates.
   platform: process.platform,
 
+  // Distribution channel: 'mas' for the Mac App Store build (Electron's MAS
+  // runtime sets process.mas, also in sandboxed preloads), else 'direct'.
+  // The renderer uses it to keep update UI and GitHub release polling out of
+  // the App Store build.
+  distribution: process.mas === true ? 'mas' : 'direct',
+
   readBookmarkedFile: (filePath) => ipcRenderer.invoke('read-bookmarked-file', filePath),
 
   // Called by the renderer to open the native file dialog

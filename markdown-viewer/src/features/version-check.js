@@ -4,7 +4,10 @@
 // release) and are passed in, so this module has no release-time coupling.
 
 import { isDesktop, isIOSNative } from '../core/platform.js';
-import { bridgeDesktopPlatform } from '../platform/bridge.js';
+import {
+  bridgeDesktopPlatform,
+  bridgeDistribution,
+} from '../platform/bridge.js';
 
 let versionCheckCurrent = '';
 /** @type {{ version: string, url: string } | null} */
@@ -32,7 +35,9 @@ export function getAvailableUpdate() {
  * @param {{ version: string, repo: string, repoUrl: string }} opts
  */
 export function checkForUpdates({ version, repo, repoUrl }) {
-  if (isIOSNative) {
+  // Store builds (iOS app, Mac App Store) are updated by the App Store; a
+  // GitHub release poll there would be misleading UI and unneeded traffic.
+  if (isIOSNative || bridgeDistribution() === 'mas') {
     return;
   }
   // On macOS desktop, electron-updater owns the update lifecycle (signed

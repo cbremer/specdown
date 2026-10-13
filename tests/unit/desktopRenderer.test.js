@@ -195,5 +195,15 @@ describe('Desktop renderer integration', () => {
       loadApp(document);
       expect(githubApiCalled()).toBe(true);
     });
+
+    it('never polls GitHub in the Mac App Store build (the App Store updates it)', () => {
+      // Use a non-darwin platform so only the distribution flag can skip it.
+      window.specdown.platform = 'linux';
+      window.specdown.distribution = 'mas';
+      global.fetch.mockClear();
+      loadApp(document);
+      expect(githubApiCalled()).toBe(false);
+      delete window.specdown.distribution;
+    });
   });
 });

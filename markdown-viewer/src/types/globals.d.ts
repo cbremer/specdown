@@ -50,6 +50,8 @@ interface SpecdownDesktopBridge {
   isDesktop?: boolean;
   /** Shell OS (Node `process.platform`): 'darwin' | 'win32' | 'linux'. */
   platform?: string;
+  /** 'mas' for the Mac App Store build, 'direct' for the DMG/ZIP download. */
+  distribution?: 'mas' | 'direct';
   readBookmarkedFile?: (filePath: string) => Promise<SpecdownFileData | null>;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
