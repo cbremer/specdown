@@ -15,6 +15,7 @@ module.exports = [
     ignores: [
       'markdown-viewer/dist/**',
       'dist/**',
+      'dist-mas/**',
       'coverage/**',
       'node_modules/**',
       'ios/**',

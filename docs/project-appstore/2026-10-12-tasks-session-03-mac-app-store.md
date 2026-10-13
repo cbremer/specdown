@@ -18,3 +18,27 @@ Connect change, upload or submission.
 Decisions taken in this session (implementation-level, no account impact):
 native bookmark module for MAS only; polling watch for MAS; no temporary
 entitlement exceptions. See [mas-interface.md](mas-interface.md).
+
+## Sandbox evidence from the real app (unprovisioned mas-dev, arm64)
+
+`SPECDOWN_MAS_UNPROVISIONED=1 npm run desktop:mas-dev` at the AS-026 branch,
+signed with the Apple Development identity, `codesign --verify --deep --strict`
+clean. Info.plist: `com.mosaicpando.specdown`, `SpecDown`, category
+developer-tools, `ITSAppUsesNonExemptEncryption=false`, `.md`/`.markdown`
+document types, minimum macOS 12.0. Entitlements exactly as
+`build/entitlements.mas.plist`; helpers sandbox + inherit only. No
+`app-update.yml`, no electron-updater in the asar; the native module is
+unpacked and the sources aren't shipped. Logs: shared session notes
+`mas-devbuild-qa-2026-10-12/`.
+
+| Check                                     | Result                                                                                                    |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Launch under sandbox; updater             | ✅ "Auto-update disabled: Mac App Store build" (Q15)                                                      |
+| Finder open (`open -a`) → quit → relaunch | ✅ session restored from the persisted bookmark, no access prompt (Q01 Finder, Q04, Q05)                  |
+| File moved while closed → relaunch        | ✅ "Granted item moved: …/qa.md -> …/other/qa-moved.md"; the next launch restored the new path (Q03, Q05) |
+| File deleted while closed → relaunch      | ✅ bookmark fails to resolve → `file-access-needed` → Locate… toast (Q03, Q21)                            |
+
+Still manual (needs someone at the Mac): Open/Open Folder/CSS pickers and
+relaunch (Q01, Q06, Q07), live reload on a save (Q02), drag-and-drop (Q08),
+print sheet and Export as PDF + reveal (Q10, Q11), real rendering (Q12),
+provider/iCloud files (Q09), the Locate… toast click-through.

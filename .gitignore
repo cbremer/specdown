@@ -5,6 +5,7 @@ yarn.lock
 
 # Build output (Vite web build + electron-builder installers) — produced in CI
 dist/
+dist-mas/
 markdown-viewer/dist/
 
 # Coverage reports
