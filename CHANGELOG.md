@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.202 — 2026-10-13
+
+### Bug Fixes
+
+- give the Theme picker its own palette icon
+
 ## v0.0.201 — 2026-10-12
 
 - keep the header clear of the Dynamic Island on device
