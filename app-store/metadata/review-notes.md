@@ -15,6 +15,8 @@ How to review in under a minute:
    Mermaid diagram type (flowchart, sequence, state, Gantt, and more).
 3. Tap the expand icon on any diagram to open it fullscreen; pinch to zoom and pan.
 4. Use "Contents" to jump between sections and "Raw" to view the Markdown source.
+   "Open Sample" includes HTML comments shown as tinted notes; More → "Hide
+   HTML Comments (2)" hides them and the item then reads "Show HTML Comments (2)".
 5. To open your own file: tap "Open" and pick any .md file from Files/iCloud Drive,
    or use "Open With… SpecDown" / the share sheet from another app.
 
