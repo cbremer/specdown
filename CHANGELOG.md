@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.211 — 2026-10-13
+
+- app-store: note the web-content HTTP exception in review notes
+
 ## v0.0.210 — 2026-10-13
 
 - close review findings before App Store submission
