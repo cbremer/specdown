@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.214 — 2026-10-13
+
+- stop Find (and other text fields) from zooming the page
+
 ## v0.0.213 — 2026-10-13
 
 ### Bug Fixes
