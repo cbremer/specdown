@@ -3174,12 +3174,15 @@ mark.search-highlight-current {
     align-items: flex-end;
     justify-content: center;
     padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     background: rgba(0, 0, 0, 0.28);
 }
 
 .ios-sheet {
     width: min(100%, 540px);
     max-height: min(75vh, 720px);
+    /* Never taller than the visible area (vh can exceed it in WKWebView). */
+    max-height: min(calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)), 720px);
     display: flex;
     flex-direction: column;
     background: var(--bg-primary);
@@ -3216,6 +3219,11 @@ mark.search-highlight-current {
     display: grid;
     gap: 0.75rem;
     padding: 1rem;
+    /* The list scrolls inside the capped sheet instead of being clipped. */
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .ios-sheet-action-button {

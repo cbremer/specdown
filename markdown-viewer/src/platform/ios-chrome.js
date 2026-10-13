@@ -504,6 +504,8 @@ export function syncIOSChrome() {
 
   const iosSplitButton = /** @type {HTMLButtonElement | null} */ (el('ios-split-button'));
   const iosPrintButton = /** @type {HTMLButtonElement | null} */ (el('ios-print-button'));
+  const iosFindButton = /** @type {HTMLButtonElement | null} */ (el('ios-find-button'));
+  if (iosFindButton) iosFindButton.disabled = !hasContent;
   if (iosSplitButton) iosSplitButton.disabled = !hasContent;
   if (iosPrintButton) iosPrintButton.disabled = !hasContent;
 }
