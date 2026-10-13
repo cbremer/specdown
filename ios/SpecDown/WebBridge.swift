@@ -45,6 +45,16 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
+        // Trust boundary: only the bundled viewer's main frame may drive native
+        // actions (print, preferences, file picker, samples, app icon).
+        guard message.frameInfo.isMainFrame,
+              message.frameInfo.securityOrigin.protocol == BundleSchemeHandler.scheme,
+              message.frameInfo.securityOrigin.host == BundleSchemeHandler.host
+        else {
+            print("[Bridge] Ignoring message from untrusted frame")
+            return
+        }
+
         guard
             let body = message.body as? [String: Any],
             let action = body["action"] as? String
@@ -57,9 +67,6 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
         switch action {
         case "showAppIconPicker":
-            guard message.frameInfo.isMainFrame,
-                  message.frameInfo.request.url?.scheme == BundleSchemeHandler.scheme,
-                  message.frameInfo.request.url?.host == BundleSchemeHandler.host else { return }
             showsAppIconPicker = true
 
         case "openFilePicker":
@@ -136,6 +143,12 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         evaluateJavaScript(function: "window.setIOSLayoutMode", arguments: [layoutMode], context: "setIOSLayoutMode")
     }
 
+    /// Show an error toast in the web layer (e.g. an unreadable file).
+    func showError(_ message: String) {
+        guard pageLoaded else { return }
+        evaluateJavaScript(function: "window.specdownShowError", arguments: [message], context: "showError")
+    }
+
     /// Deliver a file's content to the web layer.
     func loadFile(name: String, content: String) {
         currentDocumentName = name
@@ -168,11 +181,13 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             let data = try Data(contentsOf: url)
             guard let content = String(data: data, encoding: .utf8) else {
                 print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
+                showError("\(url.lastPathComponent) couldn't be opened. SpecDown reads UTF-8 text files, such as Markdown (.md).")
                 return
             }
             loadFile(name: url.lastPathComponent, content: content)
         } catch {
             print("[Bridge] Failed to read file: \(error)")
+            showError("\(url.lastPathComponent) couldn't be opened. Check that the file is available and try again.")
         }
     }
 

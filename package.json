@@ -80,7 +80,14 @@
         "functions": 16,
         "lines": 29
       }
-    }
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.claude/"
+    ],
+    "modulePathIgnorePatterns": [
+      "/.claude/"
+    ]
   },
   "build": {
     "appId": "com.specdown.desktop",

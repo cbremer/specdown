@@ -107,6 +107,8 @@ declare global {
     iosNative?: boolean;
     /** App Store marketing version (e.g. "1.0"), injected by the iOS shell. */
     specdownAppVersion?: string;
+    /** Set by the app; called by the iOS shell to show a native file error. */
+    specdownShowError?: (message: string) => void;
     /** WKWebView message-handler namespace (iOS only). */
     webkit?: {
       messageHandlers?: {

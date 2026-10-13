@@ -262,6 +262,12 @@ window.loadFileContent = function(content, filename) {
     createTab(filename, content);
 };
 
+// iOS API: called by the Swift shell when a picked/shared file can't be read
+// (e.g. not UTF-8 text), so the user sees why nothing opened.
+window.specdownShowError = function(/** @type {string} */ message) {
+    showToast(String(message || 'This file could not be opened.'), { type: 'error' });
+};
+
 
 // ===========================
 // Event Listeners
@@ -452,7 +458,10 @@ async function renderMarkdown(content, filename) {
         // Keep HTML comment nodes through sanitization (`#comment`) so they can
         // be revealed below — DOMPurify strips them by default, which silently
         // dropped authored `<!-- … -->` content from the preview.
-        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent, { ADD_TAGS: ['#comment'] });
+        // FORBID_TAGS style: a document's <style> blocks would apply to the whole
+        // app (it shares this document), letting a crafted file restyle, hide or
+        // overlay the app's own controls. Inline style attributes still apply.
+        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent, { ADD_TAGS: ['#comment'], FORBID_TAGS: ['style'] });
 
         // Reveal authored HTML comments as styled blocks, then sync the toggle.
         revealHtmlComments(markdownContent);

@@ -524,4 +524,10 @@ export function hideIOSDeferredFeatures() {
   }
   const iosRecentItem = document.getElementById('open-recent-button');
   if (iosRecentItem) iosRecentItem.hidden = true;
+
+  // Touch wording on the start screen (no drag-and-drop or clicking on iOS).
+  const iosDropTitle = document.querySelector('.drop-zone-content h2');
+  if (iosDropTitle) iosDropTitle.textContent = 'Open a Markdown File';
+  const iosDropHint = document.querySelector('.drop-zone-content > p');
+  if (iosDropHint) iosDropHint.textContent = 'Tap Browse Files to choose one from Files or iCloud Drive.';
 }

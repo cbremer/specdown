@@ -3810,3 +3810,16 @@ mark.search-highlight-current {
     border-radius: 50%;
     background-color: var(--accent-color, #1f6bb8);
 }
+
+/* iOS 1.0: diagram SVG/PNG download and copy-link need native save/share
+   handling the WKWebView shell doesn't provide yet (planned for 1.1). */
+.ios-native .fullscreen-controls .export-svg,
+.ios-native .fullscreen-controls .export-png,
+.ios-native .fullscreen-controls .share-diagram {
+    display: none;
+}
+
+/* The web-only "Try diagram showcase" duplicates iOS's bundled sample buttons. */
+.ios-native #web-sample-section {
+    display: none !important;
+}

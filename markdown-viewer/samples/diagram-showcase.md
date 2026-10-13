@@ -2,7 +2,8 @@
 
 A test document packed with **every major Mermaid diagram type** — handy for
 exercising SpecDown's diagram features: inline diagrams that expand into a
-fullscreen explorer with zoom/pan, minimap, SVG/PNG export, and share links,
+fullscreen explorer with zoom/pan and a minimap (plus SVG/PNG export and
+share links on desktop and the web),
 plus theme re-rendering and **presentation mode** (hit *Present* and step
 through with `←` / `→`).
 
