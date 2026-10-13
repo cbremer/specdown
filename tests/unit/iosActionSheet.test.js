@@ -38,3 +38,44 @@ describe('iOS action sheet', () => {
     expect(sheet).toMatch(/100dvh/);
   });
 });
+
+describe('iOS 1.0 hides features planned for 1.1', () => {
+  beforeEach(() => {
+    window.iosNative = true;
+    window.webkit = {
+      messageHandlers: { specdown: { postMessage: jest.fn() } },
+    };
+    loadHTML(document);
+    loadApp(document);
+  });
+  afterEach(() => {
+    delete window.iosNative;
+    delete window.webkit;
+  });
+
+  it('removes annotation controls and hides Open Recent, keeping About reachable', () => {
+    for (const id of [
+      'annotation-toggle',
+      'annotation-list-toggle',
+      'ios-annotations-button',
+    ]) {
+      expect(document.getElementById(id)).toBeNull();
+    }
+    expect(document.getElementById('open-recent-button').hidden).toBe(true);
+
+    document.getElementById('header-more-toggle').click();
+    expect(document.activeElement.id).toBe('about-button');
+  });
+});
+
+describe('web keeps annotations and recents', () => {
+  beforeEach(() => {
+    loadHTML(document);
+    loadApp(document);
+  });
+
+  it('leaves the controls in place', () => {
+    expect(document.getElementById('annotation-toggle')).not.toBeNull();
+    expect(document.getElementById('open-recent-button').hidden).toBe(false);
+  });
+});

@@ -5,7 +5,7 @@
 // palette owns how they're presented.
 
 import { bookmarkCurrentFile, openBookmarks } from './bookmarks.js';
-import { isDesktop } from '../core/platform.js';
+import { isDesktop, isIOSNative } from '../core/platform.js';
 import { registerCommands } from './command-palette.js';
 import {
   requestNativeOpenIfAvailable,
@@ -117,14 +117,14 @@ export function registerAppCommands() {
         toggleAnnotationMode();
         syncIOSChrome();
       },
-      isAvailable: isDocumentOpen,
+      isAvailable: () => !isIOSNative && isDocumentOpen(), // iOS: 1.1
     },
     {
       id: 'show-annotations',
       title: 'Show annotations list',
       keywords: ['notes', 'annotations', 'panel', 'comments'],
       run: () => openAnnotationPanel(),
-      isAvailable: isDocumentOpen,
+      isAvailable: () => !isIOSNative && isDocumentOpen(), // iOS: 1.1
     },
     {
       id: 'find',

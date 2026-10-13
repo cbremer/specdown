@@ -70,6 +70,12 @@ export function setupRecentFiles() {
   )
     return;
 
+  // Menu items that are currently shown (iOS hides Open Recent in 1.0).
+  const recentVisibleItems = () =>
+    /** @type {HTMLElement[]} */ ([
+      ...recentHeaderMenu.querySelectorAll('[role="menuitem"]'),
+    ]).filter((item) => !item.hidden);
+
   /** @param {boolean} open @param {boolean} [restoreFocus] */
   const recentSetHeaderMenuOpen = (open, restoreFocus = false) => {
     recentHeaderMenu.hidden = !open;
@@ -82,7 +88,7 @@ export function setupRecentFiles() {
     event.stopPropagation();
     const recentOpeningMenu = !!recentHeaderMenu.hidden;
     recentSetHeaderMenuOpen(recentOpeningMenu, !recentOpeningMenu);
-    if (recentOpeningMenu) recentMenuItem.focus();
+    if (recentOpeningMenu) recentVisibleItems()[0]?.focus();
   });
   recentHeaderPicker.addEventListener('keydown', (event) => {
     const recentKeyEvent = /** @type {KeyboardEvent} */ (event);
@@ -93,15 +99,13 @@ export function setupRecentFiles() {
       recentKeyEvent.preventDefault();
       recentKeyEvent.stopPropagation();
       // Closed: open on the first item. Open: move between items, wrapping.
-      const recentItems = /** @type {HTMLElement[]} */ ([
-        ...recentHeaderMenu.querySelectorAll('[role="menuitem"]'),
-      ]);
+      const recentItems = recentVisibleItems();
       const recentAt = recentItems.indexOf(
         /** @type {HTMLElement} */ (document.activeElement)
       );
       if (recentHeaderMenu.hidden || recentAt === -1) {
         recentSetHeaderMenuOpen(true);
-        recentMenuItem.focus();
+        recentItems[0]?.focus();
       } else {
         const recentStep = recentKeyEvent.key === 'ArrowDown' ? 1 : -1;
         recentItems[

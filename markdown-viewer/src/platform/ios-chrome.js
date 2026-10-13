@@ -509,3 +509,19 @@ export function syncIOSChrome() {
   if (iosSplitButton) iosSplitButton.disabled = !hasContent;
   if (iosPrintButton) iosPrintButton.disabled = !hasContent;
 }
+
+/**
+ * iOS 1.0: hide features that aren't touch-ready yet (planned for 1.1):
+ * annotations (creating a note needs double-click) and recent files (the
+ * iOS shell can't reopen picked files without security-scoped bookmarks).
+ * Annotation controls are removed (all callers null-check them); Open Recent
+ * stays in the DOM because the header ⋮ menu wiring keys off it.
+ */
+export function hideIOSDeferredFeatures() {
+  if (!isIOSNative) return;
+  for (const id of ['annotation-toggle', 'annotation-list-toggle', 'ios-annotations-button']) {
+    document.getElementById(id)?.remove();
+  }
+  const iosRecentItem = document.getElementById('open-recent-button');
+  if (iosRecentItem) iosRecentItem.hidden = true;
+}
