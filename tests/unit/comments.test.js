@@ -89,6 +89,29 @@ describe('HTML comments', () => {
       expect(mc.classList.contains('comments-hidden')).toBe(true);
     });
 
+    it('labels the iOS action with what a tap does, and disables it without comments', () => {
+      const ios = document.getElementById('ios-comments-button');
+      const mc = document.getElementById('markdown-content');
+
+      mc.innerHTML = '<p>No comments here</p>';
+      refreshCommentsUI();
+      expect(ios.textContent).toBe('No HTML Comments');
+      expect(ios.disabled).toBe(true);
+
+      mc.innerHTML =
+        '<div class="html-comment-block">a</div><div class="html-comment-block">b</div>';
+      refreshCommentsUI();
+      expect(ios.disabled).toBe(false);
+      expect(ios.textContent).toBe('Hide HTML Comments (2)');
+
+      toggleComments();
+      expect(ios.textContent).toBe('Show HTML Comments (2)');
+      expect(document.getElementById('comments-toggle').getAttribute('title')).toBe(
+        'Show HTML comments'
+      );
+      toggleComments();
+    });
+
     it('Annotations button opens the annotations panel', () => {
       localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
       const mc = document.getElementById('markdown-content');

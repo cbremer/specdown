@@ -59,7 +59,7 @@ const OVERFLOW_ACTIONS = [
   { targetId: 'split-toggle', label: 'Split view' },
   { targetId: 'annotation-toggle', label: 'Annotate' },
   { targetId: 'annotation-list-toggle', label: 'Annotations list' },
-  { targetId: 'comments-toggle', label: 'Show author comments' },
+  { targetId: 'comments-toggle', label: 'Show / hide HTML comments' },
   { targetId: 'present-button', label: 'Present diagrams' },
   { targetId: 'print-button', label: 'Print / Save as PDF' },
   {
