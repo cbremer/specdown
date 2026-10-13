@@ -1502,6 +1502,8 @@ process.on('unhandledRejection', (reason) => {
 
     initLogFile();
     initStore();
+    // Grants from a Finder cold start (open-file before ready) — persist now.
+    fileAccess.flushPendingGrants();
     buildMenu();
     createWindow();
     initAutoUpdater();
