@@ -112,6 +112,8 @@ npm run typecheck         # tsc --noEmit (checkJs) — must be clean before comm
 npm run format            # Prettier — write
 npm run desktop           # build the web app, then launch Electron (macOS)
 npm run desktop:build     # build the web app + .dmg locally (macOS only)
+npm run desktop:mas-dev   # sandboxed Mac App Store dev build → dist-mas/ (needs a Mac Development profile, or SPECDOWN_MAS_UNPROVISIONED=1 for a local smoke run)
+npm run desktop:mas       # Store-signed .pkg (electron-builder.mas.js; Store certs + profile)
 ```
 
 The shared web app is a Vite + ES-module build. All three surfaces (web, desktop,
@@ -228,6 +230,15 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   broke drag-and-drop live reload after the Electron 40→43 bump). The
   sanctioned replacement is `webUtils.getPathForFile(file)`, callable only in
   the preload — exposed on the bridge as `getPathForFile`.
+- **Mac App Store build = sandboxed, separate config.** `electron-builder.mas.js`
+  (appId `com.mosaicpando.specdown`, shared with iOS for universal purchase)
+  is separate from package.json `build` (the DMG). In MAS (`process.mas`) every
+  user-file read must go through `fileAccess` (`desktop/mas-access.js`): paths
+  are identifiers, only security-scoped bookmarks grant access, and an
+  ungranted path must never be touched (probing ungranted `~/Documents`
+  folders can hang the main thread). Parent-directory watches fail under the
+  sandbox — MAS live reload polls the granted file. No updater/update UI in
+  MAS. Contract and evidence: `docs/project-appstore/mas-interface.md`.
 - **The GitHub release record appears minutes before its artifacts.** Every
   merge has a ~5–15-min window where update checks find the new release but
   its `latest*.yml` doesn't exist yet; the desktop app shows a "still being

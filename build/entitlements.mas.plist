@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Mac App Store (sandboxed) main app. Each entitlement is justified in
+    docs/project-appstore/mas-interface.md; keep this list minimal.
+  -->
+  <!-- Required for the Mac App Store. -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <!-- Electron's MAS runtime names Chromium's shared memory / Mach ports with
+       the team-prefixed group (ElectronTeamID). -->
+  <key>com.apple.security.application-groups</key>
+  <array>
+    <string>582YQWPT9G.com.mosaicpando.specdown</string>
+  </array>
+  <!-- Open/Save panels, Finder opens, drag-and-drop; write for Export as PDF. -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+  <!-- Persist those grants across launches (security-scoped bookmarks). -->
+  <key>com.apple.security.files.bookmarks.app-scope</key>
+  <true/>
+  <!-- Remote images and documents the user opens by URL / GitHub. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <!-- Native print sheet. -->
+  <key>com.apple.security.print</key>
+  <true/>
+</dict>
+</plist>
