@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.208 — 2026-10-13
+
+- Viewer Actions sheet scrolls and fits; add Find in Document
+
 ## v0.0.207 — 2026-10-13
 
 - stop double-insetting the header on iOS 27.2 devices
