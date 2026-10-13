@@ -20,3 +20,8 @@ How to review in under a minute:
 
 Network use: the app only goes online when the user opens a web/GitHub link or a
 document that references remote images. It contains no analytics, ads or tracking.
+
+App Transport Security: the app's own viewer is bundled and loaded locally.
+NSAllowsArbitraryLoadsInWebContent is set only so Markdown documents the user
+opens can display images hosted on plain-HTTP servers. Tapped links open in
+Safari, not inside the app.
