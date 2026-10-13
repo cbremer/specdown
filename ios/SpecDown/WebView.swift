@@ -52,10 +52,11 @@ struct WebView: UIViewRepresentable {
         config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
 
         let webView = SafeAreaWebView(frame: .zero, configuration: config)
-        // Use .scrollableAxes to expose safe area insets to CSS env() variables without
-        // automatic content inset adjustments. This allows CSS to handle Dynamic Island
-        // and notch areas via env(safe-area-inset-*) while preventing double-insets.
-        webView.scrollView.contentInsetAdjustmentBehavior = .scrollableAxes
+        // .never: the scroll view must not shift the page itself. The page pads
+        // its own header from env(safe-area-inset-*) / --native-safe-* (see
+        // SafeAreaWebView). On iOS 27.2 devices .scrollableAxes also inset the
+        // content, doubling the top gap under the Dynamic Island.
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         bridge.webView = webView
@@ -261,9 +262,8 @@ final class SafeAreaWebView: WKWebView {
     @objc private func keyboardDidHide(_ notification: Notification) {
         // Leave a deliberate pinch-zoom alone; otherwise snap back to the top.
         guard scrollView.zoomScale <= scrollView.minimumZoomScale + 0.01 else { return }
-        let rest = CGPoint(x: -scrollView.adjustedContentInset.left, y: -scrollView.adjustedContentInset.top)
-        if scrollView.contentOffset != rest {
-            scrollView.setContentOffset(rest, animated: true)
+        if scrollView.contentOffset != .zero {
+            scrollView.setContentOffset(.zero, animated: true)
         }
     }
 
