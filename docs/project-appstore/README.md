@@ -6,11 +6,13 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 
 ## Timeline
 
-| Date         | Type      | Document                                                                      | Summary                                                                                                    |
-| ------------ | --------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Sep 28, 2026 | Spec/plan | [Release preparation plan](2026-09-28-spec-appstore-release-plan.md)          | 50 stable task IDs, source-backed gates, 21 QA scenarios, decisions and nine kickoff/resume prompts.       |
-| Sep 28, 2026 | Tasks     | [Session 01: preparation](2026-09-28-tasks-session-01-release-preparation.md) | This session's documentation and native Google Sheet deliverables; no app implementation.                  |
-| Sep 28, 2026 | Tasks     | [Session 02: owner archives](2026-09-28-tasks-session-02-owner-archive.md)    | Require recoverable copies of code/artifacts and actual generated reusable credentials; plan revision 1.1. |
+| Date         | Type      | Document                                                                        | Summary                                                                                                    |
+| ------------ | --------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Sep 28, 2026 | Spec/plan | [Release preparation plan](2026-09-28-spec-appstore-release-plan.md)            | 50 stable task IDs, source-backed gates, 21 QA scenarios, decisions and nine kickoff/resume prompts.       |
+| Sep 28, 2026 | Tasks     | [Session 01: preparation](2026-09-28-tasks-session-01-release-preparation.md)   | This session's documentation and native Google Sheet deliverables; no app implementation.                  |
+| Sep 28, 2026 | Tasks     | [Session 02: owner archives](2026-09-28-tasks-session-02-owner-archive.md)      | Require recoverable copies of code/artifacts and actual generated reusable credentials; plan revision 1.1. |
+| Oct 12, 2026 | Interface | [MAS access contract](mas-interface.md)                                         | AS-021 sandbox spike results: proven grant/bookmark/watch mechanisms, storage, recovery UX, entitlements.  |
+| Oct 12, 2026 | Tasks     | [Session 03: Mac App Store build](2026-10-12-tasks-session-03-mac-app-store.md) | AS-021..026 MAS lane: spike, channel separation, grants, packaging.                                        |
 
 **Google Sheet:** https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit
 
