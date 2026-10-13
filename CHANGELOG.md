@@ -5,6 +5,10 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.216 — 2026-10-13
+
+- add HTML comments to the bundled sample
+
 ## v0.0.215 — 2026-10-13
 
 ### Features
