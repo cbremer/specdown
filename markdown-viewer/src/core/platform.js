@@ -17,3 +17,17 @@ export const isIOSNative = !!(
   window.webkit.messageHandlers &&
   window.webkit.messageHandlers.specdown
 );
+
+/**
+ * True on touch-first devices (the iOS app, or a coarse-pointer browser).
+ * Dialogs there should not auto-focus a text field on open: that pops the
+ * software keyboard, and on iOS the keyboard shifts the whole web view.
+ */
+export function platformIsTouchFirst() {
+  if (isIOSNative) return true;
+  return !!(
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(pointer: coarse)').matches
+  );
+}
