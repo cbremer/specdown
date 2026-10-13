@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.206 — 2026-10-13
+
+### Build System
+
+- **mas:** Mac App Store and mas-dev packaging (AS-026)
+
 ## v0.0.205 — 2026-10-13
 
 ### Features
