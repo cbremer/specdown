@@ -21,6 +21,7 @@ jest.mock('electron', () => ({
     on: jest.fn(),
     getPath: jest.fn(() => '/tmp/specdown-mas-channel-test'),
     getVersion: jest.fn(() => '0.0.0'),
+    addRecentDocument: jest.fn(),
   },
   BrowserWindow: Object.assign(jest.fn(), { getAllWindows: jest.fn(() => []) }),
   Menu: {
@@ -158,5 +159,105 @@ describe('direct (Developer ID) build keeps auto-update', () => {
     const main = loadMain(false);
     main.buildMenu();
     expect(helpLabels()).toContain('Check for Updates...');
+  });
+});
+
+// Fake native bookmark module: anything the test "granted" can be bookmarked.
+const mockNativeBookmarks = {
+  createBookmark: jest.fn((p) => `b64:${p}`),
+  startAccess: jest.fn((b64) => ({
+    id: 1,
+    path: b64.slice(4),
+    stale: false,
+    ok: true,
+  })),
+  stopAccess: jest.fn(() => true),
+};
+jest.mock(
+  require('path').join(
+    __dirname,
+    '../../desktop/native/mas-bookmarks/masbookmarks.node'
+  ),
+  () => mockNativeBookmarks,
+  { virtual: true }
+);
+
+describe('Mac App Store build: sandbox file access', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  let dir;
+  let file;
+  let main;
+
+  const ipcHandler = (channel) =>
+    loadedElectron.ipcMain.on.mock.calls
+      .filter((c) => c[0] === channel)
+      .at(-1)[1];
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-mas-'));
+    file = path.join(dir, 'notes.md');
+    fs.writeFileSync(file, '# Notes');
+    mockNativeBookmarks.createBookmark.mockClear();
+    main = loadMain(true);
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    // Restore only this block's fs spies (tests/setup.js owns Storage spies).
+    for (const name of ['readFileSync', 'watchFile', 'unwatchFile']) fs[name].mockRestore?.();
+  });
+
+  it('does not read a raw path that has no sandbox grant (old state migration)', () => {
+    const read = jest.spyOn(fs, 'readFileSync');
+    ipcHandler('request-open-path')(null, file);
+    expect(read).not.toHaveBeenCalledWith(file, expect.anything());
+    expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
+  });
+
+  it('persists a dropped file as a grant, then opens it', () => {
+    ipcHandler('open-dropped-path')(null, file);
+    expect(mockNativeBookmarks.createBookmark).toHaveBeenCalledWith(file);
+    expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
+    // The same path now opens by reference (recents / session restore).
+    loadedElectron.app.addRecentDocument.mockClear();
+    ipcHandler('request-open-path')(null, file);
+    expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
+  });
+
+  it('records paths the preload resolved from user-picked Files', () => {
+    ipcHandler('note-user-picked-path')(null, file);
+    expect(main.fileAccess.hasGrant(file)).toBe(true);
+    ipcHandler('note-user-picked-path')(null, 'relative.md');
+    expect(main.fileAccess.hasGrant('relative.md')).toBe(false);
+  });
+
+  it('watches by polling the granted file instead of its parent folder', () => {
+    const chokidar = require('chokidar');
+    const watch = jest.spyOn(fs, 'watchFile').mockImplementation(() => {});
+    const unwatch = jest.spyOn(fs, 'unwatchFile').mockImplementation(() => {});
+    main.fileAccess.noteUserIntent(file, 'file');
+
+    main.watchFile(file);
+    main.watchFile(file); // idempotent
+    expect(watch).toHaveBeenCalledTimes(1);
+    expect(watch).toHaveBeenCalledWith(
+      file,
+      { interval: 1000 },
+      expect.any(Function)
+    );
+    expect(chokidar.watch).not.toHaveBeenCalled();
+    expect(main.pollWatchers.has(file)).toBe(true);
+
+    main.unwatchFile(file);
+    expect(unwatch).toHaveBeenCalledWith(file, watch.mock.calls[0][2]);
+    expect(main.pollWatchers.has(file)).toBe(false);
+  });
+
+  it('skips live reload for a file without a grant', () => {
+    const watch = jest.spyOn(fs, 'watchFile').mockImplementation(() => {});
+    main.watchFile(path.join(dir, 'ungranted.md'));
+    expect(watch).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ const os = require('os');
 const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
 const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
+const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -22,6 +23,7 @@ const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
 
 // 'mas' (Mac App Store) or 'direct' (Developer ID DMG/ZIP). See distribution.js.
 const DISTRIBUTION_CHANNEL = getDistributionChannel();
+const IS_MAS = DISTRIBUTION_CHANNEL === 'mas';
 
 // Only platforms whose shipped binaries are code-signed may auto-update.
 // electron-updater performs NO signature verification for an unsigned app, so
@@ -37,6 +39,19 @@ function isSignedUpdatePlatform(platform) {
 let mainWindow = null;
 let store = null;
 let logFilePath = null;
+
+// Every user-file read goes through fileAccess (see mas-access.js): a plain
+// pass-through for the direct build, sandbox grants + persisted
+// security-scoped bookmarks for the Mac App Store build.
+const fileAccess = IS_MAS
+  ? createMasAccess({
+      getStore: () => store,
+      native: loadMasNative((msg, err) => logError(msg, err)),
+      electronApp: app,
+      logInfo: (msg) => logInfo(msg),
+      logError: (msg, err) => logError(msg, err),
+    })
+  : createDirectAccess();
 const appIconController = createAppIconController({
   app, nativeImage, platform: process.platform,
   getStore: () => store, getWindow: () => mainWindow,
@@ -507,33 +522,78 @@ function openFileByPath(filePath) {
   if (!isValidMarkdownFile(filePath)) return;
 
   try {
-    const fileData = readMarkdownFile(filePath);
+    const access = fileAccess.withAccess(filePath, readMarkdownFile);
+    if (!access.ok) {
+      notifyFileAccessNeeded(filePath);
+      return;
+    }
+    const fileData = access.value;
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('file-opened', fileData);
     }
-    addRecentFile(filePath);
+    addRecentFile(fileData.filePath);
   } catch (err) {
     console.error('Failed to read file:', filePath, err);
   }
 }
 
+// Mac App Store build: a by-path open (recents, session restore, bookmarks)
+// found no sandbox grant. The renderer offers "Locate…", which re-grants via
+// the open panel (request-grant-access). Never sent by the direct build.
+function notifyFileAccessNeeded(filePath) {
+  logInfo(`No sandbox access for ${filePath}; asking the user to locate it.`);
+  const wc = mainWindow && mainWindow.webContents;
+  if (wc && !wc.isDestroyed()) {
+    wc.send('file-access-needed', { filePath, filename: path.basename(filePath) });
+  }
+}
+
+// Open-panel options: the MAS build asks for security-scoped bookmarks so the
+// grant survives a relaunch (the option is MAS-only in Electron).
+function withBookmarkOption(options) {
+  return IS_MAS ? { ...options, securityScopedBookmarks: true } : options;
+}
+
+// Record user-granted paths from an open panel result (no-op on direct).
+function noteDialogGrants(result, kind) {
+  result.filePaths.forEach((p, i) => {
+    fileAccess.noteUserIntent(p, kind, result.bookmarks && result.bookmarks[i]);
+  });
+}
+
 async function showOpenDialog() {
   if (!mainWindow) return;
 
-  const result = await dialog.showOpenDialog(mainWindow, {
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
     title: 'Open Markdown File',
     properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'Markdown Files', extensions: ['md', 'markdown'] },
       { name: 'All Files', extensions: ['*'] },
     ],
-  });
+  }));
 
   if (result.canceled || !result.filePaths.length) return;
+  noteDialogGrants(result, 'file');
 
   for (const filePath of result.filePaths) {
     openFileByPath(filePath);
   }
+}
+
+async function requestGrantAccess(filePath) {
+  if (!mainWindow || typeof filePath !== 'string' || !filePath) return;
+  const filename = path.basename(filePath);
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
+    title: 'Locate File',
+    message: `Select “${filename}” to give SpecDown access to it again.`,
+    defaultPath: filePath,
+    properties: ['openFile'],
+    filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown'] }],
+  }));
+  if (result.canceled || !result.filePaths.length) return;
+  noteDialogGrants(result, 'file');
+  openFileByPath(result.filePaths[0]);
 }
 
 // ===========================
@@ -599,18 +659,27 @@ const workspaceRoots = new Set();
 async function showOpenFolderDialog() {
   if (!mainWindow) return;
 
-  const result = await dialog.showOpenDialog(mainWindow, {
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
     title: 'Open Folder',
     properties: ['openDirectory'],
-  });
+  }));
 
   if (result.canceled || !result.filePaths.length) return;
+  noteDialogGrants(result, 'folder');
+  openWorkspace(result.filePaths[0]);
+}
 
-  const root = result.filePaths[0];
+// Scan a user-chosen folder (picker or drop) into a workspace. Its grant
+// covers every file inside, so relative links and live reload work there.
+function openWorkspace(root) {
+  const scan = fileAccess.withAccess(root, scanWorkspace);
+  if (!scan.ok) {
+    logInfo(`No sandbox access to workspace folder ${root}`);
+    return;
+  }
   workspaceRoots.add(root);
-  const files = scanWorkspace(root);
   if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('workspace-opened', { root, files });
+    mainWindow.webContents.send('workspace-opened', { root, files: scan.value });
   }
 }
 
@@ -681,7 +750,49 @@ function openRelativeFromFile(fromPath, href) {
 const watchers = new Map();          // filePath → { dir }
 const dirWatchers = new Map();       // dir → { watcher, files: Map<basename, filePath> }
 
+// Mac App Store build: the sandbox only grants the file itself (or a chosen
+// folder), so a parent-directory watch fails with EPERM. Instead hold the
+// file's grant and poll it with fs.watchFile, which the AS-021 spike showed
+// survives in-place saves, atomic saves (new inode), delete and re-create.
+const pollWatchers = new Map(); // filePath -> { watchedPath, listener, release }
+const MAS_POLL_INTERVAL_MS = 1000;
+
+function watchFilePolling(filePath) {
+  if (pollWatchers.has(filePath)) return;
+  const held = fileAccess.hold(filePath);
+  if (!held) {
+    logInfo(`Live reload unavailable for ${filePath}: no sandbox access.`);
+    return;
+  }
+  const listener = (curr, prev) => {
+    if (curr.mtimeMs === prev.mtimeMs && curr.size === prev.size && curr.ino === prev.ino) return;
+    if (curr.mtimeMs === 0 && curr.ino === 0) return; // deleted; wait for it to return
+    try {
+      // Keep the tab's identity even when the grant followed a moved file.
+      const fileData = { ...readMarkdownFile(held.path), filePath };
+      const wc = mainWindow && mainWindow.webContents;
+      if (wc && !wc.isDestroyed()) wc.send('file-changed', fileData);
+    } catch (err) {
+      logError(`Failed to re-read watched file: ${held.path}`, err);
+    }
+  };
+  fs.watchFile(held.path, { interval: MAS_POLL_INTERVAL_MS }, listener);
+  pollWatchers.set(filePath, { watchedPath: held.path, listener, release: held.release });
+}
+
+function unwatchFilePolling(filePath) {
+  const entry = pollWatchers.get(filePath);
+  if (!entry) return;
+  pollWatchers.delete(filePath);
+  fs.unwatchFile(entry.watchedPath, entry.listener);
+  entry.release();
+}
+
 function watchFile(filePath, _webContents) {
+  if (IS_MAS) {
+    watchFilePolling(filePath);
+    return;
+  }
   if (watchers.has(filePath)) return; // already watching
 
   const dir = path.dirname(filePath);
@@ -744,6 +855,10 @@ function watchFile(filePath, _webContents) {
 }
 
 function unwatchFile(filePath) {
+  if (IS_MAS) {
+    unwatchFilePolling(filePath);
+    return;
+  }
   const entry = watchers.get(filePath);
   if (!entry) return;
 
@@ -769,23 +884,28 @@ function unwatchFile(filePath) {
 async function loadCustomCss() {
   if (!mainWindow) return;
 
-  const result = await dialog.showOpenDialog(mainWindow, {
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
     title: 'Load Custom CSS Theme',
     properties: ['openFile'],
     filters: [
       { name: 'CSS Files', extensions: ['css'] },
       { name: 'All Files', extensions: ['*'] },
     ],
-  });
+  }));
 
   if (result.canceled || !result.filePaths.length) return;
+  noteDialogGrants(result, 'file');
 
   const cssPath = result.filePaths[0];
   try {
-    const cssContent = fs.readFileSync(cssPath, 'utf8');
+    const css = fileAccess.withAccess(cssPath, (p) => fs.readFileSync(p, 'utf8'));
+    if (!css.ok) return;
+    const cssContent = css.value;
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('apply-custom-css', cssContent);
     }
+    const previousCssPath = store ? store.get('customCssPath', '') : '';
+    if (previousCssPath && previousCssPath !== cssPath) fileAccess.forget(previousCssPath);
     if (store) store.set('customCssPath', cssPath);
   } catch (err) {
     console.error('Failed to read CSS file:', cssPath, err);
@@ -796,6 +916,8 @@ function clearCustomCss() {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send('apply-custom-css', '');
   }
+  const cssPath = store ? store.get('customCssPath', '') : '';
+  if (cssPath) fileAccess.forget(cssPath);
   if (store) store.set('customCssPath', '');
 }
 
@@ -804,12 +926,16 @@ function restoreCustomCss() {
   const cssPath = store.get('customCssPath', '');
   if (!cssPath) return;
   try {
-    const cssContent = fs.readFileSync(cssPath, 'utf8');
+    const css = fileAccess.withAccess(cssPath, (p) => fs.readFileSync(p, 'utf8'));
+    if (!css.ok) throw new Error('no sandbox access');
     if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('apply-custom-css', cssContent);
+      mainWindow.webContents.send('apply-custom-css', css.value);
     }
+    // A moved theme file keeps working; remember where it is now.
+    if (css.path !== cssPath) store.set('customCssPath', css.path);
   } catch {
-    // CSS file may have been moved; silently skip
+    // CSS file may have been moved or its access revoked; silently skip
+    fileAccess.forget(cssPath);
     store.set('customCssPath', '');
   }
 }
@@ -963,10 +1089,13 @@ ipcMain.handle('read-bookmarked-file', async (event, filePath) => {
       typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
       !isValidMarkdownFile(filePath)) return null;
   try {
-    const stats = await fs.promises.stat(filePath);
-    if (!stats.isFile() || stats.size > 8 * 1024 * 1024) return null;
-    const content = await fs.promises.readFile(filePath, 'utf8');
-    return { filename: path.basename(filePath), filePath, content };
+    const access = await fileAccess.withAccessAsync(filePath, async (p) => {
+      const stats = await fs.promises.stat(p);
+      if (!stats.isFile() || stats.size > 8 * 1024 * 1024) return null;
+      const content = await fs.promises.readFile(p, 'utf8');
+      return { filename: path.basename(p), filePath: p, content };
+    });
+    return access.ok ? access.value : null;
   } catch {
     return null;
   }
@@ -974,7 +1103,9 @@ ipcMain.handle('read-bookmarked-file', async (event, filePath) => {
 
 // File info sheet: return on-disk metadata using request/response IPC.
 ipcMain.handle('get-file-metadata', (_event, filePath) => {
-  return buildFileMetadata(filePath);
+  if (typeof filePath !== 'string' || !filePath) return null;
+  const access = fileAccess.withAccess(filePath, buildFileMetadata);
+  return access.ok ? access.value : null;
 });
 
 // Manual "Reload from disk": re-read the file and reply over the same
@@ -983,7 +1114,12 @@ ipcMain.handle('get-file-metadata', (_event, filePath) => {
 ipcMain.on('refresh-file', (_event, filePath) => {
   if (typeof filePath !== 'string' || !isValidMarkdownFile(filePath)) return;
   try {
-    const fileData = readMarkdownFile(filePath);
+    const access = fileAccess.withAccess(filePath, readMarkdownFile);
+    if (!access.ok) {
+      notifyFileAccessNeeded(filePath);
+      return;
+    }
+    const fileData = { ...access.value, filePath };
     const wc = mainWindow && mainWindow.webContents;
     if (wc && !wc.isDestroyed()) {
       wc.send('file-changed', fileData);
@@ -1007,15 +1143,29 @@ ipcMain.on('open-dropped-path', (_event, absPath) => {
     logError(`Failed to stat dropped path: ${absPath}`, err);
     return;
   }
+  // A drop is a user grant in the sandbox: persist it (no-op on direct).
+  fileAccess.noteUserIntent(absPath, stats.isDirectory() ? 'folder' : 'file');
   if (stats.isDirectory()) {
-    workspaceRoots.add(absPath);
-    const files = scanWorkspace(absPath);
-    if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('workspace-opened', { root: absPath, files });
-    }
+    openWorkspace(absPath);
     return;
   }
   openFileByPath(absPath);
+});
+
+// The preload reports every path it resolved from a user-supplied File
+// (drag-and-drop, the bookmarks "Locate file" picker) so the Mac App Store
+// build can persist that grant. Paths the user never granted cannot be
+// bookmarked — the sandbox refuses — so this cannot widen access.
+ipcMain.on('note-user-picked-path', (_event, absPath) => {
+  if (typeof absPath === 'string' && path.isAbsolute(absPath)) {
+    fileAccess.noteUserIntent(absPath, 'file');
+  }
+});
+
+// "Locate…" from the file-access-needed toast: re-grant a file the sandbox
+// build has no (or no longer valid) access to, then open it.
+ipcMain.on('request-grant-access', (_event, filePath) => {
+  requestGrantAccess(filePath);
 });
 
 // Session save: renderer sends tab state when it changes
@@ -1398,6 +1548,8 @@ app.on('window-all-closed', () => {
 // macOS: handle files opened via Finder (double-click, drag-to-dock, Open With)
 app.on('open-file', (event, filePath) => {
   event.preventDefault();
+  // Finder/Dock opens are user grants in the sandbox: persist them.
+  fileAccess.noteUserIntent(filePath, 'file');
   if (mainWindow && mainWindow.webContents) {
     openFileByPath(filePath);
   } else {
@@ -1425,6 +1577,9 @@ module.exports = {
   isSignedUpdatePlatform,
   initAutoUpdater,
   DISTRIBUTION_CHANNEL,
+  fileAccess,
+  pollWatchers,
+  requestGrantAccess,
   isValidPrintPayload,
   pdfDefaultName,
   loadPrintableWindow,

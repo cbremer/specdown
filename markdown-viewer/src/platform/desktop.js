@@ -35,6 +35,8 @@ import {
   bridgeOnApplyCustomCss,
   bridgeOnUpdateDownloaded,
   bridgeRestartToUpdate,
+  bridgeOnFileAccessNeeded,
+  bridgeRequestGrantAccess,
 } from './bridge.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -282,6 +284,20 @@ export function setupDesktopIPC() {
   // Appearance menu: Theme submenu
   bridgeOnSetVisualTheme(function (themeId) {
     setVisualTheme(String(themeId || 'default'));
+  });
+
+  // Mac App Store sandbox: a recent/session/bookmarked file has no saved
+  // access (first launch, revoked, or the grant could not be renewed). Say so
+  // honestly and offer to locate it, which re-grants access and opens it.
+  bridgeOnFileAccessNeeded(function (info) {
+    const accessFilename = info && info.filename ? info.filename : 'this file';
+    const accessPath = info && info.filePath;
+    if (!accessPath) return;
+    showToast(`SpecDown needs permission to open “${accessFilename}”.`, {
+      type: 'warning',
+      duration: 0, // persist until the user acts or dismisses
+      action: { label: 'Locate…', onClick: () => bridgeRequestGrantAccess(accessPath) },
+    });
   });
 
   // Auto-update: a downloaded update is ready — offer a one-click restart.
