@@ -34,6 +34,15 @@ export function bridgeDesktopPlatform() {
   return nativeBridge()?.platform;
 }
 
+/**
+ * The desktop build's distribution channel: 'mas' (Mac App Store) or 'direct'
+ * (Developer ID download), or undefined outside the desktop shell.
+ * @returns {'mas' | 'direct' | undefined}
+ */
+export function bridgeDistribution() {
+  return nativeBridge()?.distribution;
+}
+
 // --- Commands (renderer → shell) -------------------------------------------
 
 /** Ask the shell to show its native file-open dialog. */

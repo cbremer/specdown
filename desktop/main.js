@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
+const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -18,6 +19,9 @@ function htmlDocumentsEnabledMain() {
 }
 
 const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
+
+// 'mas' (Mac App Store) or 'direct' (Developer ID DMG/ZIP). See distribution.js.
+const DISTRIBUTION_CHANNEL = getDistributionChannel();
 
 // Only platforms whose shipped binaries are code-signed may auto-update.
 // electron-updater performs NO signature verification for an unsigned app, so
@@ -105,6 +109,12 @@ function logInfo(msg) {
 // so it never loads during unit tests (which mock electron but not the updater)
 // or when updates are disabled.
 function initAutoUpdater() {
+  // Checked first so the MAS build never even requires electron-updater:
+  // the App Store delivers updates (Guideline 2.4.5).
+  if (!channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL)) {
+    logInfo('Auto-update disabled: Mac App Store build (updates come from the App Store).');
+    return;
+  }
   if (!app.isPackaged) {
     logInfo('Auto-update skipped (not a packaged build).');
     return;
@@ -1015,7 +1025,7 @@ ipcMain.on('save-session', (_event, tabs) => {
 
 // Renderer's "Restart now" toast asks the shell to install the downloaded update.
 ipcMain.on('restart-to-update', () => {
-  if (autoUpdaterRef) {
+  if (autoUpdaterRef && channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL)) {
     autoUpdaterRef.quitAndInstall();
   }
 });
@@ -1260,11 +1270,14 @@ function buildMenu() {
     {
       label: 'Help',
       submenu: [
-        {
-          label: 'Check for Updates...',
-          click: () => checkForUpdatesManually(),
-        },
-        { type: 'separator' },
+        // The App Store build has no self-update path, so no update UI.
+        ...(channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL) ? [
+          {
+            label: 'Check for Updates...',
+            click: () => checkForUpdatesManually(),
+          },
+          { type: 'separator' },
+        ] : []),
         {
           label: 'Open Log File',
           click: () => {
@@ -1410,6 +1423,8 @@ module.exports = {
   isInsideAnyWorkspace,
   workspaceRoots,
   isSignedUpdatePlatform,
+  initAutoUpdater,
+  DISTRIBUTION_CHANNEL,
   isValidPrintPayload,
   pdfDefaultName,
   loadPrintableWindow,
