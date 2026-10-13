@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.215 — 2026-10-13
+
+### Features
+
+- clear Show/Hide HTML Comments labels (iOS 1.0)
+
 ## v0.0.214 — 2026-10-13
 
 - stop Find (and other text fields) from zooming the page
