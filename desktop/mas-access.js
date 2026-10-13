@@ -33,7 +33,7 @@ function masIsInside(root, target) {
  * Validate the persisted grant store. Malformed entries are dropped from the
  * in-memory view; an unknown version is left untouched on disk (writable:
  * false) so a downgrade can never destroy a newer build's grants.
- * @returns {{ entries: Record<string, { kind: 'file'|'folder', bookmark: string, savedAt: number }>, writable: boolean }}
+ * @returns {{ entries: Record<string, { kind: 'file'|'folder', bookmark: string, savedAt: number, movedTo?: string }>, writable: boolean }}
  */
 function readMasGrants(raw) {
   if (raw === undefined || raw === null) return { entries: {}, writable: true };
@@ -52,6 +52,10 @@ function readMasGrants(raw) {
       Number.isFinite(entry.savedAt)
     ) {
       entries[key] = { kind: entry.kind, bookmark: entry.bookmark, savedAt: entry.savedAt };
+      // Alias left behind when the granted item moved (see acquire).
+      if (typeof entry.movedTo === 'string' && path.isAbsolute(entry.movedTo)) {
+        entries[key].movedTo = entry.movedTo;
+      }
     }
   }
   return { entries, writable: true };
@@ -202,16 +206,27 @@ function createMasAccess(deps) {
       const access = start(grant.key, grant.entry);
       if (access) {
         let resolved = target;
-        if (access.path !== grant.key) {
+        const moved = access.path !== grant.key;
+        if (moved) {
           resolved = path.join(access.path, path.relative(grant.key, target));
-          logInfo(`Granted item moved: ${grant.key} -> ${access.path}`);
+          if (grant.entry.movedTo !== access.path) {
+            logInfo(`Granted item moved: ${grant.key} -> ${access.path}`);
+          }
         }
-        if ((access.stale || access.path !== grant.key) && native) {
+        // Refresh a stale bookmark, and record a move once. The old key stays
+        // as an alias (movedTo) with the fresh bookmark: other tabs, recents
+        // and session entries still name files under the OLD path, and every
+        // one of them must keep resolving — not just the first one opened.
+        const needsRefresh = access.stale || (moved && grant.entry.movedTo !== access.path);
+        if (needsRefresh && native) {
           try {
             const bookmark = native.createBookmark(access.path);
+            const savedAt = now();
             const next = { ...entries };
-            delete next[grant.key];
-            next[access.path] = { kind: grant.entry.kind, bookmark, savedAt: now() };
+            next[access.path] = { kind: grant.entry.kind, bookmark, savedAt };
+            if (moved) {
+              next[grant.key] = { kind: grant.entry.kind, bookmark, savedAt, movedTo: access.path };
+            }
             saveGrants(next);
           } catch (err) {
             logError(`Could not refresh saved access for ${access.path}`, err);

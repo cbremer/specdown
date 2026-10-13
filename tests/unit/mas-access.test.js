@@ -219,12 +219,72 @@ describe('createMasAccess', () => {
     const result = access.withAccess(FILE, (p) => p);
     expect(result).toEqual({ ok: true, path: NEW, value: NEW });
     const entries = store.data[MAS_GRANTS_KEY].entries;
-    expect(entries[FILE]).toBeUndefined();
     expect(entries[NEW]).toEqual({
       kind: 'file',
       bookmark: `b64:${NEW}`,
       savedAt: 1000,
     });
+    // The old path stays as an alias so recents/session entries still work.
+    expect(entries[FILE]).toEqual({
+      kind: 'file',
+      bookmark: `b64:${NEW}`,
+      savedAt: 1000,
+      movedTo: NEW,
+    });
+    expect(access.withAccess(FILE, (p) => p).path).toBe(NEW);
+  });
+
+  it('keeps every file of a moved folder reachable, not just the first', () => {
+    native.live.add(ROOT);
+    access.noteUserIntent(ROOT, 'folder');
+    native.live.clear();
+    const NEW_ROOT = '/Users/me/notes-2026';
+    native.moved.set(ROOT, NEW_ROOT);
+
+    // Session restore reopens three tabs named by their OLD paths.
+    const tabs = ['a.md', 'sub/b.md', 'sub/deeper/c.md'];
+    for (const rel of tabs) {
+      const result = access.withAccess(path.join(ROOT, rel), (p) => p);
+      expect(result).toEqual({
+        ok: true,
+        path: path.join(NEW_ROOT, rel),
+        value: path.join(NEW_ROOT, rel),
+      });
+    }
+    // The move is recorded once, not rewritten on every open.
+    expect(native.createBookmark).toHaveBeenCalledTimes(2); // grant + one refresh
+    expect(native.active.size).toBe(0);
+
+    // And after a relaunch, both the old and the new paths still resolve.
+    const relaunched = createMasAccess({ getStore: () => store, native });
+    expect(relaunched.withAccess(path.join(ROOT, 'a.md'), (p) => p).path).toBe(
+      path.join(NEW_ROOT, 'a.md')
+    );
+    expect(
+      relaunched.withAccess(path.join(NEW_ROOT, 'a.md'), (p) => p).path
+    ).toBe(path.join(NEW_ROOT, 'a.md'));
+  });
+
+  it('round-trips the moved-item alias through storage validation', () => {
+    const { entries } = readMasGrants({
+      version: MAS_GRANTS_VERSION,
+      entries: {
+        [ROOT]: {
+          kind: 'folder',
+          bookmark: 'b64:x',
+          savedAt: 1,
+          movedTo: '/new',
+        },
+        '/bad': {
+          kind: 'folder',
+          bookmark: 'b64:y',
+          savedAt: 1,
+          movedTo: 'relative',
+        },
+      },
+    });
+    expect(entries[ROOT].movedTo).toBe('/new');
+    expect(entries['/bad'].movedTo).toBeUndefined();
   });
 
   it('maps a file inside a moved folder into the new location', () => {
