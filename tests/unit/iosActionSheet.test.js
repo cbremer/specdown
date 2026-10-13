@@ -129,3 +129,17 @@ describe('document styles', () => {
     expect(src).toMatch(/FORBID_TAGS:\s*\['style'\]/);
   });
 });
+
+describe('iOS text fields', () => {
+  it('are at least 16px so focusing them never auto-zooms the page', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '../../markdown-viewer/styles.css'),
+      'utf8'
+    );
+    const rule = css.match(
+      /\.ios-native input:not\(\[type="checkbox"\]\)[^{]*\.ios-native textarea,\s*\.ios-native select\s*\{([^}]*)\}/
+    );
+    expect(rule).not.toBeNull();
+    expect(rule[1]).toMatch(/font-size:\s*16px/);
+  });
+});
