@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.213 — 2026-10-13
+
+### Bug Fixes
+
+- **mas:** build the Store package as a universal app
+
 ## v0.0.212 — 2026-10-13
 
 ### Bug Fixes
