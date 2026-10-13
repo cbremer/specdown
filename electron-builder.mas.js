@@ -35,7 +35,10 @@ const shared = {
   // @electron/osx-sign inserts application-identifier / team-identifier from
   // the provisioning profile; they make an unprovisioned app unlaunchable.
   preAutoEntitlements: !unprovisioned,
-  minimumSystemVersion: '12.0',
+  // Electron 44's framework is built for macOS 13.0 (LC_BUILD_VERSION minos)
+  // and its own Info.plist says 13.0; a lower value would let macOS 12 users
+  // install a build that cannot launch.
+  minimumSystemVersion: '13.0',
   // The bookmark module is built universal already (scripts/build-mas-native.js).
   x64ArchFiles: '**/masbookmarks.node',
   extendInfo: {

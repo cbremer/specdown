@@ -25,7 +25,7 @@ entitlement exceptions. See [mas-interface.md](mas-interface.md).
 signed with the Apple Development identity, `codesign --verify --deep --strict`
 clean. Info.plist: `com.mosaicpando.specdown`, `SpecDown`, category
 developer-tools, `ITSAppUsesNonExemptEncryption=false`, `.md`/`.markdown`
-document types, minimum macOS 12.0. Entitlements exactly as
+document types, minimum macOS 12.0 (corrected to 13.0 afterwards: Electron 44 requires macOS 13). Entitlements exactly as
 `build/entitlements.mas.plist`; helpers sandbox + inherit only. No
 `app-update.yml`, no electron-updater in the asar; the native module is
 unpacked and the sources aren't shipped. Logs: shared session notes
