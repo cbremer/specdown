@@ -3823,3 +3823,12 @@ mark.search-highlight-current {
 .ios-native #web-sample-section {
     display: none !important;
 }
+
+/* iOS zooms the page when a focused text field's font is under 16px (Find's
+   field was 0.9rem), leaving the view enlarged and shifted after typing. Keep
+   every editable field at 16px in the iOS app so focusing never zooms. */
+.ios-native input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.ios-native textarea,
+.ios-native select {
+    font-size: 16px;
+}
