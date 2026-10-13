@@ -83,10 +83,12 @@ function visualThemeUpdatePicker() {
     button.setAttribute('aria-label', label);
     button.setAttribute('title', label);
     button.classList.toggle('active', current.id !== 'default');
+    // Always a palette: the button opens the theme picker, and a per-theme
+    // icon collided with the light/dark toggle's "system" monitor icon.
     const icon = button.querySelector('.theme-icon');
-    if (icon) {
-      icon.setAttribute('data-icon', current.icon);
-      icon.innerHTML = iconSvg(current.icon);
+    if (icon && icon.getAttribute('data-icon') !== 'palette') {
+      icon.setAttribute('data-icon', 'palette');
+      icon.innerHTML = iconSvg('palette');
     }
   }
   const menu = visualThemeEl('visual-theme-menu');

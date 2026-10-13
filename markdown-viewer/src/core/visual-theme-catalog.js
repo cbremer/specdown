@@ -15,7 +15,7 @@
 
 /** @type {ReadonlyArray<VisualThemeSpec>} */
 export const visualThemeCatalog = [
-  { id: 'default', label: 'Default', icon: 'auto' },
+  { id: 'default', label: 'Default', icon: 'palette' },
   { id: 'starfield', label: 'Starfield', icon: 'sparkles' },
   { id: 'aurora', label: 'Aurora', icon: 'waves' },
   { id: 'blueprint', label: 'Blueprint', icon: 'grid' },

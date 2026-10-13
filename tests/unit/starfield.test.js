@@ -21,6 +21,27 @@ describe('Visual themes', () => {
     localStorage.getItem.mockReset();
   });
 
+  it('shows a palette icon on the Theme button, distinct from the appearance toggle', () => {
+    loadApp(document);
+    const visualIcon = () =>
+      document
+        .querySelector('#visual-theme-toggle .theme-icon')
+        .getAttribute('data-icon');
+
+    for (const id of ['default', 'starfield', 'aurora', 'blueprint']) {
+      setVisualTheme(id);
+      expect(visualIcon()).toBe('palette');
+    }
+    for (let step = 0; step < 3; step++) {
+      toggleTheme(); // cycles light → dark → system
+      expect(
+        document
+          .querySelector('#theme-toggle .theme-icon')
+          .getAttribute('data-icon')
+      ).not.toBe(visualIcon());
+    }
+  });
+
   it('defaults to Starfield on the web surface and mounts the sky canvas', () => {
     loadApp(document);
 

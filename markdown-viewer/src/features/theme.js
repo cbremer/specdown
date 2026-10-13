@@ -33,7 +33,8 @@ export function configureTheme(deps) {
 
 function systemPrefersDark() {
   return !!(
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
   );
 }
 
@@ -54,7 +55,8 @@ function updateThemeIcon() {
 
   const icon = themeToggle.querySelector('.theme-icon');
   if (icon) {
-    const name = preference === 'auto' ? 'auto' : preference === 'dark' ? 'sun' : 'moon';
+    const name =
+      preference === 'auto' ? 'auto' : preference === 'dark' ? 'sun' : 'moon';
     icon.setAttribute('data-icon', name);
     icon.innerHTML = iconSvg(name);
   }
@@ -63,10 +65,10 @@ function updateThemeIcon() {
   // both the current mode and what a click switches to next.
   const label =
     preference === 'auto'
-      ? 'Theme: system (click for light)'
+      ? 'Appearance: system (click for light)'
       : preference === 'dark'
-        ? 'Theme: dark (click for system)'
-        : 'Theme: light (click for dark)';
+        ? 'Appearance: dark (click for system)'
+        : 'Appearance: light (click for dark)';
   themeToggle.setAttribute('aria-label', label);
   themeToggle.setAttribute('title', label);
 }
