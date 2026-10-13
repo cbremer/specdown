@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.219 — 2026-10-13
+
+### Documentation
+
+- **appstore:** session 03 — 1.0 submitted, 1.1 backlog
+
 ## v0.0.218 — 2026-10-13
 
 - support page is accurate about relative images on iOS
