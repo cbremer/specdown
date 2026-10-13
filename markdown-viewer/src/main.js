@@ -50,6 +50,7 @@ import {
   requestNativeOpenIfAvailable,
   requestBundledSampleIfAvailable,
   performPrint,
+  hideIOSDeferredFeatures,
 } from './platform/ios-chrome.js';
 import {
   buildToc,
@@ -364,6 +365,7 @@ function setupEventListeners() {
     }
 
     setupIOSEventListeners();
+    hideIOSDeferredFeatures();
 
     // Search bar events
     if (searchInput) {

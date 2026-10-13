@@ -83,17 +83,8 @@ struct ContentView: View {
                 }
             }
 
-            Section("Recent") {
-                if bridge.recentFiles.isEmpty {
-                    Text("No recent files yet")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(bridge.recentFiles, id: \.self) { name in
-                        Label(name, systemImage: "clock.arrow.circlepath")
-                            .foregroundStyle(.primary)
-                    }
-                }
-            }
+            // "Recent" returns in 1.1, once picked files can be reopened via
+            // security-scoped bookmarks (it listed names that couldn't be tapped).
         }
         .listStyle(.sidebar)
         .navigationTitle("SpecDown")
