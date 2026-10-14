@@ -36,6 +36,10 @@ pending).
 
 - [ ] Update App Privacy (data linked to the user), privacy policy, add in-app account deletion; Sign in with Apple if other third-party logins are offered; demo account in review notes.
 
+## After the App Review decision
+
+- [ ] Merge the queued Dependabot PRs (held so nothing changes under the submitted build): #268 DOMPurify 3.4.14 → 3.4.17 first (it sanitizes every rendered document; re-verify against the real library), then #259 #260 #261 #263 #264 #265 #269 #271 #272 and any newer ones. Full test/lint/typecheck, then ship in the next build.
+
 ## Owner follow-ups
 
 - [ ] Optional: ask Apple Developer Support (Membership and Account → Account Information Update) to show "Christopher Bremer" / "Christopher M. Bremer" as the seller name; or convert to an Organization (LLC + D-U-N-S) later.
