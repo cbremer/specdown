@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.220 — 2026-10-14
+
+### Documentation
+
+- **appstore:** queue Dependabot merges until after App Review
+
 ## v0.0.219 — 2026-10-13
 
 ### Documentation
