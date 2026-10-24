@@ -5,6 +5,15 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.222 — 2026-10-24
+
+### Chores
+
+- **deps:** bump actions/upload-artifact from 4.6.2 to 7.0.2
+- **deps:** bump actions/setup-node from 7.0.0 to 7.1.0
+- **deps:** bump actions/deploy-pages from 5.0.0 to 5.0.1
+- **deps:** bump softprops/action-gh-release from 3.0.2 to 3.0.3
+
 ## v0.0.221 — 2026-10-24
 
 ### Chores
