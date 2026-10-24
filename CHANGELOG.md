@@ -5,6 +5,13 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.223 — 2026-10-24
+
+### Chores
+
+- **deps-dev:** bump vite from 8.2.2 to 8.2.4
+- **deps-dev:** bump fast-uri from 3.1.5 to 3.1.9
+
 ## v0.0.222 — 2026-10-24
 
 ### Chores
