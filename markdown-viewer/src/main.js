@@ -128,7 +128,7 @@ import {
 // ===========================
 // Constants
 // ===========================
-const APP_VERSION = '0.0.223';
+const APP_VERSION = '0.0.224';
 const SOURCE_REPO = 'cbremer/specdown';
 const SOURCE_REPO_URL = 'https://github.com/' + SOURCE_REPO;
 

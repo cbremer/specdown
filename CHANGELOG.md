@@ -5,6 +5,13 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.224 — 2026-10-24
+
+### Chores
+
+- **deps-dev:** bump undici from 6.28.0 to 6.29.1
+- **deps-dev:** bump electron from 44.0.0 to 44.9.1
+
 ## v0.0.223 — 2026-10-24
 
 ### Chores
