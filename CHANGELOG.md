@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.221 — 2026-10-24
+
+### Chores
+
+- **deps-dev:** bump baseline-browser-mapping from 2.10.37 to 2.11.32
+
 ## v0.0.220 — 2026-10-14
 
 ### Documentation
