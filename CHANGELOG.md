@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.228 — 2026-10-24
+
+### Chores
+
+- **deps-dev:** bump brace-expansion from 1.1.18 to 1.1.21
+
 ## v0.0.227 — 2026-10-24
 
 ### Chores
