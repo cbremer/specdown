@@ -5,6 +5,16 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.227 — 2026-10-24
+
+### Chores
+
+- **deps-dev:** bump @xmldom/xmldom from 0.8.13 to 0.8.15
+- **deps-dev:** bump http-cache-semantics from 4.2.0 to 4.3.0
+- **deps-dev:** bump source-map-js from 1.2.1 to 1.2.2
+- **deps-dev:** bump browserslist from 4.28.2 to 4.29.4
+- **deps:** bump js-yaml from 4.2.0 to 4.3.2
+
 ## v0.0.226 — 2026-10-24
 
 ### Chores
