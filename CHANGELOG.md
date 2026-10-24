@@ -5,6 +5,13 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.226 — 2026-10-24
+
+### Chores
+
+- **deps:** bump mermaid from 11.17.2 to 12.0.0
+- **deps:** bump marked from 18.0.11 to 18.0.14
+
 ## v0.0.225 — 2026-10-24
 
 ### Chores
