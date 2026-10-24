@@ -5,6 +5,12 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.225 — 2026-10-24
+
+### Chores
+
+- **deps:** bump dompurify from 3.4.14 to 3.4.17
+
 ## v0.0.224 — 2026-10-24
 
 ### Chores
