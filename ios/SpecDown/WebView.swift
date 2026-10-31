@@ -3,8 +3,15 @@ import WebKit
 
 struct WebView: UIViewRepresentable {
     let bridge: WebBridge
+    let layoutMode: String
 
     func makeUIView(context: Context) -> WKWebView {
+        if let webView = bridge.webView {
+            webView.navigationDelegate = context.coordinator
+            webView.uiDelegate = context.coordinator
+            return webView
+        }
+
         let config = WKWebViewConfiguration()
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -52,6 +59,9 @@ struct WebView: UIViewRepresentable {
         config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
 
         let webView = SafeAreaWebView(frame: .zero, configuration: config)
+        webView.onWindowAttachment = { [weak bridge] window in
+            bridge?.presentationWindow = window
+        }
         // .never: the scroll view must not shift the page itself. The page pads
         // its own header from env(safe-area-inset-*) / --native-safe-* (see
         // SafeAreaWebView). On iOS 27.2 devices .scrollableAxes also inset the
@@ -77,7 +87,11 @@ struct WebView: UIViewRepresentable {
         return webView
     }
 
-    func updateUIView(_ webView: WKWebView, context: Context) {}
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        // Read the detail column's environment on every update: a fold can
+        // change it without replacing the scene's root SwiftUI environment.
+        bridge.applyLayoutMode(layoutMode)
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(bridge: bridge)
@@ -116,7 +130,7 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             bridge.pageDidLoad()
-            (webView as? SafeAreaWebView)?.pushSafeAreaInsets()
+            (webView as? SafeAreaWebView)?.pushSafeAreaInsets(force: true)
         }
 
         func webView(
@@ -251,6 +265,13 @@ private class WeakMessageHandler: NSObject, WKScriptMessageHandler {
 /// alone proved unreliable on device (iOS 27.2 left the header under the
 /// Dynamic Island), so the CSS takes the larger of the two.
 final class SafeAreaWebView: WKWebView {
+    var onWindowAttachment: ((UIWindow) -> Void)?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if let window { onWindowAttachment?(window) }
+    }
+
     override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         super.init(frame: frame, configuration: configuration)
         // When a text field takes focus, iOS scrolls the whole web view up to
@@ -279,13 +300,22 @@ final class SafeAreaWebView: WKWebView {
 
     override func safeAreaInsetsDidChange() {
         super.safeAreaInsetsDidChange()
+        setNeedsLayout()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
         pushSafeAreaInsets()
     }
 
-    func pushSafeAreaInsets() {
-        // The view's own insets: full device insets on iPhone (the web view
-        // ignores the safe area), ~0 on iPad where it already sits below the bar.
+    private var lastSafeAreaInsets: UIEdgeInsets?
+
+    func pushSafeAreaInsets(force: Bool = false) {
+        // The renderer respects its native container's safe area. Only any
+        // residual local insets reach CSS; do not copy window insets here.
         let insets = safeAreaInsets
+        guard force || lastSafeAreaInsets != insets else { return }
+        lastSafeAreaInsets = insets
         let script = """
             (function () {
               var s = document.documentElement && document.documentElement.style;
