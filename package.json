@@ -61,6 +61,7 @@
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "markdown-viewer/**/*.js",
+      "!markdown-viewer/dist/**",
       "!markdown-viewer/vendor/**",
       "!markdown-viewer/**/*.test.js",
       "!markdown-viewer/**/*.spec.js",
@@ -160,6 +161,14 @@
   "overrides": {
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "^4.2.0"
+    },
+    "minimatch@9 || 10": "11.0.3",
+    "glob@10 || 13 || 14": "14.0.3",
+    "filelist": {
+      "minimatch": "11.0.3"
+    },
+    "babel-plugin-istanbul": {
+      "test-exclude": "8.0.0"
     }
   },
   "dependencies": {
