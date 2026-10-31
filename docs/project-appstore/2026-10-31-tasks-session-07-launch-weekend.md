@@ -1,5 +1,7 @@
 # Session 07: launch weekend, security and next Store candidates
 
+Latest final mobile review, authorized signed-in portal observations and TestFlight preparation: [Session 17](2026-10-31-tasks-session-17-testflight-preparation.md). Chris retains signing and Mac App Store key setup.
+
 Latest owner direction and iOS release gate: [Session 16](2026-10-31-tasks-session-16-testflight-boundary.md) records TestFlight testing before App Review submission and the native-iOS annotation boundary follow-up. Earlier simulator/artifact results remain tied to their recorded source revisions.
 
 Latest unlocked-Mac Duo runtime results and the owner-requested centering/Find corrections are recorded in [Session 14](2026-10-31-tasks-session-14-duo-runtime.md). That follow-up supersedes the earlier locked-Mac testing status; release/account gates remain unchanged.
