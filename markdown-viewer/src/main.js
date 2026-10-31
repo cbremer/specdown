@@ -210,7 +210,7 @@ function init() {
         stopWatchingFilePath: (/** @type {string | null} */ filePath) => stopWatchingFilePath(filePath),
     });
     configureDesktop({
-        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
+        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title, /** @type {{ html: string } | undefined} */ prepared) => renderMarkdown(content, title, prepared),
     });
     configureRecentFiles({ onSelect: (entry) => openRecentEntry(entry) });
     configureWorkspace({
@@ -446,7 +446,8 @@ function setupEventListeners() {
 /**
  * @param {string} content
  * @param {string} filename
- * @param {{ html: string }} [prepared] Synchronous preflight from a new tab.
+ * @param {{ html: string }} [prepared] Synchronous preflight from an open/refresh.
+ * @returns {Promise<boolean>} Whether this render completed in its current view.
  */
 async function renderMarkdown(content, filename, prepared) {
     let context = captureDocumentContext();
@@ -475,7 +476,7 @@ async function renderMarkdown(content, filename, prepared) {
 
         // Process mermaid diagrams
         await processMermaidDiagrams();
-        if (!isDocumentContextCurrent(context)) return;
+        if (!isDocumentContextCurrent(context)) return false;
 
         // Reveal the Present entry points (desktop toolbar + iPhone action sheet)
         // only when there are diagrams to present.
@@ -511,11 +512,13 @@ async function renderMarkdown(content, filename, prepared) {
         // Scroll to top
         markdownContent.scrollTop = 0;
         syncIOSChrome();
+        return true;
 
     } catch (error) {
-        if (!isDocumentContextCurrent(context)) return;
+        if (!isDocumentContextCurrent(context)) return false;
         console.error('Error rendering markdown:', error);
         showToast(error instanceof Error && error.message.startsWith('This document') ? error.message : 'Error rendering markdown content. Please check the file format.', { type: 'error' });
+        return false;
     }
 }
 
