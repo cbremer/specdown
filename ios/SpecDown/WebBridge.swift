@@ -36,6 +36,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private var appliedLayoutMode: String?
     private var pendingFile: PendingFile?
     private var pendingError: String?
+    private var documentLoadAcceptance = DocumentLoadAcceptance()
 
     private let defaults = UserDefaults.standard
     private enum Keys {
@@ -161,6 +162,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func pageWillLoad() {
         pageLoaded = false
+        documentLoadAcceptance.invalidateRequests()
         // A WebKit process reload need not trigger a SwiftUI update. Restore
         // the last delivered mode unless a newer layout is already queued.
         pendingLayoutMode = pendingLayoutMode ?? appliedLayoutMode
@@ -203,14 +205,21 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     /// Deliver a file's content to the web layer.
     func loadFile(name: String, content: String) {
         viewerPresentationRequest &+= 1
-        currentDocumentName = name
-        hasLoadedDocument = true
         guard pageLoaded else {
             pendingFile = PendingFile(name: name, content: content)
             return
         }
-        evaluateJavaScript(function: "window.loadFileContent", arguments: [content, name], context: "loadFileContent")
-        trackRecentFile(name: name)
+        let request = documentLoadAcceptance.beginRequest()
+        evaluateJavaScript(function: "window.loadFileContent", arguments: [content, name], context: "loadFileContent") { [weak self] result, error in
+            guard let self,
+                  self.documentLoadAcceptance.accept(request, rendererAccepted: error == nil && result as? Bool == true)
+            else { return }
+            // The renderer may reject limits, malformed input or the tab cap.
+            // Keep the native title and recents attached to accepted content.
+            self.currentDocumentName = name
+            self.hasLoadedDocument = true
+            self.trackRecentFile(name: name)
+        }
     }
 
     func openDocumentPickerFromSidebar() {
@@ -249,7 +258,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         loadBundledSample(named: fileName)
     }
 
-    private func evaluateJavaScript(function: String, arguments: [Any], context: String) {
+    private func evaluateJavaScript(
+        function: String, arguments: [Any], context: String,
+        completion: ((Any?, Error?) -> Void)? = nil
+    ) {
         guard let webView else {
             print("[Bridge] Missing WKWebView for \(context)")
             return
@@ -259,10 +271,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             let serializedArguments = try arguments
                 .map(serializeJavaScriptArgument)
                 .joined(separator: ", ")
-            webView.evaluateJavaScript("\(function)(\(serializedArguments))") { _, error in
+            webView.evaluateJavaScript("\(function)(\(serializedArguments))") { result, error in
                 if let error = error {
                     print("[Bridge] \(context) error: \(error)")
                 }
+                completion?(result, error)
             }
         } catch {
             print("[Bridge] Failed to serialize JS arguments for \(context): \(error)")

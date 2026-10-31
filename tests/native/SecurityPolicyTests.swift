@@ -58,6 +58,31 @@ struct SecurityPolicyTests {
                 preconditionFailure("Non-local or non-regular file was accepted")
             } catch SpecDownSecurityPolicy.FileError.unsupportedFile { }
         }
-        print("Native security policy passed: bundle traversal/host/symlink boundaries and bounded document reads")
+
+        // JavaScript completion order can differ from request order. Only
+        // accepted documents commit metadata, and old pages cannot commit it.
+        var acceptance = DocumentLoadAcceptance()
+        let first = acceptance.beginRequest()
+        precondition(!acceptance.accept(first, rendererAccepted: false))
+        precondition(acceptance.accept(first, rendererAccepted: true))
+        precondition(!acceptance.accept(first, rendererAccepted: true), "Duplicate acknowledgment committed twice")
+
+        let acceptedA = acceptance.beginRequest()
+        let rejectedB = acceptance.beginRequest()
+        precondition(!acceptance.accept(rejectedB, rendererAccepted: false))
+        precondition(acceptance.accept(acceptedA, rendererAccepted: true), "Rejected B suppressed accepted A")
+        precondition(!acceptance.accept(rejectedB, rendererAccepted: false))
+
+        let delayedA = acceptance.beginRequest()
+        let acceptedB = acceptance.beginRequest()
+        precondition(acceptance.accept(acceptedB, rendererAccepted: true))
+        precondition(!acceptance.accept(delayedA, rendererAccepted: true), "Delayed A replaced accepted B")
+
+        let oldPage = acceptance.beginRequest()
+        acceptance.invalidateRequests()
+        precondition(!acceptance.accept(oldPage, rendererAccepted: true), "Reload accepted an old-page acknowledgment")
+        let newPage = acceptance.beginRequest()
+        precondition(acceptance.accept(newPage, rendererAccepted: true))
+        print("Native security policy passed: bundle traversal/host/symlink boundaries, bounded reads and accepted-document acknowledgment ordering")
     }
 }
