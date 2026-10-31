@@ -16,6 +16,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 13, 2026 | Tasks     | [Session 03: 1.0 submitted, 1.1 backlog](2026-10-13-tasks-session-03-v1-1-backlog.md) | iOS 1.0 (11) submitted for review; deferred items and owner follow-ups.                                    |
 | Oct 31, 2026 | Tasks | [Session 07: launch weekend](2026-10-31-tasks-session-07-launch-weekend.md) | Public iOS launch verified; shared/native security fixes, website updates, candidate validation and owner login gates. |
 | Oct 31, 2026 | Spec | [Build-tool advisories](2026-10-31-spec-toolchain-advisories.md) | Scoped dependency updates, unsigned packaging evidence and unresolved upstream constraints. |
+| Oct 31, 2026 | Tasks | [Session 08: iPhone Duo](2026-10-31-tasks-session-08-iphone-duo.md) | Adaptive layout and retained document state; exact simulator evidence and remaining unlocked-Mac touch checks. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
