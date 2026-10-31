@@ -475,7 +475,7 @@ describe('Recent files', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('re-opens the most recent document via onSelect', () => {
+    it('waits for an explicit history click before contacting a stored URL', () => {
       const onSelect = jest.fn();
       recordRecentFile({ ref: 'https://a/old.md', title: 'old.md' });
       recordRecentFile({ ref: 'https://a/last.md', title: 'last.md' });
@@ -483,7 +483,9 @@ describe('Recent files', () => {
 
       restoreLastSession();
 
-      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).not.toHaveBeenCalled();
+      openRecentFiles();
+      document.querySelector('.recent-file-item').click();
       expect(onSelect.mock.calls[0][0].ref).toBe('https://a/last.md');
     });
   });
@@ -494,7 +496,7 @@ describe('Session restore on launch', () => {
     localStorage.clear();
   });
 
-  it('reopens the stored last document when the app starts', () => {
+  it('does not contact a stored URL when the app starts', () => {
     localStorage.setItem(
       'specdown-recent-files',
       JSON.stringify([
@@ -504,8 +506,8 @@ describe('Session restore on launch', () => {
     loadHTML(document);
     loadApp(document);
 
-    // init() should have kicked off a fetch for the restored URL.
-    expect(global.fetch).toHaveBeenCalledWith(
+    // History persists without granting background network permission.
+    expect(global.fetch).not.toHaveBeenCalledWith(
       'https://example.com/a.md',
       expect.anything()
     );

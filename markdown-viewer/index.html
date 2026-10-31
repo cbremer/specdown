@@ -9,10 +9,10 @@
       <style> blocks and style attributes. The `file:` scheme is allowed so the
       bundled assets load inside the Electron and iOS WKWebView shells (which
       serve from file://, where 'self' is not reliably matched). connect-src /
-      img-src stay permissive (https/http) because the viewer intentionally
-      fetches user-supplied URLs and the GitHub API/raw hosts.
+      img-src allow HTTPS for remote Markdown/images and retain self for local
+      previews. Cleartext redirects are blocked before a request is sent.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: http: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: http: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <meta name="description" content="A markdown viewer where Mermaid diagrams are first-class — zoom, pan, present, and export. Try it in the browser or download the desktop app.">

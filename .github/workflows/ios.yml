@@ -2,24 +2,26 @@ name: iOS Build
 
 on:
   push:
-    branches: [main, html, "claude/**"]
+    branches: [main, html, 'claude/**']
     paths:
-      - "ios/**"
-      - "markdown-viewer/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.js"
-      - "scripts/**"
-      - ".github/workflows/ios.yml"
+      - 'ios/**'
+      - 'markdown-viewer/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'scripts/**'
+      - 'tests/native/**'
+      - '.github/workflows/ios.yml'
   pull_request:
     paths:
-      - "ios/**"
-      - "markdown-viewer/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.js"
-      - "scripts/**"
-      - ".github/workflows/ios.yml"
+      - 'ios/**'
+      - 'markdown-viewer/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'scripts/**'
+      - 'tests/native/**'
+      - '.github/workflows/ios.yml'
 
 jobs:
   build:
@@ -48,6 +50,9 @@ jobs:
       - name: Generate Xcode project
         working-directory: ios
         run: xcodegen generate
+
+      - name: Test native file security boundaries
+        run: bash scripts/test-ios-security.sh
 
       - name: Build for iOS Simulator
         run: |

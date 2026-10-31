@@ -8,7 +8,8 @@
 // directly by the render core here; the heavy `mermaid` engine is loaded on
 // demand by the diagram module (see core/render-config.js `loadMermaid`).
 import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { sanitizeDocumentHtml } from './core/document-sanitizer.js';
+import { assertDocumentComplexity } from './core/document-limits.js';
 // Side-effect import of a highlight.js theme; Vite resolves it at build time.
 // TypeScript 6+ reports TS2882 for an untyped side-effect import (the .css file
 // resolves physically but has no type declaration), so suppress it here.
@@ -313,7 +314,7 @@ function setupEventListeners() {
     dropZone.addEventListener('click', (e) => {
         const target = /** @type {HTMLElement | null} */ (e.target);
         if (isLandingDropClickIgnored(target)) return;
-        if (e.target === dropZone || (target && target.closest('.drop-zone-content'))) {
+        if (e.target === dropZone || (target instanceof Element && target.closest('.drop-zone-content'))) {
             if (requestNativeOpenIfAvailable()) return;
             fileInput.click();
         }
@@ -445,23 +446,16 @@ function setupEventListeners() {
  */
 async function renderMarkdown(content, filename) {
     try {
-        // Store raw markdown for toggle
+        assertDocumentComplexity(content);
+        // Parse and validate before replacing the current document's state/UI.
+        const htmlContent = /** @type {string} */ (marked.parse(content));
+        const safeHtmlContent = sanitizeDocumentHtml(htmlContent);
+
         state.currentRawMarkdown = content;
         state.currentViewMode = 'preview';
         updateViewToggleButton();
-
-        // Parse markdown to HTML (synchronous: marked.parse returns a string here)
-        const htmlContent = /** @type {string} */ (marked.parse(content));
-
-        // Update UI
         fileName.textContent = filename;
-        // Keep HTML comment nodes through sanitization (`#comment`) so they can
-        // be revealed below — DOMPurify strips them by default, which silently
-        // dropped authored `<!-- … -->` content from the preview.
-        // FORBID_TAGS style: a document's <style> blocks would apply to the whole
-        // app (it shares this document), letting a crafted file restyle, hide or
-        // overlay the app's own controls. Inline style attributes still apply.
-        markdownContent.innerHTML = DOMPurify.sanitize(htmlContent, { ADD_TAGS: ['#comment'], FORBID_TAGS: ['style'] });
+        markdownContent.innerHTML = safeHtmlContent;
 
         // Reveal authored HTML comments as styled blocks, then sync the toggle.
         revealHtmlComments(markdownContent);
@@ -515,7 +509,7 @@ async function renderMarkdown(content, filename) {
 
     } catch (error) {
         console.error('Error rendering markdown:', error);
-        showToast('Error rendering markdown content. Please check the file format.', { type: 'error' });
+        showToast(error instanceof Error && error.message.startsWith('This document') ? error.message : 'Error rendering markdown content. Please check the file format.', { type: 'error' });
     }
 }
 

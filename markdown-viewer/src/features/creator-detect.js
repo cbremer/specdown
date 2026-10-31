@@ -62,7 +62,9 @@ function tidyCreatorValue(/** @type {string} */ raw) {
 function extractCreatorFrontMatter(markdown) {
   // Tolerate a leading BOM but require the fence at the very start otherwise.
   const text = markdown.charCodeAt(0) === 0xfeff ? markdown.slice(1) : markdown;
-  const match = text.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+  const match = text.match(
+    /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/
+  );
   if (!match) return null;
 
   /** @type {Record<string, string>} */
@@ -99,17 +101,22 @@ export function detectCreator(markdown) {
 
   // 2. Explicit SpecDown marker, then a generic "Generated/Created/Made by/with"
   //    comment. Restricted to comment bodies so prose can't trip it.
-  const specdownComment = markdown.match(
-    /<!--\s*specdown\s*:\s*(?:creator|generator|created[-\s]?by)\s*[:=]\s*([^>]+?)\s*-->/i
-  );
-  if (specdownComment) {
-    return { creator: tidyCreatorValue(specdownComment[1]), source: 'comment' };
-  }
-  const genericComment = markdown.match(
-    /<!--\s*(?:generated|created|made)\s+(?:by|with)\s+([^>]+?)\s*-->/i
-  );
-  if (genericComment) {
-    return { creator: tidyCreatorValue(genericComment[1]), source: 'comment' };
+  // Scan bounded comment bodies once; do not backtrack across an arbitrarily
+  // long unterminated comment when a document contains repeated whitespace.
+  let creatorCommentOffset = 0;
+  while (creatorCommentOffset < markdown.length) {
+    const start = markdown.indexOf('<!--', creatorCommentOffset);
+    if (start < 0) break;
+    const end = markdown.indexOf('-->', start + 4);
+    if (end < 0) break;
+    const body = markdown.slice(start + 4, Math.min(end, start + 4100)).trim();
+    const marker =
+      body.match(
+        /^specdown\s*:\s*(?:creator|generator|created[-\s]?by)\s*[:=]\s*(.+)$/i
+      ) || body.match(/^(?:generated|created|made)\s+(?:by|with)\s+(.+)$/i);
+    if (marker)
+      return { creator: tidyCreatorValue(marker[1]), source: 'comment' };
+    creatorCommentOffset = end + 3;
   }
 
   // 3. Known generation signatures (narrow by construction).

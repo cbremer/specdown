@@ -133,6 +133,29 @@ describe('IPC sender validation', () => {
     expect(dialog.showOpenDialog).not.toHaveBeenCalled();
   });
 
+  it('denies arbitrary paths from the trusted renderer without filesystem probes', async () => {
+    const fs = require('fs');
+    const chokidar = require('chokidar');
+    const probe = jest.spyOn(fs, 'statSync');
+    const open = jest.spyOn(fs, 'openSync');
+    const event = eventFrom(APP_INDEX_URL);
+    const secret = '/unselected/private/secret.md';
+    try {
+      handlerFor('request-open-path')(event, secret);
+      handlerFor('refresh-file')(event, secret);
+      handlerFor('watch-file')(event, secret);
+      handlerFor('open-dropped-path')(event, '/unselected/private');
+      await expect(invokeFor('read-bookmarked-file')(event, secret)).resolves.toBeNull();
+      await expect(invokeFor('get-file-metadata')(event, secret)).resolves.toBeNull();
+      expect(probe).not.toHaveBeenCalled();
+      expect(open).not.toHaveBeenCalled();
+      expect(chokidar.watch).not.toHaveBeenCalled();
+    } finally {
+      probe.mockRestore();
+      open.mockRestore();
+    }
+  });
+
   it('returns nothing to an untrusted invoke', async () => {
     await expect(
       invokeFor('read-bookmarked-file')(eventFrom(attackerHtml), '/tmp/a.md')

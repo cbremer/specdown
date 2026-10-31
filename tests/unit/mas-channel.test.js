@@ -210,7 +210,7 @@ describe('Mac App Store build: sandbox file access', () => {
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
     // Restore only this block's fs spies (tests/setup.js owns Storage spies).
-    for (const name of ['readFileSync', 'watchFile', 'unwatchFile']) fs[name].mockRestore?.();
+    for (const name of ['readFileSync', 'statSync', 'watchFile', 'unwatchFile']) fs[name].mockRestore?.();
   });
 
   it('does not read a raw path that has no sandbox grant (old state migration)', () => {
@@ -221,6 +221,7 @@ describe('Mac App Store build: sandbox file access', () => {
   });
 
   it('persists a dropped file as a grant, then opens it', () => {
+    ipcHandler('note-user-picked-path')(masTrustedEvent(), file);
     ipcHandler('open-dropped-path')(masTrustedEvent(), file);
     expect(mockNativeBookmarks.createBookmark).toHaveBeenCalledWith(file);
     expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
@@ -228,6 +229,38 @@ describe('Mac App Store build: sandbox file access', () => {
     loadedElectron.app.addRecentDocument.mockClear();
     ipcHandler('request-open-path')(masTrustedEvent(), file);
     expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
+  });
+
+  it('stats dropped paths only inside an active scope and opens the resolved moved file', () => {
+    main.fileAccess.noteUserIntent(file, 'file');
+    const movedFile = path.join(dir, 'renamed.md');
+    fs.renameSync(file, movedFile);
+    const start = mockNativeBookmarks.startAccess.getMockImplementation();
+    const stop = mockNativeBookmarks.stopAccess.getMockImplementation();
+    const stat = fs.statSync;
+    let activeScopes = 0;
+    mockNativeBookmarks.startAccess.mockImplementation((bookmark) => {
+      activeScopes += 1;
+      return { ...start(bookmark), path: movedFile };
+    });
+    mockNativeBookmarks.stopAccess.mockImplementation(() => {
+      activeScopes -= 1;
+      return true;
+    });
+    const statSpy = jest.spyOn(fs, 'statSync').mockImplementation((target, ...args) => {
+      expect(target).toBe(movedFile);
+      expect(activeScopes).toBeGreaterThan(0);
+      return stat(target, ...args);
+    });
+    try {
+      ipcHandler('open-dropped-path')(masTrustedEvent(), file);
+      expect(statSpy).toHaveBeenCalledWith(movedFile);
+      expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(movedFile);
+      expect(activeScopes).toBe(0);
+    } finally {
+      mockNativeBookmarks.startAccess.mockImplementation(start);
+      mockNativeBookmarks.stopAccess.mockImplementation(stop);
+    }
   });
 
   it('records paths the preload resolved from user-picked Files', () => {
