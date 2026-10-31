@@ -2,6 +2,8 @@
 
 Latest unlocked-Mac Duo runtime results and the owner-requested centering/Find corrections are recorded in [Session 14](2026-10-31-tasks-session-14-duo-runtime.md). That follow-up supersedes the earlier locked-Mac testing status; release/account gates remain unchanged.
 
+The matching unsigned direct/MAS artifact handoff is [Session 15](2026-10-31-tasks-session-15-centered-desktop-artifacts.md). Application source remains `65716dc`; later documentation commits do not imply a new native or renderer build.
+
 Date: 2026-10-31 (America/Los_Angeles).
 
 ## Working tracker
