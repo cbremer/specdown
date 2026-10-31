@@ -4,7 +4,7 @@ Date: 2026-10-31 (America/Los_Angeles).
 
 ## Working tracker
 
-The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-20. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
+The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-23. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
 
 ## Scope and boundary
 
@@ -17,6 +17,7 @@ Work authorized overnight: inspect and fix Codex Security findings across shared
 - Fetched and fast-forwarded primary `main` from 2283d83 to 681d952 (v0.0.228).
 - Preserved the owner's uncommitted App Store artwork/copy and index changes. The tracked index also has a named backup stash, `codex-preserve-appstore-readme-2026-10-31`.
 - Implementation uses an isolated checkout with stacked branches `codex/weekend-release-controls`, `codex/weekend-security-fixes`, `codex/weekend-launch-website`, `codex/weekend-toolchain-audit` and `codex/weekend-iphone-duo`; the primary checkout remains on current published source.
+- The first weekend follow-up adds `codex/weekend-updater-cache`, `codex/weekend-annotation-store` and `codex/weekend-electron-security` after the Duo branch. Each is a separate logical commit and draft review candidate; inspect live PR heads and checks before acting.
 - The approved iOS source version remains 1.0 (11). Local simulator validation overrides only the candidate build number to 228; no new Store binary has been uploaded.
 
 ## Security work
@@ -65,6 +66,14 @@ Additional tracked residuals: filename-only annotation identity needs a lossless
 - Mac App Store initial security candidate: unsigned universal app and unpacked bookmark native module both contain x86_64 and arm64; packaged desktop and web bytes match source. MAS package excludes updater/feed and native source. ASAR SHA-256: `f738b1d178cc7af1842dbaf229a455dc0b3663e13eb710d62173ded3a59bf2be`. No signing keys were used; this is not an uploadable signed Store candidate.
 - iPhone Duo: installed simulator device type requires iOS 27.1 or newer; initial installed runtime was 27.0. Official arm64 27.1 runtime installation completed with ample local disk space and no sign-in/agreement. Actual folded Duo baseline showed content beneath the side status area. Phone-idiom gating, conditional WebView recreation and lateral-safe-area work are being addressed on a separate compatibility branch; the native pose/state evidence is recorded in [Session 08](2026-10-31-tasks-session-08-iphone-duo.md). The Mac locked before the final touch matrix; no unlock bypass or other computer was used.
 
-Review/merge order is #311, then #312, then [website/tracker PR #313](https://github.com/cbremer/specdown/pull/313), [toolchain PR #314](https://github.com/cbremer/specdown/pull/314), and the separate Duo compatibility PR, each via rebase after checks and independent review. Retarget stacked PRs after their base lands and recheck their exact heads. Do not merge release-authority changes before the owner reviews the changed release behavior. No Store action, production deployment or scanner finding closure occurred.
+## First weekend follow-up
+
+Three additional candidates extend the original stack. [Session 09](2026-10-31-tasks-session-09-updater-security.md) records the updater 6.8.11 cache-filename fix in [PR #321](https://github.com/cbremer/specdown/pull/321), including real dependency regressions that fail on 6.8.9. [Session 10](2026-10-31-tasks-session-10-annotation-storage.md) records unreadable-store and recovery-export protection in [PR #322](https://github.com/cbremer/specdown/pull/322). Independent review found and verified fixes for transient reads opening blank editors, overwriting saved collections, and losing imported extension metadata. Filename-only note identity and general recovery/restore design remain open under WK-18.
+
+[Session 11](2026-10-31-tasks-session-11-electron-security.md) records the same-major Electron 44.10.1 update on `codex/weekend-electron-security`, its initial runtime evidence and separately identified combined artifacts. The reviewed builder guard remains unchanged. Do not replace it with the failing grouped Dependabot proposal or infer full security coverage from a zero runtime npm audit. No Dependabot PR was merged or closed.
+
+Combined application revision `8303795` passed a clean install, **908 tests / 54 suites**, coverage, lint, typecheck and production build. Unsigned universal direct/MAS assembly and the unsigned iOS Release simulator build passed; all 110 iOS web files matched the final bundle. Session 11 retains exact artifact hashes and distinguishes this application revision from the subsequent documentation-only review commit. The candidate checkout at `/private/tmp/specdown-weekend-20261031` is retained for the combined source under `codex/weekend-review-candidate`; the primary checkout and owner artwork remain untouched. Final interactive native checks still require this Mac to be unlocked.
+
+Review/merge order is #311, #312, [website/tracker #313](https://github.com/cbremer/specdown/pull/313), [toolchain #314](https://github.com/cbremer/specdown/pull/314), [Duo #315](https://github.com/cbremer/specdown/pull/315), updater #321, annotation #322, then the Electron security branch, each via rebase after checks and independent review. Retarget stacked PRs after their base lands and recheck their exact heads. Do not merge release-authority changes before the owner reviews the changed release behavior. No Store action, production deployment or scanner finding closure occurred.
 
 The user approved bounded two-hour overnight follow-ups; automation `specdown-launch-weekend-follow-up` is active. It preserves the Apple account/key boundary and reads this handoff plus live state before continuing.
