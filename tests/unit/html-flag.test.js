@@ -174,10 +174,10 @@ describe('production ship workflows stay off the html branch', () => {
     expect(onBlock).not.toMatch(/\bhtml\b/);
   });
 
-  it('desktop.yml only ships from v* tags or dispatch', () => {
+  it('desktop.yml only ships through explicit dispatch', () => {
     const onBlock = workflowOnBlock('.github/workflows/desktop.yml');
     expect(onBlock).toMatch(/workflow_dispatch/);
-    expect(onBlock).toMatch(/'v\*'/);
+    expect(onBlock).not.toMatch(/tags:/);
     expect(onBlock).not.toMatch(/\bhtml\b/);
   });
 });

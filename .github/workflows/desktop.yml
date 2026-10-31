@@ -1,253 +1,165 @@
 name: Build Desktop App
 
+# Dispatch the reviewed workflow on main and choose an immutable release tag.
+# Preview is unsigned and artifact-only. Publication requires a protected
+# desktop-release environment with independent approval (see release docs).
 on:
-  # Tag pushes (e.g. from a PAT or GitHub App — GITHUB_TOKEN tag pushes
-  # do NOT trigger this; the version-bump workflow uses workflow_dispatch
-  # instead).
-  push:
-    tags:
-      - 'v*'
-  # Triggered explicitly by the version-bump "tag" job, or manually.
   workflow_dispatch:
     inputs:
+      release-tag:
+        description: Exact existing release tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
       validate-only:
-        description: Build and notarize macOS without publishing a release
+        description: Build unsigned preview artifacts without signing or publishing
         type: boolean
-        default: false
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ inputs.release-tag }}
+  cancel-in-progress: false
 
 jobs:
-  # -------------------------------------------------------
-  # macOS: DMG
-  # -------------------------------------------------------
-  build-macos:
-    name: Build macOS DMG
-    runs-on: macos-latest
-    permissions:
-      contents: write
-      issues: write # failure step files/refreshes the macos-release-failure issue
-    # Sign + notarize only when the signing secrets are configured; otherwise
-    # fall back to an unsigned build so the pipeline never hard-fails (e.g. on a
-    # fork or a quick manual dispatch). See docs/project-modernization for setup.
-    env:
-      HAS_SIGNING: ${{ secrets.MAC_CERT_P12 != '' }}
-
+  provenance:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      sha: ${{ steps.release.outputs.sha }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
-      - name: Determine release tag
-        id: get_tag
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            TAG=$(git describe --tags --abbrev=0)
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Resolve reviewed tag to immutable source
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: node scripts/release-policy.js resolve
+      - name: Require independently protected release environment
+        if: ${{ !inputs.validate-only }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/verify-release-environment.js desktop-release
 
+  build:
+    needs: provenance
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            args: --mac dmg zip --universal
+          - os: windows-latest
+            platform: win
+            args: --win nsis
+          - os: ubuntu-latest
+            platform: linux
+            args: --linux AppImage
+    runs-on: ${{ matrix.os }}
+    # An unprotected preview environment receives no signing secrets.
+    environment: ${{ inputs.validate-only && 'desktop-preview' || 'desktop-release' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.provenance.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
       - name: Install dependencies
         run: npm ci
-
-      # Signed + notarized build (Developer ID). electron-builder imports the
-      # cert from CSC_LINK/CSC_KEY_PASSWORD; `-c.mac.notarize=true` enables
-      # notarization via notarytool, which reads the APPLE_ID app-specific
-      # password and APPLE_TEAM_ID from the env below.
-      - name: Build DMG (signed + notarized)
-        if: env.HAS_SIGNING == 'true'
-        # `zip` is built alongside `dmg` because electron-updater downloads the
-        # zip (not the dmg) for macOS auto-updates. `--publish never` keeps
-        # electron-builder from uploading: it still generates the latest-mac.yml
-        # update feed locally, and the softprops step below uploads everything.
-        run: npm run desktop:build -- --mac dmg zip --universal -c.mac.notarize=true --publish never
+      - name: Verify source
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run test:ci
+      - name: Linux dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgbm-dev
+      - name: Build unsigned preview or non-macOS installer
+        if: inputs.validate-only || matrix.platform != 'mac'
+        shell: bash
+        env:
+          BUILD_ARGS: ${{ matrix.args }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run desktop:build -- $BUILD_ARGS --publish never
+      - name: Build signed and notarized macOS release
+        if: ${{ !inputs.validate-only && matrix.platform == 'mac' }}
+        shell: bash
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Unsigned fallback (no secrets configured). Produces a working DMG that
-      # macOS Gatekeeper will quarantine ("damaged") — the signed path above is
-      # the real distribution build.
-      - name: Build DMG (unsigned fallback)
-        if: env.HAS_SIGNING != 'true'
-        run: npm run desktop:build -- --mac dmg zip --universal --publish never
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify packaged macOS icon and Markdown associations
+        run: |
+          set -euo pipefail
+          test -n "$CSC_LINK" && test -n "$CSC_KEY_PASSWORD" && test -n "$APPLE_ID" && test -n "$APPLE_APP_SPECIFIC_PASSWORD" && test -n "$APPLE_TEAM_ID" || { echo 'Signing configuration is incomplete; release stopped'; exit 1; }
+          npm run desktop:build -- --mac dmg zip --universal -c.mac.notarize=true --publish never
+          codesign --verify --deep --strict 'dist/mac-universal/Specdown Desktop.app'
+          spctl --assess --type execute 'dist/mac-universal/Specdown Desktop.app'
+      - name: Verify macOS icon and associations
+        if: matrix.platform == 'mac'
         run: |
           python3 scripts/test-macos-icon.py
-          python3 scripts/macos-icon.py verify "dist/mac-universal/Specdown Desktop.app"
-
-      # Upload the installer (dmg), the auto-update artifact (zip), their
-      # blockmaps, and the latest-mac.yml update feed so electron-updater can
-      # discover and download new versions.
-      - name: Upload macOS artifacts to GitHub Release
-        if: ${{ !inputs.validate-only }}
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
+          python3 scripts/macos-icon.py verify 'dist/mac-universal/Specdown Desktop.app'
+      - name: Store exact build artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: |
+          name: desktop-${{ matrix.platform }}-${{ needs.provenance.outputs.sha }}
+          if-no-files-found: error
+          path: |
             dist/*.dmg
             dist/*.zip
-            dist/*.blockmap
-            dist/latest-mac.yml
-
-      # Loud failure: when this lane breaks, macOS users silently lose both
-      # the DMG and the latest-mac.yml update feed while Win/Linux keep
-      # publishing (exactly how the 2026-07 Apple-agreement expiry went
-      # unnoticed for three releases). File/refresh a labeled issue so the
-      # outage is visible without anyone reading Actions logs.
-      - name: Open an issue if the macOS release build failed
-        if: ${{ failure() && !inputs.validate-only }}
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const tag = '${{ steps.get_tag.outputs.tag }}' || 'unknown tag';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const label = 'macos-release-failure';
-            const title = 'macOS release build is failing';
-            const body = [
-              `The **Build macOS DMG** job failed for **${tag}**.`,
-              '',
-              `Run: ${runUrl}`,
-              '',
-              'Until this is fixed, releases publish WITHOUT a DMG or',
-              '`latest-mac.yml`, so macOS auto-update checks fail with a 404.',
-              '',
-              'Common cause: Apple 403 "required agreement … expired" — the',
-              'account holder must accept the updated agreement at',
-              'developer.apple.com, then re-run the failed job.',
-            ].join('\n');
-
-            try {
-              await github.rest.issues.getLabel({ ...context.repo, name: label });
-            } catch {
-              await github.rest.issues.createLabel({ ...context.repo, name: label, color: 'B60205' });
-            }
-
-            const open = await github.rest.issues.listForRepo({
-              ...context.repo, state: 'open', labels: label, per_page: 1,
-            });
-            if (open.data.length > 0) {
-              await github.rest.issues.createComment({
-                ...context.repo, issue_number: open.data[0].number,
-                body: `Still failing for **${tag}** — ${runUrl}`,
-              });
-            } else {
-              await github.rest.issues.create({
-                ...context.repo, title, body, labels: [label],
-              });
-            }
-
-  # -------------------------------------------------------
-  # Windows: NSIS installer (.exe)
-  # -------------------------------------------------------
-  build-windows:
-    if: ${{ !inputs.validate-only }}
-    name: Build Windows Installer
-    runs-on: windows-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-
-      - name: Determine release tag
-        id: get_tag
-        shell: bash
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            TAG=$(git describe --tags --abbrev=0)
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Windows installer
-        run: npm run desktop:build -- --win nsis --publish never
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Upload the NSIS installer, its blockmap, and the latest.yml update feed
-      # for electron-updater on Windows.
-      - name: Upload Windows artifacts to GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
-        with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: |
             dist/*.exe
+            dist/*.AppImage
             dist/*.blockmap
-            dist/latest.yml
+            dist/latest*.yml
 
-  # -------------------------------------------------------
-  # Linux: AppImage
-  # -------------------------------------------------------
-  build-linux:
+  publish:
     if: ${{ !inputs.validate-only }}
-    name: Build Linux AppImage
+    needs: [provenance, build]
     runs-on: ubuntu-latest
+    environment: desktop-release
     permissions:
       contents: write
-
+      actions: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-
-      - name: Determine release tag
-        id: get_tag
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            TAG=$(git describe --tags --abbrev=0)
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Linux build dependencies
-        run: sudo apt-get update && sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgbm-dev
-
-      - name: Build AppImage
-        run: npm run desktop:build -- --linux AppImage --publish never
+      # No dependency install, source scripts, or app build executes in this job.
+      - name: Download this run's verified artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Upload the AppImage and the latest-linux.yml update feed for
-      # electron-updater on Linux.
-      - name: Upload Linux artifacts to GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
-        with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          files: |
-            dist/*.AppImage
-            dist/latest-linux.yml
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ needs.provenance.outputs.sha }}
+        run: gh run download "$GITHUB_RUN_ID" --pattern "desktop-*-$RELEASE_SHA" --dir artifacts
+      - name: Publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.provenance.outputs.tag }}
+          RELEASE_SHA: ${{ needs.provenance.outputs.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || exit 1
+          TAG_SHA=$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq .object.sha)
+          TAG_TYPE=$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq .object.type)
+          if [ "$TAG_TYPE" = tag ]; then
+            TAG_SHA=$(gh api "repos/$GH_REPO/git/tags/$TAG_SHA" --jq .object.sha)
+          fi
+          test "$TAG_SHA" = "$RELEASE_SHA" || { echo 'Release tag changed since validation'; exit 1; }
+          gh release view "$RELEASE_TAG" >/dev/null
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true || { echo 'Refusing to overwrite an already published release'; exit 1; }
+          test -f "artifacts/desktop-mac-$RELEASE_SHA/latest-mac.yml"
+          mapfile -d '' FILES < <(find artifacts -type f -print0)
+          test "${#FILES[@]}" -gt 0
+          gh release upload "$RELEASE_TAG" "${FILES[@]}" --clobber
+          gh release edit "$RELEASE_TAG" --draft=false
