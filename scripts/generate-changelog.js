@@ -41,8 +41,17 @@ const CC_TYPE_LABELS = {
 
 // Section order in the rendered changelog.
 const CC_TYPE_ORDER = [
-  'feat', 'fix', 'perf', 'refactor', 'docs',
-  'test', 'build', 'ci', 'chore', 'style', 'revert',
+  'feat',
+  'fix',
+  'perf',
+  'refactor',
+  'docs',
+  'test',
+  'build',
+  'ci',
+  'chore',
+  'style',
+  'revert',
 ];
 
 /**
@@ -51,7 +60,9 @@ const CC_TYPE_ORDER = [
  * @returns {{ type: string, scope: string, breaking: boolean, description: string } | null}
  */
 function parseCommitSubject(subject) {
-  const m = /^(\w+)(\([^)]*\))?(!)?:\s+(.*)$/.exec(String(subject || '').trim());
+  const m = /^(\w+)(\([^)]*\))?(!)?:\s+(.*)$/.exec(
+    String(subject || '').trim()
+  );
   if (!m) return null;
   return {
     type: m[1].toLowerCase(),
@@ -66,9 +77,18 @@ function parseCommitSubject(subject) {
 // is left uncategorized so it lands in "Other Changes" rather than being
 // mislabeled. Each pattern is anchored to the start of the subject.
 const INFERENCE_RULES = [
-  [/^(add|adds|added|introduce[sd]?|implement[sed]*|support[sed]*|enable[sd]?|new)\b/i, 'feat'],
-  [/^(fix|fixe[sd]|resolve[sd]?|correct[sed]*|prevent[sed]*|stop[sed]*|repair[sed]*|patch(e[sd])?)\b/i, 'fix'],
-  [/^(refactor(e[sd])?|simplif(y|ies|ied)|rename[sd]?|reorganize[sd]?|extract[sed]*|consolidate[sd]?)\b/i, 'refactor'],
+  [
+    /^(add|adds|added|introduce[sd]?|implement[sed]*|support[sed]*|enable[sd]?|new)\b/i,
+    'feat',
+  ],
+  [
+    /^(fix|fixe[sd]|resolve[sd]?|correct[sed]*|prevent[sed]*|stop[sed]*|repair[sed]*|patch(e[sd])?)\b/i,
+    'fix',
+  ],
+  [
+    /^(refactor(e[sd])?|simplif(y|ies|ied)|rename[sd]?|reorganize[sd]?|extract[sed]*|consolidate[sd]?)\b/i,
+    'refactor',
+  ],
   [/^(doc|docs|document[sed]*)\b/i, 'docs'],
   [/^(test|tests|spec)\b/i, 'test'],
   [/^(optimi[sz]e[sd]?|perf)\b/i, 'perf'],
@@ -97,7 +117,10 @@ function inferType(subject) {
  */
 function isReleaseNoise(subject) {
   const s = String(subject || '');
-  return /\[version bump\]/i.test(s) || /^Merge (pull request|branch|remote)/i.test(s);
+  return (
+    /\[version bump\]/i.test(s) ||
+    /^Merge (pull request|branch|remote)/i.test(s)
+  );
 }
 
 /** @param {{ subject: string, cc: ReturnType<typeof parseCommitSubject> }} entry */
@@ -242,7 +265,7 @@ module.exports = {
 if (require.main === module) {
   const fs = require('fs');
   const path = require('path');
-  const { execSync } = require('child_process');
+  const { execFileSync } = require('child_process');
 
   const changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
   const readChangelog = () =>
@@ -258,18 +281,35 @@ if (require.main === module) {
     // when this runs in the bump job). No tags yet → fall back to all history.
     let range = '';
     try {
-      const prevTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim();
-      if (prevTag) range = `${prevTag}..HEAD`;
+      const previousTag = execFileSync(
+        'git',
+        ['describe', '--tags', '--abbrev=0'],
+        { encoding: 'utf8' }
+      ).trim();
+      const previousCommit = execFileSync(
+        'git',
+        ['rev-parse', '--verify', `refs/tags/${previousTag}^{commit}`],
+        { encoding: 'utf8' }
+      ).trim();
+      if (/^[0-9a-f]{40,64}$/.test(previousCommit))
+        range = `${previousCommit}..HEAD`;
     } catch {
       range = '';
     }
 
-    const cmd = `git log ${range} --no-merges --pretty=%s`.replace(/\s+/g, ' ').trim();
-    const log = execSync(cmd, { encoding: 'utf8' });
-    const commits = log.split('\n').map((s) => s.trim()).filter(Boolean);
+    const args = ['log', '--no-merges', '--pretty=%s'];
+    if (range) args.push(range);
+    args.push('--');
+    const log = execFileSync('git', args, { encoding: 'utf8' });
+    const commits = log
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const section = formatSection(commits, version, date);
     fs.writeFileSync(changelogPath, prependSection(readChangelog(), section));
-    process.stderr.write(`Updated CHANGELOG.md for v${version} (${commits.length} commits)\n`);
+    process.stderr.write(
+      `Updated CHANGELOG.md for v${version} (${commits.length} commits)\n`
+    );
   }
 }
