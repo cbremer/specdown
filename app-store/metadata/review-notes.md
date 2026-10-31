@@ -24,6 +24,7 @@ Network use: the app only goes online when the user opens a web/GitHub link or a
 document that references remote images. It contains no analytics, ads or tracking.
 
 App Transport Security: the app's own viewer is bundled and loaded locally.
-NSAllowsArbitraryLoadsInWebContent is set only so Markdown documents the user
-opens can display images hosted on plain-HTTP servers. Tapped links open in
-Safari, not inside the app.
+External document and image loads require HTTPS; the prior arbitrary HTTP
+web-content exception has been removed in this candidate. Tapped external links
+open in Safari, not inside the app. Documents are limited to 8 MiB, with additional
+rendering bounds to keep the viewer responsive.

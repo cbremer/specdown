@@ -16,17 +16,24 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let content: String
     }
 
-    weak var webView: WKWebView?
+    // The scene owns one renderer even if SwiftUI rebuilds a split-view column.
+    // Script handlers hold only a weak proxy back to this bridge.
+    var webView: WKWebView?
+    // A collapsed split view can detach the retained renderer while its
+    // sidebar still needs to present the document picker in the same window.
+    weak var presentationWindow: UIWindow?
 
     @Published private(set) var currentDocumentName = "SpecDown Document"
     @Published private(set) var recentFiles: [String]
     @Published private(set) var hasLoadedDocument = false
     @Published var showsAppIconPicker = false
+    @Published private(set) var viewerPresentationRequest: UInt = 0
 
     private var pageLoaded = false
     private var readinessGeneration = 0
     private var pendingTheme: String?
     private var pendingLayoutMode: String?
+    private var appliedLayoutMode: String?
     private var pendingFile: PendingFile?
     private var pendingError: String?
 
@@ -154,6 +161,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func pageWillLoad() {
         pageLoaded = false
+        // A WebKit process reload need not trigger a SwiftUI update. Restore
+        // the last delivered mode unless a newer layout is already queued.
+        pendingLayoutMode = pendingLayoutMode ?? appliedLayoutMode
+        appliedLayoutMode = nil
         readinessGeneration += 1
     }
 
@@ -174,11 +185,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             pendingLayoutMode = layoutMode
             return
         }
+        guard appliedLayoutMode != layoutMode else { return }
+        appliedLayoutMode = layoutMode
         evaluateJavaScript(function: "window.setIOSLayoutMode", arguments: [layoutMode], context: "setIOSLayoutMode")
     }
 
     /// Show an error toast in the web layer (e.g. an unreadable file).
     func showError(_ message: String) {
+        viewerPresentationRequest &+= 1
         guard pageLoaded else {
             pendingError = message
             return
@@ -188,6 +202,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Deliver a file's content to the web layer.
     func loadFile(name: String, content: String) {
+        viewerPresentationRequest &+= 1
         currentDocumentName = name
         hasLoadedDocument = true
         guard pageLoaded else {
@@ -354,12 +369,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     }
 
     private func topViewController() -> UIViewController? {
-        let scenes = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-        let keyWindow = scenes
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow }
-        var top = keyWindow?.rootViewController
+        // A picker or print sheet belongs to this renderer's window, including
+        // after its scene moves between a folding phone's displays.
+        var top = (webView?.window ?? presentationWindow)?.rootViewController
         while let presented = top?.presentedViewController {
             top = presented
         }
