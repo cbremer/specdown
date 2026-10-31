@@ -10,6 +10,11 @@
 // module to global scope).
 
 import { state } from '../core/state.js';
+import {
+  captureDocumentContext,
+  invalidateDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 import { isDesktop } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { closeFullscreen } from './diagrams.js';
@@ -209,6 +214,7 @@ export async function switchTab(id) {
   if (!markdownContent) return;
 
   if (tab.viewMode === 'raw') {
+    invalidateDocumentContext();
     if (state.tocVisible) {
       toggleToc(false);
     }
@@ -226,8 +232,11 @@ export async function switchTab(id) {
     markdownContent.scrollTop = tab.scrollTop;
     syncIOSChrome();
   } else {
-    await renderDoc(tab.rawMarkdown, tab.filename);
-    markdownContent.scrollTop = tab.scrollTop;
+    const rendering = renderDoc(tab.rawMarkdown, tab.filename);
+    const context = captureDocumentContext();
+    await rendering;
+    if (isDocumentContextCurrent(context))
+      markdownContent.scrollTop = tab.scrollTop;
   }
 }
 
@@ -261,6 +270,7 @@ export async function closeTab(id) {
     if (isDesktop) refreshWatchUI();
 
     if (newTab.viewMode === 'raw') {
+      invalidateDocumentContext();
       if (state.tocVisible) {
         toggleToc(false);
       }
@@ -285,6 +295,7 @@ export async function closeTab(id) {
 }
 
 export function showDropZone() {
+  invalidateDocumentContext();
   // Cleanup
   closeFullscreen();
   closeSearch();

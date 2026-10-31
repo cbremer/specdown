@@ -1,4 +1,8 @@
 // @ts-check
+import {
+  captureDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 import { DOCUMENT_MAX_DIAGRAMS, DOCUMENT_MAX_DIAGRAM_CHARS } from '../core/document-limits.js';
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
@@ -55,6 +59,7 @@ let diagramRenderGeneration = 0;
 
 export async function processMermaidDiagrams() {
     const generation = ++diagramRenderGeneration;
+    const context = captureDocumentContext();
     const root = el('markdown-content');
     if (!root) return;
     // Find all code blocks with mermaid language
@@ -72,7 +77,7 @@ export async function processMermaidDiagrams() {
     // Load the mermaid engine on demand (this is the only place — plus the theme
     // re-render — that needs it, so documents without diagrams never pay for it).
     const mermaid = await loadMermaid();
-    if (generation !== diagramRenderGeneration) return;
+    if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
 
     // Process each mermaid diagram
     for (let i = 0; i < codeBlocks.length; i++) {
@@ -87,7 +92,7 @@ export async function processMermaidDiagrams() {
 
             // Render mermaid diagram
             const { svg } = await mermaid.render(diagramId, mermaidCode);
-            if (generation !== diagramRenderGeneration) return; // superseded mid-render
+            if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
 
             // Create diagram container with mermaid source for re-rendering
             const container = createDiagramContainer(svg, diagramId, mermaidCode);
@@ -99,6 +104,7 @@ export async function processMermaidDiagrams() {
             initializeInlineDiagram(diagramId);
 
         } catch (error) {
+            if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
             console.error('Error rendering mermaid diagram:', error);
             // Keep the original code block on error
             const errorDiv = document.createElement('div');
@@ -617,6 +623,7 @@ export async function reRenderMermaidDiagrams() {
     // Shares the generation counter with processMermaidDiagrams: a new document
     // render invalidates an in-flight theme re-render, and vice versa.
     const generation = ++diagramRenderGeneration;
+    const context = captureDocumentContext();
     const roots = [];
     const markdownRoot = el('markdown-content');
     if (markdownRoot) roots.push(markdownRoot);
@@ -636,7 +643,7 @@ export async function reRenderMermaidDiagrams() {
 
     // Update mermaid theme (the engine is already loaded if diagrams exist)
     const mermaid = await loadMermaid();
-    if (generation !== diagramRenderGeneration) return;
+    if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
     mermaid.initialize(getMermaidConfig());
 
     for (const container of containers) {
@@ -656,7 +663,7 @@ export async function reRenderMermaidDiagrams() {
         try {
             // Re-render with new theme
             const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
-            if (generation !== diagramRenderGeneration) return; // superseded mid-render
+            if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
 
             // Update wrapper content
             // Preserve Mermaid's label markup: allow <foreignObject> (HTML labels for
@@ -677,6 +684,7 @@ export async function reRenderMermaidDiagrams() {
             initializeInlineDiagram(diagramId);
 
         } catch (error) {
+            if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
             console.error('Error re-rendering mermaid diagram:', error);
         }
     }

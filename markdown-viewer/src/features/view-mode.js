@@ -3,6 +3,7 @@
 // core (main.js) and is supplied via configureViewMode.
 
 import { state } from '../core/state.js';
+import { invalidateDocumentContext } from '../core/document-context.js';
 import { iconSvg } from '../core/icons.js';
 import { toggleToc } from './toc.js';
 import { syncIOSChrome } from '../platform/ios-chrome.js';
@@ -25,6 +26,7 @@ export function toggleViewMode() {
   if (!markdownContent) return;
 
   if (state.currentViewMode === 'preview') {
+    invalidateDocumentContext();
     state.currentViewMode = 'raw';
     if (state.tocVisible) {
       toggleToc(false);
