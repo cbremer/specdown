@@ -27,6 +27,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 17: final source review and TestFlight preparation](2026-10-31-tasks-session-17-testflight-preparation.md) | Signed-in portal verification, final mobile review corrections and owner-signing handoff. |
 | Oct 31, 2026 | Tasks | [Session 18: security-update numbering](2026-10-31-tasks-session-18-security-update-numbering.md) | Owner-selected 1.0.1 (228), regenerated unsigned artifacts and replacement signing packet. |
 | Oct 31, 2026 | Tasks | [Session 19: desktop refresh acceptance](2026-10-31-tasks-session-19-desktop-refresh-acceptance.md) | Reject watched/manual updates before tab mutation, preserve accepted documents, and gate renderer recents and Updated feedback. |
+| Oct 31, 2026 | Tasks | [Session 20: corrected desktop artifacts](2026-10-31-tasks-session-20-desktop-security-artifacts.md) | Unsigned desktop artifacts after refresh correction; durable packet and complete proposed recovery contract. |
+| Oct 31, 2026 | Spec | [Annotation recovery contract](2026-10-31-spec-annotation-recovery-contract.md) | Proposed identity, transactions, association, undo and lossless backup/restore acceptance; no runtime activation. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

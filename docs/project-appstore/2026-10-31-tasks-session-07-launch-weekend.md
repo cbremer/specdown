@@ -1,5 +1,7 @@
 # Session 07: launch weekend, security and next Store candidates
 
+Latest desktop correction, artifact and recovery-contract handoff: [Session 20](2026-10-31-tasks-session-20-desktop-security-artifacts.md). The frozen iOS signing packet remains separate.
+
 Latest mobile candidate numbering: **1.0.1 (228)**, selected by Chris for the security update. Use [Session 18](2026-10-31-tasks-session-18-security-update-numbering.md) for the current signing packet and [Session 17](2026-10-31-tasks-session-17-testflight-preparation.md) for final source review and portal observations. Chris retains signing and Mac App Store key setup.
 
 Latest owner direction and iOS release gate: [Session 16](2026-10-31-tasks-session-16-testflight-boundary.md) records TestFlight testing before App Review submission and the native-iOS annotation boundary follow-up. Earlier simulator/artifact results remain tied to their recorded source revisions.
