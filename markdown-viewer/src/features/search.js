@@ -62,6 +62,10 @@ function updateSearchCount() {
 }
 
 export function openSearch() {
+  // All entry points (shortcut, palette and toolbar) share this boundary.
+  // Find belongs to the document, which is obscured by fullscreen diagrams.
+  const fullscreen = el('fullscreen-overlay');
+  if (fullscreen && fullscreen.style.display !== 'none') return;
   const searchBar = el('search-bar');
   if (!searchBar) return;
   searchBar.style.display = 'flex';
