@@ -1,3 +1,4 @@
+const { documentResponseBody } = require('../helpers/document-response');
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 
 describe('Bookmarks', () => {
@@ -84,7 +85,7 @@ describe('Bookmarks', () => {
       state.tabs = [];
       global.fetch.mockResolvedValueOnce({
         ok: true,
-        text: async () => '# New',
+        body: documentResponseBody('# New'),
       });
       await recallBookmark(id);
       expect(state.tabs[0].rawMarkdown).toBe('# New');
@@ -315,7 +316,7 @@ describe('Bookmarks', () => {
     state.tabs = [];
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => '# Remote',
+      body: documentResponseBody('# Remote'),
     });
     await recallBookmark(entry.id);
     expect(fetch).toHaveBeenCalledWith(

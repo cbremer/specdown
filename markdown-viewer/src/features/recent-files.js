@@ -32,6 +32,8 @@ let recentFilesOverlay = null;
 let recentFilesPreviousFocus = null;
 /** @type {(() => void) | null} */
 let recentFilesReleaseFocus = null;
+/** @type {WeakMap<Element, string>} */
+const recentButtonReferences = new WeakMap();
 
 function loadRecent() {
   try {
@@ -179,9 +181,8 @@ export function clearRecentFiles() {
  * web surface (the native shells have their own session handling).
  */
 export function restoreLastSession() {
-  if (recentEntries.length > 0) {
-    selectRecent(recentEntries[0]);
-  }
+  // A persisted URL is history, not permission to contact its server on launch.
+  // Keep it available through Open Recent, which requires an explicit click.
 }
 
 export function closeRecentFiles() {
@@ -269,20 +270,23 @@ export function renderRecentFiles() {
   if (!list || !empty || !clear) return;
 
   const recentHadListFocus = list.contains(document.activeElement);
-  const recentFocusedRef = document.activeElement?.getAttribute('data-ref');
+  const recentFocusedRef = document.activeElement
+    ? recentButtonReferences.get(document.activeElement)
+    : undefined;
   list.innerHTML = '';
   empty.textContent = recentEntries.length === 0 ? 'No recent files yet.' : '';
   empty.hidden = recentEntries.length > 0;
   list.hidden = recentEntries.length === 0;
   clear.disabled = recentEntries.length === 0;
 
-  for (const entry of recentEntries) {
+  for (const [recentIndex, entry] of recentEntries.entries()) {
     const li = document.createElement('li');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'recent-file-item';
     btn.dataset.type = entry.type;
-    btn.dataset.ref = entry.ref;
+    btn.dataset.recentIndex = String(recentIndex);
+    recentButtonReferences.set(btn, entry.ref);
     btn.textContent = entry.title;
     btn.title = entry.ref;
     btn.addEventListener('click', (e) => {
@@ -297,7 +301,7 @@ export function renderRecentFiles() {
   if (recentHadListFocus) {
     const recentFocusTarget =
       Array.from(list.querySelectorAll('button')).find(
-        (button) => button.dataset.ref === recentFocusedRef
+        (button) => recentButtonReferences.get(button) === recentFocusedRef
       ) ||
       list.querySelector('button') ||
       recentFilesOverlay.querySelector('button');

@@ -28,7 +28,10 @@ export function configureMarked() {
             console.error('Highlight error:', err);
           }
         }
-        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escaped = code
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
         return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
       },
     },
@@ -40,6 +43,8 @@ export function getMermaidConfig() {
     startOnLoad: false,
     theme: state.currentTheme === 'dark' ? 'dark' : 'default',
     securityLevel: 'strict',
+    maxTextSize: 50000,
+    maxEdges: 500,
     fontFamily: FONT_FAMILY,
     // Render node labels as SVG <text> rather than <foreignObject> HTML.
     // Mermaid 11 defaults to HTML labels; our DOMPurify pass strips the
@@ -62,15 +67,22 @@ export function getMermaidConfig() {
 let mermaidPromise = null;
 export function loadMermaid() {
   if (!mermaidPromise) {
+    const mermaidCandidate = /** @type {any} */ (globalThis.mermaid);
     /** @type {Promise<any>} */
     const source =
-      typeof globalThis.mermaid !== 'undefined'
+      typeof mermaidCandidate?.initialize === 'function' &&
+      typeof mermaidCandidate?.render === 'function'
         ? Promise.resolve(globalThis.mermaid)
         : import('mermaid').then((module) => module.default);
-    mermaidPromise = source.then((instance) => {
-      instance.initialize(getMermaidConfig());
-      return instance;
-    });
+    mermaidPromise = source
+      .then((instance) => {
+        instance.initialize(getMermaidConfig());
+        return instance;
+      })
+      .catch((error) => {
+        mermaidPromise = null;
+        throw error;
+      });
   }
   return mermaidPromise;
 }

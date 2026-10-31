@@ -1,4 +1,8 @@
 // @ts-check
+import {
+  assertDocumentSize,
+  readDocumentResponse,
+} from '../core/document-limits.js';
 // Explicit, durable favorites. Paths/URLs reopen their current source; files
 // without a reusable reference retain a clearly labeled snapshot instead.
 import { state } from '../core/state.js';
@@ -223,6 +227,8 @@ export async function recallBookmark(id, status) {
       content = file.content;
       filename = file.filename;
     } else if (entry.type === 'url') {
+      if (!entry.ref.startsWith('https://'))
+        throw new Error('Only secure HTTPS document URLs can be opened.');
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       try {
@@ -234,11 +240,14 @@ export async function recallBookmark(id, status) {
           throw new Error(
             'URL unavailable. Check your connection or edit the address.'
           );
-        content = await response.text();
+        if (response.url && !response.url.startsWith('https://'))
+          throw new Error('The document redirected to an insecure URL.');
+        content = await readDocumentResponse(response);
       } finally {
         clearTimeout(timeout);
       }
     }
+    assertDocumentSize(content);
     // The user may have closed the dialog or changed a bookmark while loading.
     if (
       generation !== bookmarkRecallGeneration ||

@@ -123,10 +123,13 @@ describe('iOS 1.0 reviewer-facing fixes', () => {
 describe('document styles', () => {
   it('forbids <style> blocks when sanitizing rendered Markdown', () => {
     const src = fs.readFileSync(
-      path.join(__dirname, '../../markdown-viewer/src/main.js'),
+      path.join(
+        __dirname,
+        '../../markdown-viewer/src/core/document-sanitizer.js'
+      ),
       'utf8'
     );
-    expect(src).toMatch(/FORBID_TAGS:\s*\['style'\]/);
+    expect(src).toMatch(/FORBID_TAGS:\s*\[\s*'style'/);
   });
 });
 

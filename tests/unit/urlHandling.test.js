@@ -1,3 +1,4 @@
+const { documentResponseBody } = require('../helpers/document-response');
 /**
  * Unit tests for URL loading functionality
  */
@@ -22,13 +23,16 @@ describe('URL Handling', () => {
   describe('normalizeMarkdownUrl', () => {
     it('converts a GitHub blob URL to a raw githubusercontent URL', () => {
       const input = 'https://github.com/cbremer/specdown/blob/main/README.md';
-      const expected = 'https://raw.githubusercontent.com/cbremer/specdown/main/README.md';
+      const expected =
+        'https://raw.githubusercontent.com/cbremer/specdown/main/README.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
 
     it('converts a GitHub blob URL with a deep path', () => {
-      const input = 'https://github.com/user/repo/blob/feature-branch/docs/spec.md';
-      const expected = 'https://raw.githubusercontent.com/user/repo/feature-branch/docs/spec.md';
+      const input =
+        'https://github.com/user/repo/blob/feature-branch/docs/spec.md';
+      const expected =
+        'https://raw.githubusercontent.com/user/repo/feature-branch/docs/spec.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
 
@@ -44,25 +48,32 @@ describe('URL Handling', () => {
 
     it('handles http GitHub blob URLs', () => {
       const input = 'http://github.com/user/repo/blob/main/file.md';
-      const expected = 'https://raw.githubusercontent.com/user/repo/main/file.md';
+      const expected =
+        'https://raw.githubusercontent.com/user/repo/main/file.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
 
     it('converts a GitHub Enterprise blob URL to a raw URL on the same host', () => {
-      const input = 'https://github.linkedin.com/linkedin-multiproduct/scout-docs/blob/master/docs/intro.md';
-      const expected = 'https://github.linkedin.com/linkedin-multiproduct/scout-docs/raw/master/docs/intro.md';
+      const input =
+        'https://github.linkedin.com/linkedin-multiproduct/scout-docs/blob/master/docs/intro.md';
+      const expected =
+        'https://github.linkedin.com/linkedin-multiproduct/scout-docs/raw/master/docs/intro.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
 
     it('preserves the protocol for GitHub Enterprise http URLs', () => {
-      const input = 'http://git.internal.company.com/team/project/blob/develop/README.md';
-      const expected = 'http://git.internal.company.com/team/project/raw/develop/README.md';
+      const input =
+        'http://git.internal.company.com/team/project/blob/develop/README.md';
+      const expected =
+        'http://git.internal.company.com/team/project/raw/develop/README.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
 
     it('converts a GitHub Enterprise blob URL with a deep path', () => {
-      const input = 'https://github.corp.net/org/repo/blob/feature/src/docs/spec.md';
-      const expected = 'https://github.corp.net/org/repo/raw/feature/src/docs/spec.md';
+      const input =
+        'https://github.corp.net/org/repo/blob/feature/src/docs/spec.md';
+      const expected =
+        'https://github.corp.net/org/repo/raw/feature/src/docs/spec.md';
       expect(normalizeMarkdownUrl(input)).toBe(expected);
     });
   });
@@ -117,16 +128,20 @@ describe('URL Handling', () => {
 
     it('fetches the normalized URL on success and creates a tab', async () => {
       const markdown = '# Hello from URL';
-      global.fetch.mockImplementation(() => Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve(markdown),
-      }));
+      global.fetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          body: documentResponseBody(markdown),
+        })
+      );
 
-      await handleUrl('https://raw.githubusercontent.com/user/repo/main/README.md');
+      await handleUrl(
+        'https://raw.githubusercontent.com/user/repo/main/README.md'
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/user/repo/main/README.md',
-        { credentials: 'omit' }
+        { credentials: 'omit', signal: expect.any(AbortSignal) }
       );
 
       // Content area should be visible (tab was created)
@@ -135,38 +150,46 @@ describe('URL Handling', () => {
     });
 
     it('auto-converts a GitHub blob URL before fetching', async () => {
-      global.fetch.mockImplementation(() => Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('# Spec'),
-      }));
+      global.fetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          body: documentResponseBody('# Spec'),
+        })
+      );
 
       await handleUrl('https://github.com/user/repo/blob/main/spec.md');
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/user/repo/main/spec.md',
-        { credentials: 'omit' }
+        { credentials: 'omit', signal: expect.any(AbortSignal) }
       );
     });
 
     it('auto-converts a GitHub Enterprise blob URL and fetches', async () => {
-      global.fetch.mockImplementation(() => Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('# Enterprise Doc'),
-      }));
+      global.fetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          body: documentResponseBody('# Enterprise Doc'),
+        })
+      );
 
-      await handleUrl('https://github.linkedin.com/org/repo/blob/master/docs/intro.md');
+      await handleUrl(
+        'https://github.linkedin.com/org/repo/blob/master/docs/intro.md'
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://github.linkedin.com/org/repo/raw/master/docs/intro.md',
-        { credentials: 'omit' }
+        { credentials: 'omit', signal: expect.any(AbortSignal) }
       );
     });
 
     it('shows an HTTP error message when response is not ok', async () => {
-      global.fetch.mockImplementation(() => Promise.resolve({
-        ok: false,
-        status: 404,
-      }));
+      global.fetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: false,
+          status: 404,
+        })
+      );
 
       await handleUrl('https://example.com/missing.md');
 
@@ -177,7 +200,9 @@ describe('URL Handling', () => {
     });
 
     it('shows a CORS error message when fetch throws a network error', async () => {
-      global.fetch.mockImplementation(() => Promise.reject(new TypeError('Failed to fetch')));
+      global.fetch.mockImplementation(() =>
+        Promise.reject(new TypeError('Failed to fetch'))
+      );
 
       await handleUrl('https://example.com/file.md');
 
@@ -217,7 +242,7 @@ describe('URL Handling', () => {
 
         expect(global.fetch).toHaveBeenCalledWith(
           'https://example.com/unavailable.md',
-          { credentials: 'omit' }
+          { credentials: 'omit', signal: expect.any(AbortSignal) }
         );
         expect(document.querySelector('.recent-files-overlay')).toBeNull();
         const toast = document.querySelector('.toast-error[role="alert"]');
@@ -243,11 +268,15 @@ describe('URL Handling', () => {
       expect(errorEl.style.display).not.toBe('none');
 
       // Second call — should succeed and clear the error
-      global.fetch.mockImplementation(() => Promise.resolve({
-        ok: true,
-        text: () => Promise.resolve('# Good'),
-      }));
-      await handleUrl('https://raw.githubusercontent.com/user/repo/main/README.md');
+      global.fetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          body: documentResponseBody('# Good'),
+        })
+      );
+      await handleUrl(
+        'https://raw.githubusercontent.com/user/repo/main/README.md'
+      );
       expect(errorEl.style.display).toBe('none');
     });
   });

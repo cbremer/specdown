@@ -1,4 +1,5 @@
 // @ts-check
+import { documentByteLength } from '../core/document-limits.js';
 // Sticky-note annotations stored in localStorage, keyed by filename. Users
 // double-click any paragraph/heading to add a note. State is private to this
 // module.
@@ -19,11 +20,18 @@ const STORE_VERSION = 2;
 /** @typedef {{ fp: string, path: string, ordinal: number }} Anchor */
 /** @typedef {{ id: string, text: string, anchor: Anchor | null, legacyIdx: number }} Note */
 /** @typedef {{ version: number, files: Record<string, Note[]> }} Store */
-/** @typedef {{ root: HTMLElement, blocks: Element[], fps: string[], byFp: Map<string, number[]> }} BlockContext */
+/** @typedef {{ root: HTMLElement, blocks: Element[], fps: string[], headingPaths: string[], byFp: Map<string, number[]> }} BlockContext */
 
 let annotationMode = false;
 let annotationKey = '';
 let annNoteSeq = 0;
+const ANN_MAX_BYTES = 2 * 1024 * 1024;
+const ANN_MAX_DOCUMENTS = 100;
+const ANN_MAX_NOTES = 500;
+const ANN_MAX_TOTAL_NOTES = 2000;
+const ANN_MAX_TEXT = 16384;
+/** @type {HTMLElement | null} */
+let annEditorBackdrop = null;
 
 const content = () => document.getElementById('markdown-content');
 
@@ -59,30 +67,14 @@ function annNoteId() {
  * @param {Element} element
  */
 function annBlockText(element) {
-  const clone = /** @type {Element} */ (element.cloneNode(true));
-  clone.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
-  return (clone.textContent || '').replace(/\s+/g, ' ').trim();
-}
-
-/**
- * The trail of enclosing headings above an element (e.g. "Intro / Setup"),
- * hashed by the caller. Disambiguates blocks that share identical text.
- * @param {Element} target
- * @param {Element} root
- */
-function annHeadingTrail(target, root) {
-  const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
-  /** @type {{ level: number, text: string }[]} */
-  const stack = [];
-  for (const h of headings) {
-    if (h === target) break;
-    // Only headings positioned before the target contribute to its path.
-    if (!(target.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_PRECEDING)) continue;
-    const level = Number(h.tagName.charAt(1));
-    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
-    stack.push({ level, text: annBlockText(h) });
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let text = '';
+  let node;
+  while ((node = walker.nextNode()) && text.length < ANN_MAX_TEXT) {
+    if (node.parentElement?.closest('.annotation-badge')) continue;
+    text += (node.textContent || '').slice(0, ANN_MAX_TEXT - text.length);
   }
-  return stack.map((s) => s.text).join(' / ');
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 // ===========================
@@ -95,20 +87,46 @@ function annHeadingTrail(target, root) {
  * @returns {BlockContext}
  */
 function annContext(root) {
-  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR));
+  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR)).slice(
+    0,
+    5000
+  );
   /** @type {string[]} */
   const fps = [];
+  /** @type {string[]} */
+  const headingPaths = [];
+  /** @type {{level: number, text: string}[]} */
+  const annHeadingStack = [];
   /** @type {Map<string, number[]>} */
   const byFp = new Map();
   blocks.forEach((element, idx) => {
     element.setAttribute('data-annot-idx', String(idx));
-    const fp = annHash(annBlockText(element));
+    const blockText = annBlockText(element);
+    headingPaths[idx] = annHash(
+      annHeadingStack.map((heading) => heading.text).join(' / ')
+    );
+    if (/^H[1-6]$/.test(element.tagName)) {
+      const level = Number(element.tagName.charAt(1));
+      while (
+        annHeadingStack.length &&
+        annHeadingStack[annHeadingStack.length - 1].level >= level
+      )
+        annHeadingStack.pop();
+      annHeadingStack.push({ level, text: blockText.slice(0, 512) });
+    }
+    const fp = annHash(blockText);
     fps[idx] = fp;
     const bucket = byFp.get(fp);
     if (bucket) bucket.push(idx);
     else byFp.set(fp, [idx]);
   });
-  return { root: /** @type {HTMLElement} */ (root), blocks, fps, byFp };
+  return {
+    root: /** @type {HTMLElement} */ (root),
+    blocks,
+    fps,
+    headingPaths,
+    byFp,
+  };
 }
 
 /**
@@ -122,7 +140,7 @@ function annAnchorFor(ctx, idx) {
   const bucket = ctx.byFp.get(fp) || [idx];
   return {
     fp,
-    path: annHash(annHeadingTrail(ctx.blocks[idx], ctx.root)),
+    path: ctx.headingPaths[idx],
     ordinal: Math.max(0, bucket.indexOf(idx)),
   };
 }
@@ -144,21 +162,25 @@ function annResolve(ctx, note) {
     if (bucket && bucket.length) {
       if (bucket.length === 1) return { idx: bucket[0], reason: 'fp' };
       // Several blocks share the text — narrow by heading path, then ordinal.
-      const pathMatches = bucket.filter(
-        (i) => annHash(annHeadingTrail(ctx.blocks[i], ctx.root)) === a.path
-      );
+      const pathMatches = bucket.filter((i) => ctx.headingPaths[i] === a.path);
       const pool = pathMatches.length ? pathMatches : bucket;
-      if (typeof a.ordinal === 'number' && a.ordinal >= 0 && a.ordinal < pool.length) {
+      if (
+        typeof a.ordinal === 'number' &&
+        a.ordinal >= 0 &&
+        a.ordinal < pool.length
+      ) {
         return { idx: pool[a.ordinal], reason: 'fp' };
       }
       return { idx: pool[0], reason: 'fp' };
     }
     // Anchor existed but the fingerprint is gone — the block's text was edited.
-    if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'fallback' };
+    if (annValidIdx(ctx, note.legacyIdx))
+      return { idx: note.legacyIdx, reason: 'fallback' };
     return { idx: -1, reason: 'missing' };
   }
   // v1 note (no anchor): position it, then renderAnnotations upgrades it.
-  if (annValidIdx(ctx, note.legacyIdx)) return { idx: note.legacyIdx, reason: 'legacy' };
+  if (annValidIdx(ctx, note.legacyIdx))
+    return { idx: note.legacyIdx, reason: 'legacy' };
   return { idx: -1, reason: 'missing' };
 }
 
@@ -192,7 +214,12 @@ function annReadStore() {
   } catch {
     return { version: STORE_VERSION, files: {} };
   }
-  if (parsed && parsed.version === STORE_VERSION && parsed.files && typeof parsed.files === 'object') {
+  if (
+    parsed &&
+    parsed.version === STORE_VERSION &&
+    parsed.files &&
+    typeof parsed.files === 'object'
+  ) {
     return /** @type {Store} */ (parsed);
   }
   return annMigrate(parsed);
@@ -209,7 +236,9 @@ function annMigrate(parsed) {
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
     for (const [file, notes] of Object.entries(parsed)) {
       if (!notes || typeof notes !== 'object') continue;
-      const arr = annLegacyToNotes(/** @type {Record<string, string>} */ (notes));
+      const arr = annLegacyToNotes(
+        /** @type {Record<string, string>} */ (notes)
+      );
       if (arr.length) store.files[file] = arr;
     }
   }
@@ -241,10 +270,14 @@ function annWriteStore(store) {
     for (const [file, notes] of Object.entries(store.files || {})) {
       if (Array.isArray(notes) && notes.length) files[file] = notes;
     }
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ version: STORE_VERSION, files }));
+    localStorage.setItem(
+      ANNOTATIONS_KEY,
+      JSON.stringify({ version: STORE_VERSION, files })
+    );
   } catch {
-    // localStorage quota exceeded — silently ignore.
+    return false;
   }
+  return true;
 }
 
 /**
@@ -253,6 +286,8 @@ function annWriteStore(store) {
  */
 function annFileNotes(key) {
   const store = annReadStore();
+  // Never truncate the persistence model: older versions allowed larger
+  // collections, which must survive edits and anchor migration intact.
   return Array.isArray(store.files[key]) ? store.files[key] : [];
 }
 
@@ -264,7 +299,7 @@ function annPutFileNotes(key, notes) {
   const store = annReadStore();
   if (!notes || notes.length === 0) delete store.files[key];
   else store.files[key] = notes;
-  annWriteStore(store);
+  return annWriteStore(store);
 }
 
 // ===========================
@@ -295,6 +330,14 @@ export function exportAnnotations() {
  */
 function annNormalizeImportedNote(raw) {
   if (!raw || typeof raw.text !== 'string' || !raw.text) return null;
+  if (
+    raw.text.length > ANN_MAX_TEXT ||
+    String(raw.id || '').length > 256 ||
+    String(raw.anchor?.fp || '').length > 256 ||
+    String(raw.anchor?.path || '').length > 1024
+  ) {
+    throw new Error('An annotation field exceeds the supported length.');
+  }
   const anchor =
     raw.anchor && typeof raw.anchor.fp === 'string'
       ? {
@@ -312,16 +355,6 @@ function annNormalizeImportedNote(raw) {
 }
 
 /**
- * @param {Note} a
- * @param {Note} b
- */
-function annSameNote(a, b) {
-  if (a.text !== b.text) return false;
-  if (a.anchor && b.anchor) return a.anchor.fp === b.anchor.fp && a.anchor.ordinal === b.anchor.ordinal;
-  return a.legacyIdx === b.legacyIdx;
-}
-
-/**
  * Merge imported annotations into the store. Accepts both v2 (`{ version, files }`)
  * and legacy v1 (`{ file: { idx: text } }`) payloads. Existing notes are kept;
  * incoming notes are appended unless an exact duplicate already exists.
@@ -329,6 +362,17 @@ function annSameNote(a, b) {
  * @returns {boolean}
  */
 export function importAnnotations(jsonText) {
+  if (
+    typeof jsonText !== 'string' ||
+    jsonText.length > ANN_MAX_BYTES ||
+    documentByteLength(jsonText) > ANN_MAX_BYTES
+  ) {
+    showToast(
+      'Import failed: annotation backups must be no larger than 2 MiB.',
+      { type: 'error' }
+    );
+    return false;
+  }
   let incoming;
   try {
     incoming = JSON.parse(jsonText);
@@ -337,38 +381,92 @@ export function importAnnotations(jsonText) {
     return false;
   }
   if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
-    showToast('Import failed: unexpected annotations format.', { type: 'error' });
+    showToast('Import failed: unexpected annotations format.', {
+      type: 'error',
+    });
     return false;
   }
 
   const incomingFiles =
-    incoming.version === STORE_VERSION && incoming.files && typeof incoming.files === 'object'
+    incoming.version === STORE_VERSION &&
+    incoming.files &&
+    typeof incoming.files === 'object'
       ? incoming.files
       : annMigrate(incoming).files;
 
   const store = annReadStore();
   let fileCount = 0;
-  for (const [file, notes] of Object.entries(incomingFiles)) {
-    if (!Array.isArray(notes)) continue;
-    const merged = Array.isArray(store.files[file]) ? store.files[file].slice() : [];
-    for (const candidate of notes) {
-      const note = annNormalizeImportedNote(candidate);
-      if (!note) continue;
-      if (!merged.some((m) => annSameNote(m, note))) merged.push(note);
-    }
-    store.files[file] = merged;
-    fileCount += 1;
-  }
-
   try {
-    annWriteStore(store);
-  } catch {
-    showToast('Import failed: could not save (storage full?).', { type: 'error' });
+    if (Object.keys(incomingFiles).length > ANN_MAX_DOCUMENTS)
+      throw new Error('Too many documents in this backup.');
+    for (const [file, notes] of Object.entries(incomingFiles)) {
+      if (!Array.isArray(notes)) continue;
+      if (file.length > 1024 || notes.length > ANN_MAX_NOTES)
+        throw new Error('Too many annotations or an overlong document name.');
+      const merged =
+        Object.hasOwn(store.files, file) && Array.isArray(store.files[file])
+          ? store.files[file].slice()
+          : [];
+      const anchored = new Set();
+      const unanchored = new Set();
+      const legacy = new Set();
+      const addKeys = (/** @type {Note} */ note) => {
+        const key = JSON.stringify([note.text, note.legacyIdx]);
+        legacy.add(key);
+        if (note.anchor)
+          anchored.add(
+            JSON.stringify([note.text, note.anchor.fp, note.anchor.ordinal])
+          );
+        else unanchored.add(key);
+      };
+      merged.forEach(addKeys);
+      for (const candidate of notes) {
+        const note = annNormalizeImportedNote(candidate);
+        if (!note) continue;
+        const legacyKey = JSON.stringify([note.text, note.legacyIdx]);
+        const duplicate = note.anchor
+          ? anchored.has(
+              JSON.stringify([note.text, note.anchor.fp, note.anchor.ordinal])
+            ) || unanchored.has(legacyKey)
+          : legacy.has(legacyKey);
+        if (!duplicate) {
+          merged.push(note);
+          addKeys(note);
+        }
+      }
+      if (merged.length > ANN_MAX_NOTES)
+        throw new Error('A document can have at most 500 annotations.');
+      Object.defineProperty(store.files, file, {
+        value: merged,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+      fileCount += 1;
+    }
+    const collections = Object.values(store.files);
+    if (
+      collections.length > ANN_MAX_DOCUMENTS ||
+      collections.reduce((sum, notes) => sum + notes.length, 0) >
+        ANN_MAX_TOTAL_NOTES ||
+      documentByteLength(JSON.stringify(store)) > ANN_MAX_BYTES
+    )
+      throw new Error('The combined annotation collection exceeds its limit.');
+    if (!annWriteStore(store))
+      throw new Error('Could not save the annotations (storage full).');
+  } catch (error) {
+    showToast(
+      'Import failed: ' +
+        (error instanceof Error ? error.message : 'invalid annotations.'),
+      { type: 'error' }
+    );
     return false;
   }
 
   if (annotationKey) renderAnnotations(annotationKey);
-  showToast(`Imported annotations for ${fileCount} document(s).`, { type: 'success' });
+  showToast(`Imported annotations for ${fileCount} document(s).`, {
+    type: 'success',
+  });
   return true;
 }
 
@@ -380,9 +478,17 @@ export function importAnnotationsFromFile() {
   input.addEventListener('change', () => {
     const file = input.files && input.files[0];
     if (!file) return;
+    if (file.size > ANN_MAX_BYTES) {
+      showToast(
+        'Import failed: annotation backups must be no larger than 2 MiB.',
+        { type: 'error' }
+      );
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => importAnnotations(String(reader.result || ''));
-    reader.onerror = () => showToast('Could not read the file.', { type: 'error' });
+    reader.onerror = () =>
+      showToast('Could not read the file.', { type: 'error' });
     reader.readAsText(file);
   });
   input.click();
@@ -402,9 +508,12 @@ export function toggleAnnotationMode() {
 
   if (annotationMode && annotationKey) {
     attachAnnotationHandlers();
-    showToast('Annotation mode on — double-click any paragraph or heading to add a note.', {
-      type: 'info',
-    });
+    showToast(
+      'Annotation mode on — double-click any paragraph or heading to add a note.',
+      {
+        type: 'info',
+      }
+    );
   } else {
     detachAnnotationHandlers();
   }
@@ -413,7 +522,10 @@ export function toggleAnnotationMode() {
 function attachAnnotationHandlers() {
   const root = content();
   if (!root) return;
-  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR));
+  const blocks = Array.from(root.querySelectorAll(ANNOTATABLE_SELECTOR)).slice(
+    0,
+    5000
+  );
   blocks.forEach((element, idx) => {
     element.setAttribute('data-annot-idx', String(idx));
     element.classList.add('annotatable');
@@ -457,8 +569,13 @@ export function renderAnnotations(key) {
     element.classList.remove('has-annotation', 'annotation-orphaned');
   });
 
+  const storedNotes = annFileNotes(key);
+  const notes = storedNotes.slice(0, ANN_MAX_NOTES);
+  if (notes.length === 0 && !annotationMode) {
+    renderAnnotationPanel();
+    return;
+  }
   const ctx = annContext(root);
-  const notes = annFileNotes(key);
   let dirty = false;
 
   for (const note of notes) {
@@ -477,7 +594,7 @@ export function renderAnnotations(key) {
     attachAnnotationBadge(ctx.blocks[idx], note, reason === 'fallback');
   }
 
-  if (dirty) annPutFileNotes(key, notes);
+  if (dirty) annPutFileNotes(key, storedNotes);
   if (annotationMode) attachAnnotationHandlers();
   renderAnnotationPanel();
 }
@@ -496,7 +613,8 @@ function attachAnnotationBadge(element, note, orphaned) {
   element.classList.toggle('annotation-orphaned', orphaned);
 
   const badge = document.createElement('span');
-  badge.className = 'annotation-badge' + (orphaned ? ' annotation-badge-orphaned' : '');
+  badge.className =
+    'annotation-badge' + (orphaned ? ' annotation-badge-orphaned' : '');
   badge.title = orphaned
     ? `${note.text}\n(the anchored text changed — best-guess location)`
     : note.text;
@@ -518,10 +636,9 @@ function attachAnnotationBadge(element, note, orphaned) {
 let editorCleanup = null;
 
 function ensureEditor() {
-  let backdrop = document.getElementById('annotation-editor-backdrop');
-  if (backdrop) return backdrop;
-
-  backdrop = document.createElement('div');
+  if (annEditorBackdrop?.isConnected) return annEditorBackdrop;
+  const backdrop = document.createElement('div');
+  annEditorBackdrop = backdrop;
   backdrop.id = 'annotation-editor-backdrop';
   backdrop.className = 'annotation-editor-backdrop';
   backdrop.innerHTML =
@@ -544,12 +661,22 @@ function ensureEditor() {
  */
 function openAnnotationEditor(target) {
   const backdrop = ensureEditor();
-  const textarea = /** @type {HTMLTextAreaElement} */ (backdrop.querySelector('.annotation-editor-input'));
-  const deleteBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-delete'));
-  const saveBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-save'));
-  const cancelBtn = /** @type {HTMLButtonElement} */ (backdrop.querySelector('.annotation-editor-cancel'));
+  const textarea = /** @type {HTMLTextAreaElement} */ (
+    backdrop.querySelector('.annotation-editor-input')
+  );
+  const deleteBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-delete')
+  );
+  const saveBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-save')
+  );
+  const cancelBtn = /** @type {HTMLButtonElement} */ (
+    backdrop.querySelector('.annotation-editor-cancel')
+  );
 
-  const existing = target.id ? annFileNotes(annotationKey).find((n) => n.id === target.id) : null;
+  const existing = target.id
+    ? annFileNotes(annotationKey).find((n) => n.id === target.id)
+    : null;
   textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
   backdrop.style.display = 'flex';
@@ -561,12 +688,10 @@ function openAnnotationEditor(target) {
     editorCleanup = null;
   };
   const save = () => {
-    commitAnnotation(target, textarea.value);
-    close();
+    if (commitAnnotation(target, textarea.value)) close();
   };
   const remove = () => {
-    commitAnnotation(target, '');
-    close();
+    if (commitAnnotation(target, '')) close();
   };
   /** @param {KeyboardEvent} e */
   const onKey = (e) => {
@@ -605,17 +730,29 @@ function openAnnotationEditor(target) {
  */
 function commitAnnotation(target, rawText) {
   const text = String(rawText || '').trim();
+  if (text.length > ANN_MAX_TEXT) {
+    showToast('Notes can contain at most 16,384 characters.', {
+      type: 'error',
+    });
+    return false;
+  }
   const notes = annFileNotes(annotationKey);
 
   if (target.id) {
     const note = notes.find((n) => n.id === target.id);
-    if (!note) return;
+    if (!note) return false;
     if (!text) {
       notes.splice(notes.indexOf(note), 1);
     } else {
       note.text = text;
     }
   } else if (target.element && text) {
+    if (notes.length >= ANN_MAX_NOTES) {
+      showToast('A document can have at most 500 annotations.', {
+        type: 'error',
+      });
+      return false;
+    }
     const root = content();
     const ctx = root ? annContext(root) : null;
     const idx = ctx ? ctx.blocks.indexOf(target.element) : -1;
@@ -627,8 +764,15 @@ function commitAnnotation(target, rawText) {
     });
   }
 
-  annPutFileNotes(annotationKey, notes);
+  if (!annPutFileNotes(annotationKey, notes)) {
+    showToast(
+      'Could not save this note (storage full?). Your text is still in the editor.',
+      { type: 'error' }
+    );
+    return false;
+  }
   renderAnnotations(annotationKey);
+  return true;
 }
 
 // ===========================
@@ -660,8 +804,8 @@ export function renderAnnotationPanel() {
   const list = document.getElementById('annotation-list');
   const toggle = document.getElementById('annotation-list-toggle');
   const root = content();
-  const notes = annFileNotes(annotationKey);
-  const ctx = root ? annContext(root) : null;
+  const notes = annFileNotes(annotationKey).slice(0, ANN_MAX_NOTES);
+  const ctx = root && notes.length ? annContext(root) : null;
 
   if (toggle) {
     toggle.style.display = notes.length ? '' : 'none';
@@ -685,10 +829,14 @@ export function renderAnnotationPanel() {
   // Resolve each note to a block, then order rows by document position
   // (unresolved notes sink to the bottom).
   const rows = notes.map((note) => {
-    const r = ctx ? annResolve(ctx, note) : { idx: -1, reason: /** @type {const} */ ('missing') };
+    const r = ctx
+      ? annResolve(ctx, note)
+      : { idx: -1, reason: /** @type {const} */ ('missing') };
     return { note, idx: r.idx, reason: r.reason };
   });
-  rows.sort((a, b) => (a.idx < 0 ? Infinity : a.idx) - (b.idx < 0 ? Infinity : b.idx));
+  rows.sort(
+    (a, b) => (a.idx < 0 ? Infinity : a.idx) - (b.idx < 0 ? Infinity : b.idx)
+  );
 
   for (const row of rows) {
     const { note, idx, reason } = row;
@@ -706,8 +854,11 @@ export function renderAnnotationPanel() {
     note_.textContent = note.text;
     const ctxEl = document.createElement('span');
     ctxEl.className = 'annotation-list-context';
-    ctxEl.textContent = snippet || (reason === 'missing' ? '(text not found)' : '(moved or edited)');
-    if (reason === 'fallback' || reason === 'missing') ctxEl.classList.add('annotation-list-context-orphaned');
+    ctxEl.textContent =
+      snippet ||
+      (reason === 'missing' ? '(text not found)' : '(moved or edited)');
+    if (reason === 'fallback' || reason === 'missing')
+      ctxEl.classList.add('annotation-list-context-orphaned');
     jump.append(note_, ctxEl);
     jump.addEventListener('click', () => jumpToAnnotation(note.id));
 
