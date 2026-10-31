@@ -23,6 +23,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 12: document context](2026-10-31-tasks-session-12-document-context.md) | Reject stale annotation actions while preserving drafts; guard asynchronous document/diagram completions and captured PDF titles. |
 | Oct 31, 2026 | Tasks | [Session 14: Duo runtime](2026-10-31-tasks-session-14-duo-runtime.md) | Unlocked-Mac touch testing, centered diagram zoom/resize, and compact keyboard Find corrections. |
 | Oct 31, 2026 | Tasks | [Session 15: centered desktop artifacts](2026-10-31-tasks-session-15-centered-desktop-artifacts.md) | Refresh unsigned direct/MAS packaging from the centered shared viewer; preserve owner signing gates. |
+| Oct 31, 2026 | Tasks | [Session 16: TestFlight and iOS annotation boundary](2026-10-31-tasks-session-16-testflight-boundary.md) | TestFlight-before-submission direction, consistent deferred annotation behavior, and exact-build acceptance checklist. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

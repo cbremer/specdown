@@ -1,6 +1,7 @@
 // @ts-check
 import { documentByteLength } from '../core/document-limits.js';
 import { state } from '../core/state.js';
+import { isIOSNative } from '../core/platform.js';
 import {
   captureDocumentContext,
   isDocumentContextCurrent,
@@ -16,6 +17,9 @@ import {
 // or reordered, instead of drifting with a raw index. Legacy v1 stores
 // (`{ file: { idx: text } }`) are read transparently and upgraded in place the
 // first time their blocks resolve.
+// Native iOS defers this feature. Enforce that policy at its entry points and
+// storage boundary, not only in the toolbar: existing notes must remain unseen
+// and untouched until source identity and recovery are supported there.
 
 import { showToast } from './toast.js';
 
@@ -48,6 +52,7 @@ const content = () => document.getElementById('markdown-content');
 /** @param {AnnotationContext | null} context */
 function annIsContextCurrent(context) {
   return (
+    !isIOSNative &&
     !!context &&
     context.key === annotationKey &&
     isDocumentContextCurrent(context.document) &&
@@ -228,6 +233,8 @@ function annValidIdx(ctx, idx) {
  * @returns {AnnotationStoreRead}
  */
 function annReadStore() {
+  if (isIOSNative)
+    return { status: 'unavailable', raw: null, store: null };
   let raw;
   try {
     raw = localStorage.getItem(ANNOTATIONS_KEY);
@@ -379,6 +386,7 @@ function annLegacyToNotes(obj) {
 
 /** @param {Store} store */
 function annWriteStore(store) {
+  if (isIOSNative) return false;
   // Recheck at the persistence boundary too: no caller may overwrite a store
   // whose current contents are unreadable or from a different schema.
   if (!annReadStore().store) return false;
@@ -411,6 +419,7 @@ function annFileNotes(key) {
  * @param {Note[]} notes
  */
 function annPutFileNotes(key, notes) {
+  if (isIOSNative) return false;
   const result = annReadStore();
   annReportStoreProblem(result);
   if (!result.store) return false;
@@ -427,6 +436,7 @@ function annPutFileNotes(key, notes) {
  * A missing store has an empty v2 backup; inaccessible storage must throw.
  */
 export function getAnnotationsJSON() {
+  if (isIOSNative) throw new Error('Annotations are not available on native iOS.');
   const raw = localStorage.getItem(ANNOTATIONS_KEY);
   return raw === null
     ? JSON.stringify({ version: STORE_VERSION, files: {} }, null, 2)
@@ -435,6 +445,7 @@ export function getAnnotationsJSON() {
 
 /** Download all annotations as a JSON file. */
 export function exportAnnotations() {
+  if (isIOSNative) return;
   let json;
   try {
     json = getAnnotationsJSON();
@@ -512,6 +523,7 @@ function annNoteExtensions(note) {
  * @returns {boolean}
  */
 export function importAnnotations(jsonText) {
+  if (isIOSNative) return false;
   if (
     typeof jsonText !== 'string' ||
     jsonText.length > ANN_MAX_BYTES ||
@@ -665,6 +677,7 @@ export function importAnnotations(jsonText) {
 
 /** Open a file picker and import the chosen annotations JSON. */
 export function importAnnotationsFromFile() {
+  if (isIOSNative) return;
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'application/json,.json';
@@ -695,6 +708,7 @@ export function importAnnotationsFromFile() {
  * action bar) after toggling.
  */
 export function toggleAnnotationMode() {
+  if (isIOSNative) return;
   annotationMode = !annotationMode;
   const btn = document.getElementById('annotation-toggle');
   if (btn) btn.classList.toggle('active', annotationMode);
@@ -756,6 +770,7 @@ export function renderAnnotations(
   key,
   documentContext = captureDocumentContext()
 ) {
+  if (isIOSNative) return;
   if (
     !isDocumentContextCurrent(documentContext) ||
     state.currentViewMode !== 'preview'
@@ -864,6 +879,7 @@ function ensureEditor() {
  * @param {AnnotationContext | null} [context]
  */
 function openAnnotationEditor(target, context = annDocumentContext) {
+  if (isIOSNative) return;
   if (
     !annIsContextCurrent(context) ||
     (target.element && !content()?.contains(target.element))
@@ -957,6 +973,7 @@ function openAnnotationEditor(target, context = annDocumentContext) {
  * @param {AnnotationContext | null} [context]
  */
 function commitAnnotation(target, rawText, context = annDocumentContext) {
+  if (isIOSNative) return false;
   if (
     !annIsContextCurrent(context) ||
     !context ||
@@ -1044,6 +1061,7 @@ function jumpToAnnotation(id, context = annDocumentContext) {
  * sync the toolbar toggle's visibility + count.
  */
 export function renderAnnotationPanel() {
+  if (isIOSNative) return;
   const list = document.getElementById('annotation-list');
   const toggle = document.getElementById('annotation-list-toggle');
   const root = content();
@@ -1139,6 +1157,7 @@ export function renderAnnotationPanel() {
 
 /** Show/hide the annotations panel. */
 export function toggleAnnotationPanel() {
+  if (isIOSNative) return;
   const panel = document.getElementById('annotation-panel');
   if (!panel) return;
   const toggle = document.getElementById('annotation-list-toggle');
@@ -1156,6 +1175,7 @@ export function toggleAnnotationPanel() {
 
 /** Open the annotations panel (idempotent). */
 export function openAnnotationPanel() {
+  if (isIOSNative) return;
   const panel = document.getElementById('annotation-panel');
   if (!panel) return;
   renderAnnotationPanel();
@@ -1170,6 +1190,7 @@ export function openAnnotationPanel() {
  * @param {string} text
  */
 function showAnnotationPopover(anchor, text) {
+  if (isIOSNative) return;
   let popover = document.getElementById('annotation-popover');
   if (!popover) {
     popover = document.createElement('div');
