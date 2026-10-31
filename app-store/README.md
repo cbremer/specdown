@@ -3,14 +3,15 @@
 Draft listing copy, screenshots and review material for the iPhone/iPad App Store and the
 Mac App Store. Plan and tracker: [docs/project-appstore](../docs/project-appstore/).
 
-**Status: DRAFT, pre-freeze.** Everything here was produced from `main` at
+**Status: DRAFT, pre-freeze.** The original listing assets and screenshot set were produced from `main` at
 `2b5c835` (v0.0.194) plus the bundle ID change (#266), recaptured 2026-10-12, before any candidate freeze (AS-035). Screenshots
-must be recaptured from the frozen candidate; copy must be rechecked against it.
+must be recaptured from the frozen candidate; copy must be rechecked against it. The October 31 next-mobile notes are a separate draft for the upcoming security revision.
 
 | Path                                       | What                                                                                             | Plan task  |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------- |
 | `demo/`                                    | Original demo Markdown used for screenshots and App Review                                       | AS-036/038 |
 | `metadata/en-US/ios.json`, `mac.json`      | Name, subtitle, promo text, description, keywords, URLs (limits validated)                       | AS-036     |
+| `metadata/next-mobile-release.md` | Next security revision notes and owner upload/device-QA gates; draft only | WK-13/14 |
 | `metadata/review-notes.md`                 | App Review notes (no login needed)                                                               | AS-036     |
 | `metadata/privacy-policy.md`, `support.md` | Page drafts with `[PLACEHOLDERS]` for owner facts                                                | AS-037     |
 | `metadata/app-privacy-answers.md`          | Proposed App Privacy / encryption / age answers with code evidence                               | AS-040     |
