@@ -16,12 +16,14 @@ import { shareDiagramLink } from './share-links.js';
 
 /** @typedef {import('@panzoom/panzoom').PanzoomObject} PanzoomObject */
 /** @typedef {{ scale: number, x: number, y: number }} HomeState */
+/** @typedef {{ homeState: HomeState, interacted: boolean, initialPanPending: boolean, centerAfterInitialPan: boolean }} FullscreenState */
 /**
  * The fullscreen overlay carries expando properties set by this module.
  * @typedef {HTMLElement & {
  *   panzoomInstance?: any,
  *   diagramId?: string | null,
- *   fullscreenState?: { homeState: HomeState },
+ *   fullscreenState?: FullscreenState,
+ *   fullscreenCleanup?: (() => void) | null,
  *   wheelHandler?: EventListener | null,
  *   dblClickHandler?: EventListener | null,
  * }} FullscreenOverlay
@@ -204,48 +206,67 @@ function prepareInlineDiagramSvg(svgEl) {
 // ===========================
 // Diagram Fit Helpers
 // ===========================
+/** @param {HTMLElement} wrapper @param {SVGElement | null} svgElement */
+function fullscreenDiagramGeometry(wrapper, svgElement) {
+    const dims = svgElement && getSvgNaturalDimensions(svgElement);
+    const width = wrapper.clientWidth;
+    const height = wrapper.clientHeight;
+    if (!dims || ![width, height, dims.width, dims.height].every((n) => Number.isFinite(n) && n > 0)) return null;
+    return { width, height, diagramWidth: dims.width, diagramHeight: dims.height };
+}
+
+/** Center the whole SVG using Panzoom's actual (possibly clamped) scale.
+ * Manual pan remains available until a control zoom, resize or reset.
+ * @param {PanzoomObject} panzoomInstance @param {HTMLElement} wrapper
+ * @param {SVGElement | null} svgElement @param {boolean} [animate]
+ * @returns {HomeState | null}
+ */
+function centerFullscreenDiagram(panzoomInstance, wrapper, svgElement, animate = false) {
+    const geometry = fullscreenDiagramGeometry(wrapper, svgElement);
+    const scale = panzoomInstance.getScale();
+    if (!geometry || !Number.isFinite(scale) || scale <= 0) return null;
+    // CSS transform is scale(S) translate(x,y), with SVG origin and position 0,0.
+    const x = geometry.width / (2 * scale) - geometry.diagramWidth / 2;
+    const y = geometry.height / (2 * scale) - geometry.diagramHeight / 2;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    panzoomInstance.pan(x, y, { animate });
+    return { scale, ...panzoomInstance.getPan() };
+}
+
 /**
  * @param {HTMLElement} wrapper
  * @param {SVGElement} svgElement
  * @param {PanzoomObject} panzoomInstance
+ * @param {boolean} [animate]
  * @returns {HomeState}
  */
-function fitDiagramToContainer(wrapper, svgElement, panzoomInstance) {
-    const dims = getSvgNaturalDimensions(svgElement);
-    const containerWidth = wrapper.clientWidth;
-    const containerHeight = wrapper.clientHeight;
-
-    if (!dims || !containerWidth || !containerHeight) {
+function fitDiagramToContainer(wrapper, svgElement, panzoomInstance, animate = false) {
+    const geometry = fullscreenDiagramGeometry(wrapper, svgElement);
+    if (!geometry) {
         return { scale: 1, x: 0, y: 0 };
     }
 
-    // Clear all mermaid-set inline styles (e.g. max-width) that interfere with panzoom
-    svgElement.style.cssText = '';
+    // Clear Mermaid sizing without removing Panzoom's touch/selection styles.
+    svgElement.style.maxWidth = '';
+    svgElement.style.maxHeight = '';
     // Remove mermaid's width/height attributes (often "100%") so they don't conflict
     svgElement.removeAttribute('width');
     svgElement.removeAttribute('height');
     // Set explicit pixel dimensions matching the viewBox content size
-    svgElement.style.width = dims.width + 'px';
-    svgElement.style.height = dims.height + 'px';
+    svgElement.style.width = geometry.diagramWidth + 'px';
+    svgElement.style.height = geometry.diagramHeight + 'px';
     svgElement.style.position = 'absolute';
+    svgElement.style.left = '0px';
+    svgElement.style.top = '0px';
     svgElement.style.transformOrigin = '0 0';
 
     // Calculate scale to fit with 10% padding
-    const scaleX = containerWidth / dims.width;
-    const scaleY = containerHeight / dims.height;
-    const fitScale = Math.min(scaleX, scaleY) * 0.9;
-
-    // Center the diagram. Panzoom's transform is `scale(S) translate(x, y)`, so
-    // the translate is applied in the *pre-scale* coordinate space — a pan of x
-    // moves the element S*x pixels on screen. To land the scaled diagram's
-    // top-left at the centering offset, divide the pixel gap by the scale.
-    const x = (containerWidth / fitScale - dims.width) / 2;
-    const y = (containerHeight / fitScale - dims.height) / 2;
-
-    panzoomInstance.zoom(fitScale, { animate: false });
-    panzoomInstance.pan(x, y, { animate: false });
-
-    return { scale: fitScale, x: x, y: y };
+    const desired = Math.min(geometry.width / geometry.diagramWidth, geometry.height / geometry.diagramHeight) * 0.9;
+    const options = panzoomInstance.getOptions?.();
+    const minScale = Number.isFinite(options?.minScale) && Number(options?.minScale) > 0 ? Number(options?.minScale) : 0.05;
+    const maxScale = Number.isFinite(options?.maxScale) && Number(options?.maxScale) >= minScale ? Number(options?.maxScale) : Math.max(20, minScale);
+    panzoomInstance.zoom(Math.max(minScale, Math.min(maxScale, desired)), { animate });
+    return centerFullscreenDiagram(panzoomInstance, wrapper, svgElement, animate) || { scale: 1, x: 0, y: 0 };
 }
 
 /**
@@ -258,33 +279,17 @@ export function resetToFit(panzoomInstance, homeState) {
 }
 
 /**
- * Change the zoom scale while keeping the container's center point fixed.
- *
- * Panzoom's `zoom()`/`zoomIn()`/`zoomOut()` change the scale but leave the pan
- * (translate) untouched. Because the transform is `scale(S) translate(x, y)`
- * with a `0 0` origin, the on-screen position of the diagram's top-left is
- * `S * translate` — so raising S alone pushes the diagram toward the
- * bottom-right and out of view (the wheel path avoids this by zooming about the
- * cursor's focal point). Re-derive the pan so the content point under the
- * container's center stays put across the zoom.
+ * Control zoom returns the whole diagram to the viewport center at the new
+ * scale, including when a scale limit prevents any zoom change. Pointer-wheel
+ * and pinch gestures retain their native focal-point behavior.
  *
  * @param {PanzoomObject} panzoomInstance
  * @param {HTMLElement} wrapper
  * @param {() => void} applyZoom  applies the scale change (e.g. zoomIn, zoom)
  */
 export function zoomKeepingCenter(panzoomInstance, wrapper, applyZoom) {
-    const oldScale = panzoomInstance.getScale();
     applyZoom();
-    const newScale = panzoomInstance.getScale();
-    // Nothing to re-center if a scale is missing or unchanged.
-    if (!oldScale || !newScale || oldScale === newScale) return;
-    const { x, y } = panzoomInstance.getPan();
-    // Pan is in the pre-scale coordinate space, so the shift needed to hold a
-    // point fixed is the on-screen offset divided out by each scale.
-    const shift = 1 / newScale - 1 / oldScale;
-    const cx = wrapper.clientWidth / 2;
-    const cy = wrapper.clientHeight / 2;
-    panzoomInstance.pan(x + cx * shift, y + cy * shift, { animate: false });
+    centerFullscreenDiagram(panzoomInstance, wrapper, wrapper.querySelector('svg'));
 }
 
 /**
@@ -397,6 +402,7 @@ function openFullscreen(diagramId) {
 
     const fsOverlay = getFsOverlay();
     if (!fsOverlay) return;
+    closeFullscreen();
 
     // Clone SVG for fullscreen - use original mermaid source SVG attributes
     const svgClone = /** @type {SVGSVGElement} */ (svgElement.cloneNode(true));
@@ -422,8 +428,15 @@ function openFullscreen(diagramId) {
 
     // Use mutable state for deferred fit recalculation.
     const fullscreenState = {
-        homeState: fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom)
+        homeState: fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom),
+        interacted: false,
+        initialPanPending: true,
+        centerAfterInitialPan: false
     };
+    const isActive = () => fsOverlay.panzoomInstance === fullscreenPanzoom &&
+        svgClone.parentElement === fullscreenWrapper && svgClone.isConnected;
+    let fitFrame = 0;
+    let resizeFrame = 0;
     // Panzoom's constructor defers a forced `pan(startX, startY)` (0,0) via a
     // setTimeout(0) to constrain its initial values — that reset fires *after*
     // this synchronous fit and would clobber the centering back to the
@@ -432,11 +445,22 @@ function openFullscreen(diagramId) {
     // after the reset and wins. A trailing rAF refits once more against the
     // final post-layout container dimensions.
     const applyFit = () => {
+        if (!isActive() || fullscreenState.interacted) return;
         fullscreenState.homeState = fitDiagramToContainer(fullscreenWrapper, svgClone, fullscreenPanzoom);
+        updateZoomUI(fullscreenPanzoom, fsOverlay.querySelector('.fullscreen-controls'));
     };
-    setTimeout(() => {
-        applyFit();
-        requestAnimationFrame(applyFit);
+    const fitTimer = setTimeout(() => {
+        if (!isActive()) return;
+        fullscreenState.initialPanPending = false;
+        // A control may zoom before Panzoom's constructor timer forces pan(0,0).
+        // Repair that one reset at the user's current scale, then leave later
+        // interaction alone; the trailing fit frame still observes interacted.
+        if (fullscreenState.centerAfterInitialPan) {
+            centerFullscreenDiagram(fullscreenPanzoom, fullscreenWrapper, svgClone);
+            updateZoomUI(fullscreenPanzoom, fsOverlay.querySelector('.fullscreen-controls'));
+            fullscreenState.centerAfterInitialPan = false;
+        } else applyFit();
+        fitFrame = requestAnimationFrame(applyFit);
     }, 0);
 
     // Store for cleanup
@@ -444,18 +468,51 @@ function openFullscreen(diagramId) {
     fsOverlay.diagramId = diagramId;
     fsOverlay.fullscreenState = fullscreenState;
 
+    // A detail column can resize without a window resize (sidebar/fold/safe
+    // area). Keep the user's scale and center the SVG in its actual new box.
+    let previousWidth = fullscreenWrapper.clientWidth;
+    let previousHeight = fullscreenWrapper.clientHeight;
+    const recenterOnResize = () => {
+        if (!isActive()) return;
+        const geometry = fullscreenDiagramGeometry(fullscreenWrapper, svgClone);
+        if (!geometry || (geometry.width === previousWidth && geometry.height === previousHeight)) return;
+        previousWidth = geometry.width;
+        previousHeight = geometry.height;
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(() => {
+            if (!isActive()) return;
+            centerFullscreenDiagram(fullscreenPanzoom, fullscreenWrapper, svgClone);
+            updateZoomUI(fullscreenPanzoom, fsOverlay.querySelector('.fullscreen-controls'));
+        });
+    };
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(recenterOnResize) : null;
+    if (resizeObserver) resizeObserver.observe(fullscreenWrapper);
+    else window.addEventListener('resize', recenterOnResize);
+    const markInteraction = () => { fullscreenState.interacted = true; };
+    svgClone.addEventListener('panzoomstart', markInteraction);
+    fsOverlay.fullscreenCleanup = () => {
+        clearTimeout(fitTimer);
+        cancelAnimationFrame(fitFrame);
+        cancelAnimationFrame(resizeFrame);
+        resizeObserver?.disconnect();
+        window.removeEventListener('resize', recenterOnResize);
+        svgClone.removeEventListener('panzoomstart', markInteraction);
+    };
+
     // Setup fullscreen controls with fresh event listeners
     setupFullscreenControls(fullscreenPanzoom, fullscreenWrapper, fullscreenState);
 
     if (!isIOSNative) {
         // Setup minimap
         requestAnimationFrame(() => {
+            if (!isActive()) return;
             updateMinimap(svgClone);
             updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
         });
 
         // Update minimap viewport on pan/zoom
         svgClone.addEventListener('panzoomchange', () => {
+            if (!isActive()) return;
             updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
         });
     }
@@ -467,11 +524,12 @@ function openFullscreen(diagramId) {
 /**
  * @param {PanzoomObject} panzoomInstance
  * @param {HTMLElement} wrapper
- * @param {{ homeState: HomeState }} fullscreenState
+ * @param {FullscreenState} fullscreenState
  */
 function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const fsOverlay = getFsOverlay();
     if (!fsOverlay) return;
+    const isActive = () => fsOverlay.panzoomInstance === panzoomInstance;
     const controls = fsOverlay.querySelector('.fullscreen-controls');
     if (!controls) return;
     const zoomInBtn = controls.querySelector('.zoom-in');
@@ -504,33 +562,51 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     if (shareBtn && newShare) shareBtn.replaceWith(newShare);
     closeBtn.replaceWith(newClose);
 
+    const markControlZoom = () => {
+        fullscreenState.interacted = true;
+        if (fullscreenState.initialPanPending) fullscreenState.centerAfterInitialPan = true;
+    };
+
     // Add new listeners
     on(newZoomIn, 'click', (e) => {
         e.stopPropagation();
-        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomIn());
+        if (!isActive()) return;
+        markControlZoom();
+        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomIn({ animate: false }));
         updateZoomUI(panzoomInstance, controls);
     });
 
     on(newZoomOut, 'click', (e) => {
         e.stopPropagation();
-        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomOut());
+        if (!isActive()) return;
+        markControlZoom();
+        zoomKeepingCenter(panzoomInstance, wrapper, () => panzoomInstance.zoomOut({ animate: false }));
         updateZoomUI(panzoomInstance, controls);
     });
 
     on(newReset, 'click', (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, fullscreenState.homeState);
-        updateZoomUI(panzoomInstance, controls);
+        resetCurrentFit();
     });
+
+    const resetCurrentFit = () => {
+        if (!isActive()) return;
+        markControlZoom();
+        const svg = wrapper.querySelector('svg');
+        if (svg) fullscreenState.homeState = fitDiagramToContainer(wrapper, svg, panzoomInstance, true);
+        updateZoomUI(panzoomInstance, controls);
+    };
 
     const newZoomRange = controls.querySelector('.zoom-range');
     on(newZoomRange, 'input', (e) => {
         e.stopPropagation();
+        if (!isActive()) return;
+        markControlZoom();
         const target = /** @type {HTMLInputElement} */ (e.target);
         const targetPercent = Number(target.value);
-        if (!isNaN(targetPercent)) {
+        if (Number.isFinite(targetPercent) && targetPercent > 0) {
             zoomKeepingCenter(panzoomInstance, wrapper, () =>
-                panzoomInstance.zoom(targetPercent / 100)
+                panzoomInstance.zoom(targetPercent / 100, { animate: false })
             );
             updateZoomUI(panzoomInstance, controls);
         }
@@ -538,21 +614,25 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
 
     on(newExportSvg, 'click', (e) => {
         e.stopPropagation();
+        if (!isActive()) return;
         downloadDiagramSvg(fsOverlay.diagramId || '');
     });
 
     on(newExportPng, 'click', (e) => {
         e.stopPropagation();
+        if (!isActive()) return;
         downloadDiagramPng(fsOverlay.diagramId || '');
     });
 
     on(newShare, 'click', (e) => {
         e.stopPropagation();
+        if (!isActive()) return;
         shareDiagramLink(fsOverlay.diagramId || '');
     });
 
     on(newClose, 'click', (e) => {
         e.stopPropagation();
+        if (!isActive()) return;
         closeFullscreen();
     });
 
@@ -561,6 +641,8 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const wheelHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isActive()) return;
+        fullscreenState.interacted = true;
         panzoomInstance.zoomWithWheel(/** @type {WheelEvent} */ (e));
         updateZoomUI(panzoomInstance, controls);
     };
@@ -572,8 +654,7 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     /** @type {EventListener} */
     const dblClickHandler = (e) => {
         e.stopPropagation();
-        resetToFit(panzoomInstance, fullscreenState.homeState);
-        updateZoomUI(panzoomInstance, controls);
+        resetCurrentFit();
     };
 
     wrapper.addEventListener('dblclick', dblClickHandler);
@@ -584,6 +665,8 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
 export function closeFullscreen() {
     const fsOverlay = getFsOverlay();
     if (!fsOverlay) return;
+    fsOverlay.fullscreenCleanup?.();
+    fsOverlay.fullscreenCleanup = null;
 
     // Cleanup panzoom instance
     if (fsOverlay.panzoomInstance) {

@@ -1,5 +1,7 @@
 # Session 07: launch weekend, security and next Store candidates
 
+Latest unlocked-Mac Duo runtime results and the owner-requested centering/Find corrections are recorded in [Session 14](2026-10-31-tasks-session-14-duo-runtime.md). That follow-up supersedes the earlier locked-Mac testing status; release/account gates remain unchanged.
+
 Date: 2026-10-31 (America/Los_Angeles).
 
 ## Working tracker
