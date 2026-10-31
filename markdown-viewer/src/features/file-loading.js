@@ -3,6 +3,11 @@
 // GitHub repo browser). Opening content creates a tab (tabs core, main.js),
 // supplied via configureFileLoading.
 
+import {
+  DOCUMENT_MAX_BYTES,
+  assertDocumentSize,
+  readDocumentResponse,
+} from '../core/document-limits.js';
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
@@ -43,10 +48,22 @@ export function handleFileSelect(e) {
 /** @param {File} file */
 export function handleFile(file) {
   // Validate file type
-  const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  const fileExtension = file.name
+    .substring(file.name.lastIndexOf('.'))
+    .toLowerCase();
 
   if (!VALID_EXTENSIONS.includes(fileExtension)) {
-    showToast('Please select a valid Markdown file (.md or .markdown)', { type: 'warning' });
+    showToast('Please select a valid Markdown file (.md or .markdown)', {
+      type: 'warning',
+    });
+    return;
+  }
+
+  if (file.size > DOCUMENT_MAX_BYTES) {
+    showToast(
+      'This document is too large. SpecDown supports files up to 8 MiB.',
+      { type: 'error' }
+    );
     return;
   }
 
@@ -64,6 +81,17 @@ export function handleFile(file) {
     const content = /** @type {string} */ (reader.result);
     // A browser File also exposes size + last-modified; carry them so the File
     // info sheet can show them on the web surface (where there's no path).
+    try {
+      assertDocumentSize(content);
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : 'Could not read this document.',
+        { type: 'error' }
+      );
+      return;
+    }
     openTabFromFile(file.name, content, filePath, {
       size: file.size,
       lastModified: file.lastModified,
@@ -119,15 +147,17 @@ function clearUrlError() {
 export async function handleUrl(url) {
   clearUrlError();
 
-  if (!url || !/^https?:\/\//.test(url)) {
-    showUrlError('Please enter a valid URL starting with http:// or https://');
+  if (!url || !/^https:\/\//i.test(url)) {
+    showUrlError('Please enter a valid URL starting with https://');
     return;
   }
 
   const urlInput = /** @type {HTMLInputElement | null} */ (el('url-input'));
 
   // Check if this is a GitHub repo URL to show the file browser
-  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(url);
+  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(
+    url
+  );
   if (isRepoBrowserUrl) {
     const handled = await handleRepoUrl(url, {
       clearError: clearUrlError,
@@ -144,21 +174,29 @@ export async function handleUrl(url) {
   const filename = getFilenameFromUrl(url);
 
   try {
-    const response = await fetch(fetchUrl, { credentials: 'omit' });
+    const response = await fetch(fetchUrl, {
+      credentials: 'omit',
+      signal: AbortSignal.timeout(30000),
+    });
     if (!response.ok) {
       showUrlError('Failed to fetch URL: HTTP ' + response.status);
       return;
     }
-    const markdown = await response.text();
+    if (response.url && !response.url.startsWith('https://'))
+      throw new Error('The document redirected to an insecure URL.');
+    const markdown = await readDocumentResponse(response);
     if (urlInput) urlInput.value = '';
     // Record the source URL so the File info sheet can show where it came from.
     openTabFromFile(filename, markdown, null, { url });
     // Remember this URL for one-click re-open from Open Recent.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();
-  } catch {
+  } catch (error) {
     showUrlError(
-      'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
+      error instanceof Error &&
+        /^(?:This document|The document)/.test(error.message)
+        ? error.message
+        : 'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
     );
   }
 }

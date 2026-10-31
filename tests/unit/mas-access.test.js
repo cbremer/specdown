@@ -96,19 +96,6 @@ describe('readMasGrants (storage format / migration)', () => {
   });
 });
 
-describe('createDirectAccess', () => {
-  it('runs every read directly, exactly like the unsandboxed app', () => {
-    const access = createDirectAccess();
-    expect(access.withAccess('/a.md', (p) => p + '!')).toEqual({
-      ok: true,
-      path: '/a.md',
-      value: '/a.md!',
-    });
-    expect(access.noteUserIntent('/a.md', 'file')).toBe(false);
-    expect(access.hold('/a.md').path).toBe('/a.md');
-  });
-});
-
 describe('createMasAccess', () => {
   let store;
   let native;
@@ -332,6 +319,21 @@ describe('createMasAccess', () => {
     access.forget(FILE);
     expect(store.data[MAS_GRANTS_KEY].entries).toEqual({});
     expect(access.hasGrant(FILE)).toBe(false);
+  });
+
+  it.each(['old', 'new'])('forget revokes every alias of a moved item via its %s path', (which) => {
+    native.live.add(FILE);
+    access.noteUserIntent(FILE, 'file');
+    const moved = '/Users/me/archive/plan.md';
+    native.moved.set(FILE, moved);
+    expect(access.withAccess(FILE, (p) => p).path).toBe(moved);
+    access.forget(which === 'old' ? FILE : moved);
+    expect(access.hasGrant(FILE)).toBe(false);
+    expect(access.hasGrant(moved)).toBe(false);
+    expect(store.data[MAS_GRANTS_KEY].entries).toEqual({});
+    const relaunched = createMasAccess({ getStore: () => store, native });
+    expect(relaunched.withAccess(FILE, jest.fn()).ok).toBe(false);
+    expect(relaunched.withAccess(moved, jest.fn()).ok).toBe(false);
   });
 
   it('caps the store to the most recent grants', () => {

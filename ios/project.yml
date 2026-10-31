@@ -72,7 +72,7 @@ targets:
           UISceneConfigurations: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
-          NSAllowsArbitraryLoadsInWebContent: true
+          NSAllowsArbitraryLoadsInWebContent: false
         # Register SpecDown as a viewer for Markdown files so it appears in the
         # share sheet and "Open With…", and can open files in place from the
         # Files app. Incoming URLs are handled in ContentView via .onOpenURL.

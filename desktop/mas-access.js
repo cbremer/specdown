@@ -3,8 +3,8 @@
 // main.js reads every user file through one of these objects, so the same
 // call sites work in both builds:
 //
-//   - direct: the Developer ID app is not sandboxed — access is a no-op
-//     wrapper around the read, exactly as before.
+//   - direct: main-process grants limit access to explicitly selected files
+//     and folders, even though the operating system does not sandbox it.
 //   - mas: the App Sandbox only lets us read what the user granted (open/save
 //     panels, Finder opens, drag-and-drop), and only until quit. Grants are
 //     persisted as security-scoped bookmarks and every read starts/stops
@@ -71,19 +71,7 @@ function loadMasNative(log) {
   }
 }
 
-/** Direct channel: no sandbox, so every path is readable as before. */
-function createDirectAccess() {
-  return {
-    channel: 'direct',
-    noteUserIntent: () => false,
-    withAccess: (target, fn) => ({ ok: true, path: target, value: fn(target) }),
-    withAccessAsync: async (target, fn) => ({ ok: true, path: target, value: await fn(target) }),
-    hold: (target) => ({ path: target, release: () => {} }),
-    forget: () => {},
-    flushPendingGrants: () => false,
-    hasGrant: () => true,
-  };
-}
+const { createDirectAccess } = require('./direct-access');
 
 /**
  * @param {{
@@ -323,10 +311,26 @@ function createMasAccess(deps) {
 
     /** Drop a persisted grant (e.g. the custom theme was cleared). */
     forget(target) {
-      sessionGrants.delete(target);
       const { entries } = loadGrants();
-      if (!entries[target]) return;
-      delete entries[target];
+      // Moves leave aliases behind. Revoke the entire connected component,
+      // including earlier moves whose bookmark bytes have since been refreshed.
+      const keys = new Set([target]);
+      const bookmarks = new Set();
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const [key, entry] of Object.entries(entries)) {
+          if (keys.has(key) || keys.has(entry.movedTo) || bookmarks.has(entry.bookmark)) {
+            if (!keys.has(key)) { keys.add(key); changed = true; }
+            if (entry.movedTo && !keys.has(entry.movedTo)) { keys.add(entry.movedTo); changed = true; }
+            if (!bookmarks.has(entry.bookmark)) { bookmarks.add(entry.bookmark); changed = true; }
+          }
+        }
+      }
+      for (const key of keys) {
+        sessionGrants.delete(key);
+        delete entries[key];
+      }
       saveGrants(entries);
     },
 

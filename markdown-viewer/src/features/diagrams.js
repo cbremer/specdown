@@ -1,4 +1,5 @@
 // @ts-check
+import { DOCUMENT_MAX_DIAGRAMS, DOCUMENT_MAX_DIAGRAM_CHARS } from '../core/document-limits.js';
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
 import { isIOSNative } from '../core/platform.js';
@@ -23,7 +24,8 @@ import { shareDiagramLink } from './share-links.js';
  */
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
-const getFsOverlay = () => /** @type {FullscreenOverlay | null} */ (el('fullscreen-overlay'));
+const diagramFullscreenOverlay = /** @type {FullscreenOverlay | null} */ (document.getElementById('fullscreen-overlay'));
+const getFsOverlay = () => diagramFullscreenOverlay;
 
 /**
  * Null-safe addEventListener.
@@ -59,6 +61,13 @@ export async function processMermaidDiagrams() {
     const codeBlocks = root.querySelectorAll('code.language-mermaid');
 
     if (codeBlocks.length === 0) return;
+    if (codeBlocks.length > DOCUMENT_MAX_DIAGRAMS) {
+        const limitNotice = document.createElement('p');
+        limitNotice.className = 'mermaid-error';
+        limitNotice.textContent = 'This document has more than 100 diagrams. Their source is shown instead.';
+        root.prepend(limitNotice);
+        return; // Complete the rest of the document's TOC/annotation setup.
+    }
 
     // Load the mermaid engine on demand (this is the only place — plus the theme
     // re-render — that needs it, so documents without diagrams never pay for it).
@@ -72,6 +81,7 @@ export async function processMermaidDiagrams() {
         const preElement = codeBlock.parentElement;
 
         try {
+            if (mermaidCode.length > DOCUMENT_MAX_DIAGRAM_CHARS) throw new Error('This diagram is too large (maximum 50,000 characters).');
             // Generate unique ID
             const diagramId = `mermaid-diagram-${i}-${Date.now()}`;
 

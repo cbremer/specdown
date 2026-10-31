@@ -1,5 +1,5 @@
-// Backport https://github.com/electron-userland/electron-builder/pull/10172.
-// Remove when upgrading to a release containing the upstream correction.
+// Backport https://github.com/electron-userland/electron-builder/pull/10172
+// for 26.15.3; verify the upstream correction without rewriting 26.18.1.
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -19,7 +19,8 @@ const replacements = [
 ];
 
 function patchSource(source, version) {
-  if (version !== '26.15.3') {
+  const needsBackport = version === '26.15.3';
+  if (!needsBackport && version !== '26.18.1') {
     throw new Error(
       `Review macOS keychain backport for app-builder-lib ${version}`
     );
@@ -32,6 +33,7 @@ function patchSource(source, version) {
   )
     return source;
   if (
+    !needsBackport ||
     !replacements.every(
       ([before, after]) =>
         source.split(before).length === 2 && !source.includes(after)
@@ -57,7 +59,7 @@ if (require.main === module) {
   const source = fs.readFileSync(filename, 'utf8');
   const patched = patchSource(source, version);
   if (patched !== source) fs.writeFileSync(filename, patched);
-  console.log('Verified electron-builder macOS keychain password backport');
+  console.log('Verified electron-builder macOS keychain password handling');
 }
 
 module.exports = { patchSource };
