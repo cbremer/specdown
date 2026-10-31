@@ -10,6 +10,7 @@
 // module to global scope).
 
 import { state } from '../core/state.js';
+import { prepareMarkdownDocument } from '../core/prepare-document.js';
 import {
   captureDocumentContext,
   invalidateDocumentContext,
@@ -50,7 +51,7 @@ const setDisplay = (/** @type {string} */ id, /** @type {string} */ value) => {
 };
 
 // Render-core / desktop callbacks, wired by configureTabs in init().
-/** @type {(content: string, filename: string) => any} */
+/** @type {(content: string, filename: string, prepared?: { html: string }) => any} */
 let renderDoc = () => {};
 /** @type {() => void} */
 let refreshWatchUI = () => {};
@@ -155,13 +156,29 @@ export function renderTabBar() {
  * @param {import('../core/state.js').TabSourceMeta | null} [sourceMeta] Origin
  *   metadata for pathless tabs (web File size/last-modified, or a source URL),
  *   shown in the File info sheet.
+ * @returns {boolean} Whether the document was accepted, before async diagrams.
  */
 export function createTab(filename, content, filePath, sourceMeta) {
   if (state.tabs.length >= MAX_TABS) {
     showToast('Maximum of ' + MAX_TABS + ' tabs reached. Close a tab to open another file.', {
       type: 'warning',
     });
-    return;
+    return false;
+  }
+
+  // Failed opens must leave the current tab, raw/preview view and document
+  // context intact. Prepare before allocating an ID, watching or saving state.
+  let prepared;
+  try {
+    prepared = prepareMarkdownDocument(content);
+  } catch (error) {
+    showToast(
+      error instanceof Error && error.message.startsWith('This document')
+        ? error.message
+        : 'Error rendering markdown content. Please check the file format.',
+      { type: 'error' }
+    );
+    return false;
   }
 
   // Save current tab state before switching
@@ -192,7 +209,8 @@ export function createTab(filename, content, filePath, sourceMeta) {
     refreshWatchUI();
     persistSession();
   }
-  renderDoc(content, filename);
+  renderDoc(content, filename, prepared);
+  return true;
 }
 
 /** @param {number} id */
