@@ -1,0 +1,54 @@
+name: Desktop Package Validation
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'desktop/**'
+      - 'electron-builder*.js'
+      - 'scripts/patch-macos-keychain.js'
+      - '.github/workflows/desktop-validation.yml'
+
+# Compatibility checks have no release, signing or environment authority.
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Unsigned package (${{ matrix.platform }})
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macOS
+            args: --mac dir --universal
+          - os: windows-latest
+            platform: Windows
+            args: --win nsis
+          - os: ubuntu-latest
+            platform: Linux
+            args: --linux AppImage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build unsigned package
+        shell: bash
+        env:
+          BUILD_ARGS: ${{ matrix.args }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run desktop:build -- $BUILD_ARGS --publish never
