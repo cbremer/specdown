@@ -1,147 +1,86 @@
 name: Bump version on merge
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: version-bump-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  # -----------------------------------------------------------------
-  # bump: commits a version bump directly to main when new code lands.
-  # Uses ADMIN_PAT so the push is from a repo admin, bypassing branch
-  # protection. The [version bump] marker prevents infinite loops.
-  # For pull_request events it is a no-op so the required "bump"
-  # status check passes on every PR.
-  #
-  # SECURITY (action item for the repo owner): ADMIN_PAT is a standing
-  # admin-scoped credential — if it leaks, an attacker can push directly to
-  # main. Prefer replacing it with a GitHub App installation token (or at
-  # minimum a fine-grained PAT scoped to this repo with only `contents:write`
-  # + a branch-protection bypass entry for the app/bot), so the blast radius
-  # of a leak is one repo's contents rather than admin over the account.
-  # -----------------------------------------------------------------
+  # Keep the existing required check name. Version changes now go through a
+  # normal PR; this workflow cannot bypass review or merge its own proposal.
   bump:
     runs-on: ubuntu-latest
-
-    # For push: only run if NOT a version bump commit (prevents infinite loop)
-    # For PR: always run (provides the required "bump" status check)
-    if: >-
-      github.event_name == 'pull_request' ||
-      !contains(github.event.head_commit.message, '[version bump]')
-
     permissions:
       contents: write
-
+      pull-requests: write
+      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: github.event_name == 'push'
         with:
-          token: ${{ secrets.ADMIN_PAT }}
-          # Full history + tags so the changelog can diff against the previous
-          # release tag (git describe needs them).
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: github.event_name == 'push'
         with:
-          node-version: 22
-
-      - name: Configure git
+          node-version: '22'
+      - name: Classify the reviewed commit
+        id: policy
         if: github.event_name == 'push'
+        run: node scripts/release-policy.js classify
+      - name: Prepare version proposal without npm lifecycle scripts
+        if: steps.policy.outputs.action == 'prepare'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump patch version
-        if: github.event_name == 'push'
-        run: npm version patch --no-git-tag-version
-
-      - name: Update changelog
-        if: github.event_name == 'push'
-        run: node scripts/generate-changelog.js
-
-      - name: Commit and push version bump to main
-        if: github.event_name == 'push'
+          npm version patch --ignore-scripts --no-git-tag-version
+          node scripts/sync-version.js
+          node scripts/generate-changelog.js
+      - name: Open normal version PR
+        if: steps.policy.outputs.action == 'prepare'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
-          git add package.json markdown-viewer/src/main.js CHANGELOG.md
-          git commit -m "Bump version to v${VERSION} [version bump]"
-          git push origin main
-
-  # -----------------------------------------------------------------
-  # tag: after a version-bump commit lands on main, create the
-  # version tag, then explicitly trigger the desktop build and
-  # static deploy workflows.
-  #
-  # Why explicit triggers? Tags pushed with GITHUB_TOKEN do NOT fire
-  # push-tag events for other workflows (GitHub prevents this to
-  # avoid infinite loops). Using gh workflow run (workflow_dispatch)
-  # works with GITHUB_TOKEN and gives us precise control.
-  # -----------------------------------------------------------------
-  tag:
-    runs-on: ubuntu-latest
-
-    if: >-
-      github.event_name == 'push' &&
-      contains(github.event.head_commit.message, '[version bump]')
-
-    permissions:
-      contents: write
-      actions: write
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Create and push tag
-        id: tag
+          BRANCH="codex/version-bump-${VERSION}-${GITHUB_SHA:0:12}"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          git add -- package.json package-lock.json markdown-viewer/src/main.js CHANGELOG.md
+          git commit -m "chore: prepare v${VERSION} release"
+          gh auth setup-git
+          git push origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --base main --head "$BRANCH" --title "chore: prepare v${VERSION} release" --body 'Generated version-only proposal. Required checks and independent review must pass before rebase merging. This automation does not merge or bypass branch protection.'
+          gh workflow run ci.yml --ref "$BRANCH"
+          gh workflow run version-bump.yml --ref "$BRANCH"
+      - name: Create immutable tag for a reviewed version-only commit
+        if: steps.policy.outputs.action == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
           TAG="v${VERSION}"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # If the tag already exists (e.g. from a previous failed run),
-          # delete it so we can recreate it on the correct commit.
-          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
-            echo "::warning::Tag ${TAG} already exists on remote — replacing it"
-            git push origin --delete "${TAG}" 2>/dev/null || true
-          fi
-
-          git tag -a "${TAG}" -m "${TAG}"
-          git push origin "${TAG}"
-
-      # Create the GitHub Release up front with the changelog notes as its body,
-      # so the platform build jobs (which attach the DMG/EXE/AppImage to this
-      # same tag via softprops/action-gh-release) leave the notes intact. If the
-      # release already exists, just update its body.
-      - name: Publish release notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          NOTES=$(node scripts/generate-changelog.js --latest)
-          if [ -z "${NOTES}" ]; then
-            NOTES="Release ${TAG}"
-          fi
-          if gh release view "${TAG}" >/dev/null 2>&1; then
-            gh release edit "${TAG}" --title "${TAG}" --notes "${NOTES}"
+          EXISTING=$(git ls-remote origin "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          if [ -n "$EXISTING" ]; then
+            git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+            test "$(git rev-parse "$TAG^{commit}")" = "$GITHUB_SHA" || { echo 'Release tag already belongs to another commit'; exit 1; }
           else
-            gh release create "${TAG}" --title "${TAG}" --notes "${NOTES}"
+            git tag "$TAG" "$GITHUB_SHA"
+            gh auth setup-git
+            git push origin "refs/tags/$TAG"
           fi
-
-      - name: Trigger desktop build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run desktop.yml --ref main
-
-      - name: Trigger static deploy
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run static.yml --ref main
+          node scripts/generate-changelog.js --latest > "$RUNNER_TEMP/release-notes.md"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+          echo 'Draft release created. Desktop signing/publication requires the protected release workflow; Apple uploads remain manual.'
