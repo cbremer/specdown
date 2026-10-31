@@ -10,6 +10,11 @@
 import { marked } from 'marked';
 import { sanitizeDocumentHtml } from './core/document-sanitizer.js';
 import { assertDocumentComplexity } from './core/document-limits.js';
+import {
+  captureDocumentContext,
+  invalidateDocumentContext,
+  isDocumentContextCurrent,
+} from './core/document-context.js';
 // Side-effect import of a highlight.js theme; Vite resolves it at build time.
 // TypeScript 6+ reports TS2882 for an untyped side-effect import (the .css file
 // resolves physically but has no type declaration), so suppress it here.
@@ -445,12 +450,14 @@ function setupEventListeners() {
  * @param {string} filename
  */
 async function renderMarkdown(content, filename) {
+    let context = captureDocumentContext();
     try {
         assertDocumentComplexity(content);
         // Parse and validate before replacing the current document's state/UI.
         const htmlContent = /** @type {string} */ (marked.parse(content));
         const safeHtmlContent = sanitizeDocumentHtml(htmlContent);
 
+        context = invalidateDocumentContext();
         state.currentRawMarkdown = content;
         state.currentViewMode = 'preview';
         updateViewToggleButton();
@@ -471,6 +478,7 @@ async function renderMarkdown(content, filename) {
 
         // Process mermaid diagrams
         await processMermaidDiagrams();
+        if (!isDocumentContextCurrent(context)) return;
 
         // Reveal the Present entry points (desktop toolbar + iPhone action sheet)
         // only when there are diagrams to present.
@@ -501,13 +509,14 @@ async function renderMarkdown(content, filename) {
         clearSearchHighlights();
 
         // Render annotations for this document (re-arms handlers if active)
-        renderAnnotations(filename);
+        renderAnnotations(filename, context);
 
         // Scroll to top
         markdownContent.scrollTop = 0;
         syncIOSChrome();
 
     } catch (error) {
+        if (!isDocumentContextCurrent(context)) return;
         console.error('Error rendering markdown:', error);
         showToast(error instanceof Error && error.message.startsWith('This document') ? error.message : 'Error rendering markdown content. Please check the file format.', { type: 'error' });
     }

@@ -20,6 +20,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 09: updater security](2026-10-31-tasks-session-09-updater-security.md) | Direct desktop cached-update filename containment; real dependency regressions and preserved release guards. |
 | Oct 31, 2026 | Tasks | [Session 10: annotation storage](2026-10-31-tasks-session-10-annotation-storage.md) | Preserve corrupt, unsupported and temporarily unavailable note stores; exact recovery backups and bounded schema-aware imports. |
 | Oct 31, 2026 | Tasks | [Session 11: Electron security](2026-10-31-tasks-session-11-electron-security.md) | Electron 44.10.1 same-major update; unsigned universal direct/MAS packaging, hidden runtime checks and exact artifact evidence. |
+| Oct 31, 2026 | Tasks | [Session 12: document context](2026-10-31-tasks-session-12-document-context.md) | Reject stale annotation actions while preserving drafts; guard asynchronous document/diagram completions and captured PDF titles. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

@@ -10,6 +10,11 @@
 // own render callback under the test harness.
 
 import { state } from '../core/state.js';
+import {
+  captureDocumentContext,
+  invalidateDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 import { isDesktop } from '../core/platform.js';
 import { createTab, closeTab, renderTabBar } from '../features/tabs.js';
 import { openSearch } from '../features/search.js';
@@ -168,11 +173,14 @@ export function refreshActiveFileFromDisk() {
 // shell, which renders it offscreen and writes the PDF via printToPDF.
 export async function exportActivePdf() {
   if (!isDesktop || !hasDesktopBridge() || !hasLoadedContent()) return;
+  const fileNameEl = el('file-name');
+  const title = fileNameEl && fileNameEl.textContent
+    ? fileNameEl.textContent
+    : 'Specdown Document';
   const html = await buildPrintableDocument();
   if (!html) return;
-  const fileNameEl = el('file-name');
   bridgeExportPdf({
-    title: fileNameEl && fileNameEl.textContent ? fileNameEl.textContent : 'Specdown Document',
+    title,
     html,
   });
 }
@@ -221,8 +229,10 @@ export function setupDesktopIPC() {
       const markdownContent = el('markdown-content');
       if (!markdownContent) return;
       const savedScrollTop = markdownContent.scrollTop;
+      let refreshContext;
 
       if (activeTab.viewMode === 'raw') {
+        refreshContext = invalidateDocumentContext();
         state.currentRawMarkdown = fileData.content;
         const escaped = fileData.content
           .replace(/&/g, '&amp;')
@@ -231,13 +241,16 @@ export function setupDesktopIPC() {
         markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
         markdownContent.scrollTop = savedScrollTop;
       } else {
-        await reloadDoc(fileData.content, fileData.filename);
-        markdownContent.scrollTop = savedScrollTop;
+        const rendering = reloadDoc(fileData.content, fileData.filename);
+        refreshContext = captureDocumentContext();
+        await rendering;
+        if (isDocumentContextCurrent(refreshContext))
+          markdownContent.scrollTop = savedScrollTop;
       }
 
       // Visual feedback that an auto-reload happened — otherwise
       // the user has no way to tell the content just changed.
-      pulseWatchToggle();
+      if (isDocumentContextCurrent(refreshContext)) pulseWatchToggle();
     }
 
     // Flag any non-active copies so the user sees that something changed when
