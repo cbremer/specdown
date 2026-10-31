@@ -2,7 +2,7 @@
 
 End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versions, with traceable builds, native QA, screenshots, complete draft listings and an explicit later submission boundary.
 
-**Status as of 2026-10-13:** iPhone/iPad 1.0 (build 11) submitted to App Review (manual release). Mac App Store build in progress (certificates pending). See the canonical plan and its live Google Sheet link below.
+**Status as of 2026-10-31:** iPhone/iPad 1.0 is publicly available on the US App Store. Security fixes, website updates and next Store candidates are in preparation; Mac App Store distribution signing remains pending. See the canonical plan and its live Google Sheet link below.
 
 ## Timeline
 
@@ -14,7 +14,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 12, 2026 | Interface | [MAS access contract](mas-interface.md)                                               | AS-021 sandbox spike results: proven grant/bookmark/watch mechanisms, storage, recovery UX, entitlements.  |
 | Oct 12, 2026 | Tasks     | [Session 03: Mac App Store build](2026-10-12-tasks-session-03-mac-app-store.md)       | AS-021..026 MAS lane: spike, channel separation, grants, packaging.                                        |
 | Oct 13, 2026 | Tasks     | [Session 03: 1.0 submitted, 1.1 backlog](2026-10-13-tasks-session-03-v1-1-backlog.md) | iOS 1.0 (11) submitted for review; deferred items and owner follow-ups.                                    |
+| Oct 31, 2026 | Tasks | [Session 07: launch weekend](2026-10-31-tasks-session-07-launch-weekend.md) | Public iOS launch verified; shared/native security fixes, website updates, candidate validation and owner login gates. |
 
-**Google Sheet:** https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit
+**Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
 The Markdown plan owns scope/constraints; the live Sheet owns task status/evidence/accepted Decisions. Future work follows repo `CLAUDE.md`, preserves the phone checkout and Developer ID channel, and uses one logical change per PR with rebase merging. Add the next dated numbered tasks file and timeline entry for a future execution session.

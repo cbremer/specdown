@@ -7,7 +7,7 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 
 - 🌐 **Web** — runs on GitHub Pages, installable as a PWA (works offline)
 - 🖥️ **Desktop** — Electron app, signed & notarized on macOS
-- 📱 **iOS / iPadOS** — native WKWebView shell (build from source — see below)
+- 📱 **iOS / iPadOS** — [free on the App Store](https://apps.apple.com/app/specdown/id6822086808)
 
 ---
 
@@ -75,8 +75,11 @@ Gatekeeper warning, because the app is signed with a Developer ID certificate an
 notarized by Apple.
 
 ### iOS / iPadOS
-There is **no App Store / TestFlight build yet** — the iOS app currently has to be
-**built from source and run via Xcode** on your own device:
+SpecDown 1.0 is available free for iPhone and iPad on the
+**[App Store](https://apps.apple.com/app/specdown/id6822086808)**. Requires iOS or
+iPadOS 16.0 or later.
+
+For development, you can also build the app from source and run it via Xcode:
 
 ```bash
 npm install
@@ -87,8 +90,9 @@ open SpecDown.xcodeproj
 # In Xcode: select your device + your signing team, then Run (⌘R)
 ```
 
-(CI builds the iOS app for the simulator on every change to verify it compiles, but
-does not produce a distributable build.)
+CI validates simulator builds on every change. The iOS release-validation
+workflow also checks the Release configuration without signing in to Apple.
+Device archives, uploads and Store submissions are separate release steps.
 
 ---
 
@@ -148,15 +152,17 @@ npm run format         # Prettier (write)
 - **`scripts/`** — version sync, static copy, changelog generation.
 
 ### Releasing
-The pipeline is automated — **every merge to `main`**:
-1. **Bumps** the patch version and updates `CHANGELOG.md` from the commit history.
-2. **Tags** the commit and publishes a **GitHub Release** (release notes = the new
-   changelog section).
-3. **Builds** the desktop installers (signed + notarized DMG, Windows `.exe`, Linux
-   AppImage) and attaches them to the release.
-4. **Deploys** the web app to GitHub Pages.
+Merges to `main` run the web quality gates and deploy the verified build to
+GitHub Pages. The version workflow opens a separate patch-version PR; after
+review and merge, it creates an immutable tag and a draft GitHub Release.
 
-Don't push version tags by hand — let the pipeline handle it.
+Desktop release builds are dispatched for an exact tag. Unsigned preview builds
+produce downloadable workflow artifacts only. Signing and publication require a
+protected `desktop-release` environment with independent approval. The release
+becomes public after all platform artifacts are ready. Apple Store uploads and
+submissions remain separate from web and direct-download releases.
+
+Don't push version tags by hand — let the reviewed version workflow create them.
 
 ---
 
