@@ -1,14 +1,16 @@
 # Session 07: launch weekend, security and next Store candidates
 
+Latest owner direction and iOS release gate: [Session 16](2026-10-31-tasks-session-16-testflight-boundary.md) records TestFlight testing before App Review submission and the native-iOS annotation boundary follow-up. Earlier simulator/artifact results remain tied to their recorded source revisions.
+
 Latest unlocked-Mac Duo runtime results and the owner-requested centering/Find corrections are recorded in [Session 14](2026-10-31-tasks-session-14-duo-runtime.md). That follow-up supersedes the earlier locked-Mac testing status; release/account gates remain unchanged.
 
-The matching unsigned direct/MAS artifact handoff is [Session 15](2026-10-31-tasks-session-15-centered-desktop-artifacts.md). Application source remains `65716dc`; later documentation commits do not imply a new native or renderer build.
+The matching unsigned direct/MAS artifact handoff is [Session 15](2026-10-31-tasks-session-15-centered-desktop-artifacts.md). Those desktop artifacts contain application source `65716dc`; the later native-iOS annotation correction and its rebuilt simulator artifact are recorded separately in Session 16.
 
 Date: 2026-10-31 (America/Los_Angeles).
 
 ## Working tracker
 
-The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-24. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
+The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-25. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
 
 ## Scope and boundary
 
