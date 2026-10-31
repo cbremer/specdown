@@ -1160,6 +1160,11 @@ body {
     transition: var(--transition-fast);
 }
 
+.drop-zone.web-showcase .landing-resource-links a {
+    color: inherit;
+    text-underline-offset: 0.2em;
+}
+
 .drop-zone.web-showcase .landing-download:hover {
     background: linear-gradient(115deg, #17528f, #00c2d6 55%, #ff9268);
     color: #fff;
