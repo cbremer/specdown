@@ -168,12 +168,14 @@ export function registerAppCommands() {
       title: 'Export annotations',
       keywords: ['annotations', 'notes', 'download', 'backup', 'json'],
       run: () => exportAnnotations(),
+      isAvailable: () => !isIOSNative,
     },
     {
       id: 'import-annotations',
       title: 'Import annotations',
       keywords: ['annotations', 'notes', 'upload', 'restore', 'json'],
       run: () => importAnnotationsFromFile(),
+      isAvailable: () => !isIOSNative,
     },
     {
       id: 'toggle-live-reload',

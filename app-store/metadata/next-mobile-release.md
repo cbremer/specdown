@@ -1,23 +1,33 @@
 # Next mobile revision — draft release material
 
-Prepared October 31, 2026. This is review material, not an uploaded release. The approved 1.0 (11) source identity remains unchanged; choose the next marketing version and a build number above the latest accepted Apple build when Chris is ready to use App Store Connect.
+Prepared October 31, 2026. This is review material, not an uploaded release. Source version settings remain 1.0 (11); choose the next marketing version and an unused build number after Chris checks Apple build history. Chris requested TestFlight testing before App Review submission; see [Session 16](../../docs/project-appstore/2026-10-31-tasks-session-16-testflight-boundary.md) for the exact-build handoff and acceptance gates.
 
 ## What's New draft
 
-Improved security and reliability when opening Markdown documents, with safer handling of document content and large files. Web documents and images now use secure HTTPS connections, and recent web documents reopen only when you choose them.
+Security and reliability improvements for opening Markdown documents.
 
-Add a sentence about folding/resizing improvements only after the final iPhone Duo candidate passes its native pose and continuity checks. Do not claim Duo optimization from compilation alone.
+- Safer handling of document content, oversized files and complex diagrams.
+- Web documents and remote images now require HTTPS.
+- Fullscreen diagrams stay centered when the view changes size. Zoom controls center the diagram, and Reset fits the current view.
+- Improved layouts during folding and rotation, plus better Find controls when the keyboard is open.
+
+The layout copy describes implemented behavior with simulator interaction evidence in Session 14. Finalize it after the exact TestFlight build passes the applicable physical-device checks; do not claim physical Duo testing or universal compatibility. The initial-release `en-US/ios.json` still needs the accepted next-version What's New text when preparing that version's listing.
 
 ## Reviewer context for the security revision
 
-The Markdown viewer is bundled locally. There is no account or sign-in. External document and image loads use HTTPS; the prior arbitrary HTTP web-content exception has been removed. Tapped external links open in Safari.
+SpecDown is a Markdown viewer with Mermaid diagrams. No account or sign-in is required. The viewer, Sample and Diagram Showcase are bundled and available offline.
 
-Documents are limited to 8 MiB with additional rendering bounds to prevent unresponsive views. Unsupported active HTML, forms and document-provided styling are removed. Bundled Sample and Diagram Showcase remain available offline.
+To review, open Diagram Showcase, expand a diagram, and try the zoom controls and Reset. Use Contents to navigate and Raw/Preview to switch views. Find remains available while the keyboard is open. Use Open or Browse Files to select a Markdown document from Files.
 
-## Before upload
+Remote documents and images loaded inside the viewer require HTTPS. Tapped external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.
+
+Annotations are not enabled in this iPhone/iPad release: annotation display, editing, import and export are disabled. Any existing stored annotation data is left untouched.
+
+## Acceptance and submission gates
 
 - Review the final source commit, CI, production web bundle and native candidate identity together.
-- Verify Files/iCloud open, multiple tabs, comments, annotations, secure URL failures, oversized-file messages, light/dark appearance and keyboard/action-sheet behavior on physical iPhone and iPad.
-- Complete the Duo open/closed/partly folded, rotation and continuity matrix before advertising support or adding Duo screenshots.
-- Replace the old HTTP-exception paragraph in the existing App Review notes with the reviewer context above.
+- Verify Files/iCloud open, multiple tabs, comment viewing, secure URL failures, oversized-file messages, light/dark appearance and keyboard/action-sheet behavior on physical iPhone and iPad using the exact processed TestFlight build. Verify annotations stay unavailable and existing annotation data is preserved.
+- Record upgrade-from-1.0 and data-preservation results without deleting the installed app. Keep the physical Duo and remaining runtime gaps explicit; do not count simulator results as physical-device results.
+- The HTTP-exception paragraph in `review-notes.md` is already corrected. Incorporate the current reviewer context above when finalizing the next version, and replace the first-release What's New text in `en-US/ios.json`.
+- Use a Store-capable upload, then select the same tested build for App Review after the TestFlight gate passes. Public release remains owner-controlled.
 - Chris handles Apple sign-in and existing signing credentials manually. No other owner computers may be accessed.
