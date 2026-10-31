@@ -4,7 +4,7 @@ Date: 2026-10-31 (America/Los_Angeles).
 
 ## Working tracker
 
-The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-23. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
+The existing [App Store execution tracker](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026) now has a **Launch Weekend** tab with WK-01 through WK-24. It covers security, local sync, public availability, website, assets, Mac App Store and the next mobile revision. Historical tabs remain intact. The existing Linear project is specifically Share Links; it is not a duplicate launch tracker.
 
 ## Scope and boundary
 
@@ -18,6 +18,7 @@ Work authorized overnight: inspect and fix Codex Security findings across shared
 - Preserved the owner's uncommitted App Store artwork/copy and index changes. The tracked index also has a named backup stash, `codex-preserve-appstore-readme-2026-10-31`.
 - Implementation uses an isolated checkout with stacked branches `codex/weekend-release-controls`, `codex/weekend-security-fixes`, `codex/weekend-launch-website`, `codex/weekend-toolchain-audit` and `codex/weekend-iphone-duo`; the primary checkout remains on current published source.
 - The first weekend follow-up adds `codex/weekend-updater-cache`, `codex/weekend-annotation-store` and `codex/weekend-electron-security` after the Duo branch. Each is a separate logical commit and draft review candidate; inspect live PR heads and checks before acting.
+- The second follow-up adds `codex/weekend-document-context` after the Electron security branch. It protects note actions and asynchronous rendering across document changes without changing persistent annotation identity.
 - The approved iOS source version remains 1.0 (11). Local simulator validation overrides only the candidate build number to 228; no new Store binary has been uploaded.
 
 ## Security work
@@ -72,8 +73,14 @@ Three additional candidates extend the original stack. [Session 09](2026-10-31-t
 
 [Session 11](2026-10-31-tasks-session-11-electron-security.md) records the same-major Electron 44.10.1 update on `codex/weekend-electron-security`, its initial runtime evidence and separately identified combined artifacts. The reviewed builder guard remains unchanged. Do not replace it with the failing grouped Dependabot proposal or infer full security coverage from a zero runtime npm audit. No Dependabot PR was merged or closed.
 
-Combined application revision `8303795` passed a clean install, **908 tests / 54 suites**, coverage, lint, typecheck and production build. Unsigned universal direct/MAS assembly and the unsigned iOS Release simulator build passed; all 110 iOS web files matched the final bundle. Session 11 retains exact artifact hashes and distinguishes this application revision from the subsequent documentation-only review commit. The candidate checkout at `/private/tmp/specdown-weekend-20261031` is retained for the combined source under `codex/weekend-review-candidate`; the primary checkout and owner artwork remain untouched. Final interactive native checks still require this Mac to be unlocked.
+The first follow-up's application revision `8303795` passed a clean install, **908 tests / 54 suites**, coverage, lint, typecheck and production build. Unsigned universal direct/MAS assembly and the unsigned iOS Release simulator build passed; all 110 iOS web files matched that bundle. Session 11 retains exact artifact hashes and distinguishes this application revision from its documentation-only review commit. The candidate checkout at `/private/tmp/specdown-weekend-20261031` is retained for the latest combined source under `codex/weekend-review-candidate`; the primary checkout and owner artwork remain untouched. Final interactive native checks still require this Mac to be unlocked.
 
-Review/merge order is #311, #312, [website/tracker #313](https://github.com/cbremer/specdown/pull/313), [toolchain #314](https://github.com/cbremer/specdown/pull/314), [Duo #315](https://github.com/cbremer/specdown/pull/315), updater #321, annotation #322, then the Electron security branch, each via rebase after checks and independent review. Retarget stacked PRs after their base lands and recheck their exact heads. Do not merge release-authority changes before the owner reviews the changed release behavior. No Store action, production deployment or scanner finding closure occurred.
+## Second weekend follow-up
+
+[Session 12](2026-10-31-tasks-session-12-document-context.md) records three reproduced races on `7803f9b`: a pending note saved into a different document, an obsolete editor deleting a colliding note ID from the new document, and a late render assigning old annotation context to new content. The context guard also covers raw/empty transitions, watcher/tab completion, and matching a requested PDF's filename to its captured content. Invalid input and ordinary resize preserve the current usable editor; rejected stale saves preserve the draft. Independent negative controls establish these failures on the prior candidate. Filename identity and legacy recovery remain unresolved under WK-18.
+
+Session 12 is the current source/test/artifact handoff for `codex/weekend-document-context`; earlier native artifacts and interactive evidence remain tied to their recorded revisions. Do not claim final native interaction or signed sandbox acceptance from source, headless tests, or unsigned assembly.
+
+Review/merge order is #311, #312, [website/tracker #313](https://github.com/cbremer/specdown/pull/313), [toolchain #314](https://github.com/cbremer/specdown/pull/314), [Duo #315](https://github.com/cbremer/specdown/pull/315), updater #321, annotation #322, [Electron #323](https://github.com/cbremer/specdown/pull/323), then the document-context branch, each via rebase after checks and independent review. Retarget stacked PRs after their base lands and recheck their exact heads. Do not merge release-authority changes before the owner reviews the changed release behavior. No Store action, production deployment or scanner finding closure occurred.
 
 The user approved bounded two-hour overnight follow-ups; automation `specdown-launch-weekend-follow-up` is active. It preserves the Apple account/key boundary and reads this handoff plus live state before continuing.

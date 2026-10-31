@@ -1,5 +1,10 @@
 // @ts-check
 import { documentByteLength } from '../core/document-limits.js';
+import { state } from '../core/state.js';
+import {
+  captureDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 // Sticky-note annotations stored in localStorage, keyed by filename. Users
 // double-click any paragraph/heading to add a note. State is private to this
 // module.
@@ -22,9 +27,12 @@ const STORE_VERSION = 2;
 /** @typedef {{ version: number, files: Record<string, Note[]> } & Record<string, unknown>} Store */
 /** @typedef {{ status: 'missing' | 'valid', raw: string | null, store: Store } | { status: 'corrupt' | 'unsupported' | 'unavailable', raw: string | null, store: null }} AnnotationStoreRead */
 /** @typedef {{ root: HTMLElement, blocks: Element[], fps: string[], headingPaths: string[], byFp: Map<string, number[]> }} BlockContext */
+/** @typedef {{ key: string, document: import('../core/document-context.js').DocumentContext }} AnnotationContext */
 
 let annotationMode = false;
 let annotationKey = '';
+/** @type {AnnotationContext | null} */
+let annDocumentContext = null;
 let annNoteSeq = 0;
 const ANN_MAX_BYTES = 2 * 1024 * 1024;
 const ANN_MAX_DOCUMENTS = 100;
@@ -36,6 +44,23 @@ let annEditorBackdrop = null;
 let annReportedStoreProblem = '';
 
 const content = () => document.getElementById('markdown-content');
+
+/** @param {AnnotationContext | null} context */
+function annIsContextCurrent(context) {
+  return (
+    !!context &&
+    context.key === annotationKey &&
+    isDocumentContextCurrent(context.document) &&
+    state.currentViewMode === 'preview'
+  );
+}
+
+function annRejectChangedContext() {
+  showToast(
+    'The document changed. No notes were changed; any open draft has been kept. Reopen the note before editing.',
+    { type: 'warning' }
+  );
+}
 
 // All block types a note can attach to. Rendering and the double-click handlers
 // index by this exact selector, so element positions line up.
@@ -630,7 +655,8 @@ export function importAnnotations(jsonText) {
     return false;
   }
 
-  if (annotationKey) renderAnnotations(annotationKey);
+  if (annIsContextCurrent(annDocumentContext) && annDocumentContext)
+    renderAnnotations(annotationKey, annDocumentContext.document);
   showToast(`Imported annotations for ${fileCount} document(s).`, {
     type: 'success',
   });
@@ -673,7 +699,7 @@ export function toggleAnnotationMode() {
   const btn = document.getElementById('annotation-toggle');
   if (btn) btn.classList.toggle('active', annotationMode);
 
-  if (annotationMode && annotationKey) {
+  if (annotationMode && annIsContextCurrent(annDocumentContext)) {
     attachAnnotationHandlers();
     showToast(
       'Annotation mode on — double-click any paragraph or heading to add a note.',
@@ -724,10 +750,20 @@ function handleAnnotationDblClick(e) {
 /**
  * Render saved annotation badges for a document, keyed by filename.
  * @param {string} key
+ * @param {import('../core/document-context.js').DocumentContext} [documentContext]
  */
-export function renderAnnotations(key) {
+export function renderAnnotations(
+  key,
+  documentContext = captureDocumentContext()
+) {
+  if (
+    !isDocumentContextCurrent(documentContext) ||
+    state.currentViewMode !== 'preview'
+  )
+    return;
   const root = content();
   annotationKey = key;
+  annDocumentContext = { key, document: documentContext };
   if (!root) return;
 
   root.querySelectorAll('.annotation-badge').forEach((b) => b.remove());
@@ -825,8 +861,23 @@ function ensureEditor() {
  * Open the note editor for an existing note (`{ id }`) or a new note on a block
  * (`{ element }`).
  * @param {{ id?: string, element?: HTMLElement }} target
+ * @param {AnnotationContext | null} [context]
  */
-function openAnnotationEditor(target) {
+function openAnnotationEditor(target, context = annDocumentContext) {
+  if (
+    !annIsContextCurrent(context) ||
+    (target.element && !content()?.contains(target.element))
+  ) {
+    annRejectChangedContext();
+    return;
+  }
+  if (editorCleanup) {
+    showToast(
+      'Finish or cancel the open note before editing another. Your draft has been kept.',
+      { type: 'warning' }
+    );
+    return;
+  }
   const result = annReadStore();
   annReportStoreProblem(result);
   if (!result.store) return;
@@ -864,10 +915,10 @@ function openAnnotationEditor(target) {
     editorCleanup = null;
   };
   const save = () => {
-    if (commitAnnotation(target, textarea.value)) close();
+    if (commitAnnotation(target, textarea.value, context)) close();
   };
   const remove = () => {
-    if (commitAnnotation(target, '')) close();
+    if (commitAnnotation(target, '', context)) close();
   };
   /** @param {KeyboardEvent} e */
   const onKey = (e) => {
@@ -903,8 +954,17 @@ function openAnnotationEditor(target) {
  * Add / edit / remove a note, then re-render badges + panel.
  * @param {{ id?: string, element?: HTMLElement }} target
  * @param {string} rawText
+ * @param {AnnotationContext | null} [context]
  */
-function commitAnnotation(target, rawText) {
+function commitAnnotation(target, rawText, context = annDocumentContext) {
+  if (
+    !annIsContextCurrent(context) ||
+    !context ||
+    (target.element && !content()?.contains(target.element))
+  ) {
+    annRejectChangedContext();
+    return false;
+  }
   const text = String(rawText || '').trim();
   if (text.length > ANN_MAX_TEXT) {
     showToast('Notes can contain at most 16,384 characters.', {
@@ -915,8 +975,8 @@ function commitAnnotation(target, rawText) {
   const result = annReadStore();
   annReportStoreProblem(result);
   if (!result.store) return false;
-  const notes = Object.hasOwn(result.store.files, annotationKey)
-    ? result.store.files[annotationKey]
+  const notes = Object.hasOwn(result.store.files, context.key)
+    ? result.store.files[context.key]
     : [];
 
   if (target.id) {
@@ -945,14 +1005,14 @@ function commitAnnotation(target, rawText) {
     });
   }
 
-  if (!annPutFileNotes(annotationKey, notes)) {
+  if (!annPutFileNotes(context.key, notes)) {
     showToast(
       'Could not save this note. Existing notes were not changed. Your text is still in the editor.',
       { type: 'error' }
     );
     return false;
   }
-  renderAnnotations(annotationKey);
+  renderAnnotations(context.key, context.document);
   return true;
 }
 
@@ -962,8 +1022,10 @@ function commitAnnotation(target, rawText) {
 /**
  * Scroll to a note's block and briefly flash it.
  * @param {string} id
+ * @param {AnnotationContext | null} [context]
  */
-function jumpToAnnotation(id) {
+function jumpToAnnotation(id, context = annDocumentContext) {
+  if (!annIsContextCurrent(context)) return;
   const root = content();
   if (!root) return;
   const ctx = annContext(root);
@@ -985,7 +1047,10 @@ export function renderAnnotationPanel() {
   const list = document.getElementById('annotation-list');
   const toggle = document.getElementById('annotation-list-toggle');
   const root = content();
-  const notes = annFileNotes(annotationKey).slice(0, ANN_MAX_NOTES);
+  const panelContext = annDocumentContext;
+  const notes = annIsContextCurrent(panelContext)
+    ? annFileNotes(annotationKey).slice(0, ANN_MAX_NOTES)
+    : [];
   const ctx = root && notes.length ? annContext(root) : null;
 
   if (toggle) {
@@ -1041,7 +1106,9 @@ export function renderAnnotationPanel() {
     if (reason === 'fallback' || reason === 'missing')
       ctxEl.classList.add('annotation-list-context-orphaned');
     jump.append(note_, ctxEl);
-    jump.addEventListener('click', () => jumpToAnnotation(note.id));
+    jump.addEventListener('click', () =>
+      jumpToAnnotation(note.id, panelContext)
+    );
 
     const edit = document.createElement('button');
     edit.type = 'button';
@@ -1051,7 +1118,7 @@ export function renderAnnotationPanel() {
     edit.textContent = '✎';
     edit.addEventListener('click', (e) => {
       e.stopPropagation();
-      openAnnotationEditor({ id: note.id });
+      openAnnotationEditor({ id: note.id }, panelContext);
     });
 
     const del = document.createElement('button');
@@ -1062,7 +1129,7 @@ export function renderAnnotationPanel() {
     del.textContent = '✕';
     del.addEventListener('click', (e) => {
       e.stopPropagation();
-      commitAnnotation({ id: note.id }, '');
+      commitAnnotation({ id: note.id }, '', panelContext);
     });
 
     li.append(jump, edit, del);
