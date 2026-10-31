@@ -142,14 +142,24 @@ while coverage grows. Native-bridge globals (`window.specdown`, `window.webkit`,
 
 ## Release Pipeline
 
-Merging to `main` triggers an automated sequence:
+Merging reviewed source to `main` builds, tests, and deploys the web app. The
+version workflow opens a separate version-only PR using `GITHUB_TOKEN`; it must
+pass checks and independent review. It does not bypass protection or merge itself.
+After that PR is merged, the workflow creates an immutable tag and a draft release.
 
-1. **Version bump** — `npm version patch` creates a commit + git tag (e.g. `v0.0.48`)
-2. **DMG build** — macOS GitHub Actions runner builds and packages the `.dmg`
-3. **GitHub Release** — DMG attached to a release matching the new tag
-4. **Web deploy** — GitHub Pages updated simultaneously
+Desktop builds are explicitly dispatched from `main` with an exact existing tag.
+The default is an unsigned, artifact-only preview. Signing and publication require
+a verified `desktop-release` environment with independent approval, no self-review
+or administrator bypass, and a main-only deployment rule. All platform artifacts
+must succeed before publishing; unsigned macOS artifacts cannot enter the release
+feed. Repository settings and signing-secret scope must be configured separately.
 
-Do not manually push version tags. Let the pipeline handle it.
+The iOS release workflow performs unsigned simulator validation only. Store signing,
+uploads, submissions, and release are separate owner-led steps. Do not infer Apple
+account authorization from a successful local build or a web/desktop merge.
+
+Do not manually push or replace version tags. Let the reviewed version pipeline
+create them. Use rebase merging after all required checks pass.
 
 ---
 

@@ -5,8 +5,12 @@ name: CI
 # and on pushes to the integration branches.
 on:
   push:
-    branches: [main, html, "claude/**"]
+    branches: [main, html, 'claude/**']
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   lint-and-test:
