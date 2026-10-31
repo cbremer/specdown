@@ -2553,6 +2553,7 @@ body {
 
 .search-input {
     flex: 1;
+    min-width: 0;
     max-width: 320px;
     padding: 0.4rem 0.75rem;
     border: 1px solid var(--border-color);
@@ -3069,6 +3070,21 @@ mark.search-highlight-current {
 
 .ios-pad .source-link {
     display: inline;
+}
+
+/* The keyboard can leave a compact native detail pane only a few hundred
+   pixels tall. Keep Find above it instead of behind the fixed action bar;
+   the native title remains visible. Restore the web chrome on blur or when
+   the keyboard dismisses and the pane regains its height. */
+@media (max-height: 480px) {
+    .ios-native:not(.ios-pad):has(.search-bar:focus-within) .app-header,
+    .ios-native:not(.ios-pad):has(.search-bar:focus-within) .content-header {
+        display: none;
+    }
+
+    .ios-native:not(.ios-pad):has(.search-bar:focus-within) .ios-action-bar {
+        display: none !important;
+    }
 }
 
 .ios-native .tab-bar,

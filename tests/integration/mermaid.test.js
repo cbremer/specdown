@@ -496,10 +496,12 @@ describe('Mermaid Diagram Processing', () => {
   });
 
   describe('zoomKeepingCenter', () => {
-    function makeWrapper(width, height) {
+    function makeWrapper(width, height, svg) {
       const wrapper = document.createElement('div');
       Object.defineProperty(wrapper, 'clientWidth', { value: width, configurable: true });
       Object.defineProperty(wrapper, 'clientHeight', { value: height, configurable: true });
+      svg.setAttribute('viewBox', '0 0 1000 500');
+      wrapper.appendChild(svg);
       return wrapper;
     }
 
@@ -514,47 +516,45 @@ describe('Mermaid Diagram Processing', () => {
       };
     }
 
-    it('keeps the container center fixed when zooming to a smaller scale', () => {
+    it('centers the whole diagram when zooming to a smaller scale', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       const panzoom = Panzoom(svg, {});
-      const wrapper = makeWrapper(800, 600);
+      const wrapper = makeWrapper(800, 600, svg);
 
-      const before = contentUnderCenter(panzoom, wrapper);
       zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(0.5));
       const after = contentUnderCenter(panzoom, wrapper);
 
       expect(panzoom.getScale()).toBe(0.5);
-      expect(after.x).toBeCloseTo(before.x, 6);
-      expect(after.y).toBeCloseTo(before.y, 6);
+      expect(after.x).toBeCloseTo(500, 6);
+      expect(after.y).toBeCloseTo(250, 6);
       // Pan is re-derived, not left at the origin (the old buggy behavior).
-      expect(panzoom.getPan()).toEqual({ x: 400, y: 300 });
+      expect(panzoom.getPan()).toEqual({ x: 300, y: 350 });
     });
 
-    it('keeps the container center fixed when zooming to a larger scale', () => {
+    it('returns a deliberately panned diagram to center when zooming in', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       const panzoom = Panzoom(svg, {});
-      const wrapper = makeWrapper(800, 600);
+      const wrapper = makeWrapper(800, 600, svg);
       panzoom.pan(30, -20);
 
-      const before = contentUnderCenter(panzoom, wrapper);
       zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(2));
       const after = contentUnderCenter(panzoom, wrapper);
 
-      expect(after.x).toBeCloseTo(before.x, 6);
-      expect(after.y).toBeCloseTo(before.y, 6);
+      expect(after.x).toBeCloseTo(500, 6);
+      expect(after.y).toBeCloseTo(250, 6);
     });
 
-    it('leaves the pan untouched when the scale does not change', () => {
+    it('recenters a panned diagram even when the scale does not change', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       const panzoom = Panzoom(svg, {});
-      const wrapper = makeWrapper(800, 600);
+      const wrapper = makeWrapper(800, 600, svg);
       panzoom.pan(45, 15);
       const panSpy = jest.spyOn(panzoom, 'pan');
 
       zoomKeepingCenter(panzoom, wrapper, () => panzoom.zoom(1));
 
-      expect(panSpy).not.toHaveBeenCalled();
-      expect(panzoom.getPan()).toEqual({ x: 45, y: 15 });
+      expect(panSpy).toHaveBeenCalled();
+      expect(panzoom.getPan()).toEqual({ x: -100, y: 50 });
     });
   });
 
