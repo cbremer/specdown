@@ -2,6 +2,10 @@
 // In-document search: highlight matches in the rendered markdown and navigate
 // between them. State is private to this module.
 
+// A small document can otherwise expand into millions of highlight nodes.
+// Stop after finding one overflow match; never allocate a mark for that match.
+const SEARCH_MAX_HIGHLIGHTS = 1000;
+let searchResultsTruncated = false;
 /** @type {HTMLElement[]} */
 let searchMatches = [];
 let searchCurrentIndex = -1;
@@ -30,11 +34,30 @@ function highlightCurrentMatch() {
 function updateSearchCount() {
   const searchCount = el('search-count');
   if (!searchCount) return;
+  searchCount.setAttribute('role', 'status');
+  searchCount.setAttribute('aria-live', 'polite');
+  searchCount.setAttribute('aria-atomic', 'true');
   if (searchMatches.length === 0) {
     searchCount.textContent = '';
+    searchCount.removeAttribute('aria-label');
+    searchCount.removeAttribute('title');
   } else {
     searchCount.textContent =
-      searchCurrentIndex + 1 + ' / ' + searchMatches.length;
+      searchCurrentIndex + 1 + ' / ' + searchMatches.length +
+      (searchResultsTruncated ? '+' : '');
+    if (searchResultsTruncated) {
+      searchCount.setAttribute(
+        'aria-label',
+        `Match ${searchCurrentIndex + 1} of the first ${SEARCH_MAX_HIGHLIGHTS} matches. More matches are not highlighted.`
+      );
+      searchCount.title = `Showing the first ${SEARCH_MAX_HIGHLIGHTS} matches. More matches are not highlighted.`;
+    } else {
+      searchCount.setAttribute(
+        'aria-label',
+        `Match ${searchCurrentIndex + 1} of ${searchMatches.length}`
+      );
+      searchCount.removeAttribute('title');
+    }
   }
 }
 
@@ -97,7 +120,13 @@ export function runSearch(query) {
     regex.lastIndex = 0;
   }
 
-  nodesToProcess.forEach((textNode) => {
+  for (const textNode of nodesToProcess) {
+    // These nodes already contain a match. Once the global budget is full,
+    // that establishes overflow without changing this or any later node.
+    if (searchMatches.length === SEARCH_MAX_HIGHLIGHTS) {
+      searchResultsTruncated = true;
+      break;
+    }
     const text = textNode.textContent || '';
     const parts = [];
     let lastIndex = 0;
@@ -105,6 +134,10 @@ export function runSearch(query) {
     regex.lastIndex = 0;
 
     while ((match = regex.exec(text)) !== null) {
+      if (searchMatches.length === SEARCH_MAX_HIGHLIGHTS) {
+        searchResultsTruncated = true;
+        break;
+      }
       if (match.index > lastIndex) {
         parts.push(document.createTextNode(text.slice(lastIndex, match.index)));
       }
@@ -117,6 +150,8 @@ export function runSearch(query) {
       lastIndex = regex.lastIndex;
     }
 
+    // lastIndex remains at the last highlighted match when the limit is hit,
+    // so the entire unhighlighted suffix (including the overflow match) stays.
     if (lastIndex < text.length) {
       parts.push(document.createTextNode(text.slice(lastIndex)));
     }
@@ -126,7 +161,8 @@ export function runSearch(query) {
       parts.forEach((p) => frag.appendChild(p));
       textNode.parentNode.replaceChild(frag, textNode);
     }
-  });
+    if (searchResultsTruncated) break;
+  }
 
   if (searchMatches.length > 0) {
     searchCurrentIndex = 0;
@@ -155,8 +191,10 @@ export function clearSearchHighlights() {
   searchHighlightNodes = [];
   searchMatches = [];
   searchCurrentIndex = -1;
+  searchResultsTruncated = false;
 
   // Normalize text nodes that were split
   const markdownContent = el('markdown-content');
   if (markdownContent) markdownContent.normalize();
+  updateSearchCount();
 }
