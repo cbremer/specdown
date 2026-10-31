@@ -80,6 +80,9 @@ const {
   resolveOwnerName,
   buildMenu,
   watchFile,
+  fileAccess,
+  MAX_DOCUMENT_BYTES,
+  MAX_FILE_WATCHERS,
   unwatchFile,
   watchers,
   scanWorkspace,
@@ -501,6 +504,26 @@ describe('desktop/main.js', () => {
     });
 
     describe('loadPrintableWindow', () => {
+      it('loads private, exclusively created HTML and cleans up a failed load', async () => {
+        let stagedPath;
+        BrowserWindow.mockImplementationOnce(() => ({
+          loadFile: jest.fn(async (file) => {
+            stagedPath = file;
+            expect(fs.readFileSync(file, 'utf8')).toBe('<p>private</p>');
+            if (process.platform !== 'win32') {
+              expect(fs.statSync(file).mode & 0o777).toBe(0o600);
+              expect(fs.statSync(path.dirname(file)).mode & 0o777).toBe(0o700);
+            }
+            throw new Error('load failed');
+          }),
+          isDestroyed: () => false,
+          destroy: jest.fn(),
+        }));
+        await expect(loadPrintableWindow('<p>private</p>')).rejects.toThrow('load failed');
+        expect(fs.existsSync(stagedPath)).toBe(false);
+        expect(fs.existsSync(path.dirname(stagedPath))).toBe(false);
+      });
+
       it('stages the HTML in an offscreen sandboxed window and cleans up fully', async () => {
         const { printWindow, cleanup } = await loadPrintableWindow('<!DOCTYPE html><p>hi</p>');
 
@@ -511,9 +534,10 @@ describe('desktop/main.js', () => {
         expect(opts.webPreferences.nodeIntegration).toBe(false);
         expect(printWindow.loadFile).toHaveBeenCalledTimes(1);
 
-        // The staged temp file exists until cleanup, then is removed.
+        // The HTML is removed as soon as the offscreen page has loaded.
         const tempHtmlPath = printWindow.loadFile.mock.calls[0][0];
-        expect(fs.existsSync(tempHtmlPath)).toBe(true);
+        expect(fs.existsSync(tempHtmlPath)).toBe(false);
+        expect(fs.existsSync(path.dirname(tempHtmlPath))).toBe(false);
         cleanup();
         expect(printWindow.destroy).toHaveBeenCalledTimes(1);
         expect(fs.existsSync(tempHtmlPath)).toBe(false);
@@ -578,6 +602,9 @@ describe('desktop/main.js', () => {
     const chokidar = require('chokidar');
 
     beforeEach(() => {
+      // These tests isolate watcher sharing; grants are exercised separately.
+      jest.spyOn(fileAccess, 'hasGrant').mockReturnValue(true);
+      jest.spyOn(fileAccess, 'withAccess').mockReturnValue({ ok: true, value: true });
       // Clear watchers map and reset mocks between tests
       watchers.clear();
       chokidar.watch.mockClear();
@@ -588,6 +615,8 @@ describe('desktop/main.js', () => {
     });
 
     afterEach(() => {
+      fileAccess.hasGrant.mockRestore();
+      fileAccess.withAccess.mockRestore();
       // Route cleanup through unwatchFile so the internal dirWatchers
       // map also gets cleared between tests (entries in `watchers` are
       // metadata, not chokidar watchers).
@@ -608,6 +637,11 @@ describe('desktop/main.js', () => {
           depth: 0,
         }));
         expect(watchers.has('/path/to/file.md')).toBe(true);
+      });
+
+      it('caps native watchers even for authorized workspace files', () => {
+        for (let i = 0; i < MAX_FILE_WATCHERS + 10; i++) watchFile(`/selected/${i}.md`);
+        expect(watchers.size).toBe(MAX_FILE_WATCHERS);
       });
 
       it('does not create a second watcher for the same path', () => {
@@ -829,6 +863,7 @@ describe('desktop/main.js', () => {
     });
 
     it('opens a dropped markdown file like a native open (recents recorded)', () => {
+      fileAccess.noteUserIntent(path.join(dropDir, 'notes.md'), 'file');
       getHandler()(trustedEvent, path.join(dropDir, 'notes.md'));
       expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(dropDir, 'notes.md'));
       // A plain file must not be registered as a workspace root.
@@ -836,9 +871,20 @@ describe('desktop/main.js', () => {
     });
 
     it('registers a dropped directory as a workspace root (relative-link containment)', () => {
+      fileAccess.noteUserIntent(dropDir, 'folder');
       getHandler()(trustedEvent, dropDir);
       expect(workspaceRoots.has(dropDir)).toBe(true);
       expect(app.addRecentDocument).not.toHaveBeenCalled();
+    });
+
+    it('rejects arbitrary renderer paths before probing the filesystem', () => {
+      const stat = jest.spyOn(fs, 'statSync');
+      getHandler()(trustedEvent, dropDir);
+      getHandler()(trustedEvent, path.join(dropDir, 'notes.md'));
+      expect(stat).not.toHaveBeenCalled();
+      expect(workspaceRoots.size).toBe(0);
+      expect(app.addRecentDocument).not.toHaveBeenCalled();
+      stat.mockRestore();
     });
 
     it('ignores non-string and nonexistent paths', () => {
@@ -907,6 +953,7 @@ describe('desktop/main.js', () => {
       // app.addRecentDocument (mocked) — use that as the observable outcome.
       it('opens a relative .md inside the workspace', () => {
         workspaceRoots.add(wsRoot);
+        fileAccess.noteUserIntent(wsRoot, 'folder');
         openRelativeFromFile(path.join(wsRoot, 'a.md'), './sub/b.md');
         expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(wsRoot, 'sub', 'b.md'));
       });
@@ -929,39 +976,53 @@ describe('desktop/main.js', () => {
 describe('Bookmark file reads', () => {
   const { ipcMain } = require('electron');
   const readBookmark = ipcMain.handle.mock.calls.find(([channel]) => channel === 'read-bookmarked-file')[1];
-  const event = trustedEvent;
-
-  afterEach(() => {
-    fs.promises.stat.mockRestore?.();
-    fs.promises.readFile.mockRestore?.();
+  let root;
+  let file;
+  beforeEach(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-bookmark-read-'));
+    file = path.join(root, 'bookmark.md');
+    fs.writeFileSync(file, '# Updated');
   });
+  afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 
-  it('returns the current file content with a real path', async () => {
-    jest.spyOn(fs.promises, 'stat').mockResolvedValue({ isFile: () => true, size: 10 });
-    jest.spyOn(fs.promises, 'readFile').mockResolvedValue('# Updated');
-    await expect(readBookmark(event, '/tmp/bookmark.md')).resolves.toEqual({
-      filePath: '/tmp/bookmark.md', filename: 'bookmark.md', content: '# Updated',
+  it('returns current content only after the user grants the file', async () => {
+    await expect(readBookmark(trustedEvent, file)).resolves.toBeNull();
+    fileAccess.noteUserIntent(file, 'file');
+    await expect(readBookmark(trustedEvent, file)).resolves.toEqual({
+      filePath: file, filename: 'bookmark.md', content: '# Updated',
     });
   });
 
-  it('returns null when a bookmarked file has moved or is inaccessible', async () => {
-    jest.spyOn(fs.promises, 'stat').mockRejectedValue(new Error('ENOENT'));
-    await expect(readBookmark(event, '/tmp/missing.md')).resolves.toBeNull();
+  it('returns null when a granted file has disappeared', async () => {
+    fileAccess.noteUserIntent(file, 'file');
+    fs.unlinkSync(file);
+    await expect(readBookmark(trustedEvent, file)).resolves.toBeNull();
   });
 
   it('rejects subframe requests and invalid file types before reading', async () => {
-    const read = jest.spyOn(fs.promises, 'stat');
-    await expect(readBookmark({ ...event, senderFrame: {} }, '/tmp/a.md')).resolves.toBeNull();
-    await expect(readBookmark(event, '/tmp/a.html')).resolves.toBeNull();
-    await expect(readBookmark(event, 'relative.md')).resolves.toBeNull();
-    await expect(readBookmark(event, null)).resolves.toBeNull();
+    const read = jest.spyOn(fs, 'openSync');
+    await expect(readBookmark({ ...trustedEvent, senderFrame: {} }, file)).resolves.toBeNull();
+    await expect(readBookmark(trustedEvent, '/tmp/a.html')).resolves.toBeNull();
+    await expect(readBookmark(trustedEvent, 'relative.md')).resolves.toBeNull();
+    await expect(readBookmark(trustedEvent, null)).resolves.toBeNull();
     expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
   });
 
-  it('rejects directories and oversized files', async () => {
-    jest.spyOn(fs.promises, 'stat').mockResolvedValueOnce({ isFile: () => false, size: 0 })
-      .mockResolvedValueOnce({ isFile: () => true, size: 9 * 1024 * 1024 });
-    await expect(readBookmark(event, '/tmp/folder.md')).resolves.toBeNull();
-    await expect(readBookmark(event, '/tmp/large.md')).resolves.toBeNull();
+  it('rejects oversized files before reading their content', async () => {
+    fileAccess.noteUserIntent(file, 'file');
+    fs.truncateSync(file, MAX_DOCUMENT_BYTES + 1);
+    const read = jest.spyOn(fs, 'readSync');
+    await expect(readBookmark(trustedEvent, file)).resolves.toBeNull();
+    expect(() => readMarkdownFile(file)).toThrow('8 MiB');
+    expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
+  });
+
+  it('rejects directories and non-Markdown content', () => {
+    const directory = path.join(root, 'folder.md');
+    fs.mkdirSync(directory);
+    expect(() => readMarkdownFile(directory)).toThrow('regular Markdown file');
+    expect(() => readMarkdownFile('/etc/passwd')).toThrow('Unsupported document');
   });
 });

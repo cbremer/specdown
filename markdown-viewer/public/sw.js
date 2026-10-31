@@ -15,13 +15,15 @@
  * Electron (file://) and iOS (specdown://) shells never use it.
  */
 
-const CACHE_NAME = 'specdown-cache-v1';
+const CACHE_NAME = 'specdown-cache-v2';
 const APP_SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL).catch(() => {}))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL).catch(() => {}))
   );
 });
 
@@ -29,7 +31,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
       await self.clients.claim();
     })()
   );
@@ -43,9 +47,24 @@ self.addEventListener('fetch', (event) => {
   // Only handle our own origin; let user URLs / GitHub API / raw content pass
   // straight through to the network (never cached).
   if (url.origin !== self.location.origin) return;
+  const base = new URL('./', self.location.href);
+  const relativePath = url.pathname.startsWith(base.pathname)
+    ? url.pathname.slice(base.pathname.length)
+    : null;
+  if (url.search || relativePath === null) return;
+  const isShell = relativePath === '' || relativePath === 'index.html';
+  const isAsset =
+    /^assets\/[A-Za-z0-9_-]+\.(?:js|css|woff2?)$/.test(relativePath) ||
+    [
+      'icons/icon.svg',
+      'icons/icon-512.png',
+      'manifest.webmanifest',
+      'og-image.png',
+    ].includes(relativePath);
+  if (!isShell && !isAsset) return;
 
   // Navigations: network-first, fall back to the cached shell when offline.
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate' && isShell) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -58,7 +77,11 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('./index.html')))
+        .catch(() =>
+          caches
+            .match(request)
+            .then((cached) => cached || caches.match('./index.html'))
+        )
     );
     return;
   }
@@ -68,7 +91,11 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then((cached) => {
       const networked = fetch(request)
         .then((response) => {
-          if (response && response.status === 200 && response.type === 'basic') {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === 'basic'
+          ) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }

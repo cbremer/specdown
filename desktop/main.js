@@ -7,9 +7,12 @@ const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
 const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
 const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
+const { createFileResourcePolicy } = require('./file-resource-policy');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
+const MAX_DOCUMENT_BYTES = 8 * 1024 * 1024;
+const MAX_FILE_WATCHERS = 128;
 
 // Session 01 will AND this with HTML extensions in the open gate.
 // Session 00 only exposes the helper so tests can stub it — `.html`
@@ -27,6 +30,13 @@ const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
 // page — must never reach the native bridge (Electron security checklist #13).
 const APP_INDEX_PATH = path.join(__dirname, '..', 'markdown-viewer', 'dist', 'index.html');
 const APP_INDEX_URL = pathToFileURL(APP_INDEX_PATH).href;
+const fileResourcePolicy = createFileResourcePolicy(
+  path.dirname(APP_INDEX_PATH),
+  (filePath) => fileAccess.hasGrant(filePath),
+  (target, read) => IS_MAS
+    ? fileAccess.withAccess(target, read)
+    : { ok: true, value: read(target) }
+);
 const EXTERNAL_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
 /** Decoded file path of a file: URL, or null for anything else. */
@@ -107,7 +117,7 @@ let store = null;
 let logFilePath = null;
 
 // Every user-file read goes through fileAccess (see mas-access.js): a plain
-// pass-through for the direct build, sandbox grants + persisted
+// main-held capability for the direct build, sandbox grants + persisted
 // security-scoped bookmarks for the Mac App Store build.
 const fileAccess = IS_MAS
   ? createMasAccess({
@@ -117,7 +127,7 @@ const fileAccess = IS_MAS
       logInfo: (msg) => logInfo(msg),
       logError: (msg, err) => logError(msg, err),
     })
-  : createDirectAccess();
+  : createDirectAccess({ getStore: () => store });
 const appIconController = createAppIconController({
   app, nativeImage, platform: process.platform,
   getStore: () => store, getWindow: () => mainWindow,
@@ -471,6 +481,7 @@ function createWindow() {
 
   // Loads the Vite build output. `npm run desktop` / `desktop:build` run the
   // web build first so this file exists.
+  fileResourcePolicy.install(mainWindow.webContents.session);
   mainWindow.loadFile(APP_INDEX_PATH);
 
   // Keep the window on the bundled viewer. A crafted markdown link must not
@@ -520,14 +531,34 @@ function createWindow() {
 // File Open Logic
 // ===========================
 function isValidMarkdownFile(filePath) {
+  if (typeof filePath !== 'string') return false;
   const ext = path.extname(filePath).toLowerCase();
   return VALID_EXTENSIONS.includes(ext);
 }
 
 function readMarkdownFile(filePath) {
-  const content = fs.readFileSync(filePath, 'utf8');
-  const filename = path.basename(filePath);
-  return { filename, filePath, content };
+  if (!isValidMarkdownFile(filePath)) throw new Error('Unsupported document type.');
+  const fd = fs.openSync(filePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+  try {
+    const stats = fs.fstatSync(fd);
+    if (!stats.isFile()) throw new Error('Please choose a regular Markdown file.');
+    if (stats.size > MAX_DOCUMENT_BYTES) throw new Error('Markdown files must be 8 MiB or smaller.');
+    // Bounded reads also cover files that grow after fstat; never read an
+    // unbounded string into memory before applying the size limit.
+    const chunks = [];
+    let total = 0;
+    while (total <= MAX_DOCUMENT_BYTES) {
+      const chunk = Buffer.alloc(Math.min(64 * 1024, MAX_DOCUMENT_BYTES + 1 - total));
+      const count = fs.readSync(fd, chunk, 0, chunk.length, null);
+      if (!count) break;
+      chunks.push(chunk.subarray(0, count));
+      total += count;
+    }
+    if (total > MAX_DOCUMENT_BYTES) throw new Error('Markdown files must be 8 MiB or smaller.');
+    return { filename: path.basename(filePath), filePath, content: Buffer.concat(chunks, total).toString('utf8') };
+  } finally {
+    fs.closeSync(fd);
+  }
 }
 
 // Best-effort owner name for a stat result. Node has no portable uid→username
@@ -570,7 +601,11 @@ function openFileByPath(filePath) {
   if (!isValidMarkdownFile(filePath)) return;
 
   try {
-    const access = fileAccess.withAccess(filePath, readMarkdownFile);
+    const access = fileAccess.withAccess(filePath, (resolved) => {
+      const document = readMarkdownFile(resolved);
+      fileResourcePolicy.noteDocument(resolved);
+      return document;
+    });
     if (!access.ok) {
       notifyFileAccessNeeded(filePath);
       return;
@@ -586,10 +621,10 @@ function openFileByPath(filePath) {
 }
 
 // Mac App Store build: a by-path open (recents, session restore, bookmarks)
-// found no sandbox grant. The renderer offers "Locate…", which re-grants via
-// the open panel (request-grant-access). Never sent by the direct build.
+// found no file grant. The renderer offers "Locate…", which re-grants via
+// the open panel (request-grant-access).
 function notifyFileAccessNeeded(filePath) {
-  logInfo(`No sandbox access for ${filePath}; asking the user to locate it.`);
+  logInfo(`No file access grant for ${filePath}; asking the user to locate it.`);
   const wc = mainWindow && mainWindow.webContents;
   if (wc && !wc.isDestroyed()) {
     wc.send('file-access-needed', { filePath, filename: path.basename(filePath) });
@@ -602,7 +637,7 @@ function withBookmarkOption(options) {
   return IS_MAS ? { ...options, securityScopedBookmarks: true } : options;
 }
 
-// Record user-granted paths from an open panel result (no-op on direct).
+// Record user-granted paths from an open panel result for either channel.
 function noteDialogGrants(result, kind) {
   result.filePaths.forEach((p, i) => {
     fileAccess.noteUserIntent(p, kind, result.bookmarks && result.bookmarks[i]);
@@ -837,6 +872,16 @@ function unwatchFilePolling(filePath) {
 }
 
 function watchFile(filePath, _webContents) {
+  if (!isValidMarkdownFile(filePath) || !fileAccess.hasGrant(filePath)) return;
+  try {
+    const valid = fileAccess.withAccess(filePath, (p) => {
+      const stats = fs.statSync(p);
+      return stats.isFile() && stats.size <= MAX_DOCUMENT_BYTES;
+    });
+    if (!valid.ok || !valid.value) return;
+  } catch { return; }
+  if (!watchers.has(filePath) && !pollWatchers.has(filePath) &&
+      watchers.size + pollWatchers.size >= MAX_FILE_WATCHERS) return;
   if (IS_MAS) {
     watchFilePolling(filePath);
     return;
@@ -857,7 +902,9 @@ function watchFile(filePath, _webContents) {
       if (!target) return;
 
       try {
-        const fileData = readMarkdownFile(target);
+        const access = fileAccess.withAccess(target, readMarkdownFile);
+        if (!access.ok) return;
+        const fileData = access.value;
         const wc = mainWindow && mainWindow.webContents;
         if (wc && !wc.isDestroyed()) {
           wc.send('file-changed', fileData);
@@ -1001,33 +1048,36 @@ function restoreCustomCss() {
 // The HTML is staged through a temp file rather than a data: URL — data URLs
 // hit length limits and encoding issues on large documents.
 async function loadPrintableWindow(html) {
-  const tempHtmlPath = path.join(
-    app.getPath('temp'),
-    `specdown-print-${process.pid}-${Date.now()}.html`
-  );
-  fs.writeFileSync(tempHtmlPath, html, 'utf8');
-  const printWindow = new BrowserWindow({
-    show: false,
-    webPreferences: {
-      sandbox: true,
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
+  const tempDirectory = fs.mkdtempSync(path.join(app.getPath('temp'), 'specdown-print-'));
+  const tempHtmlPath = path.join(tempDirectory, 'document.html');
+  let printWindow;
+  const removeHtml = () => {
+    fileResourcePolicy.forgetPrintFile(tempHtmlPath);
+    try { fs.unlinkSync(tempHtmlPath); } catch { /* Already removed. */ }
+    try { fs.rmdirSync(tempDirectory); } catch { /* Already removed. */ }
+  };
   const cleanup = () => {
     try {
-      if (!printWindow.isDestroyed()) printWindow.destroy();
-    } catch {
-      // Window teardown is best-effort.
-    }
-    try {
-      fs.unlinkSync(tempHtmlPath);
-    } catch {
-      // Temp file may already be gone.
-    }
+      if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
+    } catch { /* Window teardown is best-effort. */ }
+    removeHtml();
   };
   try {
+    fs.chmodSync(tempDirectory, 0o700);
+    fs.writeFileSync(tempHtmlPath, html, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
+    printWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+    fileResourcePolicy.allowPrintFile(tempHtmlPath);
     await printWindow.loadFile(tempHtmlPath);
+    // The loaded document is now held by the window; no copy needs to remain
+    // readable on disk while PDF generation or a later operation runs.
+    removeHtml();
   } catch (err) {
     cleanup();
     throw err;
@@ -1136,11 +1186,10 @@ handleTrustedIpc('read-bookmarked-file', async (_event, filePath) => {
   if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
       !isValidMarkdownFile(filePath)) return null;
   try {
-    const access = await fileAccess.withAccessAsync(filePath, async (p) => {
-      const stats = await fs.promises.stat(p);
-      if (!stats.isFile() || stats.size > 8 * 1024 * 1024) return null;
-      const content = await fs.promises.readFile(p, 'utf8');
-      return { filename: path.basename(p), filePath: p, content };
+    const access = fileAccess.withAccess(filePath, (resolved) => {
+      const document = readMarkdownFile(resolved);
+      fileResourcePolicy.noteDocument(resolved);
+      return document;
     });
     return access.ok ? access.value : null;
   } catch {
@@ -1182,30 +1231,33 @@ onTrustedIpc('refresh-file', (_event, filePath) => {
 // file-backed tab: live reload + Reload from disk); a directory becomes a
 // full desktop workspace (real paths, relative-link navigation, containment).
 onTrustedIpc('open-dropped-path', (_event, absPath) => {
-  if (typeof absPath !== 'string' || !absPath) return;
-  let stats;
+  if (typeof absPath !== 'string' || !path.isAbsolute(absPath)) return;
   try {
-    stats = fs.statSync(absPath);
+    // A saved MAS grant is only metadata until acquired. Resolve moved
+    // bookmarks and activate the scope before touching the dropped path.
+    const access = fileAccess.withAccess(absPath, (resolved) => fs.statSync(resolved));
+    if (!access.ok) return;
+    if (access.value.isDirectory()) openWorkspace(access.path);
+    else if (access.value.isFile()) openFileByPath(access.path);
   } catch (err) {
     logError(`Failed to stat dropped path: ${absPath}`, err);
-    return;
   }
-  // A drop is a user grant in the sandbox: persist it (no-op on direct).
-  fileAccess.noteUserIntent(absPath, stats.isDirectory() ? 'folder' : 'file');
-  if (stats.isDirectory()) {
-    openWorkspace(absPath);
-    return;
-  }
-  openFileByPath(absPath);
 });
 
 // The preload reports every path it resolved from a user-supplied File
 // (drag-and-drop, the bookmarks "Locate file" picker) so the Mac App Store
-// build can persist that grant. Paths the user never granted cannot be
-// bookmarked — the sandbox refuses — so this cannot widen access.
+// builds can persist that grant. The renderer cannot send this IPC directly;
+// the isolated preload exposes only the File-taking webUtils method.
 onTrustedIpc('note-user-picked-path', (_event, absPath) => {
   if (typeof absPath === 'string' && path.isAbsolute(absPath)) {
-    fileAccess.noteUserIntent(absPath, 'file');
+    // Only the isolated preload sends this channel, after webUtils resolves
+    // an actual user File. No bridge method exposes this raw-path grant.
+    try {
+      const stats = fs.statSync(absPath);
+      if (stats.isFile() || stats.isDirectory()) {
+        fileAccess.noteUserIntent(absPath, stats.isDirectory() ? 'folder' : 'file');
+      }
+    } catch { /* The user-selected item may have disappeared. */ }
   }
 });
 
@@ -1638,6 +1690,8 @@ module.exports = {
   loadPrintableWindow,
   exportPdfFromHtml,
   VALID_EXTENSIONS,
+  MAX_DOCUMENT_BYTES,
+  MAX_FILE_WATCHERS,
   htmlDocumentsEnabledMain,
   applyVisualThemeCatalog,
   DEFAULT_VISUAL_THEME_CATALOG,

@@ -24,9 +24,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     @Published var showsAppIconPicker = false
 
     private var pageLoaded = false
+    private var readinessGeneration = 0
     private var pendingTheme: String?
     private var pendingLayoutMode: String?
     private var pendingFile: PendingFile?
+    private var pendingError: String?
 
     private let defaults = UserDefaults.standard
     private enum Keys {
@@ -101,9 +103,36 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Swift → JS
 
-    /// Called by WKNavigationDelegate once the page has finished loading.
-    /// Flushes any theme that was requested before the page was ready.
+    /// A navigation can finish before WebKit has evaluated the module graph.
+    /// Keep cold-start files, errors and appearance changes queued until the
+    /// actual renderer bridge exists; navigation completion alone is not ready.
     func pageDidLoad() {
+        readinessGeneration += 1
+        waitForRendererBridge(generation: readinessGeneration, attempt: 0)
+    }
+
+    private func waitForRendererBridge(generation: Int, attempt: Int) {
+        guard generation == readinessGeneration, !pageLoaded, let webView else { return }
+        let check = """
+            ['setTheme', 'setIOSLayoutMode', 'loadFileContent', 'specdownShowError']
+              .every(function (name) { return typeof window[name] === 'function'; })
+            """
+        webView.evaluateJavaScript(check) { [weak self] result, _ in
+            guard let self, generation == self.readinessGeneration, !self.pageLoaded else { return }
+            if result as? Bool == true {
+                self.rendererBridgeDidLoad()
+            } else if attempt < 199 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.waitForRendererBridge(generation: generation, attempt: attempt + 1)
+                }
+            } else {
+                // Preserve the queued data; a later reload can recover it.
+                print("[Bridge] Renderer bridge was not ready after navigation")
+            }
+        }
+    }
+
+    private func rendererBridgeDidLoad() {
         pageLoaded = true
         if let theme = pendingTheme {
             pendingTheme = nil
@@ -117,10 +146,15 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             pendingFile = nil
             loadFile(name: file.name, content: file.content)
         }
+        if let error = pendingError {
+            pendingError = nil
+            showError(error)
+        }
     }
 
     func pageWillLoad() {
         pageLoaded = false
+        readinessGeneration += 1
     }
 
     func applyTheme(_ colorScheme: ColorScheme) {
@@ -145,7 +179,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Show an error toast in the web layer (e.g. an unreadable file).
     func showError(_ message: String) {
-        guard pageLoaded else { return }
+        guard pageLoaded else {
+            pendingError = message
+            return
+        }
         evaluateJavaScript(function: "window.specdownShowError", arguments: [message], context: "showError")
     }
 
@@ -178,13 +215,15 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         }
 
         do {
-            let data = try Data(contentsOf: url)
+            let data = try SpecDownSecurityPolicy.readDocument(at: url)
             guard let content = String(data: data, encoding: .utf8) else {
                 print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
                 showError("\(url.lastPathComponent) couldn't be opened. SpecDown reads UTF-8 text files, such as Markdown (.md).")
                 return
             }
             loadFile(name: url.lastPathComponent, content: content)
+        } catch SpecDownSecurityPolicy.FileError.tooLarge {
+            showError("\(url.lastPathComponent) is too large. SpecDown opens files up to 8 MiB.")
         } catch {
             print("[Bridge] Failed to read file: \(error)")
             showError("\(url.lastPathComponent) couldn't be opened. Check that the file is available and try again.")
@@ -247,7 +286,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         }
 
         do {
-            let data = try Data(contentsOf: url)
+            let data = try SpecDownSecurityPolicy.readDocument(at: url)
             guard let content = String(data: data, encoding: .utf8) else {
                 print("[Bridge] Unsupported bundled sample encoding for \(fileName)")
                 return

@@ -1,4 +1,5 @@
 // @ts-check
+import { showToast } from './toast.js';
 // Copy-to-clipboard buttons on rendered code blocks. After each render, every
 // `<pre><code>` gets a hover "Copy" button that copies the block's text. Works
 // on all surfaces; the button is excluded from print output.
@@ -53,7 +54,34 @@ export function enhanceCodeBlocks(container) {
 
     button.addEventListener('click', (e) => {
       e.stopPropagation();
-      copyToClipboard(code.textContent || '').then(
+      const text = code.textContent || '';
+      const hasControlBytes = Array.from(text).some((character) => {
+        const codePoint = character.charCodeAt(0);
+        return (
+          (codePoint < 32 && ![9, 10, 13].includes(codePoint)) ||
+          (codePoint >= 127 && codePoint <= 159)
+        );
+      });
+      if (
+        hasControlBytes ||
+        /[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/.test(text) ||
+        Array.from(code.querySelectorAll('*')).some((node) => {
+          const style = getComputedStyle(node);
+          return (
+            node.hasAttribute('hidden') ||
+            style.display === 'none' ||
+            style.visibility === 'hidden' ||
+            style.opacity === '0'
+          );
+        })
+      ) {
+        showToast(
+          'This code contains hidden or directional characters. Review the source before copying.',
+          { type: 'warning' }
+        );
+        return;
+      }
+      copyToClipboard(text).then(
         () => flash(button, 'Copied'),
         () => flash(button, 'Failed')
       );

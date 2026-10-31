@@ -109,8 +109,8 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // legacy File.path property (v32+); webUtils.getPathForFile is the
   // sanctioned replacement and is only callable from the preload context.
   // The resolved path is also reported to the main process: a File the user
-  // dropped or picked is a sandbox grant in the Mac App Store build, and main
-  // persists it (a no-op for the direct build).
+  // dropped or picked authorizes access in both channels. Only this private
+  // IPC route can add a grant; raw renderer path strings cannot.
   getPathForFile: (file) => {
     let filePath;
     try {
@@ -135,7 +135,8 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
     ipcRenderer.send('request-grant-access', filePath);
   },
 
-  // Open a dropped file/folder by absolute path: the main process stats it
+  // Open a previously resolved File by path: main requires the grant recorded
+  // by getPathForFile before it stats anything. The main process then stats it
   // and either opens the file (file-opened) or scans the directory into a
   // workspace (workspace-opened).
   openDroppedPath: (absPath) => {

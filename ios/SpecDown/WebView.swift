@@ -320,17 +320,8 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
 
-        // Map the request path to a file under dist/. "/" → index.html.
-        var relativePath = url.path
-        if relativePath.hasPrefix("/") { relativePath.removeFirst() }
-        if relativePath.isEmpty { relativePath = "index.html" }
-
-        let rootStd = root.standardizedFileURL
-        let fileURL = rootStd.appendingPathComponent(relativePath).standardizedFileURL
-
-        // Guard against path traversal outside the bundled dist/ directory.
-        guard fileURL.path.hasPrefix(rootStd.path),
-              let data = try? Data(contentsOf: fileURL) else {
+        guard let fileURL = SpecDownSecurityPolicy.bundledFile(for: url, root: root),
+              let data = try? SpecDownSecurityPolicy.readDocument(at: fileURL) else {
             urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
             return
         }
