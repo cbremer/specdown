@@ -1,6 +1,6 @@
 # Next mobile revision — draft release material
 
-Prepared October 31, 2026. This is review material, not an uploaded release. The candidate is prepared as **1.1 (228)** after the authorized Chrome session confirmed the latest upload is 1.0 (11), with no newer upload present. Chris retains signing. See [Session 17](../../docs/project-appstore/2026-10-31-tasks-session-17-testflight-preparation.md) for final source review and the owner handoff; [Session 16](../../docs/project-appstore/2026-10-31-tasks-session-16-testflight-boundary.md) retains the exact-build TestFlight acceptance checklist.
+Prepared October 31, 2026. Chris selected **1.0.1 (228)** for this security update. This supersedes the provisional 1.1 (228) preparation; no build has been signed or uploaded by Codex. The authorized Chrome inspection found the latest upload was 1.0 (11); recheck before upload if another build may have been sent. Chris retains signing. See [Session 18](../../docs/project-appstore/2026-10-31-tasks-session-18-security-update-numbering.md) for the current packet and numbering, [Session 17](../../docs/project-appstore/2026-10-31-tasks-session-17-testflight-preparation.md) for final source review, and [Session 16](../../docs/project-appstore/2026-10-31-tasks-session-16-testflight-boundary.md) for exact-build TestFlight acceptance.
 
 ## What's New draft
 
