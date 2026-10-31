@@ -2,6 +2,8 @@
 
 Date: 2026-10-31 (America/Los_Angeles).
 
+**Numbering superseded:** Chris subsequently selected **1.0.1 (228)** for the security update. Use [Session 18](2026-10-31-tasks-session-18-security-update-numbering.md) and its new owner packet for signing. The 1.1 paths and evidence below are retained as the historical preparation record.
+
 ## Owner direction and verified portal state
 
 Chris requested the final source review and preparation of the next TestFlight build. He confirmed Chrome was already signed in and authorized using that session. Apple signing and existing Mac App Store keys remain owner-managed. The accepted sequence remains TestFlight acceptance first, followed by App Review submission of that exact passing build; public release remains owner-controlled.
