@@ -22,12 +22,19 @@ describe('Annotation Mode', () => {
   // ===========================
   describe('store helpers', () => {
     it('returns an empty v2 store when localStorage is empty', () => {
-      expect(annReadStore()).toEqual({ version: 2, files: {} });
+      expect(annReadStore()).toEqual({
+        status: 'missing',
+        raw: null,
+        store: { version: 2, files: {} },
+      });
     });
 
     it('reads a legacy v1 store as migrated v2 notes (anchor null, index kept)', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'x', 2: 'y' } }));
-      const store = annReadStore();
+      localStorage.setItem(
+        ANNOTATIONS_KEY,
+        JSON.stringify({ 'a.md': { 0: 'x', 2: 'y' } })
+      );
+      const { store } = annReadStore();
       expect(store.version).toBe(2);
       expect(store.files['a.md'].map((n) => n.text)).toEqual(['x', 'y']);
       expect(store.files['a.md'][0].legacyIdx).toBe(0);
@@ -35,20 +42,29 @@ describe('Annotation Mode', () => {
       expect(store.files['a.md'][0].anchor).toBeNull();
     });
 
-    it('returns an empty v2 store on malformed JSON', () => {
+    it('keeps malformed JSON separate from a missing store', () => {
       localStorage.setItem(ANNOTATIONS_KEY, 'NOT_JSON');
       expect(() => annReadStore()).not.toThrow();
-      expect(annReadStore()).toEqual({ version: 2, files: {} });
+      expect(annReadStore()).toEqual({
+        status: 'corrupt',
+        raw: 'NOT_JSON',
+        store: null,
+      });
     });
 
     it('annFileNotes returns the notes array for a key', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'x' } }));
+      localStorage.setItem(
+        ANNOTATIONS_KEY,
+        JSON.stringify({ 'a.md': { 0: 'x' } })
+      );
       expect(annFileNotes('a.md').map((n) => n.text)).toEqual(['x']);
       expect(annFileNotes('missing.md')).toEqual([]);
     });
 
     it('annPutFileNotes writes v2 and drops empty files', () => {
-      annPutFileNotes('a.md', [{ id: 'n', text: 't', anchor: null, legacyIdx: 0 }]);
+      annPutFileNotes('a.md', [
+        { id: 'n', text: 't', anchor: null, legacyIdx: 0 },
+      ]);
       let store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
       expect(store.version).toBe(2);
       expect(store.files['a.md'][0].text).toBe('t');
@@ -105,7 +121,10 @@ describe('Annotation Mode', () => {
     });
 
     it('renders saved badges when annotation mode is OFF (indexes blocks itself)', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'doc.md': { 1: 'second-block note' } }));
+      localStorage.setItem(
+        ANNOTATIONS_KEY,
+        JSON.stringify({ 'doc.md': { 1: 'second-block note' } })
+      );
       const mc = document.getElementById('markdown-content');
       mc.innerHTML = '<p>Block zero</p><p>Block one</p>';
 
@@ -113,12 +132,19 @@ describe('Annotation Mode', () => {
 
       const badges = mc.querySelectorAll('.annotation-badge');
       expect(badges.length).toBe(1);
-      expect(mc.querySelectorAll('p')[1].querySelector('.annotation-badge')).not.toBeNull();
-      expect(mc.querySelectorAll('p')[0].querySelector('.annotation-badge')).toBeNull();
+      expect(
+        mc.querySelectorAll('p')[1].querySelector('.annotation-badge')
+      ).not.toBeNull();
+      expect(
+        mc.querySelectorAll('p')[0].querySelector('.annotation-badge')
+      ).toBeNull();
     });
 
     it('migrates a legacy v1 note and upgrades it to a durable anchor on render', () => {
-      localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'm.md': { 1: 'legacy note' } }));
+      localStorage.setItem(
+        ANNOTATIONS_KEY,
+        JSON.stringify({ 'm.md': { 1: 'legacy note' } })
+      );
       const mc = document.getElementById('markdown-content');
       mc.innerHTML = '<p>Zero</p><p>One</p>';
 
@@ -143,7 +169,9 @@ describe('Annotation Mode', () => {
       mc.innerHTML = '<p>Alpha</p><p>Beta</p><p>Gamma</p>';
       renderAnnotations('reorder.md');
 
-      const beta = [...mc.querySelectorAll('p')].find((p) => p.textContent === 'Beta');
+      const beta = [...mc.querySelectorAll('p')].find(
+        (p) => p.textContent === 'Beta'
+      );
       commitAnnotation({ element: beta }, 'note on beta');
       expect(beta.querySelector('.annotation-badge')).not.toBeNull();
 
@@ -181,7 +209,9 @@ describe('Annotation Mode', () => {
       const mc = document.getElementById('markdown-content');
       mc.innerHTML = '<p>Alpha</p><p>Beta</p>';
       renderAnnotations('edited.md');
-      const beta = [...mc.querySelectorAll('p')].find((p) => p.textContent === 'Beta');
+      const beta = [...mc.querySelectorAll('p')].find(
+        (p) => p.textContent === 'Beta'
+      );
       commitAnnotation({ element: beta }, 'n');
 
       // Rewrite Beta's text so the fingerprint no longer matches.
@@ -198,7 +228,12 @@ describe('Annotation Mode', () => {
   // attachAnnotationBadge
   // ===========================
   describe('attachAnnotationBadge', () => {
-    const note = (text, id = 'n1') => ({ id, text, anchor: null, legacyIdx: 0 });
+    const note = (text, id = 'n1') => ({
+      id,
+      text,
+      anchor: null,
+      legacyIdx: 0,
+    });
     function makeParagraph() {
       const mc = document.getElementById('markdown-content');
       const p = document.createElement('p');
@@ -234,7 +269,11 @@ describe('Annotation Mode', () => {
       const p = makeParagraph();
       attachAnnotationBadge(p, note('x'), true);
       expect(p.classList.contains('annotation-orphaned')).toBe(true);
-      expect(p.querySelector('.annotation-badge').classList.contains('annotation-badge-orphaned')).toBe(true);
+      expect(
+        p
+          .querySelector('.annotation-badge')
+          .classList.contains('annotation-badge-orphaned')
+      ).toBe(true);
     });
   });
 
@@ -249,7 +288,9 @@ describe('Annotation Mode', () => {
 
     it('adds annotatable class and data-annot-idx', () => {
       attachAnnotationHandlers();
-      expect(document.querySelectorAll('.annotatable').length).toBeGreaterThan(0);
+      expect(document.querySelectorAll('.annotatable').length).toBeGreaterThan(
+        0
+      );
       const els = document.querySelectorAll('[data-annot-idx]');
       expect(els[0].getAttribute('data-annot-idx')).toBe('0');
     });
@@ -269,11 +310,11 @@ describe('Annotation export / import', () => {
     loadApp(document);
   });
 
-  it('exports the store as v2 (migrating legacy data)', () => {
-    localStorage.setItem(ANNOTATIONS_KEY, JSON.stringify({ 'a.md': { 0: 'note' } }));
-    const parsed = JSON.parse(getAnnotationsJSON());
-    expect(parsed.version).toBe(2);
-    expect(parsed.files['a.md'][0].text).toBe('note');
+  it('exports legacy data in its original format without migrating it', () => {
+    const raw = JSON.stringify({ 'a.md': { 0: 'note' } });
+    localStorage.setItem(ANNOTATIONS_KEY, raw);
+    expect(getAnnotationsJSON()).toBe(raw);
+    expect(localStorage.getItem(ANNOTATIONS_KEY)).toBe(raw);
   });
 
   it('returns an empty v2 store JSON when there are no annotations', () => {
@@ -281,7 +322,9 @@ describe('Annotation export / import', () => {
   });
 
   it('imports a v2 payload, merging across files', () => {
-    annPutFileNotes('a.md', [{ id: 'x', text: 'keep', anchor: null, legacyIdx: 0 }]);
+    annPutFileNotes('a.md', [
+      { id: 'x', text: 'keep', anchor: null, legacyIdx: 0 },
+    ]);
     const ok = importAnnotations(
       JSON.stringify({
         version: 2,
@@ -293,7 +336,10 @@ describe('Annotation export / import', () => {
     );
     expect(ok).toBe(true);
     const store = JSON.parse(localStorage.getItem(ANNOTATIONS_KEY));
-    expect(store.files['a.md'].map((n) => n.text).sort()).toEqual(['add', 'keep']);
+    expect(store.files['a.md'].map((n) => n.text).sort()).toEqual([
+      'add',
+      'keep',
+    ]);
     expect(store.files['b.md'][0].text).toBe('new');
   });
 
@@ -308,7 +354,9 @@ describe('Annotation export / import', () => {
   it('does not duplicate an identical re-import', () => {
     const payload = JSON.stringify({
       version: 2,
-      files: { 'a.md': [{ id: 'x', text: 'once', anchor: null, legacyIdx: 0 }] },
+      files: {
+        'a.md': [{ id: 'x', text: 'once', anchor: null, legacyIdx: 0 }],
+      },
     });
     importAnnotations(payload);
     importAnnotations(payload);
@@ -342,16 +390,22 @@ describe('Annotation editor + panel', () => {
     renderAnnotations('doc.md');
     toggleAnnotationMode(); // arms double-click handlers
 
-    mc.querySelector('p').dispatchEvent(new Event('dblclick', { bubbles: true }));
+    mc.querySelector('p').dispatchEvent(
+      new Event('dblclick', { bubbles: true })
+    );
 
     const backdrop = document.getElementById('annotation-editor-backdrop');
     expect(backdrop).not.toBeNull();
     expect(backdrop.style.display).toBe('flex');
 
     backdrop.querySelector('.annotation-editor-input').value = 'My note';
-    backdrop.querySelector('.annotation-editor-save').dispatchEvent(new Event('click', { bubbles: true }));
+    backdrop
+      .querySelector('.annotation-editor-save')
+      .dispatchEvent(new Event('click', { bubbles: true }));
 
-    expect(mc.querySelector('p').querySelector('.annotation-badge')).not.toBeNull();
+    expect(
+      mc.querySelector('p').querySelector('.annotation-badge')
+    ).not.toBeNull();
     const store = JSON.parse(localStorage.getItem('specdown-annotations'));
     expect(store.files['doc.md'][0].text).toBe('My note');
     expect(store.files['doc.md'][0].anchor).not.toBeNull();
@@ -359,30 +413,44 @@ describe('Annotation editor + panel', () => {
   });
 
   it('renders the panel rows + toolbar count, in document order', () => {
-    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'note A', 1: 'note B' } }));
+    localStorage.setItem(
+      'specdown-annotations',
+      JSON.stringify({ 'doc.md': { 0: 'note A', 1: 'note B' } })
+    );
     const mc = document.getElementById('markdown-content');
     mc.innerHTML = '<p>Zero</p><p>One</p>';
     renderAnnotations('doc.md');
 
     const toggle = document.getElementById('annotation-list-toggle');
     expect(toggle.style.display).not.toBe('none');
-    expect(toggle.querySelector('.annotation-list-count').textContent).toBe('2');
+    expect(toggle.querySelector('.annotation-list-count').textContent).toBe(
+      '2'
+    );
 
     const items = document.querySelectorAll('.annotation-list-item');
     expect(items.length).toBe(2);
-    expect(items[0].querySelector('.annotation-list-note').textContent).toBe('note A');
-    expect(items[0].querySelector('.annotation-list-context').textContent).toBe('Zero');
+    expect(items[0].querySelector('.annotation-list-note').textContent).toBe(
+      'note A'
+    );
+    expect(items[0].querySelector('.annotation-list-context').textContent).toBe(
+      'Zero'
+    );
   });
 
   it('hides the toggle when there are no notes', () => {
     const mc = document.getElementById('markdown-content');
     mc.innerHTML = '<p>Zero</p>';
     renderAnnotations('doc.md');
-    expect(document.getElementById('annotation-list-toggle').style.display).toBe('none');
+    expect(
+      document.getElementById('annotation-list-toggle').style.display
+    ).toBe('none');
   });
 
   it('opens and closes the panel', () => {
-    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
+    localStorage.setItem(
+      'specdown-annotations',
+      JSON.stringify({ 'doc.md': { 0: 'n' } })
+    );
     const mc = document.getElementById('markdown-content');
     mc.innerHTML = '<p>Zero</p>';
     renderAnnotations('doc.md');
@@ -395,15 +463,24 @@ describe('Annotation editor + panel', () => {
   });
 
   it('deleting the last note from the panel hides the toggle and closes the panel', () => {
-    localStorage.setItem('specdown-annotations', JSON.stringify({ 'doc.md': { 0: 'n' } }));
+    localStorage.setItem(
+      'specdown-annotations',
+      JSON.stringify({ 'doc.md': { 0: 'n' } })
+    );
     const mc = document.getElementById('markdown-content');
     mc.innerHTML = '<p>Zero</p>';
     renderAnnotations('doc.md');
     openAnnotationPanel();
 
-    document.querySelector('.annotation-list-delete').dispatchEvent(new Event('click', { bubbles: true }));
+    document
+      .querySelector('.annotation-list-delete')
+      .dispatchEvent(new Event('click', { bubbles: true }));
 
-    expect(document.getElementById('annotation-list-toggle').style.display).toBe('none');
-    expect(document.getElementById('annotation-panel').classList.contains('open')).toBe(false);
+    expect(
+      document.getElementById('annotation-list-toggle').style.display
+    ).toBe('none');
+    expect(
+      document.getElementById('annotation-panel').classList.contains('open')
+    ).toBe(false);
   });
 });

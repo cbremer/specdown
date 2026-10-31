@@ -19,7 +19,8 @@ const STORE_VERSION = 2;
 
 /** @typedef {{ fp: string, path: string, ordinal: number }} Anchor */
 /** @typedef {{ id: string, text: string, anchor: Anchor | null, legacyIdx: number }} Note */
-/** @typedef {{ version: number, files: Record<string, Note[]> }} Store */
+/** @typedef {{ version: number, files: Record<string, Note[]> } & Record<string, unknown>} Store */
+/** @typedef {{ status: 'missing' | 'valid', raw: string | null, store: Store } | { status: 'corrupt' | 'unsupported' | 'unavailable', raw: string | null, store: null }} AnnotationStoreRead */
 /** @typedef {{ root: HTMLElement, blocks: Element[], fps: string[], headingPaths: string[], byFp: Map<string, number[]> }} BlockContext */
 
 let annotationMode = false;
@@ -32,6 +33,7 @@ const ANN_MAX_TOTAL_NOTES = 2000;
 const ANN_MAX_TEXT = 16384;
 /** @type {HTMLElement | null} */
 let annEditorBackdrop = null;
+let annReportedStoreProblem = '';
 
 const content = () => document.getElementById('markdown-content');
 
@@ -196,33 +198,123 @@ function annValidIdx(ctx, idx) {
 // Storage (schema v2 + v1 migration)
 // ===========================
 /**
- * Read the whole annotation store, transparently migrating a legacy v1 map to
- * the v2 shape in memory (persisted on the next write).
- * @returns {Store}
+ * Read without confusing missing data with data this version cannot safely
+ * update. Keep the original bytes available for backup, including bad JSON.
+ * @returns {AnnotationStoreRead}
  */
 function annReadStore() {
   let raw;
   try {
     raw = localStorage.getItem(ANNOTATIONS_KEY);
   } catch {
-    return { version: STORE_VERSION, files: {} };
+    return { status: 'unavailable', raw: null, store: null };
   }
-  if (!raw) return { version: STORE_VERSION, files: {} };
+  if (raw === null)
+    return {
+      status: 'missing',
+      raw,
+      store: { version: STORE_VERSION, files: Object.create(null) },
+    };
+  return annDecodeStore(raw);
+}
+
+/** @param {any} value @returns {value is Record<string, any>} */
+function annIsRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Validate shape only: existing stores may predate today's import limits.
+ * @param {any} note
+ * @param {boolean} [importing]
+ */
+function annIsNote(note, importing = false) {
+  if (!annIsRecord(note) || typeof note.text !== 'string') return false;
+  if (!(typeof note.id === 'string' || (importing && note.id === undefined)))
+    return false;
+  if (!(
+    (Number.isSafeInteger(note.legacyIdx) && note.legacyIdx >= -1) ||
+    (importing && note.legacyIdx === undefined)
+  ))
+    return false;
+  const anchor = note.anchor;
+  return (
+    anchor === null ||
+    (importing && anchor === undefined) ||
+    (annIsRecord(anchor) &&
+      typeof anchor.fp === 'string' &&
+      (typeof anchor.path === 'string' ||
+        (importing && anchor.path === undefined)) &&
+      ((Number.isSafeInteger(anchor.ordinal) && anchor.ordinal >= 0) ||
+        (importing && anchor.ordinal === undefined)))
+  );
+}
+
+/** @param {string} raw @param {boolean} [importing] @returns {AnnotationStoreRead} */
+function annDecodeStore(raw, importing = false) {
   let parsed;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { version: STORE_VERSION, files: {} };
+    return { status: 'corrupt', raw, store: null };
   }
+  if (!annIsRecord(parsed)) return { status: 'corrupt', raw, store: null };
+  if (Object.hasOwn(parsed, 'version')) {
+    if (parsed.version !== STORE_VERSION)
+      return { status: 'unsupported', raw, store: null };
+    if (
+      !annIsRecord(parsed.files) ||
+      !Object.values(parsed.files).every(
+        (notes) =>
+          Array.isArray(notes) &&
+          notes.every((note) => annIsNote(note, importing))
+      )
+    )
+      return { status: 'corrupt', raw, store: null };
+    return {
+      status: 'valid',
+      raw,
+      store: {
+        ...parsed,
+        version: STORE_VERSION,
+        files: Object.assign(Object.create(null), parsed.files),
+      },
+    };
+  }
+  // Only an actual v1 map may migrate. Unknown or malformed shapes must not
+  // become an empty writable store or lose individual entries during migration.
   if (
-    parsed &&
-    parsed.version === STORE_VERSION &&
-    parsed.files &&
-    typeof parsed.files === 'object'
-  ) {
-    return /** @type {Store} */ (parsed);
+    !Object.values(parsed).every(
+      (notes) =>
+        annIsRecord(notes) &&
+        Object.entries(notes).every(
+          ([idx, text]) =>
+            /^\d+$/.test(idx) &&
+            Number.isSafeInteger(Number(idx)) &&
+            typeof text === 'string'
+        )
+    )
+  )
+    return { status: 'corrupt', raw, store: null };
+  return { status: 'valid', raw, store: annMigrate(parsed) };
+}
+
+/** @param {AnnotationStoreRead['status']} status */
+function annStoreProblemMessage(status) {
+  if (status === 'unavailable')
+    return 'Saved notes are unavailable. Saving and importing are paused until storage access returns.';
+  if (status === 'unsupported')
+    return 'Saved notes use an unsupported format. They have not been changed. Export a backup before recovery.';
+  return 'Saved notes could not be read. They have not been changed. Export a backup before recovery.';
+}
+
+/** @param {AnnotationStoreRead} result */
+function annReportStoreProblem(result) {
+  if (result.store) {
+    annReportedStoreProblem = '';
+  } else if (annReportedStoreProblem !== result.status) {
+    annReportedStoreProblem = result.status;
+    showToast(annStoreProblemMessage(result.status), { type: 'error' });
   }
-  return annMigrate(parsed);
 }
 
 /**
@@ -232,14 +324,14 @@ function annReadStore() {
  */
 function annMigrate(parsed) {
   /** @type {Store} */
-  const store = { version: STORE_VERSION, files: {} };
+  const store = { version: STORE_VERSION, files: Object.create(null) };
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
     for (const [file, notes] of Object.entries(parsed)) {
       if (!notes || typeof notes !== 'object') continue;
       const arr = annLegacyToNotes(
         /** @type {Record<string, string>} */ (notes)
       );
-      if (arr.length) store.files[file] = arr;
+      store.files[file] = arr;
     }
   }
   return store;
@@ -254,9 +346,7 @@ function annLegacyToNotes(obj) {
   const out = [];
   for (const [idx, text] of Object.entries(obj)) {
     const n = Number(idx);
-    const t = String(text || '');
-    if (Number.isNaN(n) || !t) continue;
-    out.push({ id: annNoteId(), text: t, anchor: null, legacyIdx: n });
+    out.push({ id: annNoteId(), text, anchor: null, legacyIdx: n });
   }
   out.sort((a, b) => a.legacyIdx - b.legacyIdx);
   return out;
@@ -264,16 +354,13 @@ function annLegacyToNotes(obj) {
 
 /** @param {Store} store */
 function annWriteStore(store) {
+  // Recheck at the persistence boundary too: no caller may overwrite a store
+  // whose current contents are unreadable or from a different schema.
+  if (!annReadStore().store) return false;
   try {
-    /** @type {Record<string, Note[]>} */
-    const files = {};
-    for (const [file, notes] of Object.entries(store.files || {})) {
-      if (Array.isArray(notes) && notes.length) files[file] = notes;
-    }
-    localStorage.setItem(
-      ANNOTATIONS_KEY,
-      JSON.stringify({ version: STORE_VERSION, files })
-    );
+    const raw = JSON.stringify(store);
+    if (!annDecodeStore(raw).store) return false;
+    localStorage.setItem(ANNOTATIONS_KEY, raw);
   } catch {
     return false;
   }
@@ -285,10 +372,13 @@ function annWriteStore(store) {
  * @returns {Note[]}
  */
 function annFileNotes(key) {
-  const store = annReadStore();
+  const result = annReadStore();
+  annReportStoreProblem(result);
+  if (!result.store) return [];
+  const store = result.store;
   // Never truncate the persistence model: older versions allowed larger
   // collections, which must survive edits and anchor migration intact.
-  return Array.isArray(store.files[key]) ? store.files[key] : [];
+  return Object.hasOwn(store.files, key) ? store.files[key] : [];
 }
 
 /**
@@ -296,7 +386,10 @@ function annFileNotes(key) {
  * @param {Note[]} notes
  */
 function annPutFileNotes(key, notes) {
-  const store = annReadStore();
+  const result = annReadStore();
+  annReportStoreProblem(result);
+  if (!result.store) return false;
+  const store = result.store;
   if (!notes || notes.length === 0) delete store.files[key];
   else store.files[key] = notes;
   return annWriteStore(store);
@@ -305,14 +398,28 @@ function annPutFileNotes(key, notes) {
 // ===========================
 // Export / import
 // ===========================
-/** Pretty-printed JSON of the entire annotation store (v2). */
+/** Exact stored bytes for recovery, even for a corrupt or future-format store.
+ * A missing store has an empty v2 backup; inaccessible storage must throw.
+ */
 export function getAnnotationsJSON() {
-  return JSON.stringify(annReadStore(), null, 2);
+  const raw = localStorage.getItem(ANNOTATIONS_KEY);
+  return raw === null
+    ? JSON.stringify({ version: STORE_VERSION, files: {} }, null, 2)
+    : raw;
 }
 
 /** Download all annotations as a JSON file. */
 export function exportAnnotations() {
-  const json = getAnnotationsJSON();
+  let json;
+  try {
+    json = getAnnotationsJSON();
+  } catch {
+    showToast(
+      'Could not access saved notes. No backup was created; try exporting again when storage access returns.',
+      { type: 'error' }
+    );
+    return;
+  }
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -326,10 +433,11 @@ export function exportAnnotations() {
 
 /**
  * @param {any} raw
- * @returns {Note | null}
+ * @returns {Note}
  */
 function annNormalizeImportedNote(raw) {
-  if (!raw || typeof raw.text !== 'string' || !raw.text) return null;
+  if (!annIsNote(raw, true))
+    throw new Error('An annotation has an invalid format.');
   if (
     raw.text.length > ANN_MAX_TEXT ||
     String(raw.id || '').length > 256 ||
@@ -341,17 +449,34 @@ function annNormalizeImportedNote(raw) {
   const anchor =
     raw.anchor && typeof raw.anchor.fp === 'string'
       ? {
+          ...raw.anchor,
           fp: String(raw.anchor.fp),
           path: String(raw.anchor.path || ''),
           ordinal: Number(raw.anchor.ordinal) || 0,
         }
       : null;
   return {
+    ...raw,
     id: typeof raw.id === 'string' ? raw.id : annNoteId(),
     text: raw.text,
     anchor,
     legacyIdx: Number.isFinite(raw.legacyIdx) ? Number(raw.legacyIdx) : -1,
   };
+}
+
+/** Extra fields must not disappear when the existing duplicate rules apply.
+ * @param {any} note
+ */
+function annNoteExtensions(note) {
+  const fields = Object.entries(note)
+    .filter(([key]) => !['id', 'text', 'anchor', 'legacyIdx'].includes(key))
+    .sort(([left], [right]) => left.localeCompare(right));
+  const anchorFields = Object.entries(note.anchor || {})
+    .filter(([key]) => !['fp', 'path', 'ordinal'].includes(key))
+    .sort(([left], [right]) => left.localeCompare(right));
+  return fields.length || anchorFields.length
+    ? JSON.stringify([fields, anchorFields])
+    : '';
 }
 
 /**
@@ -373,62 +498,102 @@ export function importAnnotations(jsonText) {
     );
     return false;
   }
-  let incoming;
-  try {
-    incoming = JSON.parse(jsonText);
-  } catch {
-    showToast('Import failed: the file is not valid JSON.', { type: 'error' });
+  const incoming = annDecodeStore(jsonText, true);
+  if (!incoming.store) {
+    showToast(
+      incoming.status === 'unsupported'
+        ? 'Import failed: unsupported annotations version. The backup has not been changed.'
+        : 'Import failed: unexpected annotations format or invalid JSON.',
+      {
+        type: 'error',
+      }
+    );
     return false;
   }
-  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
-    showToast('Import failed: unexpected annotations format.', {
+
+  const incomingFiles = incoming.store.files;
+  const existing = annReadStore();
+  if (!existing.store) {
+    showToast('Import failed: ' + annStoreProblemMessage(existing.status), {
       type: 'error',
     });
     return false;
   }
-
-  const incomingFiles =
-    incoming.version === STORE_VERSION &&
-    incoming.files &&
-    typeof incoming.files === 'object'
-      ? incoming.files
-      : annMigrate(incoming).files;
-
-  const store = annReadStore();
+  const store = existing.store;
   let fileCount = 0;
   try {
+    // Preserve extension metadata rather than silently dropping it on import.
+    // Conflicting metadata needs a newer recovery path, not a last-write win.
+    for (const [key, value] of Object.entries(incoming.store)) {
+      if (key === 'version' || key === 'files') continue;
+      if (
+        Object.hasOwn(store, key) &&
+        JSON.stringify(store[key]) !== JSON.stringify(value)
+      )
+        throw new Error(
+          'Backup metadata conflicts with saved notes. Existing data was not changed.'
+        );
+      Object.defineProperty(store, key, {
+        value,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    }
     if (Object.keys(incomingFiles).length > ANN_MAX_DOCUMENTS)
       throw new Error('Too many documents in this backup.');
     for (const [file, notes] of Object.entries(incomingFiles)) {
-      if (!Array.isArray(notes)) continue;
       if (file.length > 1024 || notes.length > ANN_MAX_NOTES)
         throw new Error('Too many annotations or an overlong document name.');
       const merged =
         Object.hasOwn(store.files, file) && Array.isArray(store.files[file])
           ? store.files[file].slice()
           : [];
-      const anchored = new Set();
-      const unanchored = new Set();
-      const legacy = new Set();
+      /** @type {Map<string, Set<string>>} */
+      const duplicates = new Map();
       const addKeys = (/** @type {Note} */ note) => {
-        const key = JSON.stringify([note.text, note.legacyIdx]);
-        legacy.add(key);
-        if (note.anchor)
-          anchored.add(
-            JSON.stringify([note.text, note.anchor.fp, note.anchor.ordinal])
-          );
-        else unanchored.add(key);
+        const keys = [JSON.stringify(['legacy', note.text, note.legacyIdx])];
+        keys.push(
+          note.anchor
+            ? JSON.stringify([
+                'anchor',
+                note.text,
+                note.anchor.fp,
+                note.anchor.ordinal,
+              ])
+            : JSON.stringify(['unanchored', note.text, note.legacyIdx])
+        );
+        const metadata = annNoteExtensions(note);
+        for (const key of keys) {
+          if (!duplicates.has(key)) duplicates.set(key, new Set());
+          duplicates.get(key)?.add(metadata);
+        }
       };
       merged.forEach(addKeys);
       for (const candidate of notes) {
         const note = annNormalizeImportedNote(candidate);
-        if (!note) continue;
-        const legacyKey = JSON.stringify([note.text, note.legacyIdx]);
-        const duplicate = note.anchor
-          ? anchored.has(
-              JSON.stringify([note.text, note.anchor.fp, note.anchor.ordinal])
-            ) || unanchored.has(legacyKey)
-          : legacy.has(legacyKey);
+        const keys = note.anchor
+          ? [
+              JSON.stringify([
+                'anchor',
+                note.text,
+                note.anchor.fp,
+                note.anchor.ordinal,
+              ]),
+              JSON.stringify(['unanchored', note.text, note.legacyIdx]),
+            ]
+          : [JSON.stringify(['legacy', note.text, note.legacyIdx])];
+        const matches = keys.map((key) => duplicates.get(key));
+        const duplicate = matches.some(Boolean);
+        const metadata = annNoteExtensions(note);
+        if (
+          duplicate &&
+          metadata &&
+          !matches.some((match) => match?.has(metadata))
+        )
+          throw new Error(
+            'An imported duplicate has additional or conflicting metadata. Existing notes were not changed.'
+          );
         if (!duplicate) {
           merged.push(note);
           addKeys(note);
@@ -453,7 +618,9 @@ export function importAnnotations(jsonText) {
     )
       throw new Error('The combined annotation collection exceeds its limit.');
     if (!annWriteStore(store))
-      throw new Error('Could not save the annotations (storage full).');
+      throw new Error(
+        'Could not save the annotations. Existing data was not changed.'
+      );
   } catch (error) {
     showToast(
       'Import failed: ' +
@@ -660,6 +827,18 @@ function ensureEditor() {
  * @param {{ id?: string, element?: HTMLElement }} target
  */
 function openAnnotationEditor(target) {
+  const result = annReadStore();
+  annReportStoreProblem(result);
+  if (!result.store) return;
+  const notes = Object.hasOwn(result.store.files, annotationKey)
+    ? result.store.files[annotationKey]
+    : [];
+  const existing = target.id
+    ? notes.find((note) => note.id === target.id)
+    : null;
+  // An unread or missing note must never become a blank editor whose Save
+  // action could delete the original after storage access recovers.
+  if (target.id && !existing) return;
   const backdrop = ensureEditor();
   const textarea = /** @type {HTMLTextAreaElement} */ (
     backdrop.querySelector('.annotation-editor-input')
@@ -674,9 +853,6 @@ function openAnnotationEditor(target) {
     backdrop.querySelector('.annotation-editor-cancel')
   );
 
-  const existing = target.id
-    ? annFileNotes(annotationKey).find((n) => n.id === target.id)
-    : null;
   textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
   backdrop.style.display = 'flex';
@@ -736,7 +912,12 @@ function commitAnnotation(target, rawText) {
     });
     return false;
   }
-  const notes = annFileNotes(annotationKey);
+  const result = annReadStore();
+  annReportStoreProblem(result);
+  if (!result.store) return false;
+  const notes = Object.hasOwn(result.store.files, annotationKey)
+    ? result.store.files[annotationKey]
+    : [];
 
   if (target.id) {
     const note = notes.find((n) => n.id === target.id);
@@ -766,7 +947,7 @@ function commitAnnotation(target, rawText) {
 
   if (!annPutFileNotes(annotationKey, notes)) {
     showToast(
-      'Could not save this note (storage full?). Your text is still in the editor.',
+      'Could not save this note. Existing notes were not changed. Your text is still in the editor.',
       { type: 'error' }
     );
     return false;
