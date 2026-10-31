@@ -16,6 +16,7 @@ import {
   isDocumentContextCurrent,
 } from '../core/document-context.js';
 import { isDesktop } from '../core/platform.js';
+import { prepareMarkdownDocument } from '../core/prepare-document.js';
 import { createTab, closeTab, renderTabBar } from '../features/tabs.js';
 import { openSearch } from '../features/search.js';
 import { applyCustomCss } from '../features/custom-css.js';
@@ -50,8 +51,8 @@ const el = (/** @type {string} */ id) => document.getElementById(id);
 const watchRefCounts = new Map();
 
 // Render core (main.js), supplied via configureDesktop.
-/** @type {(content: string, filename: string) => any} */
-let reloadDoc = () => {};
+/** @type {(content: string, filename: string, prepared?: { html: string }) => Promise<boolean> | boolean} */
+let reloadDoc = () => false;
 
 /** @param {{ renderMarkdown?: Function }} [deps] */
 export function configureDesktop(deps) {
@@ -190,7 +191,7 @@ export function setupDesktopIPC() {
 
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
   bridgeOnFileOpened(function (fileData) {
-    createTab(fileData.filename, fileData.content, fileData.filePath);
+    if (!createTab(fileData.filename, fileData.content, fileData.filePath)) return;
     // Remember the path so the in-app recent-files list can reopen it later.
     if (fileData.filePath) {
       recordRecentFile({ type: 'path', ref: fileData.filePath, title: fileData.filename });
@@ -216,6 +217,22 @@ export function setupDesktopIPC() {
     const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath);
     if (matchingTabs.length === 0) return;
 
+    // A rejected refresh must preserve every accepted copy, including hidden
+    // tabs and raw views. Otherwise a later tab switch can select rejected
+    // source while leaving a different document visible.
+    let prepared;
+    try {
+      prepared = prepareMarkdownDocument(fileData.content);
+    } catch (error) {
+      showToast(
+        error instanceof Error && error.message.startsWith('This document')
+          ? error.message
+          : 'Error rendering markdown content. Please check the file format.',
+        { type: 'error' }
+      );
+      return;
+    }
+
     for (const tab of matchingTabs) {
       tab.rawMarkdown = fileData.content;
       tab.filename = fileData.filename;
@@ -230,6 +247,7 @@ export function setupDesktopIPC() {
       if (!markdownContent) return;
       const savedScrollTop = markdownContent.scrollTop;
       let refreshContext;
+      let refreshRendered = true;
 
       if (activeTab.viewMode === 'raw') {
         refreshContext = invalidateDocumentContext();
@@ -241,16 +259,16 @@ export function setupDesktopIPC() {
         markdownContent.innerHTML = `<pre class="raw-markdown"><code>${escaped}</code></pre>`;
         markdownContent.scrollTop = savedScrollTop;
       } else {
-        const rendering = reloadDoc(fileData.content, fileData.filename);
+        const rendering = reloadDoc(fileData.content, fileData.filename, prepared);
         refreshContext = captureDocumentContext();
-        await rendering;
-        if (isDocumentContextCurrent(refreshContext))
+        refreshRendered = await rendering;
+        if (refreshRendered && isDocumentContextCurrent(refreshContext))
           markdownContent.scrollTop = savedScrollTop;
       }
 
       // Visual feedback that an auto-reload happened — otherwise
       // the user has no way to tell the content just changed.
-      if (isDocumentContextCurrent(refreshContext)) pulseWatchToggle();
+      if (refreshRendered && isDocumentContextCurrent(refreshContext)) pulseWatchToggle();
     }
 
     // Flag any non-active copies so the user sees that something changed when
