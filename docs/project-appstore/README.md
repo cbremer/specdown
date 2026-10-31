@@ -18,6 +18,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Spec | [Build-tool advisories](2026-10-31-spec-toolchain-advisories.md) | Scoped dependency updates, unsigned packaging evidence and unresolved upstream constraints. |
 | Oct 31, 2026 | Tasks | [Session 08: iPhone Duo](2026-10-31-tasks-session-08-iphone-duo.md) | Adaptive layout and retained document state; exact simulator evidence and remaining unlocked-Mac touch checks. |
 | Oct 31, 2026 | Tasks | [Session 09: updater security](2026-10-31-tasks-session-09-updater-security.md) | Direct desktop cached-update filename containment; real dependency regressions and preserved release guards. |
+| Oct 31, 2026 | Tasks | [Session 10: annotation storage](2026-10-31-tasks-session-10-annotation-storage.md) | Preserve corrupt, unsupported and temporarily unavailable note stores; exact recovery backups and bounded schema-aware imports. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
