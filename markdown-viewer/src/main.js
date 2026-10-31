@@ -4,12 +4,10 @@
 // Phase 1 (modernization roadmap): the viewer is an ES-module graph bundled by
 // Vite, split into core/features/platform modules. This entry keeps the render
 // core (`renderMarkdown`), the event-wiring hub, and the init() DI wiring; the
-// cohesive features live in their own modules. `marked` and `DOMPurify` are used
-// directly by the render core here; the heavy `mermaid` engine is loaded on
+// cohesive features live in their own modules. Markdown preparation validates
+// content before tab/state changes; the heavy `mermaid` engine is loaded on
 // demand by the diagram module (see core/render-config.js `loadMermaid`).
-import { marked } from 'marked';
-import { sanitizeDocumentHtml } from './core/document-sanitizer.js';
-import { assertDocumentComplexity } from './core/document-limits.js';
+import { prepareMarkdownDocument } from './core/prepare-document.js';
 import {
   captureDocumentContext,
   invalidateDocumentContext,
@@ -205,7 +203,7 @@ function init() {
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
     });
     configureTabs({
-        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
+        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title, /** @type {{ html: string } | undefined} */ prepared) => renderMarkdown(content, title, prepared),
         updateWatchToggle: () => updateWatchToggle(),
         saveDesktopSession: () => saveDesktopSession(),
         startWatchingFilePath: (/** @type {string | null} */ filePath) => startWatchingFilePath(filePath),
@@ -265,7 +263,7 @@ function openRecentEntry(entry) {
 
 // iOS API: called by Swift shell to load a file (Session 2+)
 window.loadFileContent = function(content, filename) {
-    createTab(filename, content);
+    return createTab(filename, content);
 };
 
 // iOS API: called by the Swift shell when a picked/shared file can't be read
@@ -448,14 +446,13 @@ function setupEventListeners() {
 /**
  * @param {string} content
  * @param {string} filename
+ * @param {{ html: string }} [prepared] Synchronous preflight from a new tab.
  */
-async function renderMarkdown(content, filename) {
+async function renderMarkdown(content, filename, prepared) {
     let context = captureDocumentContext();
     try {
-        assertDocumentComplexity(content);
         // Parse and validate before replacing the current document's state/UI.
-        const htmlContent = /** @type {string} */ (marked.parse(content));
-        const safeHtmlContent = sanitizeDocumentHtml(htmlContent);
+        const safeHtmlContent = (prepared || prepareMarkdownDocument(content)).html;
 
         context = invalidateDocumentContext();
         state.currentRawMarkdown = content;
