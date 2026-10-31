@@ -1,4 +1,4 @@
-# TestFlight 1.1 (228) — draft What to Test
+# TestFlight 1.0.1 (228) — draft What to Test
 
 Use this text only for the matching processed build after Chris signs and uploads it. Keep testing in the existing Owner group. These checks have not yet passed on the TestFlight build.
 

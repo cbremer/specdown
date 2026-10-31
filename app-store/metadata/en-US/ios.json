@@ -1,6 +1,6 @@
 {
   "platform": "iOS/iPadOS",
-  "status": "DRAFT — next iOS/iPadOS 1.1 update; submit after exact-build TestFlight acceptance",
+  "status": "DRAFT — next iOS/iPadOS 1.0.1 security update; submit after exact-build TestFlight acceptance",
   "name": "SpecDown",
   "name_fallback_if_taken": "SpecDown: Markdown & Mermaid",
   "subtitle": "Markdown & Mermaid viewer",
