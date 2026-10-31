@@ -51,7 +51,7 @@ The owner added folding iPhone Duo compatibility to the next mobile revision. Ap
 
 Audit assumptions about phone versus tablet, viewport width/height, safe-area symmetry and WebView lifetime. Verify the same open document, tabs, scroll position, annotations and diagram zoom survive fold/unfold and rotation. Test closed, open and partially folded poses, Split View resizing, keyboard, action sheets, print/share popovers, fullscreen diagrams and screenshot needs. iPhone Duo remains an iPhone even when it has regular width. Compile success or arbitrary browser widths alone do not establish hinge/camera/pose correctness. No Duo-ready claim until native pose tests pass.
 
-Additional tracked residuals: filename-only annotation identity needs a lossless migration design; 37 moderate/low toolchain advisories remain; external release protections require owner configuration. These are not silently marked fixed.
+Additional tracked residuals: filename-only annotation identity needs a lossless migration design and external release protections require owner configuration. The initial security candidate retained 37 toolchain audit entries; the [separate toolchain follow-up](2026-10-31-spec-toolchain-advisories.md) reduces these to 17 (12 moderate, 5 low), with runtime audit still zero. Residuals are not silently marked fixed.
 
 ## Verification record
 
