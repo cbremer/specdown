@@ -55,6 +55,11 @@ export function bridgeRequestOpenPath(filePath) {
   nativeBridge()?.requestOpenPath?.(filePath);
 }
 
+/** @param {string} receipt @param {boolean} accepted */
+export function bridgeReportFileOpenResult(receipt, accepted) {
+  nativeBridge()?.reportFileOpenResult?.(receipt, accepted);
+}
+
 /** Ask the shell to show its folder picker (workspace mode). */
 export function bridgeRequestOpenFolder() {
   nativeBridge()?.requestOpenFolder?.();
