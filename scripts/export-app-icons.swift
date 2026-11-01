@@ -1,12 +1,14 @@
-// macOS: swift scripts/export-app-icons.swift [repository root] [--ios-light-only]
+// macOS: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only]
 // Derive every alternate asset from its full-resolution source, never a prior export.
 import AppKit
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 let lightOnly = arguments.contains("--ios-light-only")
-let rootArguments = arguments.filter { $0 != "--ios-light-only" }
+let legacyIOSOnly = arguments.contains("--ios-legacy-only")
+precondition(!(lightOnly && legacyIOSOnly), "Choose only one iOS export scope")
+let rootArguments = arguments.filter { $0 != "--ios-light-only" && $0 != "--ios-legacy-only" }
 precondition(rootArguments.count <= 1 && !rootArguments.contains(where: { $0.hasPrefix("--") }),
-             "Usage: swift scripts/export-app-icons.swift [repository root] [--ios-light-only]")
+             "Usage: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only]")
 let root = URL(fileURLWithPath: rootArguments.first ?? FileManager.default.currentDirectoryPath)
 let space = CGColorSpace(name: CGColorSpace.sRGB)!
 let variants = ["flat", "glass", "ceramic", "metallic", "layered", "minimal"]
@@ -17,9 +19,9 @@ func context(_ width: Int, _ height: Int) -> CGContext {
               bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
 }
 
-func bounds(_ pixels: UnsafeMutablePointer<UInt8>, _ width: Int, _ height: Int) -> CGRect {
+func bounds(_ pixels: UnsafeMutablePointer<UInt8>, _ width: Int, _ height: Int, threshold: UInt8 = 128) -> CGRect {
     var left = width, bottom = height, right = -1, top = -1
-    for y in 0..<height { for x in 0..<width where pixels[(y * width + x) * 4 + 3] >= 128 {
+    for y in 0..<height { for x in 0..<width where pixels[(y * width + x) * 4 + 3] >= threshold {
         left = min(left, x); right = max(right, x)
         bottom = min(bottom, y); top = max(top, y)
     } }
@@ -52,6 +54,30 @@ for variant in lightOnly ? [] : variants {
     working.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
     let pixels = working.data!.assumingMemoryBound(to: UInt8.self)
     let originalBounds = bounds(pixels, width, height)
+    // iOS supplies its own outer mask. Fill the square directly from the master,
+    // preserving aspect ratio and trimming only the tile's outer antialias edge.
+    // Pixel rows are top-down; Core Graphics placement below is bottom-up.
+    let tileBounds = bounds(pixels, width, height, threshold: 250)
+    let cropSide = min(tileBounds.width, tileBounds.height) - 4
+    precondition(cropSide > 0, "Source tile is too small for the two-pixel edge guard")
+    let iosCrop = CGRect(x: tileBounds.midX - cropSide / 2, y: tileBounds.midY - cropSide / 2,
+                         width: cropSide, height: cropSide)
+    let iosScale = 1024.0 / cropSide
+    let iosPlacement = CGRect(x: 512 - iosCrop.midX * iosScale,
+                              y: 512 - (Double(height) - iosCrop.midY) * iosScale,
+                              width: Double(width) * iosScale, height: Double(height) * iosScale)
+    let ios = context(1024, 1024)
+    ios.interpolationQuality = .high
+    ios.setFillColor(CGColor(colorSpace: space, components: [11.0 / 255, 17.0 / 255, 29.0 / 255, 1])!)
+    ios.fill(CGRect(x: 0, y: 0, width: 1024, height: 1024))
+    ios.draw(source, in: iosPlacement)
+    let iosPath = "ios/SpecDown/Assets.xcassets/AppIcon-\(variant).appiconset/AppIcon-1024.png"
+    try save(ios.makeImage()!, iosPath, opaque: true)
+    try Data(contentsOf: root.appendingPathComponent(iosPath))
+        .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-\(variant).imageset/icon.png"), options: .atomic)
+    print("\(variant) iOS: opaque bounds \(tileBounds), square crop \(iosCrop), scale \(iosScale)")
+    if legacyIOSOnly { continue }
+
     // A one-source-pixel inset removes extraction matte. A small tent filter
     // restores antialiasing without blurring the face, texture, or internal edges.
     // Premultiplied RGB is adjusted with alpha to avoid colored/white fringes.
@@ -89,26 +115,21 @@ for variant in lightOnly ? [] : variants {
     desktop.interpolationQuality = .high
     desktop.draw(cleaned, in: placement)
     try save(desktop.makeImage()!, "desktop/icons/\(variant).png")
-    let ios = context(1024, 1024)
-    ios.setFillColor(CGColor(colorSpace: space, components: [11.0 / 255, 17.0 / 255, 29.0 / 255, 1])!)
-    ios.fill(CGRect(x: 0, y: 0, width: 1024, height: 1024))
-    ios.draw(desktop.makeImage()!, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
-    try save(ios.makeImage()!, "ios/SpecDown/Assets.xcassets/AppIcon-\(variant).appiconset/AppIcon-1024.png", opaque: true)
-    try Data(contentsOf: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/AppIcon-\(variant).appiconset/AppIcon-1024.png"))
-        .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-\(variant).imageset/icon.png"), options: .atomic)
     print("\(variant): source \(width)×\(height), visible \(visible), scale \(scale)")
 }
 
 // Light is an opaque, full-bleed iOS master. Do not apply desktop extraction,
 // 824px placement, rounded masking, or dark compositing to this separate choice.
-let lightSource = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/light.png")))!
-precondition(lightSource.pixelsWide == lightSource.pixelsHigh && !lightSource.hasAlpha,
-             "Light requires a square opaque master")
-let light = context(1024, 1024)
-light.interpolationQuality = .high
-light.draw(lightSource.cgImage!, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
-let lightIconPath = "ios/SpecDown/Assets.xcassets/AppIcon-light.appiconset/AppIcon-1024.png"
-try save(light.makeImage()!, lightIconPath, opaque: true)
-try Data(contentsOf: root.appendingPathComponent(lightIconPath))
-    .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-light.imageset/icon.png"), options: .atomic)
-print("light: source \(lightSource.pixelsWide)×\(lightSource.pixelsHigh), full-bleed 1024×1024 iOS only")
+if !legacyIOSOnly {
+    let lightSource = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/light.png")))!
+    precondition(lightSource.pixelsWide == lightSource.pixelsHigh && !lightSource.hasAlpha,
+                 "Light requires a square opaque master")
+    let light = context(1024, 1024)
+    light.interpolationQuality = .high
+    light.draw(lightSource.cgImage!, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
+    let lightIconPath = "ios/SpecDown/Assets.xcassets/AppIcon-light.appiconset/AppIcon-1024.png"
+    try save(light.makeImage()!, lightIconPath, opaque: true)
+    try Data(contentsOf: root.appendingPathComponent(lightIconPath))
+        .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-light.imageset/icon.png"), options: .atomic)
+    print("light: source \(lightSource.pixelsWide)×\(lightSource.pixelsHigh), full-bleed 1024×1024 iOS only")
+}
