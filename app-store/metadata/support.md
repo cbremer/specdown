@@ -21,4 +21,8 @@ SpecDown is a Markdown viewer with live Mermaid diagrams for iPhone, iPad and Ma
 
 ## Contact
 
-Report a problem: [SUPPORT EMAIL] or https://github.com/cbremer/specdown/issues
+For help or to report a problem, email
+[support@mosaicpando.com](mailto:support@mosaicpando.com).
+
+[Browse GitHub issues](https://github.com/cbremer/specdown/issues).
+A GitHub account is required to report an issue there.
