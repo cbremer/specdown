@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppIconChoice: String, CaseIterable, Identifiable {
-    case original, flat, glass, ceramic, metallic, layered, minimal
+    case original, flat, glass, ceramic, metallic, layered, minimal, light
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
     var alternateName: String? { self == .original ? nil : "AppIcon-\(rawValue)" }
