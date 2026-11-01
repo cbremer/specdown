@@ -45,6 +45,9 @@ export function setupGlobalKeyboardShortcuts() {
     );
 
   document.addEventListener('keydown', (e) => {
+    // A nested surface may have consumed Escape and already removed itself.
+    // Do not apply that same event to the surface it just revealed.
+    if (e.defaultPrevented) return;
     if (isBookmarksOpen()) return;
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd' && !e.shiftKey && !e.altKey) {
       if (document.querySelector('[role="dialog"]')) return;
@@ -106,6 +109,8 @@ export function setupGlobalKeyboardShortcuts() {
     if (
       fullscreenOverlay &&
       fullscreenOverlay.style.display !== 'none' &&
+      fullscreenOverlay.contains(document.activeElement) &&
+      !isTypingTarget(e.target) &&
       fullscreenOverlay.panzoomInstance
     ) {
       const instance = fullscreenOverlay.panzoomInstance;

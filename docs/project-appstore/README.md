@@ -27,7 +27,10 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 17: final source review and TestFlight preparation](2026-10-31-tasks-session-17-testflight-preparation.md) | Signed-in portal verification, final mobile review corrections and owner-signing handoff. |
 | Oct 31, 2026 | Tasks | [Session 18: security-update numbering](2026-10-31-tasks-session-18-security-update-numbering.md) | Owner-selected 1.0.1 (228), regenerated unsigned artifacts and replacement signing packet. |
 | Oct 31, 2026 | Tasks | [Session 19: desktop refresh acceptance](2026-10-31-tasks-session-19-desktop-refresh-acceptance.md) | Reject watched/manual updates before tab mutation, preserve accepted documents, and gate renderer recents and Updated feedback. |
+| Oct 31, 2026 | Tasks | [Session 23: fullscreen focus](2026-10-31-tasks-session-23-fullscreen-focus.md) | Isolated Find/fullscreen focus correction, nested keyboard ownership and real-browser regressions; root phone candidate preserved. |
+| Oct 31, 2026 | Tasks | [Session 24: presentation focus](2026-10-31-tasks-session-24-presentation-focus.md) | Presentation Find boundary, enabled-control keyboard navigation and safe focus restoration; document replacement teardown remains separate. |
 | Oct 31, 2026 | Tasks | [Session 25: desktop open acknowledgment](2026-10-31-tasks-session-25-desktop-open-acceptance.md) | Gate main-process and OS recents on bounded, current renderer acceptance receipts; preserve the frozen mobile candidate. |
+| Oct 31, 2026 | Tasks | [Session 26: integrated review baseline](2026-10-31-tasks-session-26-integrated-review.md) | Exact reviewed desktop and focus changes combined for independent validation; no new lifecycle behavior or phone promotion. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
