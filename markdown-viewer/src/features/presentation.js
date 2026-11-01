@@ -71,6 +71,7 @@ export function startPresentation() {
  * @returns {HTMLButtonElement}
  */
 function navButton(className, label, ariaLabel, onClick) {
+  const owner = presentationOverlay;
   const button = document.createElement('button');
   button.type = 'button';
   button.className = className;
@@ -78,6 +79,7 @@ function navButton(className, label, ariaLabel, onClick) {
   button.setAttribute('aria-label', ariaLabel);
   button.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (!owner?.isConnected || presentationOverlay !== owner) return;
     onClick();
   });
   return button;
@@ -85,6 +87,7 @@ function navButton(className, label, ariaLabel, onClick) {
 
 function buildPresentationOverlay() {
   presentationOverlay = document.createElement('div');
+  const owner = presentationOverlay;
   presentationOverlay.className = 'presentation-overlay';
   presentationOverlay.setAttribute('role', 'dialog');
   presentationOverlay.setAttribute('aria-modal', 'true');
@@ -98,7 +101,7 @@ function buildPresentationOverlay() {
   stage.addEventListener(
     'wheel',
     (e) => {
-      if (slidePanzoom) {
+      if (presentationOverlay === owner && owner.isConnected && slidePanzoom) {
         e.preventDefault();
         slidePanzoom.zoomWithWheel(e);
       }
@@ -211,7 +214,8 @@ export function presentPrev() {
   }
 }
 
-export function exitPresentation() {
+/** @param {{ restoreFocus?: boolean }} [options] */
+export function exitPresentation({ restoreFocus = true } = {}) {
   if (!presentationOverlay) return;
   const ownedFocus = presentationOverlay.contains(document.activeElement);
   if (presentationReleaseTrap) presentationReleaseTrap();
@@ -225,7 +229,7 @@ export function exitPresentation() {
   slideIndex = 0;
   // A newer dialog may own focus while presentation is closed. Otherwise,
   // return to a usable non-text opener without resurrecting its keyboard.
-  if (ownedFocus) {
+  if (restoreFocus && ownedFocus) {
     const target = canRestoreNonEditableFocus(presentationPrevFocus)
       ? presentationPrevFocus
       : el('markdown-content');
