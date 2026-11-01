@@ -82,6 +82,9 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Info.plist")" = "$IOS_BUILD_NUMBER"
           test -f "$app/dist/index.html"
           diff -qr markdown-viewer/dist "$app/dist"
+          python3 scripts/verify-ios-channel.py --project ios/SpecDown.xcodeproj
+          python3 scripts/verify-ios-channel.py --app "$app" --channel production \
+            --version "$IOS_MARKETING_VERSION" --build "$IOS_BUILD_NUMBER" --web markdown-viewer/dist
           echo 'Unsigned simulator validation passed; no archive, upload, or device validation performed.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Preserve raw build log

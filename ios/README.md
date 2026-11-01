@@ -10,18 +10,54 @@ Swift + WKWebView app wrapping the shared `markdown-viewer/` web codebase.
 ## Getting Started
 
 ```bash
-# From the ios/ directory:
-xcodegen generate        # Creates SpecDown.xcodeproj from project.yml
-open SpecDown.xcodeproj  # Opens in Xcode
+# From the repository root, build the shared viewer first:
+npm run build
+cd ios
+xcodegen generate
+open SpecDown.xcodeproj
 ```
 
-Then select an iPhone or iPad simulator and press Run.
+Select the **SpecDown Dev** scheme, then an iPhone or iPad simulator and Run.
+Device signing is a separate owner-led setup. The unsigned validation command
+below does not register identifiers or create profiles. When the owner later runs
+on a physical device, Xcode automatic signing may register the selected app ID and
+create its provisioning profile using the owner's account.
+Before regenerating an existing local project, preserve its owner-managed signing
+and workspace settings; the generated `.xcodeproj` is ignored by Git.
 
 For a reproducible command-line build on machines with different simulator inventories, prefer the generic simulator destination:
 
 ```bash
-xcodebuild -project SpecDown.xcodeproj -scheme SpecDown -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+xcodebuild -project SpecDown.xcodeproj \
+  -scheme 'SpecDown Dev' -configuration 'Dev Debug' \
+  -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO build
 ```
+
+## Development channels
+
+One source target produces three separately installed apps:
+
+| Scheme | Bundle identifier | Run configuration | Archive configuration | Display name / default icon |
+| --- | --- | --- | --- | --- |
+| `SpecDown Dev` | `com.mosaicpando.specdown.dev` | `Dev Debug` | `Dev Release` | SpecDown Dev / Flat |
+| `SpecDown Beta` | `com.mosaicpando.specdown.beta` | `Beta Debug` | `Beta Release` | SpecDown Beta / Light |
+| `SpecDown` | `com.mosaicpando.specdown` | `Debug` | `Release` | SpecDown / Original |
+
+Choose the scheme explicitly. All three retain the same eight manual icon choices,
+with a channel-aware reset to the default. Their preferences, recents and WebKit
+storage are private to their separate app sandboxes; no shared App Group or data
+migration is configured. The internal `specdown://app` origin is unchanged. Files
+documents stay where the user keeps them and can be deliberately opened in any
+channel; this change does not copy them between installations.
+
+Dev is the local development app. Beta uses a separate owner-created App Store
+Connect record for TestFlight only. The existing production ID remains the release
+identity: the final production build must pass its own TestFlight gate before App
+Review. New IDs and profiles are owner-led setup; valid existing certificates can
+be reused where appropriate. No account actions or signing are part of this source
+change. See the [channel contract](../docs/project-appstore/2026-10-31-spec-ios-development-channels.md)
+for isolation, verification, provisioning references and rollback limits.
 
 ## Structure
 
@@ -117,4 +153,8 @@ The test verifies:
 
 ## Why XcodeGen?
 
-The `.xcodeproj` is generated from `project.yml` and is **not committed to git**. This avoids notoriously messy `.pbxproj` merge conflicts. Always run `xcodegen generate` after pulling changes to `project.yml`.
+The `.xcodeproj` is generated from `project.yml` and is **not committed to git**.
+This avoids `.pbxproj` merge conflicts. After project configuration changes,
+preserve local owner-managed settings, regenerate in a reviewable location, and
+verify the selected scheme and resolved identity before replacing the working
+project. Do not overwrite local signing settings as an incidental source update.
