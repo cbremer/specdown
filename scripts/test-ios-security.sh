@@ -12,3 +12,10 @@ swiftc -warnings-as-errors \
   "$repo_dir/tests/native/SecurityPolicyTests.swift" \
   -o "$test_dir/security-policy-tests"
 "$test_dir/security-policy-tests"
+
+swiftc -warnings-as-errors \
+  -module-cache-path "$test_dir/module-cache" \
+  "$repo_dir/ios/SpecDown/AppIconCatalog.swift" \
+  "$repo_dir/tests/native/AppIconCatalogTests.swift" \
+  -o "$test_dir/app-icon-catalog-tests"
+"$test_dir/app-icon-catalog-tests"

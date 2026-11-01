@@ -54,6 +54,11 @@ jobs:
       - name: Test native file security boundaries
         run: bash scripts/test-ios-security.sh
 
+      - name: Verify channel configuration and regression controls
+        run: |
+          python3 scripts/test-ios-channel.py
+          python3 scripts/verify-ios-channel.py --project ios/SpecDown.xcodeproj
+
       - name: Build for iOS Simulator
         run: |
           # Tee the full xcodebuild output to a log before xcpretty prettifies
@@ -67,9 +72,34 @@ jobs:
             -scheme SpecDown \
             -sdk iphonesimulator \
             -configuration Debug \
+            -derivedDataPath "$RUNNER_TEMP/specdown-ios" \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | xcpretty
+
+      - name: Verify production identity and build isolated channels
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-ios-channel.py \
+            --app "$RUNNER_TEMP/specdown-ios/Build/Products/Debug-iphonesimulator/Specdown.app" \
+            --channel production --web markdown-viewer/dist
+          for channel in development beta; do
+            if [ "$channel" = development ]; then
+              scheme='SpecDown Dev'
+              configuration='Dev Debug'
+            else
+              scheme='SpecDown Beta'
+              configuration='Beta Release'
+            fi
+            xcodebuild -project ios/SpecDown.xcodeproj -scheme "$scheme" \
+              -sdk iphonesimulator -configuration "$configuration" \
+              -derivedDataPath "$RUNNER_TEMP/specdown-ios" \
+              ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build \
+              2>&1 | tee -a "$RUNNER_TEMP/xcodebuild.log" | xcpretty
+            python3 scripts/verify-ios-channel.py \
+              --app "$RUNNER_TEMP/specdown-ios/Build/Products/$configuration-iphonesimulator/Specdown.app" \
+              --channel "$channel" --web markdown-viewer/dist
+          done
 
       - name: Surface Swift warnings
         if: always()
@@ -96,6 +126,7 @@ jobs:
             -scheme SpecDown \
             -sdk iphonesimulator \
             -configuration Debug \
+            -derivedDataPath "$RUNNER_TEMP/specdown-ios" \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
             build

@@ -35,6 +35,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 28: support contact clarity](2026-10-31-tasks-session-28-support-contact.md) | Email-first reporting, retained public GitHub issue browsing and explicit account requirement; no reproduced dead URL or live deployment. |
 | Oct 31, 2026 | Tasks | [Session 29: separate iOS Light icon](2026-10-31-tasks-session-29-ios-light-icon.md) | Approved full-bleed Light master, manual iOS alternate and reproducible opaque exports; existing icons and desktop remain unchanged. |
 | Oct 31, 2026 | Tasks | [Session 30: existing iOS icon geometry](2026-10-31-tasks-session-30-ios-icon-geometry.md) | Master-derived full-edge iOS exports remove the six alternates' extra inset; Original, Light and desktop geometry preserved. |
+| Oct 31, 2026 | Spec | [iOS development channels](2026-10-31-spec-ios-development-channels.md) | Separate Dev/Beta/production identities, one source tree, owner setup and reversible workflow. |
+| Oct 31, 2026 | Tasks | [Session 32: iOS development channels](2026-10-31-tasks-session-32-ios-development-channels.md) | Three explicit schemes, channel-aware default icons and compiled identity checks; Apple setup remains owner-led. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
