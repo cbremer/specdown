@@ -7,7 +7,7 @@ import { DOCUMENT_MAX_DIAGRAMS, DOCUMENT_MAX_DIAGRAM_CHARS } from '../core/docum
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
 import { isIOSNative } from '../core/platform.js';
-import { trapFocus } from '../core/focus-trap.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
 import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
@@ -388,22 +388,6 @@ function initializeInlineDiagram(diagramId) {
 // ===========================
 // Fullscreen Management
 // ===========================
-/** Return only usable non-editable focus targets: closing must not reopen a keyboard.
- * @param {Element | null | undefined} target
- * @returns {target is HTMLElement}
- */
-function canRestoreFullscreenFocus(target) {
-    if (!(target instanceof HTMLElement) || !target.isConnected ||
-        !target.matches('button, a[href], [tabindex]') ||
-        target.matches('input, textarea, select, :disabled') ||
-        target.closest('[contenteditable]:not([contenteditable="false"]), [hidden], [inert]')) return false;
-    for (let node = /** @type {HTMLElement | null} */ (target); node; node = node.parentElement) {
-        const style = getComputedStyle(node);
-        if (style.display === 'none' || style.visibility === 'hidden') return false;
-    }
-    return true;
-}
-
 /** @param {string} diagramId */
 function openFullscreen(diagramId) {
     const wrapper = document.getElementById(`wrapper-${diagramId}`);
@@ -422,8 +406,8 @@ function openFullscreen(diagramId) {
     if (!fsOverlay) return;
     const previousFocus = document.activeElement;
     const expandButton = wrapper.closest('.diagram-container')?.querySelector('.diagram-expand');
-    const returnFocus = !fsOverlay.contains(previousFocus) && canRestoreFullscreenFocus(previousFocus)
-        ? previousFocus : canRestoreFullscreenFocus(expandButton) ? expandButton : el('markdown-content');
+    const returnFocus = !fsOverlay.contains(previousFocus) && canRestoreNonEditableFocus(previousFocus)
+        ? previousFocus : canRestoreNonEditableFocus(expandButton) ? expandButton : el('markdown-content');
     // Replacing a fullscreen instance must not momentarily refocus the page.
     closeFullscreen({ restoreFocus: false });
 
@@ -745,8 +729,8 @@ export function closeFullscreen({ restoreFocus = true } = {}) {
     // A newer dialog may own focus during teardown. Leave it alone, and never
     // restore a detached/hidden source control or an old text-entry field.
     if (restoreFocus && ownedFocus) {
-        const target = canRestoreFullscreenFocus(returnFocus) ? returnFocus : el('markdown-content');
-        if (canRestoreFullscreenFocus(target)) target.focus({ preventScroll: true });
+        const target = canRestoreNonEditableFocus(returnFocus) ? returnFocus : el('markdown-content');
+        if (canRestoreNonEditableFocus(target)) target.focus({ preventScroll: true });
         else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     }
 }

@@ -4,7 +4,7 @@
 // is cloned into a stage with pan/zoom (via the bundled Panzoom); prev/next
 // (buttons or keyboard) walk the set.
 
-import { trapFocus } from '../core/focus-trap.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import Panzoom from '@panzoom/panzoom';
 import { showToast } from './toast.js';
 
@@ -20,7 +20,7 @@ let slideIndex = 0;
 /** @type {Element | null} */
 let presentationPrevFocus = null;
 /** @type {(() => void) | null} */
-let releaseTrap = null;
+let presentationReleaseTrap = null;
 /** @type {PanzoomObject | null} */
 let slidePanzoom = null;
 
@@ -147,8 +147,8 @@ function buildPresentationOverlay() {
   presentationOverlay.appendChild(stage);
   presentationOverlay.appendChild(nav);
   document.body.appendChild(presentationOverlay);
-  releaseTrap = trapFocus(presentationOverlay);
-  presentationOverlay.focus();
+  presentationReleaseTrap = trapFocus(presentationOverlay);
+  presentationOverlay.focus({ preventScroll: true });
 }
 
 function destroySlidePanzoom() {
@@ -213,26 +213,53 @@ export function presentPrev() {
 
 export function exitPresentation() {
   if (!presentationOverlay) return;
-  if (releaseTrap) releaseTrap();
-  releaseTrap = null;
+  const ownedFocus = presentationOverlay.contains(document.activeElement);
+  if (presentationReleaseTrap) presentationReleaseTrap();
+  presentationReleaseTrap = null;
+  presentationOverlay.removeEventListener('keydown', onPresentationKeydown);
   destroySlidePanzoom();
   if (presentationOverlay.parentNode)
     presentationOverlay.parentNode.removeChild(presentationOverlay);
   presentationOverlay = null;
   diagrams = [];
   slideIndex = 0;
-  if (
-    presentationPrevFocus &&
-    typeof /** @type {HTMLElement} */ (presentationPrevFocus).focus ===
-      'function'
-  ) {
-    /** @type {HTMLElement} */ (presentationPrevFocus).focus();
+  // A newer dialog may own focus while presentation is closed. Otherwise,
+  // return to a usable non-text opener without resurrecting its keyboard.
+  if (ownedFocus) {
+    const target = canRestoreNonEditableFocus(presentationPrevFocus)
+      ? presentationPrevFocus
+      : el('markdown-content');
+    if (canRestoreNonEditableFocus(target))
+      target.focus({ preventScroll: true });
   }
   presentationPrevFocus = null;
 }
 
 /** @param {KeyboardEvent} e */
 function onPresentationKeydown(e) {
+  if (
+    e.defaultPrevented ||
+    !presentationOverlay?.contains(document.activeElement)
+  )
+    return;
+  if (e.key === 'Tab' && document.activeElement === presentationOverlay) {
+    // Enter from tabindex=-1 through the currently enabled nav controls;
+    // the shared trap handles wrapping once a control owns focus.
+    const controls = /** @type {NodeListOf<HTMLButtonElement>} */ (
+      presentationOverlay.querySelectorAll('button:not([disabled])')
+    );
+    const target = controls[e.shiftKey ? controls.length - 1 : 0];
+    e.preventDefault();
+    target?.focus({ preventScroll: true });
+    return;
+  }
+  // Let Space activate a focused button instead of advancing the slide.
+  if (
+    e.key === ' ' &&
+    e.target instanceof Element &&
+    e.target.closest('button')
+  )
+    return;
   if (
     e.key === 'ArrowRight' ||
     e.key === 'ArrowDown' ||

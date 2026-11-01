@@ -1,6 +1,7 @@
 // @ts-check
 // In-document search: highlight matches in the rendered markdown and navigate
 // between them. State is private to this module.
+import { isPresentationOpen } from './presentation.js';
 
 // A small document can otherwise expand into millions of highlight nodes.
 // Stop after finding one overflow match; never allocate a mark for that match.
@@ -63,9 +64,9 @@ function updateSearchCount() {
 
 export function openSearch() {
   // All entry points (shortcut, palette and toolbar) share this boundary.
-  // Find belongs to the document, which is obscured by fullscreen diagrams.
+  // Find belongs to the document, which these diagram surfaces obscure.
   const fullscreen = el('fullscreen-overlay');
-  if (fullscreen && fullscreen.style.display !== 'none') return;
+  if (isPresentationOpen() || (fullscreen && fullscreen.style.display !== 'none')) return;
   const searchBar = el('search-bar');
   if (!searchBar) return;
   searchBar.style.display = 'flex';
