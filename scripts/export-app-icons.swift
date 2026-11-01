@@ -1,8 +1,13 @@
-// macOS: swift scripts/export-app-icons.swift [repository root]
+// macOS: swift scripts/export-app-icons.swift [repository root] [--ios-light-only]
 // Derive every alternate asset from its full-resolution source, never a prior export.
 import AppKit
 
-let root = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : FileManager.default.currentDirectoryPath)
+let arguments = Array(CommandLine.arguments.dropFirst())
+let lightOnly = arguments.contains("--ios-light-only")
+let rootArguments = arguments.filter { $0 != "--ios-light-only" }
+precondition(rootArguments.count <= 1 && !rootArguments.contains(where: { $0.hasPrefix("--") }),
+             "Usage: swift scripts/export-app-icons.swift [repository root] [--ios-light-only]")
+let root = URL(fileURLWithPath: rootArguments.first ?? FileManager.default.currentDirectoryPath)
 let space = CGColorSpace(name: CGColorSpace.sRGB)!
 let variants = ["flat", "glass", "ceramic", "metallic", "layered", "minimal"]
 
@@ -40,7 +45,7 @@ func save(_ image: CGImage, _ relativePath: String, opaque: Bool = false) throws
     try tagged.representation(using: .png, properties: [:])!.write(to: root.appendingPathComponent(relativePath))
 }
 
-for variant in variants {
+for variant in lightOnly ? [] : variants {
     let source = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/\(variant).png")))!.cgImage!
     let width = source.width, height = source.height
     let working = context(width, height)
@@ -93,3 +98,17 @@ for variant in variants {
         .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-\(variant).imageset/icon.png"), options: .atomic)
     print("\(variant): source \(width)×\(height), visible \(visible), scale \(scale)")
 }
+
+// Light is an opaque, full-bleed iOS master. Do not apply desktop extraction,
+// 824px placement, rounded masking, or dark compositing to this separate choice.
+let lightSource = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/light.png")))!
+precondition(lightSource.pixelsWide == lightSource.pixelsHigh && !lightSource.hasAlpha,
+             "Light requires a square opaque master")
+let light = context(1024, 1024)
+light.interpolationQuality = .high
+light.draw(lightSource.cgImage!, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
+let lightIconPath = "ios/SpecDown/Assets.xcassets/AppIcon-light.appiconset/AppIcon-1024.png"
+try save(light.makeImage()!, lightIconPath, opaque: true)
+try Data(contentsOf: root.appendingPathComponent(lightIconPath))
+    .write(to: root.appendingPathComponent("ios/SpecDown/Assets.xcassets/IconPreview-light.imageset/icon.png"), options: .atomic)
+print("light: source \(lightSource.pixelsWide)×\(lightSource.pixelsHigh), full-bleed 1024×1024 iOS only")
