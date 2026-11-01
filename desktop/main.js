@@ -466,6 +466,19 @@ function restoreSession() {
   }
 }
 
+function getViewerArguments() {
+  const args = [`--specdown-app-url=${APP_INDEX_URL}`];
+  if (IS_MAS) {
+    const version = app.getVersion();
+    // Native Store metadata only; reject malformed values without coercion.
+    const match = typeof version === 'string'
+      ? version.match(/^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/)
+      : null;
+    if (match && match[0] === version) args.push(`--specdown-app-version=${version}`);
+  }
+  return args;
+}
+
 function createWindow() {
   const bounds = store ? store.get('windowBounds', { width: 1200, height: 800 }) : { width: 1200, height: 800 };
 
@@ -478,7 +491,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       // The preload only exposes the bridge when the page is this URL.
-      additionalArguments: [`--specdown-app-url=${APP_INDEX_URL}`],
+      additionalArguments: getViewerArguments(),
     },
   });
 
@@ -1691,6 +1704,7 @@ module.exports = {
   initAutoUpdater,
   DISTRIBUTION_CHANNEL,
   APP_INDEX_URL,
+  getViewerArguments,
   isAppPageUrl,
   routeNavigation,
   isTrustedIpcSender,

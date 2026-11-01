@@ -35,6 +35,16 @@ describe('Mac App Store build config', () => {
     expect(mas.productName).toBe('SpecDown');
   });
 
+  it('aligns Store release metadata with iOS without changing direct-channel metadata', () => {
+    const ios = fs.readFileSync(path.join(ROOT, 'ios/project.yml'), 'utf8');
+    const marketing = ios.match(/MARKETING_VERSION:\s*['"]?([\d.]+)/)[1];
+    const build = ios.match(/CURRENT_PROJECT_VERSION:\s*['"]?(\d+)/)[1];
+    expect(mas.extraMetadata.version).toBe(marketing);
+    expect(mas.buildVersion).toBe(build);
+    expect(pkg.build.extraMetadata).toBeUndefined();
+    expect(pkg.build.buildVersion).toBeUndefined();
+  });
+
   it('declares category, export compliance and the Electron team ID', () => {
     for (const target of [mas.mac, mas.mas, mas.masDev]) {
       expect(target.category).toBe('public.app-category.developer-tools');
