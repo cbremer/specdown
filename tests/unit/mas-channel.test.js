@@ -94,6 +94,65 @@ describe('getDistributionChannel', () => {
   });
 });
 
+describe('Store version metadata passed to the viewer', () => {
+  let previousListeners;
+  beforeEach(() => {
+    previousListeners = new Map(
+      ['uncaughtException', 'unhandledRejection'].map((name) => [
+        name,
+        new Set(process.listeners(name)),
+      ])
+    );
+  });
+  afterEach(() => {
+    for (const [name, previous] of previousListeners) {
+      for (const listener of process.listeners(name)) {
+        if (!previous.has(listener)) process.removeListener(name, listener);
+      }
+    }
+  });
+
+  it('passes the packaged MAS version, independently of the shared source version', () => {
+    const main = loadMain(true);
+    loadedElectron.app.getVersion.mockReturnValue('1.0.1');
+    expect(main.getViewerArguments()).toEqual([
+      `--specdown-app-url=${main.APP_INDEX_URL}`,
+      '--specdown-app-version=1.0.1',
+    ]);
+  });
+
+  it('leaves the direct viewer arguments unchanged and never reads a Store version', () => {
+    const main = loadMain(false);
+    expect(main.getViewerArguments()).toEqual([
+      `--specdown-app-url=${main.APP_INDEX_URL}`,
+    ]);
+    expect(loadedElectron.app.getVersion).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    null,
+    1.01,
+    '1.0.1\n',
+    '1.0.1 --specdown-app-url=file:///other',
+    '1.0.1-beta',
+    '10000.0.1',
+  ])('omits malformed native version %p', (value) => {
+    const main = loadMain(true);
+    loadedElectron.app.getVersion.mockReturnValue(value);
+    expect(main.getViewerArguments()).toEqual([
+      `--specdown-app-url=${main.APP_INDEX_URL}`,
+    ]);
+  });
+
+  it('does not coerce a native version object', () => {
+    const main = loadMain(true);
+    const toString = jest.fn(() => '1.0.1');
+    loadedElectron.app.getVersion.mockReturnValue({ toString });
+    expect(main.getViewerArguments()).toHaveLength(1);
+    expect(toString).not.toHaveBeenCalled();
+  });
+});
+
 describe('Mac App Store build', () => {
   let main;
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
