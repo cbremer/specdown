@@ -7,6 +7,7 @@ import { DOCUMENT_MAX_DIAGRAMS, DOCUMENT_MAX_DIAGRAM_CHARS } from '../core/docum
 import Panzoom from '@panzoom/panzoom';
 import DOMPurify from 'dompurify';
 import { isIOSNative } from '../core/platform.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
 import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
@@ -24,6 +25,7 @@ import { shareDiagramLink } from './share-links.js';
  *   diagramId?: string | null,
  *   fullscreenState?: FullscreenState,
  *   fullscreenCleanup?: (() => void) | null,
+ *   fullscreenReturnFocus?: HTMLElement | null,
  *   wheelHandler?: EventListener | null,
  *   dblClickHandler?: EventListener | null,
  * }} FullscreenOverlay
@@ -402,7 +404,12 @@ function openFullscreen(diagramId) {
 
     const fsOverlay = getFsOverlay();
     if (!fsOverlay) return;
-    closeFullscreen();
+    const previousFocus = document.activeElement;
+    const expandButton = wrapper.closest('.diagram-container')?.querySelector('.diagram-expand');
+    const returnFocus = !fsOverlay.contains(previousFocus) && canRestoreNonEditableFocus(previousFocus)
+        ? previousFocus : canRestoreNonEditableFocus(expandButton) ? expandButton : el('markdown-content');
+    // Replacing a fullscreen instance must not momentarily refocus the page.
+    closeFullscreen({ restoreFocus: false });
 
     // Clone SVG for fullscreen - use original mermaid source SVG attributes
     const svgClone = /** @type {SVGSVGElement} */ (svgElement.cloneNode(true));
@@ -417,6 +424,9 @@ function openFullscreen(diagramId) {
 
     // Show fullscreen first so container dimensions are available for fit calculation
     fsOverlay.style.display = 'flex';
+    fsOverlay.setAttribute('role', 'dialog');
+    fsOverlay.setAttribute('aria-modal', 'true');
+    fsOverlay.fullscreenReturnFocus = returnFocus;
 
     // Initialize panzoom for fullscreen with wide scale range
     const fullscreenPanzoom = Panzoom(svgClone, {
@@ -490,6 +500,17 @@ function openFullscreen(diagramId) {
     else window.addEventListener('resize', recenterOnResize);
     const markInteraction = () => { fullscreenState.interacted = true; };
     svgClone.addEventListener('panzoomstart', markInteraction);
+    const releaseFocusTrap = trapFocus(fsOverlay);
+    // The shared trap wraps the controls; the initial tabindex=-1 dialog
+    // itself needs an explicit entry edge in both directions.
+    const enterFullscreenControls = (/** @type {KeyboardEvent} */ event) => {
+        if (event.key !== 'Tab' || document.activeElement !== fsOverlay) return;
+        event.preventDefault();
+        const selector = event.shiftKey ? '.close-fullscreen' : '.zoom-in';
+        const control = /** @type {HTMLButtonElement | null} */ (fsOverlay.querySelector(selector));
+        control?.focus({ preventScroll: true });
+    };
+    fsOverlay.addEventListener('keydown', enterFullscreenControls);
     fsOverlay.fullscreenCleanup = () => {
         clearTimeout(fitTimer);
         cancelAnimationFrame(fitFrame);
@@ -497,6 +518,8 @@ function openFullscreen(diagramId) {
         resizeObserver?.disconnect();
         window.removeEventListener('resize', recenterOnResize);
         svgClone.removeEventListener('panzoomstart', markInteraction);
+        releaseFocusTrap();
+        fsOverlay.removeEventListener('keydown', enterFullscreenControls);
     };
 
     // Setup fullscreen controls with fresh event listeners
@@ -518,7 +541,7 @@ function openFullscreen(diagramId) {
     }
 
     // Focus for keyboard events
-    fsOverlay.focus();
+    fsOverlay.focus({ preventScroll: true });
 }
 
 /**
@@ -662,9 +685,13 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     updateZoomUI(panzoomInstance, controls);
 }
 
-export function closeFullscreen() {
+/** @param {{ restoreFocus?: boolean }} [options] */
+export function closeFullscreen({ restoreFocus = true } = {}) {
     const fsOverlay = getFsOverlay();
     if (!fsOverlay) return;
+    const ownedFocus = fsOverlay.style.display !== 'none' && fsOverlay.contains(document.activeElement);
+    const returnFocus = fsOverlay.fullscreenReturnFocus;
+    fsOverlay.fullscreenReturnFocus = null;
     fsOverlay.fullscreenCleanup?.();
     fsOverlay.fullscreenCleanup = null;
 
@@ -693,10 +720,19 @@ export function closeFullscreen() {
 
     // Hide fullscreen
     fsOverlay.style.display = 'none';
+    fsOverlay.removeAttribute('role');
+    fsOverlay.removeAttribute('aria-modal');
 
     // Clear content
     if (fullscreenWrapper) fullscreenWrapper.innerHTML = '';
     fsOverlay.diagramId = null;
+    // A newer dialog may own focus during teardown. Leave it alone, and never
+    // restore a detached/hidden source control or an old text-entry field.
+    if (restoreFocus && ownedFocus) {
+        const target = canRestoreNonEditableFocus(returnFocus) ? returnFocus : el('markdown-content');
+        if (canRestoreNonEditableFocus(target)) target.focus({ preventScroll: true });
+        else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    }
 }
 
 // ===========================

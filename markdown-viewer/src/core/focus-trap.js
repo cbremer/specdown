@@ -9,6 +9,32 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), ' +
   'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/** Return only usable non-editable targets: closing must not reopen a keyboard.
+ * @param {Element | null | undefined} target
+ * @returns {target is HTMLElement}
+ */
+export function canRestoreNonEditableFocus(target) {
+  if (
+    !(target instanceof HTMLElement) ||
+    !target.isConnected ||
+    !target.matches('button, a[href], [tabindex]') ||
+    target.matches('input, textarea, select, :disabled') ||
+    target.closest(
+      '[contenteditable]:not([contenteditable="false"]), [hidden], [inert]'
+    )
+  )
+    return false;
+  for (
+    let node = /** @type {HTMLElement | null} */ (target);
+    node;
+    node = node.parentElement
+  ) {
+    const style = getComputedStyle(node);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+  }
+  return true;
+}
+
 /**
  * Trap Tab / Shift+Tab inside `container` until released.
  * @param {HTMLElement} container
