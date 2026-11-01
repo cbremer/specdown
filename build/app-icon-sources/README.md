@@ -22,12 +22,37 @@ python3 scripts/verify-app-icons.py
 ```
 
 The verifier requires Pillow. The exporter uses AppKit/Core Graphics only.
-It removes a one-source-pixel extraction fringe, antialiases the silhouette,
-and scales directly from the master to a centered 824-pixel maximum visible
-dimension on a 1024-pixel canvas. Aspect ratio and internal detail are preserved.
-Desktop exports use transparent sRGB; iOS exports and picker previews use the
-same geometry composited on RGB (11, 17, 29), with no alpha channel.
+For desktop, it removes a one-source-pixel extraction fringe, antialiases the
+silhouette, and scales directly from the master to a centered 824-pixel maximum
+visible dimension on a 1024-pixel canvas. Desktop exports use transparent sRGB.
+The separate iOS path below fills the asset frame from the master, preserving
+aspect ratio and internal artwork without reusing the padded desktop export.
 Original and the signed app's primary bundle icon are unchanged.
+
+## Full-edge iOS geometry for the six existing alternates
+
+Reproduce only Flat, Glass, Ceramic, Metallic, Layered and Minimal on iOS:
+
+```sh
+swift scripts/export-app-icons.swift --ios-legacy-only
+python3 scripts/verify-app-icons.py --ios-legacy-only
+python3 scripts/test-app-icons.py
+```
+
+The iOS crop is a square centered on the original master's opaque tile bounds
+(alpha at least 250), with side length equal to the shorter bound dimension
+minus four source pixels. The two-pixel inward guard removes the outer antialias
+edge. This uniform aspect-fill reaches all four asset mid-edges without
+stretching or adding the desktop inset. The full square is resampled directly
+to 1024×1024; RGB (11, 17, 29) fills only remaining transparent corner pixels
+under the system mask. Existing material, bevel, ring and face artwork is kept.
+The result is opaque sRGB and the picker preview is a byte-identical copy.
+
+The default export command produces desktop and iOS outputs through their
+separate paths. `--ios-legacy-only` does not write any desktop or Light asset.
+The verifier still checks desktop's 824px geometry, then compares iOS to an
+independent full-frame crop from the master and checks all four mid-edges.
+Original, Light, the masters and desktop exports are not changed by this fix.
 
 ## Separate iOS Light choice
 
@@ -65,5 +90,5 @@ full-canvas resample to 1024×1024, tags sRGB, writes an opaque iOS AppIcon, and
 copies those exact bytes into its picker preview. It does not apply the legacy
 824-pixel desktop normalization, extract edges, add an inset or create a desktop
 Light icon. The default export/verify commands include both legacy icons and
-Light; use `--ios-light-only` to keep this work separate from the pending
-existing-alternate border task (WK-27).
+Light; use `--ios-light-only` to reproduce Light independently from the six
+existing alternate icons.
