@@ -447,6 +447,8 @@ function openFullscreen(diagramId) {
         svgClone.parentElement === fullscreenWrapper && svgClone.isConnected;
     let fitFrame = 0;
     let resizeFrame = 0;
+    /** @type {(() => void) | undefined} */
+    let disposeMinimap;
     // Panzoom's constructor defers a forced `pan(startX, startY)` (0,0) via a
     // setTimeout(0) to constrain its initial values — that reset fires *after*
     // this synchronous fit and would clobber the centering back to the
@@ -512,6 +514,8 @@ function openFullscreen(diagramId) {
     };
     fsOverlay.addEventListener('keydown', enterFullscreenControls);
     fsOverlay.fullscreenCleanup = () => {
+        disposeMinimap?.();
+        disposeMinimap = undefined;
         clearTimeout(fitTimer);
         cancelAnimationFrame(fitFrame);
         cancelAnimationFrame(resizeFrame);
@@ -529,7 +533,7 @@ function openFullscreen(diagramId) {
         // Setup minimap
         requestAnimationFrame(() => {
             if (!isActive()) return;
-            updateMinimap(svgClone);
+            disposeMinimap = updateMinimap(svgClone);
             updateMinimapViewport(fullscreenPanzoom, fullscreenWrapper);
         });
 

@@ -18,7 +18,6 @@ import {
 } from '../core/document-context.js';
 import { isDesktop } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
-import { closeFullscreen } from './diagrams.js';
 import { closeSearch } from './search.js';
 import { toggleToc } from './toc.js';
 import { toggleSplitView } from './split-view.js';
@@ -315,7 +314,6 @@ export async function closeTab(id) {
 export function showDropZone() {
   invalidateDocumentContext();
   // Cleanup
-  closeFullscreen();
   closeSearch();
   closeIOSActionSheet();
   closeIOSTocSheet();
