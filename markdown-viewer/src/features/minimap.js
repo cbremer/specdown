@@ -7,6 +7,7 @@ import { getSvgNaturalDimensions } from '../core/utils.js';
 /**
  * Render the diagram SVG into the minimap canvas.
  * @param {SVGElement} svgElement
+ * @returns {(() => void) | undefined} Cancel pending raster work and release its URL.
  */
 export function updateMinimap(svgElement) {
   const minimapEl = document.getElementById('fullscreen-minimap');
@@ -52,18 +53,30 @@ export function updateMinimap(svgElement) {
   const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const img = new Image();
-  img.onload = () => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      URL.revokeObjectURL(url);
-      return;
-    }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  let pending = true;
+  const dispose = () => {
+    if (!pending) return;
+    pending = false;
+    img.onload = null;
+    img.onerror = null;
     URL.revokeObjectURL(url);
   };
-  img.onerror = () => URL.revokeObjectURL(url);
+  img.onload = () => {
+    // A retained callback must remain inert even after another fullscreen
+    // instance has reused this canvas. Cleanup also handles a missing context.
+    if (!pending) return;
+    try {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } finally {
+      dispose();
+    }
+  };
+  img.onerror = dispose;
   img.src = url;
+  return dispose;
 }
 
 /**

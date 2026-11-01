@@ -10,6 +10,7 @@
 import { prepareMarkdownDocument } from './core/prepare-document.js';
 import {
   captureDocumentContext,
+  configureDocumentContext,
   invalidateDocumentContext,
   isDocumentContextCurrent,
 } from './core/document-context.js';
@@ -89,6 +90,7 @@ import {
 import { registerServiceWorker, registerFileHandlerLaunchConsumer } from './features/pwa.js';
 import {
   startPresentation,
+  exitPresentation,
   hasPresentableDiagrams,
 } from './features/presentation.js';
 import {
@@ -183,6 +185,20 @@ const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present
 // Initialization
 // ===========================
 function init() {
+    configureDocumentContext({
+        onInvalidate: () => {
+            // Invalidation happens only after a replacement is accepted. Do
+            // this before DOM mutation, never from an async render completion.
+            const focused = document.activeElement;
+            const presentation = document.querySelector('body > .presentation-overlay');
+            const ownedFocus = fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
+            closeFullscreen({ restoreFocus: false });
+            exitPresentation({ restoreFocus: false });
+            // Fullscreen remains in the DOM while hidden. Release only its
+            // still-active focus; a newer dialog keeps its own focus and draft.
+            if (ownedFocus && focused === document.activeElement && focused instanceof HTMLElement) focused.blur();
+        },
+    });
     // Keep the helper in the module graph so Vite cannot DCE it.
     // Session 01 gates open paths on this; Session 00 does not.
     const htmlDocumentsEnabledAtBoot = htmlDocumentsEnabled();
