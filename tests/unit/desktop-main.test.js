@@ -862,10 +862,10 @@ describe('desktop/main.js', () => {
       fs.rmSync(dropDir, { recursive: true, force: true });
     });
 
-    it('opens a dropped markdown file like a native open (recents recorded)', () => {
+    it('a granted dropped file without a receiving window does not record recents', () => {
       fileAccess.noteUserIntent(path.join(dropDir, 'notes.md'), 'file');
       getHandler()(trustedEvent, path.join(dropDir, 'notes.md'));
-      expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(dropDir, 'notes.md'));
+      expect(app.addRecentDocument).not.toHaveBeenCalled();
       // A plain file must not be registered as a workspace root.
       expect(workspaceRoots.size).toBe(0);
     });
@@ -949,13 +949,17 @@ describe('desktop/main.js', () => {
     });
 
     describe('openRelativeFromFile', () => {
-      // openFileByPath feeds every successful open into the OS recents via
-      // app.addRecentDocument (mocked) — use that as the observable outcome.
-      it('opens a relative .md inside the workspace', () => {
+      // These tests have no receiving window. Delivery/acceptance is exercised
+      // by desktop-open-acceptance.test.js; a read alone is never a recent open.
+      it('reads an authorized relative .md but does not infer renderer acceptance', () => {
         workspaceRoots.add(wsRoot);
         fileAccess.noteUserIntent(wsRoot, 'folder');
-        openRelativeFromFile(path.join(wsRoot, 'a.md'), './sub/b.md');
-        expect(app.addRecentDocument).toHaveBeenCalledWith(path.join(wsRoot, 'sub', 'b.md'));
+        const read = jest.spyOn(fs, 'openSync');
+        try {
+          openRelativeFromFile(path.join(wsRoot, 'a.md'), './sub/b.md');
+          expect(read).toHaveBeenCalledWith(path.join(wsRoot, 'sub', 'b.md'), expect.any(Number));
+          expect(app.addRecentDocument).not.toHaveBeenCalled();
+        } finally { read.mockRestore(); }
       });
 
       it('blocks traversal that escapes the workspace root', () => {

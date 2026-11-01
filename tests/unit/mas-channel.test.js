@@ -210,7 +210,7 @@ describe('Mac App Store build: sandbox file access', () => {
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
     // Restore only this block's fs spies (tests/setup.js owns Storage spies).
-    for (const name of ['readFileSync', 'statSync', 'watchFile', 'unwatchFile']) fs[name].mockRestore?.();
+    for (const name of ['readFileSync', 'openSync', 'statSync', 'watchFile', 'unwatchFile']) fs[name].mockRestore?.();
   });
 
   it('does not read a raw path that has no sandbox grant (old state migration)', () => {
@@ -220,15 +220,19 @@ describe('Mac App Store build: sandbox file access', () => {
     expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
   });
 
-  it('persists a dropped file as a grant, then opens it', () => {
+  it('persists a dropped file grant and reads it without inferring renderer acceptance', () => {
+    const read = jest.spyOn(fs, 'openSync');
     ipcHandler('note-user-picked-path')(masTrustedEvent(), file);
     ipcHandler('open-dropped-path')(masTrustedEvent(), file);
     expect(mockNativeBookmarks.createBookmark).toHaveBeenCalledWith(file);
-    expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
-    // The same path now opens by reference (recents / session restore).
-    loadedElectron.app.addRecentDocument.mockClear();
+    expect(read).toHaveBeenCalledWith(file, expect.any(Number));
+    expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
+    // This suite has no window. The same granted path can be read again, but
+    // only a receiving renderer can admit it to a tab and acknowledge recents.
+    read.mockClear();
     ipcHandler('request-open-path')(masTrustedEvent(), file);
-    expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(file);
+    expect(read).toHaveBeenCalledWith(file, expect.any(Number));
+    expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
   });
 
   it('stats dropped paths only inside an active scope and opens the resolved moved file', () => {
@@ -238,6 +242,7 @@ describe('Mac App Store build: sandbox file access', () => {
     const start = mockNativeBookmarks.startAccess.getMockImplementation();
     const stop = mockNativeBookmarks.stopAccess.getMockImplementation();
     const stat = fs.statSync;
+    const open = fs.openSync;
     let activeScopes = 0;
     mockNativeBookmarks.startAccess.mockImplementation((bookmark) => {
       activeScopes += 1;
@@ -252,10 +257,16 @@ describe('Mac App Store build: sandbox file access', () => {
       expect(activeScopes).toBeGreaterThan(0);
       return stat(target, ...args);
     });
+    const openSpy = jest.spyOn(fs, 'openSync').mockImplementation((target, ...args) => {
+      expect(target).toBe(movedFile);
+      expect(activeScopes).toBeGreaterThan(0);
+      return open(target, ...args);
+    });
     try {
       ipcHandler('open-dropped-path')(masTrustedEvent(), file);
       expect(statSpy).toHaveBeenCalledWith(movedFile);
-      expect(loadedElectron.app.addRecentDocument).toHaveBeenCalledWith(movedFile);
+      expect(openSpy).toHaveBeenCalledWith(movedFile, expect.any(Number));
+      expect(loadedElectron.app.addRecentDocument).not.toHaveBeenCalled();
       expect(activeScopes).toBe(0);
     } finally {
       mockNativeBookmarks.startAccess.mockImplementation(start);

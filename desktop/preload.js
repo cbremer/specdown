@@ -77,6 +77,10 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
+  reportFileOpenResult: (receipt, accepted) => {
+    ipcRenderer.send('file-open-result', { receipt, accepted });
+  },
+
   // Register a callback for when the menu requests closing the active tab
   onCloseTab: (callback) => {
     ipcRenderer.on('close-tab', () => {

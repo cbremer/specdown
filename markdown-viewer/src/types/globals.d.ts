@@ -15,6 +15,11 @@ interface SpecdownFileData {
   filePath: string;
 }
 
+/** Main-issued receipt exists only for a newly delivered desktop open. */
+interface SpecdownFileOpenData extends SpecdownFileData {
+  openReceipt: string;
+}
+
 /** On-disk metadata for a file, returned by the desktop shell for the File
  * info sheet. Times are epoch milliseconds; `owner` is a best-effort username
  * (or null when it can't be resolved, e.g. another user or on Windows). */
@@ -73,7 +78,8 @@ interface SpecdownDesktopBridge {
   /** Re-grant access to a file through the open panel, then open it. */
   requestGrantAccess?: (filePath: string) => void;
   openDroppedPath?: (absPath: string) => void;
-  onFileOpened?: (cb: (fileData: SpecdownFileData) => void) => void;
+  onFileOpened?: (cb: (fileData: SpecdownFileOpenData) => void) => void;
+  reportFileOpenResult?: (receipt: string, accepted: boolean) => void;
   onCloseTab?: (cb: () => void) => void;
   onFileChanged?: (
     cb: (fileData: SpecdownFileData) => void | Promise<void>
