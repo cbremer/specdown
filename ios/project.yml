@@ -1,11 +1,22 @@
 name: SpecDown
 
+# One source target, three independent install identities. Production keeps its
+# established Debug/Release configuration names for release automation.
+configs:
+  Debug: debug
+  Release: release
+  Dev Debug: debug
+  Dev Release: release
+  Beta Debug: debug
+  Beta Release: release
+
 options:
   bundleIdPrefix: com.mosaicpando
   deploymentTarget:
     iOS: "16.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
+  defaultConfig: Dev Debug
 
 settings:
   SWIFT_VERSION: "5.9"
@@ -33,21 +44,51 @@ targets:
     # the Xcode project so dist/ exists.
 
     settings:
-      # Permanent once the App Store Connect record exists. Universal purchase
-      # (docs/project-appstore, decision D02): the Mac App Store build must use
-      # this same bundle ID.
-      PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown
-      MARKETING_VERSION: "1.0.1"
-      CURRENT_PROJECT_VERSION: "228"
-      PRODUCT_NAME: Specdown
-      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-flat AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal AppIcon-light"
-      TARGETED_DEVICE_FAMILY: "1,2"   # 1 = iPhone, 2 = iPad
+      base:
+        # Permanent once the App Store Connect record exists. Universal purchase
+        # (docs/project-appstore, decision D02): the Mac App Store build must use
+        # this same bundle ID.
+        PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown
+        MARKETING_VERSION: "1.0.1"
+        CURRENT_PROJECT_VERSION: "228"
+        PRODUCT_NAME: Specdown
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-flat AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal AppIcon-light"
+        TARGETED_DEVICE_FAMILY: "1,2"   # 1 = iPhone, 2 = iPad
+        SPECDOWN_DISPLAY_NAME: SpecDown
+        SPECDOWN_CHANNEL: production
+      configs:
+        Dev Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.dev
+          SPECDOWN_DISPLAY_NAME: SpecDown Dev
+          SPECDOWN_CHANNEL: development
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-flat
+          ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal AppIcon-light"
+        Dev Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.dev
+          SPECDOWN_DISPLAY_NAME: SpecDown Dev
+          SPECDOWN_CHANNEL: development
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-flat
+          ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal AppIcon-light"
+        Beta Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.beta
+          SPECDOWN_DISPLAY_NAME: SpecDown Beta
+          SPECDOWN_CHANNEL: beta
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-light
+          ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon AppIcon-flat AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal"
+        Beta Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.beta
+          SPECDOWN_DISPLAY_NAME: SpecDown Beta
+          SPECDOWN_CHANNEL: beta
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-light
+          ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon AppIcon-flat AppIcon-glass AppIcon-ceramic AppIcon-metallic AppIcon-layered AppIcon-minimal"
 
     info:
       path: SpecDown/Info.plist
       properties:
-        CFBundleDisplayName: SpecDown
+        CFBundleDisplayName: "$(SPECDOWN_DISPLAY_NAME)"
+        SpecDownChannel: "$(SPECDOWN_CHANNEL)"
+        SpecDownPrimaryIcon: "$(ASSETCATALOG_COMPILER_APPICON_NAME)"
         # Driven by build settings so archives/uploads can stamp them
         # (AS-014). Bump CURRENT_PROJECT_VERSION for every App Store upload.
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
@@ -95,3 +136,58 @@ targets:
                 - markdown
               public.mime-type:
                 - text/markdown
+
+# Always select the identity explicitly for Run and Archive. The production
+# scheme remains named SpecDown for existing CI and the real release candidate.
+schemes:
+  SpecDown Dev:
+    build:
+      targets:
+        SpecDown: all
+    run:
+      config: Dev Debug
+    test:
+      config: Dev Debug
+    analyze:
+      config: Dev Debug
+    profile:
+      config: Dev Release
+    archive:
+      config: Dev Release
+    management:
+      shared: true
+      orderHint: 0
+  SpecDown Beta:
+    build:
+      targets:
+        SpecDown: all
+    run:
+      config: Beta Debug
+    test:
+      config: Beta Debug
+    analyze:
+      config: Beta Debug
+    profile:
+      config: Beta Release
+    archive:
+      config: Beta Release
+    management:
+      shared: true
+      orderHint: 1
+  SpecDown:
+    build:
+      targets:
+        SpecDown: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    analyze:
+      config: Debug
+    profile:
+      config: Release
+    archive:
+      config: Release
+    management:
+      shared: true
+      orderHint: 2

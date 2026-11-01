@@ -4,7 +4,9 @@ enum AppIconChoice: String, CaseIterable, Identifiable {
     case original, flat, glass, ceramic, metallic, layered, minimal, light
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
-    var alternateName: String? { self == .original ? nil : "AppIcon-\(rawValue)" }
+    var alternateName: String? {
+        AppIconCatalog.alternateName(for: rawValue, primary: AppIconCatalog.primaryName)
+    }
     var previewName: String { "IconPreview-\(rawValue)" }
 }
 
@@ -42,7 +44,7 @@ struct AppIconPicker: View {
                     }
                 } footer: {
                     Text(UIApplication.shared.supportsAlternateIcons
-                         ? "Changes the icon on your Home Screen. iOS may show a confirmation. Choose Original to reset."
+                         ? "Changes the icon on your Home Screen. iOS may show a confirmation. Choose \(AppIconCatalog.defaultTitle(primary: AppIconCatalog.primaryName)) to reset."
                          : "This installation does not support alternate icons.")
                 }
                 if changing { ProgressView("Changing icon…") }
