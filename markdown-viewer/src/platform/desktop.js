@@ -32,6 +32,7 @@ import {
   bridgeSaveSession,
   bridgeExportPdf,
   bridgeOnFileOpened,
+  bridgeReportFileOpenResult,
   bridgeOnFileChanged,
   bridgeOnCloseTab,
   bridgeOnTriggerPrint,
@@ -191,7 +192,15 @@ export function setupDesktopIPC() {
 
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
   bridgeOnFileOpened(function (fileData) {
-    if (!createTab(fileData.filename, fileData.content, fileData.filePath)) return;
+    let accepted = false;
+    try {
+      accepted = createTab(fileData.filename, fileData.content, fileData.filePath) === true;
+    } finally {
+      // This is synchronous tab admission, before async diagram completion.
+      // Report before unrelated renderer recent-list UI/persistence can fail.
+      bridgeReportFileOpenResult(fileData.openReceipt, accepted);
+    }
+    if (!accepted) return;
     // Remember the path so the in-app recent-files list can reopen it later.
     if (fileData.filePath) {
       recordRecentFile({ type: 'path', ref: fileData.filePath, title: fileData.filename });

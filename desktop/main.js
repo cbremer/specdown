@@ -8,6 +8,7 @@ const { createAppIconController } = require('./app-icons');
 const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
 const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
 const { createFileResourcePolicy } = require('./file-resource-policy');
+const { createFileOpenReceipts } = require('./file-open-receipts');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -115,6 +116,10 @@ function isSignedUpdatePlatform(platform) {
 let mainWindow = null;
 let store = null;
 let logFilePath = null;
+const fileOpenReceipts = createFileOpenReceipts({
+  isAppPage: isAppPageUrl,
+  onAccepted: addRecentFile,
+});
 
 // Every user-file read goes through fileAccess (see mas-access.js): a plain
 // main-held capability for the direct build, sandbox grants + persisted
@@ -482,6 +487,8 @@ function createWindow() {
   // Loads the Vite build output. `npm run desktop` / `desktop:build` run the
   // web build first so this file exists.
   fileResourcePolicy.install(mainWindow.webContents.session);
+  const windowWebContents = mainWindow.webContents;
+  fileOpenReceipts.bind(windowWebContents);
   mainWindow.loadFile(APP_INDEX_PATH);
 
   // Keep the window on the bundled viewer. A crafted markdown link must not
@@ -523,6 +530,7 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    fileOpenReceipts.forget(windowWebContents);
     mainWindow = null;
   });
 }
@@ -610,11 +618,9 @@ function openFileByPath(filePath) {
       notifyFileAccessNeeded(filePath);
       return;
     }
-    const fileData = access.value;
-    if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('file-opened', fileData);
+    if (!fileOpenReceipts.deliver(access.value)) {
+      logInfo('File open was not delivered; recents remain unchanged.');
     }
-    addRecentFile(fileData.filePath);
   } catch (err) {
     console.error('Failed to read file:', filePath, err);
   }
@@ -1139,6 +1145,12 @@ async function exportPdfFromHtml(payload) {
 // ===========================
 onTrustedIpc('request-file-open', () => {
   showOpenDialog();
+});
+
+// The receipt resolves only a path already read under its existing grant.
+// Never accept a renderer-supplied path or infer acceptance from a successful read.
+onTrustedIpc('file-open-result', (event, result) => {
+  fileOpenReceipts.acknowledge(event, result);
 });
 
 // Export the standalone printable document as a PDF file.
