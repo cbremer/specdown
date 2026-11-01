@@ -114,6 +114,7 @@ function isSignedUpdatePlatform(platform) {
 }
 
 let mainWindow = null;
+let viewerReadyWindow = null;
 let store = null;
 let logFilePath = null;
 const fileOpenReceipts = createFileOpenReceipts({
@@ -479,6 +480,15 @@ function getViewerArguments() {
   return args;
 }
 
+function isViewerNotLoading(window) {
+  try {
+    const wc = window && window.webContents;
+    return !!wc && !wc.isDestroyed() && !wc.isLoadingMainFrame();
+  } catch {
+    return false;
+  }
+}
+
 function createWindow() {
   const bounds = store ? store.get('windowBounds', { width: 1200, height: 800 }) : { width: 1200, height: 800 };
 
@@ -494,6 +504,8 @@ function createWindow() {
       additionalArguments: getViewerArguments(),
     },
   });
+  const appWindow = mainWindow;
+  viewerReadyWindow = null;
 
   appIconController.restore();
 
@@ -502,7 +514,6 @@ function createWindow() {
   fileResourcePolicy.install(mainWindow.webContents.session);
   const windowWebContents = mainWindow.webContents;
   fileOpenReceipts.bind(windowWebContents);
-  mainWindow.loadFile(APP_INDEX_PATH);
 
   // Keep the window on the bundled viewer. A crafted markdown link must not
   // drive it to another page — a remote site, or a local .html file that
@@ -521,19 +532,73 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    // Deliver any files that were queued before the window was ready
-    for (const filePath of pendingFilePaths) {
-      openFileByPath(filePath);
+  // did-finish-load can precede isLoadingMainFrame() becoming false. Keep
+  // receipt delivery fail-closed and drain once the same successful load stops.
+  // A genuine View > Reload starts a new generation and may restore again.
+  let loadGeneration = 0;
+  let successfulLoad = null;
+  let restored = false;
+  let startupDisposed = false;
+  const currentViewerFrame = () => {
+    try {
+      if (startupDisposed || mainWindow !== appWindow || appWindow.webContents !== windowWebContents || windowWebContents.isDestroyed()) return null;
+      const frame = windowWebContents.mainFrame;
+      return frame && !frame.detached && isAppPageUrl(frame.url) ? frame : null;
+    } catch {
+      return null;
     }
+  };
+  const invalidateStartup = () => {
+    loadGeneration += 1;
+    successfulLoad = null;
+    restored = false;
+    if (viewerReadyWindow === appWindow) viewerReadyWindow = null;
+  };
+  const drainStartup = () => {
+    if (!successfulLoad || restored) return;
+    if (successfulLoad.generation !== loadGeneration || successfulLoad.frame !== currentViewerFrame()) {
+      successfulLoad = null;
+      return;
+    }
+    if (!isViewerNotLoading(appWindow)) return;
+    successfulLoad = null;
+    restored = true;
+    viewerReadyWindow = appWindow;
+    const queued = pendingFilePaths;
     pendingFilePaths = [];
-
-    // Restore previous session
+    for (const filePath of queued) openFileByPath(filePath);
     restoreSession();
-
-    // Restore custom CSS theme
     restoreCustomCss();
-  });
+  };
+  const failedLoad = (_event, _code, _description, _url, isMainFrame) => {
+    if (isMainFrame) invalidateStartup();
+  };
+  const startupListeners = {
+    'did-start-navigation': (details) => {
+      if (details.isMainFrame && !details.isSameDocument) invalidateStartup();
+    },
+    'did-finish-load': () => {
+      const frame = currentViewerFrame();
+      if (!frame || restored) return;
+      successfulLoad = { frame, generation: loadGeneration };
+      drainStartup();
+    },
+    'did-stop-loading': drainStartup,
+    'did-fail-load': failedLoad,
+    'did-fail-provisional-load': failedLoad,
+    'render-process-gone': invalidateStartup,
+    'destroyed': () => disposeStartup(),
+  };
+  const disposeStartup = () => {
+    startupDisposed = true;
+    invalidateStartup();
+    for (const [name, listener] of Object.entries(startupListeners)) {
+      windowWebContents.removeListener(name, listener);
+    }
+  };
+  for (const [name, listener] of Object.entries(startupListeners)) {
+    windowWebContents.on(name, listener);
+  }
 
   // Save window size on resize
   mainWindow.on('resize', () => {
@@ -543,9 +608,13 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    disposeStartup();
     fileOpenReceipts.forget(windowWebContents);
-    mainWindow = null;
+    if (mainWindow === appWindow) mainWindow = null;
   });
+
+  // Register lifecycle handlers before starting even a synchronously cached load.
+  appWindow.loadFile(APP_INDEX_PATH);
 }
 
 // ===========================
@@ -1676,7 +1745,7 @@ app.on('open-file', (event, filePath) => {
   event.preventDefault();
   // Finder/Dock opens are user grants in the sandbox: persist them.
   fileAccess.noteUserIntent(filePath, 'file');
-  if (mainWindow && mainWindow.webContents) {
+  if (mainWindow && viewerReadyWindow === mainWindow && isViewerNotLoading(mainWindow)) {
     openFileByPath(filePath);
   } else {
     // Window not ready yet — queue the file
