@@ -56,7 +56,7 @@ module.exports = {
   // Store releases align with iOS; the direct channel keeps package.json's
   // independent version and update feed. These only affect packaged metadata.
   extraMetadata: { version: '1.0.1' },
-  buildVersion: '229',
+  buildVersion: '230',
   directories: { output: 'dist-mas' },
   // The bookmark module ships only here; its sources and build tree do not.
   files: [
