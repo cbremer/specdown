@@ -40,6 +40,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 37: Mac Store version and local test](2026-11-01-tasks-session-37-mac-store-version-local-test.md) | Align MAS with iOS 1.0.1 (228), development-sign and test a separate app; startup-session delivery follow-up identified. |
 | Nov 1, 2026 | Tasks | [Session 38: Mac startup delivery](2026-11-01-tasks-session-38-mac-startup-delivery.md) | Preserve receipt security while waiting for the matching viewer to stop loading; reviewed fix and signed quit/relaunch acceptance passed. |
 | Nov 1, 2026 | Tasks | [Session 44: MAS package permissions](2026-11-01-tasks-session-44-mas-package-permissions.md) | Normalize only the embedded public profile and gate full installer permissions/ownership; real rejected and corrected package controls. |
+| Nov 1, 2026 | Tasks | [Session 45: native open recovery](2026-11-01-tasks-session-45-native-open-recovery.md) | Visible native rejection feedback, exact-entry Stop reopening and non-destructive Dismiss, with frame-bound recovery and per-load session writes. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

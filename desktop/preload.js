@@ -23,6 +23,13 @@ function isBundledViewerPage(href = globalThis.location.href, argv = process.arg
   }
 }
 
+// This isolated-world nonce binds session writes to this successful page load.
+// Old queued IPC cannot erase current saved entries after a same-frame reload.
+let sessionSaveToken = null;
+if (isBundledViewerPage()) ipcRenderer.on('session-save-ready', (_event, info) => {
+  sessionSaveToken = typeof info?.token === 'string' && info.token.length === 36 ? info.token : null;
+});
+
 if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   isDesktop: true,
 
@@ -134,6 +141,14 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
     });
   },
 
+  onFileOpenFailed: (callback) => {
+    ipcRenderer.on('file-open-failed', (_event, info) => callback(info));
+  },
+  onFileOpenRecoveryResolved: (callback) => {
+    ipcRenderer.on('file-open-recovery-resolved', (_event, info) => callback(info));
+  },
+  resolveFileOpenFailure: (request) => ipcRenderer.invoke('resolve-file-open-failure', request),
+
   // Re-grant access to a file via the open panel, then open it.
   requestGrantAccess: (filePath) => {
     ipcRenderer.send('request-grant-access', filePath);
@@ -156,7 +171,7 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
 
   // Save the current tab session to disk (called when tabs change)
   saveSession: (tabs) => {
-    ipcRenderer.send('save-session', tabs);
+    ipcRenderer.send('save-session', tabs, sessionSaveToken);
   },
 
   // Register a callback for when the native File > Print menu item is clicked

@@ -121,3 +121,53 @@ test('two independently accepted opens survive reordered acknowledgments', () =>
     ['/synthetic/A.md'],
   ]);
 });
+
+test('response receipts require the exact requesting bound frame and do not push an extra open', () => {
+  const event = { sender: receiptWc, senderFrame: receiptWc.mainFrame };
+  expect(
+    receiptController.prepare(
+      receiptFile,
+      {},
+      { ...event, sender: receiptWindow() }
+    )
+  ).toBeNull();
+  expect(
+    receiptController.prepare(receiptFile, {}, { ...event, senderFrame: {} })
+  ).toBeNull();
+  const prepared = receiptController.prepare(receiptFile, {}, event);
+  expect(prepared).toMatchObject({
+    ...receiptFile,
+    openReceipt: expect.any(String),
+  });
+  expect(receiptWc.mainFrame.send).not.toHaveBeenCalled();
+  expect(resultFor(prepared.openReceipt)).toBe(true);
+  expect(receiptCommit).toHaveBeenCalledWith(receiptFile.filePath);
+});
+
+test('response receipt result uses only main-held context and consumes rejection once', () => {
+  const onResult = jest.fn();
+  const controller = createFileOpenReceipts({
+    isAppPage: () => true,
+    onAccepted: receiptCommit,
+    onResult,
+  });
+  controller.bind(receiptWc);
+  const event = { sender: receiptWc, senderFrame: receiptWc.mainFrame };
+  const context = { requestedPath: '/synthetic/original.md' };
+  const prepared = controller.prepare(receiptFile, context, event);
+  expect(
+    controller.acknowledge(event, {
+      receipt: prepared.openReceipt,
+      accepted: false,
+      context: { requestedPath: '/forged.md' },
+    })
+  ).toBe(true);
+  expect(onResult.mock.calls).toEqual([[receiptFile.filePath, false, context]]);
+  expect(receiptCommit).not.toHaveBeenCalled();
+  expect(
+    controller.acknowledge(event, {
+      receipt: prepared.openReceipt,
+      accepted: true,
+    })
+  ).toBe(false);
+});
