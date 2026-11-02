@@ -83,6 +83,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 57: Chokidar 6 compatibility](2026-11-01-tasks-session-57-chokidar-6.md) | Align the Node floor and watcher options; validate real native/polling lifecycles with synthetic files, preserve Store build 230, and require fresh cross-platform CI. |
 | Nov 1, 2026 | Tasks | [Session 58: Marked validation](2026-11-01-tasks-session-58-marked-validation.md) | Marked 18.1.2 real-parser/sanitizer compatibility and admission regressions; 1,367 tests, coverage, lint/types/build pass; frozen Store 230 remains unchanged. |
 | Nov 1, 2026 | Tasks | [Session 59: tooling and Electron 45 validation](2026-11-01-tasks-session-59-tooling-electron-validation.md) | Seven tooling updates validated with real Electron/frame/Close Folder/addon checks and unsigned MAS packaging; narrow destroyed-window cleanup fix; frozen Store230 artifacts preserved. |
+| Nov 1, 2026 | Tasks | [Session 60: README and copy proof](2026-11-01-tasks-session-60-readme-copy-proof.md) | Reading-first README with accurate platform scope and a consistent side-by-side copy proposal; existing Store copy and frozen build 230 artifacts remain unchanged. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

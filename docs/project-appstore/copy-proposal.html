@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>SpecDown — Copy proposal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17222d;
+        --muted: #53616f;
+        --line: #dbe1e6;
+        --accent: #1756a9;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-padding-top: 24px;
+      }
+      body {
+        margin: 0;
+        background: #fff;
+        color: var(--ink);
+        font:
+          17px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 52px 36px 80px;
+      }
+      header {
+        margin-bottom: 52px;
+      }
+      .eyebrow {
+        color: var(--muted);
+        margin: 0 0 8px;
+        font-size: 14px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: clamp(34px, 5vw, 48px);
+        line-height: 1.15;
+        letter-spacing: -0.035em;
+        margin: 0 0 20px;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 4px;
+        border-radius: 2px;
+      }
+      section {
+        border-top: 1px solid var(--line);
+        padding-top: 28px;
+        margin-top: 56px;
+      }
+      h2 {
+        font-size: 28px;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin: 0 0 28px;
+      }
+      h3 {
+        font-size: 21px;
+        line-height: 1.4;
+        margin: 26px 0 12px;
+      }
+      h4 {
+        font-size: 13px;
+        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 0.065em;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+      h5 {
+        font-size: 16px;
+        line-height: 1.45;
+        margin: 26px 0 10px;
+      }
+      p {
+        margin: 0 0 18px;
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+        margin: 10px 0 22px;
+      }
+      li {
+        margin: 5px 0;
+      }
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 48px;
+      }
+      .columns > :nth-child(even) {
+        border-left: 1px solid var(--line);
+        padding-left: 32px;
+      }
+      .listing > h3 {
+        margin: 0 0 26px;
+        font-size: 25px;
+      }
+      .field {
+        margin-bottom: 28px;
+      }
+      .field p {
+        overflow-wrap: anywhere;
+      }
+      .field:not(.description) p {
+        margin-bottom: 0;
+      }
+      .prose {
+        max-width: 780px;
+      }
+      .hero {
+        font-size: 32px;
+        line-height: 1.25;
+        letter-spacing: -0.025em;
+      }
+      .captions strong {
+        display: block;
+        font-weight: 600;
+      }
+      .captions p {
+        color: var(--muted);
+        margin: 2px 0 18px;
+      }
+      .links {
+        margin-top: 30px;
+        font-size: 15px;
+      }
+      code {
+        font:
+          0.94em ui-monospace,
+          SFMono-Regular,
+          monospace;
+      }
+      dt {
+        font-weight: 600;
+        margin: 24px 0 8px;
+      }
+      dd {
+        margin: 0 0 18px;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        margin-top: 56px;
+        padding-top: 24px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      @media (max-width: 760px) {
+        main {
+          padding: 30px 20px 48px;
+        }
+        header {
+          margin-bottom: 36px;
+        }
+        section {
+          margin-top: 40px;
+        }
+        .columns {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+        .columns > :nth-child(even) {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          padding: 28px 0 0;
+        }
+      }
+      @media print {
+        body {
+          font-size: 10pt;
+        }
+        main {
+          max-width: none;
+          padding: 0;
+        }
+        nav {
+          display: none;
+        }
+        section {
+          margin-top: 28px;
+          padding-top: 18px;
+        }
+        h2,
+        h3,
+        h4,
+        h5 {
+          break-after: avoid;
+        }
+        .columns {
+          gap: 24px;
+        }
+        a {
+          color: inherit;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">Copy proposal</p>
+        <h1>SpecDown</h1>
+        <nav aria-label="Copy sections">
+          <a href="#app-store">App Store</a><a href="#website">Website</a
+          ><a href="#screenshots">Screenshot captions</a
+          ><a href="#support">Support</a><a href="#privacy">Privacy</a
+          ><a href="#app-wording">App wording</a>
+        </nav>
+      </header>
+      <section id="app-store" aria-labelledby="store-title">
+        <h2 id="store-title">App Store</h2>
+        <div class="columns">
+          <article class="listing">
+            <h3>iPhone &amp; iPad</h3>
+            <div class="field">
+              <h4>Name</h4>
+              <p>SpecDown</p>
+            </div>
+            <div class="field">
+              <h4>Subtitle</h4>
+              <p>Markdown &amp; Mermaid viewer</p>
+            </div>
+            <div class="field">
+              <h4>Promotional text</h4>
+              <p>
+                Read Markdown from your editor or AI assistant. Explore specs,
+                plans and Mermaid diagrams in a dedicated reading view.
+              </p>
+            </div>
+            <div class="field description">
+              <h4>Description</h4>
+              <p>
+                Read Markdown from your editor or AI assistant in a dedicated
+                reading view.
+              </p>
+              <p>
+                SpecDown helps developers and people using AI tools review
+                specs, plans, READMEs and technical notes. Open saved Markdown
+                to read formatted tables and highlighted code, then explore
+                Mermaid diagrams with zoom, pan and fullscreen views.
+              </p>
+              <h5>Read your documents</h5>
+              <ul>
+                <li>Open Markdown from Files or iCloud Drive</li>
+                <li>
+                  Send a Markdown document to SpecDown from a compatible app
+                </li>
+                <li>Read headings, lists, tables and highlighted code</li>
+                <li>Jump between sections with the table of contents</li>
+                <li>Find text and move through matching passages</li>
+                <li>Switch between the rendered preview and raw Markdown</li>
+                <li>
+                  Compare raw Markdown and the rendered preview in split view
+                </li>
+                <li>Keep several documents open in tabs</li>
+              </ul>
+              <h5>Explore Mermaid diagrams</h5>
+              <ul>
+                <li>
+                  View Mermaid flowcharts, sequence diagrams, state diagrams and
+                  Gantt charts
+                </li>
+                <li>Expand a diagram to zoom and pan</li>
+                <li>Use Reset to fit the diagram to the current view</li>
+              </ul>
+              <h5>Make reading comfortable</h5>
+              <ul>
+                <li>Choose light, dark or system appearance</li>
+                <li>Use the iPad sidebar to open files and bundled examples</li>
+                <li>
+                  Choose from eight app icons, including a separate Light option
+                </li>
+              </ul>
+              <p>
+                The bundled Diagram Showcase works offline. Local documents
+                render on your device. Opening an online document or loading a
+                remote image connects to its host.
+              </p>
+              <p>No account is required. SpecDown has no ads or analytics.</p>
+            </div>
+            <div class="field">
+              <h4>Keywords</h4>
+              <p>
+                readme,flowchart,sequence,gantt,uml,specs,docs,reader,code,tables,architecture,planning
+              </p>
+            </div>
+            <div class="field">
+              <h4>What’s New</h4>
+              <p>Security and reliability improvements for reading Markdown.</p>
+              <ul>
+                <li>
+                  Safer handling of document content, large files and complex
+                  diagrams.
+                </li>
+                <li>Web documents and remote images now require HTTPS.</li>
+                <li>Rejected documents leave your current document intact.</li>
+                <li>
+                  Improved Find behavior for documents with many matches and
+                  when the keyboard is open.
+                </li>
+                <li>
+                  Diagram zoom controls center the diagram, and Reset fits the
+                  current view.
+                </li>
+                <li>
+                  Better fullscreen focus and cleanup when switching documents
+                  or views.
+                </li>
+                <li>Removed the diagram Link button.</li>
+                <li>
+                  A separate Light app icon, plus improved sizing for the
+                  existing alternate icons.
+                </li>
+              </ul>
+            </div>
+          </article>
+          <article class="listing">
+            <h3>Mac</h3>
+            <div class="field">
+              <h4>Name</h4>
+              <p>SpecDown</p>
+            </div>
+            <div class="field">
+              <h4>Subtitle</h4>
+              <p>Markdown &amp; Mermaid viewer</p>
+            </div>
+            <div class="field">
+              <h4>Promotional text</h4>
+              <p>
+                Read Markdown from your editor or AI assistant. Explore specs,
+                plans and Mermaid diagrams in a dedicated reading view.
+              </p>
+            </div>
+            <div class="field description">
+              <h4>Description</h4>
+              <p>
+                Read Markdown from your editor or AI assistant in a dedicated
+                reading view.
+              </p>
+              <p>
+                SpecDown helps developers and people using AI tools review
+                specs, plans, READMEs and technical notes. Open saved Markdown
+                to read formatted tables and highlighted code, then explore
+                Mermaid diagrams with zoom, pan and fullscreen views.
+              </p>
+              <h5>Read your documents</h5>
+              <ul>
+                <li>Open Markdown files from your Mac</li>
+                <li>Open a folder to browse its Markdown files</li>
+                <li>Close the folder while keeping your documents open</li>
+                <li>Read headings, lists, tables and highlighted code</li>
+                <li>Jump between sections with the table of contents</li>
+                <li>Find text and move through matching passages</li>
+                <li>Switch between the rendered preview and raw Markdown</li>
+                <li>
+                  Compare raw Markdown and the rendered preview in split view
+                </li>
+                <li>Keep several documents open in tabs</li>
+              </ul>
+              <h5>Explore Mermaid diagrams</h5>
+              <ul>
+                <li>
+                  View Mermaid flowcharts, sequence diagrams, state diagrams and
+                  Gantt charts
+                </li>
+                <li>Expand a diagram to zoom and pan</li>
+                <li>Use Reset to fit the diagram to the current view</li>
+              </ul>
+              <h5>Make reading comfortable</h5>
+              <ul>
+                <li>Choose light, dark or system appearance</li>
+              </ul>
+              <p>
+                The bundled Diagram Showcase works offline. Local documents
+                render on your device. Opening an online document or loading a
+                remote image connects to its host.
+              </p>
+              <p>No account is required. SpecDown has no ads or analytics.</p>
+            </div>
+            <div class="field">
+              <h4>Keywords</h4>
+              <p>
+                preview,readme,flowchart,sequence,gantt,uml,specs,docs,code,tables,architecture,split
+              </p>
+            </div>
+          </article>
+        </div>
+        <p class="links">
+          <a href="https://specdown.mosaicpando.com/">Website</a> ·
+          <a href="https://specdown.mosaicpando.com/support.html">Support</a> ·
+          <a href="https://specdown.mosaicpando.com/privacy.html"
+            >Privacy policy</a
+          >
+        </p>
+      </section>
+      <section id="website" aria-labelledby="website-title">
+        <h2 id="website-title">Website</h2>
+        <div class="prose">
+          <h3 class="hero">Read the docs your AI workflow produces.</h3>
+          <p>
+            A focused Markdown reader for developers working with specs, plans
+            and READMEs. Explore Mermaid diagrams as you read, with zoom and
+            fullscreen views.
+          </p>
+          <p>
+            <strong>Browse Files</strong> ·
+            <strong>Explore sample diagrams</strong>
+          </p>
+          <h3>Explore diagrams</h3>
+          <p>Zoom, pan and expand Mermaid diagrams for a closer look.</p>
+          <h3>Open your Markdown</h3>
+          <p>
+            Open a file or paste a public HTTPS link to Markdown. Browse folders
+            in supported browsers.
+          </p>
+          <h3>Read with context</h3>
+          <p>
+            Move between headings, find a term, or compare the Markdown source
+            beside the rendered page.
+          </p>
+          <h3>Read where you work</h3>
+          <p>
+            Use SpecDown in your browser, on iPhone and iPad, or as a desktop
+            app for Mac, Windows and Linux.
+          </p>
+          <p>
+            <a href="https://apps.apple.com/app/specdown/id6822086808"
+              >Get SpecDown for iPhone and iPad</a
+            >
+            ·
+            <a href="https://github.com/cbremer/specdown/releases/latest"
+              >Download the desktop app</a
+            >
+          </p>
+          <h3>Search and social preview</h3>
+          <p><strong>SpecDown | Read Markdown specs and diagrams</strong></p>
+          <p>
+            Read Markdown specs, plans and READMEs in a focused viewer for
+            developers and AI tool users. Zoom into Mermaid diagrams as you
+            read.
+          </p>
+        </div>
+      </section>
+      <section id="screenshots" aria-labelledby="screenshots-title">
+        <h2 id="screenshots-title">Screenshot captions</h2>
+        <div class="columns">
+          <article>
+            <h3>iPhone</h3>
+            <ol class="captions">
+              <li>
+                <strong>Markdown, clearly rendered</strong>
+                <p>Specs and READMEs with room to breathe</p>
+              </li>
+              <li>
+                <strong>Diagrams you can explore</strong>
+                <p>Zoom, pan and Reset for a closer look</p>
+              </li>
+              <li>
+                <strong>Technical tables, easy to read</strong>
+                <p>Inspect the details in technical docs</p>
+              </li>
+              <li>
+                <strong>Follow every transition</strong>
+                <p>Mermaid state diagrams from Markdown</p>
+              </li>
+              <li>
+                <strong>Comfortable in Dark Mode</strong>
+                <p>Choose the appearance that suits you</p>
+              </li>
+            </ol>
+          </article>
+          <article>
+            <h3>Mac</h3>
+            <ol class="captions">
+              <li>
+                <strong>Source beside the preview</strong>
+                <p>Compare Markdown with its rendered result</p>
+              </li>
+              <li>
+                <strong>Mermaid diagrams, rendered</strong>
+                <p>Explore flowcharts with zoom, pan and Reset</p>
+              </li>
+              <li>
+                <strong>Plans you can follow</strong>
+                <p>Gantt charts inside your Markdown</p>
+              </li>
+              <li>
+                <strong>Tables and highlighted code</strong>
+                <p>A readable view of technical documents</p>
+              </li>
+              <li>
+                <strong>Comfortable in Dark Mode</strong>
+                <p>Choose light, dark or system appearance</p>
+              </li>
+            </ol>
+          </article>
+          <article>
+            <h3>iPad</h3>
+            <ol class="captions">
+              <li>
+                <strong>More room for your documents</strong>
+                <p>Read Markdown with the iPad sidebar</p>
+              </li>
+              <li>
+                <strong>See the plan take shape</strong>
+                <p>Gantt charts rendered from Markdown</p>
+              </li>
+              <li>
+                <strong>Inspect tables and code</strong>
+                <p>Clear formatting for technical details</p>
+              </li>
+              <li>
+                <strong>Follow each step</strong>
+                <p>Sequence diagrams you can zoom and pan</p>
+              </li>
+              <li>
+                <strong>Read in Dark Mode</strong>
+                <p>The same document, a different appearance</p>
+              </li>
+            </ol>
+          </article>
+          <article>
+            <h3>iPhone Duo</h3>
+            <ol class="captions">
+              <li>
+                <strong>Room for your Markdown</strong>
+                <p>Specs, diagrams and reading controls together</p>
+              </li>
+              <li>
+                <strong>A closer look at diagrams</strong>
+                <p>Zoom controls center the diagram</p>
+              </li>
+              <li>
+                <strong>Source when you need it</strong>
+                <p>Switch between Raw and Preview</p>
+              </li>
+              <li>
+                <strong>Find the detail</strong>
+                <p>Search the document and move through matches</p>
+              </li>
+              <li>
+                <strong>Read in Dark Mode</strong>
+                <p>A clear view for late-night reviewing</p>
+              </li>
+            </ol>
+          </article>
+        </div>
+      </section>
+      <section id="support" aria-labelledby="support-title">
+        <h2 id="support-title">SpecDown Support</h2>
+        <div class="prose">
+          <p>
+            Read Markdown specs and plans with interactive Mermaid diagrams.
+          </p>
+          <h3>Get SpecDown</h3>
+          <p>
+            <a href="https://apps.apple.com/app/specdown/id6822086808"
+              >Download free for iPhone and iPad on the App Store</a
+            >
+            (iOS or iPadOS 16.0 or later). For Mac, Windows and Linux, get the
+            <a href="https://github.com/cbremer/specdown/releases/latest"
+              >desktop download</a
+            >.
+          </p>
+          <h3>Getting started</h3>
+          <ul>
+            <li>
+              <strong>Open a file:</strong> tap Open on iPhone, use Open
+              Markdown File in the iPad sidebar, or choose File → Open… on Mac.
+              Select a UTF-8 <code>.md</code> or <code>.markdown</code> file,
+              including files in iCloud Drive.
+            </li>
+            <li>
+              <strong>From other apps:</strong> use Open With… → SpecDown or the
+              share sheet when the app supports it.
+            </li>
+            <li>
+              <strong>From the web:</strong> paste a public HTTPS link to a
+              Markdown file on the start screen.
+            </li>
+            <li>
+              <strong>Try it:</strong> open the bundled Diagram Showcase to
+              explore example Mermaid diagrams.
+            </li>
+            <li>
+              <strong>Browse a folder:</strong> on desktop or in a supported
+              browser, choose Open Folder. Choose Close Folder to close the
+              folder browser while keeping your document tabs open.
+            </li>
+          </ul>
+          <h3>Common questions</h3>
+          <dl>
+            <dt>A diagram shows an error.</dt>
+            <dd>
+              SpecDown uses Mermaid syntax. Check that the diagram’s code block
+              starts with <code>```mermaid</code>.
+            </dd>
+            <dt>A document won’t open.</dt>
+            <dd>
+              SpecDown supports UTF-8 Markdown files up to 8 MiB. Additional
+              limits apply to long lines, deeply nested content and complex
+              diagrams.
+            </dd>
+            <dt>Images don’t appear.</dt>
+            <dd>
+              Images linked by a full HTTPS address need an internet connection.
+              On iPhone and iPad, images referenced by a relative path, such as
+              <code>./diagram.png</code>, aren’t shown yet. Use a full HTTPS
+              image address when sharing a document across platforms.
+            </dd>
+            <dt>A link requires sign-in.</dt>
+            <dd>
+              SpecDown opens public links without signing in to the host. Some
+              hosts also prevent documents from loading in other apps. Download
+              the Markdown file, then open it in SpecDown.
+            </dd>
+            <dt>How do I close a folder?</dt>
+            <dd>
+              Choose Close Folder in the folder browser, or File → Close Folder
+              in the desktop app. Your document tabs stay open. Hiding the
+              folder browser only changes its visibility; it does not close the
+              folder.
+            </dd>
+            <dt>Can I use the web app offline?</dt>
+            <dd>
+              Offline use depends on what your browser has saved. Web links and
+              remote images still need an internet connection.
+            </dd>
+          </dl>
+          <h3>Contact</h3>
+          <p>
+            For help or to report a problem, email
+            <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a
+            >.
+          </p>
+          <p>
+            <a href="https://github.com/cbremer/specdown/issues"
+              >Browse GitHub issues</a
+            >. A GitHub account is required to report an issue there.
+          </p>
+        </div>
+      </section>
+      <section id="privacy" aria-labelledby="privacy-title">
+        <h2 id="privacy-title">Privacy Policy</h2>
+        <div class="prose">
+          <p>SpecDown for iPhone, iPad, Mac, Windows, Linux and the web.</p>
+          <h3>No accounts, ads or analytics</h3>
+          <p>
+            SpecDown has no account system, advertising or analytics. Documents
+            you open are not uploaded to a SpecDown service.
+          </p>
+          <h3>Documents render on your device</h3>
+          <p>
+            Files you open are read on your device to display them. Recent
+            files, bookmarks and settings are saved in local app or browser
+            storage. Notes in the web and desktop versions are saved there too.
+          </p>
+          <p>
+            Your file provider or operating system may also store or sync files
+            and backups according to your settings.
+          </p>
+          <h3>When SpecDown uses the network</h3>
+          <p>
+            Opening a web document or an image hosted online sends a request
+            directly to the site hosting that content. That site’s privacy
+            policy applies.
+          </p>
+          <p>
+            The web app and desktop downloads also check GitHub for releases.
+            App Store versions receive their updates through Apple.
+          </p>
+          <h3>Support email</h3>
+          <p>
+            If you contact support, the message and any attachments you choose
+            to send go to the support mailbox.
+          </p>
+          <h3>Children</h3>
+          <p>
+            SpecDown does not ask children to provide personal information in
+            the app.
+          </p>
+          <h3>Policy updates</h3>
+          <p>If this policy changes, this page will be updated.</p>
+          <h3>Contact</h3>
+          <p>
+            Questions about privacy:
+            <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a
+            >.
+          </p>
+        </div>
+      </section>
+      <section id="app-wording" aria-labelledby="wording-title">
+        <h2 id="wording-title">App wording</h2>
+        <div class="prose">
+          <h3>About SpecDown</h3>
+          <p>
+            Read Markdown specs and plans with interactive Mermaid diagrams.
+          </p>
+          <h3>Sample actions</h3>
+          <p>Read a sample<br />Explore sample diagrams</p>
+          <h3>Open from a link</h3>
+          <p>
+            Links that require sign-in may not open here. Download the Markdown
+            file and open it instead.
+          </p>
+        </div>
+      </section>
+      <footer>
+        © 2026 SpecDown ·
+        <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a>
+      </footer>
+    </main>
+  </body>
+</html>
