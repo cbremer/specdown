@@ -989,12 +989,12 @@ describe('Bookmark file reads', () => {
   });
   afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 
-  it('returns current content only after the user grants the file', async () => {
+  it('does not admit a bookmark to an unbound viewer even after granting its file', async () => {
     await expect(readBookmark(trustedEvent, file)).resolves.toBeNull();
     fileAccess.noteUserIntent(file, 'file');
-    await expect(readBookmark(trustedEvent, file)).resolves.toEqual({
-      filePath: file, filename: 'bookmark.md', content: '# Updated',
-    });
+    // This suite deliberately suspends app readiness. The real bound-viewer
+    // positive path is covered in desktop-open-recovery.test.js.
+    await expect(readBookmark(trustedEvent, file)).resolves.toBeNull();
   });
 
   it('returns null when a granted file has disappeared', async () => {

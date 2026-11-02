@@ -218,3 +218,16 @@ export function bridgeRestartToUpdate() {
 export async function bridgeReadBookmarkedFile(filePath) {
   return await nativeBridge()?.readBookmarkedFile?.(filePath) ?? null;
 }
+
+/** @param {Parameters<NonNullable<DesktopBridge['onFileOpenFailed']>>[0]} cb */
+export function bridgeOnFileOpenFailed(cb) {
+  nativeBridge()?.onFileOpenFailed?.(cb);
+}
+/** @param {Parameters<NonNullable<DesktopBridge['onFileOpenRecoveryResolved']>>[0]} cb */
+export function bridgeOnFileOpenRecoveryResolved(cb) {
+  nativeBridge()?.onFileOpenRecoveryResolved?.(cb);
+}
+/** @param {Parameters<NonNullable<DesktopBridge['resolveFileOpenFailure']>>[0]} request */
+export async function bridgeResolveFileOpenFailure(request) {
+  return (await nativeBridge()?.resolveFileOpenFailure?.(request)) === true;
+}

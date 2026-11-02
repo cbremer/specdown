@@ -51,13 +51,20 @@ interface SpecdownWorkspace {
 }
 
 /** The desktop (Electron) bridge exposed on `window.specdown` by the preload. */
+interface SpecdownOpenFailure {
+  id: string;
+  filename: string;
+  message: string;
+  canForget: boolean;
+}
+
 interface SpecdownDesktopBridge {
   isDesktop?: boolean;
   /** Shell OS (Node `process.platform`): 'darwin' | 'win32' | 'linux'. */
   platform?: string;
   /** 'mas' for the Mac App Store build, 'direct' for the DMG/ZIP download. */
   distribution?: 'mas' | 'direct';
-  readBookmarkedFile?: (filePath: string) => Promise<SpecdownFileData | null>;
+  readBookmarkedFile?: (filePath: string) => Promise<SpecdownFileOpenData | null>;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
   requestOpenFolder?: () => void;
@@ -76,6 +83,14 @@ interface SpecdownDesktopBridge {
     cb: (info: { filePath: string; filename: string }) => void
   ) => void;
   /** Re-grant access to a file through the open panel, then open it. */
+  onFileOpenFailed?: (callback: (info: SpecdownOpenFailure) => void) => void;
+  onFileOpenRecoveryResolved?: (
+    callback: (info: { id: string }) => void
+  ) => void;
+  resolveFileOpenFailure?: (request: {
+    id: string;
+    action: 'locate' | 'forget' | 'dismiss';
+  }) => Promise<boolean>;
   requestGrantAccess?: (filePath: string) => void;
   openDroppedPath?: (absPath: string) => void;
   onFileOpened?: (cb: (fileData: SpecdownFileOpenData) => void) => void;
