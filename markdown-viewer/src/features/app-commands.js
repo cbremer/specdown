@@ -12,7 +12,7 @@ import {
   performPrint,
   syncIOSChrome,
 } from '../platform/ios-chrome.js';
-import { openWorkspaceFolder } from './workspace.js';
+import { openWorkspaceFolder, closeWorkspaceFolder, canOpenWorkspaceFolder, hasWorkspace } from './workspace.js';
 import { toggleTheme } from './theme.js';
 import { toggleViewMode } from './view-mode.js';
 import { toggleToc } from './toc.js';
@@ -73,7 +73,14 @@ export function registerAppCommands() {
       title: 'Open folder…',
       keywords: ['workspace', 'directory', 'browse', 'files', 'sidebar'],
       run: () => openWorkspaceFolder(),
-      isAvailable: () => isDesktop,
+      isAvailable: canOpenWorkspaceFolder,
+    },
+    {
+      id: 'close-folder',
+      title: 'Close folder',
+      keywords: ['workspace', 'directory', 'detach'],
+      run: closeWorkspaceFolder,
+      isAvailable: () => canOpenWorkspaceFolder() && hasWorkspace(),
     },
     {
       id: 'toggle-theme',

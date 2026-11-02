@@ -10,6 +10,7 @@
 // own render callback under the test harness.
 
 import { setupOpenRecovery } from './open-recovery.js';
+import { isCurrentWorkspaceFileOpen, noteWorkspaceDocumentTab } from '../features/workspace.js';
 import { state } from '../core/state.js';
 import {
   captureDocumentContext,
@@ -191,6 +192,10 @@ export function setupDesktopIPC() {
 
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
   bridgeOnFileOpened(function (fileData) {
+    if (fileData.workspaceId !== undefined && !isCurrentWorkspaceFileOpen(fileData.workspaceId)) {
+      if (fileData.openReceipt) bridgeReportFileOpenResult(fileData.openReceipt, false);
+      return;
+    }
     let accepted = false;
     try {
       accepted = createTab(fileData.filename, fileData.content, fileData.filePath) === true;
@@ -200,6 +205,7 @@ export function setupDesktopIPC() {
       bridgeReportFileOpenResult(fileData.openReceipt, accepted);
     }
     if (!accepted) return;
+    if (fileData.workspaceId !== undefined) noteWorkspaceDocumentTab();
     // Remember the path so the in-app recent-files list can reopen it later.
     if (fileData.filePath) {
       recordRecentFile({ type: 'path', ref: fileData.filePath, title: fileData.filename });

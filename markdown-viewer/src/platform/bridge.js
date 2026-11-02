@@ -68,9 +68,10 @@ export function bridgeRequestOpenFolder() {
 /**
  * @param {string} fromPath The document the link was clicked in.
  * @param {string} href The relative link to resolve + open.
+ * @param {string} id The active workspace identity.
  */
-export function bridgeRequestOpenRelative(fromPath, href) {
-  nativeBridge()?.requestOpenRelative?.(fromPath, href);
+export function bridgeRequestOpenRelative(fromPath, href, id) {
+  nativeBridge()?.requestOpenRelative?.(fromPath, href, id);
 }
 
 /** @param {string} filePath Start watching a file for on-disk changes. */
@@ -230,4 +231,17 @@ export function bridgeOnFileOpenRecoveryResolved(cb) {
 /** @param {Parameters<NonNullable<DesktopBridge['resolveFileOpenFailure']>>[0]} request */
 export async function bridgeResolveFileOpenFailure(request) {
   return (await nativeBridge()?.resolveFileOpenFailure?.(request)) === true;
+}
+
+/** Close navigation context, retaining open documents and saved access. */
+export function bridgeRequestCloseWorkspace() {
+  nativeBridge()?.requestCloseWorkspace?.();
+}
+/** @param {string} filePath @param {string} id */
+export function bridgeRequestWorkspaceFile(filePath, id) {
+  nativeBridge()?.requestWorkspaceFile?.(filePath, id);
+}
+/** @param {Parameters<NonNullable<DesktopBridge['onWorkspaceClosed']>>[0]} cb */
+export function bridgeOnWorkspaceClosed(cb) {
+  nativeBridge()?.onWorkspaceClosed?.(cb);
 }

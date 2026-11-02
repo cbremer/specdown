@@ -870,10 +870,10 @@ describe('desktop/main.js', () => {
       expect(workspaceRoots.size).toBe(0);
     });
 
-    it('registers a dropped directory as a workspace root (relative-link containment)', () => {
+    it('does not attach a dropped directory without the current viewer context', () => {
       fileAccess.noteUserIntent(dropDir, 'folder');
       getHandler()(trustedEvent, dropDir);
-      expect(workspaceRoots.has(dropDir)).toBe(true);
+      expect(workspaceRoots.has(dropDir)).toBe(false);
       expect(app.addRecentDocument).not.toHaveBeenCalled();
     });
 
