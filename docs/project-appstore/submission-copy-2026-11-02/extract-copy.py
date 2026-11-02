@@ -105,7 +105,7 @@ def blob(path):
             ["git", "show", SOURCE + ":" + path], cwd=ROOT,
             stderr=subprocess.DEVNULL,
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         data = (ROOT / path).read_bytes()
     assert sha(data) == expected, "Approved source snapshot mismatch: " + path
     return data

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source_commit": "e8dd3cb95a41c19ad10c14e6f1efba3287866625",
   "source_html_sha256": "a56a892d8a1968f54d858a8053689932a8888d45a07b87ab56cbd9f2f386bafd",
-  "extractor_sha256": "cd3bbf89c6457138ccb93f96c9afcd8e166c58c9a1c9d47f454c3339b4b6593e",
+  "extractor_sha256": "3bbcd687bbcfff5ccfecf7bb343b5c9abc9e3e14e0f1ca31902bff8ce2427ef3",
   "files": {
     "DIFF.md": {
       "sha256": "82a43d0f7eae2024c609264316897ed2ddbbc6fac13b90584059a31e5ed758e2",
