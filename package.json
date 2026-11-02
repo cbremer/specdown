@@ -173,7 +173,7 @@
   },
   "dependencies": {
     "@panzoom/panzoom": "4.6.2",
-    "chokidar": "^5.0.0",
+    "chokidar": "^6.0.0",
     "dompurify": "^3.4.17",
     "electron-updater": "^6.8.11",
     "highlight.js": "11.12.0",
