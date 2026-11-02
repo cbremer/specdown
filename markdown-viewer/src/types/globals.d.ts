@@ -17,6 +17,7 @@ interface SpecdownFileData {
 
 /** Main-issued receipt exists only for a newly delivered desktop open. */
 interface SpecdownFileOpenData extends SpecdownFileData {
+  workspaceId?: string;
   openReceipt: string;
 }
 
@@ -46,6 +47,8 @@ interface SpecdownWorkspaceFile {
 
 /** The scanned workspace folder delivered by the desktop shell. */
 interface SpecdownWorkspace {
+  id: string;
+  generation: number;
   root: string;
   files: SpecdownWorkspaceFile[];
 }
@@ -68,7 +71,10 @@ interface SpecdownDesktopBridge {
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
   requestOpenFolder?: () => void;
-  requestOpenRelative?: (fromPath: string, href: string) => void;
+  requestOpenRelative?: (fromPath: string, href: string, id: string) => void;
+  requestWorkspaceFile?: (filePath: string, id: string) => void;
+  requestCloseWorkspace?: () => void;
+  onWorkspaceClosed?: (cb: (info: { generation: number }) => void) => void;
   onWorkspaceOpened?: (cb: (workspace: SpecdownWorkspace) => void) => void;
   watchFile?: (filePath: string) => void;
   unwatchFile?: (filePath: string) => void;

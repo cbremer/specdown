@@ -16,11 +16,13 @@ import {
 //     don't show the Open Folder button.
 
 import { state } from '../core/state.js';
-import { isDesktop } from '../core/platform.js';
+import { isDesktop, isIOSNative } from '../core/platform.js';
 import { showToast } from './toast.js';
 import {
   hasDesktopBridge,
-  bridgeRequestOpenPath,
+  bridgeRequestWorkspaceFile,
+  bridgeRequestCloseWorkspace,
+  bridgeOnWorkspaceClosed,
   bridgeRequestOpenFolder,
   bridgeRequestOpenRelative,
   bridgeOnWorkspaceOpened,
@@ -61,6 +63,8 @@ const WS_MAX_FILES = 2000;
  * @typedef {object} Workspace
  * @property {string} root
  * @property {WorkspaceFile[]} files
+ * @property {string} [id] Desktop context identity.
+ * @property {number} [generation] Desktop context revision.
  */
 
 /** @type {WorkspaceFile[]} */
@@ -68,19 +72,32 @@ let workspaceFiles = [];
 let workspaceSidebarVisible = false;
 /** Relative path of the doc currently shown (for highlight + web link resolve). */
 let currentWorkspaceRelPath = '';
+let workspaceLoaded = false;
+let workspaceId = '';
+let workspaceEpoch = 0;
+let workspacePickerEpoch = 0;
+let workspaceReadEpoch = 0;
+let workspaceNativeGeneration = -1;
+let workspaceClosePending = false;
+/** @type {Map<number, string>} Accepted web tab identity → relative path. */
+const workspaceTabPaths = new Map();
+// A weak origin marker survives Close so relative links in retained documents
+// cannot navigate the web app away. It retains no folder root, path or handle.
+/** @type {WeakMap<object, number>} */
+const workspaceDocumentContexts = new WeakMap();
 /** Directory relPaths the user has collapsed in the tree. */
 const collapsedDirs = new Set();
 
-/** @type {(filePath: string) => void} */
-let workspaceOpenPath = (filePath) => {
-  bridgeRequestOpenPath(filePath);
+/** @type {(filePath: string, id: string) => void} */
+let workspaceOpenPath = (filePath, id) => {
+  bridgeRequestWorkspaceFile(filePath, id);
 };
-/** @type {(name: string, content: string, relPath: string) => void} */
+/** @type {(name: string, content: string, relPath: string) => boolean | void} */
 let workspaceOpenFile = () => {};
 
 /**
- * @param {{ openPath?: (filePath: string) => void,
- *           openFile?: (name: string, content: string, relPath: string) => void }} [deps]
+ * @param {{ openPath?: (filePath: string, id: string) => void,
+ *           openFile?: (name: string, content: string, relPath: string) => boolean | void }} [deps]
  */
 export function configureWorkspace(deps) {
   if (deps && typeof deps.openPath === 'function')
@@ -92,6 +109,7 @@ export function configureWorkspace(deps) {
 /** Whether the browser supports the File System Access directory picker. */
 function isWebFolderSupported() {
   return (
+    !isIOSNative &&
     typeof window !== 'undefined' &&
     typeof (/** @type {any} */ (window).showDirectoryPicker) === 'function'
   );
@@ -107,12 +125,17 @@ export function isFolderDragDropSupported() {
   return isWebFolderSupported();
 }
 
+/** Whether folder commands are supported on this surface. */
+export function canOpenWorkspaceFolder() {
+  return isDesktop || isWebFolderSupported();
+}
+
 /** Open a folder: native picker on desktop, File System Access on the web. */
 export function openWorkspaceFolder() {
   if (isDesktop) {
     bridgeRequestOpenFolder();
   } else if (isWebFolderSupported()) {
-    pickWebFolder();
+    return pickWebFolder();
   }
 }
 
@@ -147,10 +170,12 @@ async function scanDirectoryHandle(dirHandle, prefix, out, depth) {
 
 /** Show the web folder picker, scan it, and adopt the workspace. */
 async function pickWebFolder() {
+  const operation = ++workspacePickerEpoch;
   const w = /** @type {any} */ (window);
   let dirHandle;
   try {
     dirHandle = await w.showDirectoryPicker();
+    if (operation !== workspacePickerEpoch) return;
   } catch {
     return; // user dismissed the picker
   }
@@ -159,9 +184,11 @@ async function pickWebFolder() {
   try {
     await scanDirectoryHandle(dirHandle, '', files, 0);
   } catch {
-    showToast('Could not read the folder.', { type: 'error' });
+    if (operation === workspacePickerEpoch)
+      showToast('Could not read the folder.', { type: 'error' });
     return;
   }
+  if (operation !== workspacePickerEpoch) return;
   files.sort((a, b) => a.relPath.localeCompare(b.relPath));
   if (files.length === 0) {
     showToast('No markdown files found in that folder.', { type: 'warning' });
@@ -196,19 +223,23 @@ export async function tryOpenDroppedFolder(dataTransfer) {
     }
   }
   if (handlePromises.length === 0) return false;
+  const operation = ++workspacePickerEpoch;
 
   let dirHandle = null;
   for (const p of handlePromises) {
     try {
       const h = await p;
+      if (operation !== workspacePickerEpoch) return true;
       if (h && h.kind === 'directory') {
         dirHandle = h;
         break;
       }
     } catch {
+      if (operation !== workspacePickerEpoch) return true;
       // ignore an unreadable item; keep checking the rest
     }
   }
+  if (operation !== workspacePickerEpoch) return true;
   if (!dirHandle) return false;
 
   /** @type {WorkspaceFile[]} */
@@ -216,9 +247,11 @@ export async function tryOpenDroppedFolder(dataTransfer) {
   try {
     await scanDirectoryHandle(dirHandle, '', files, 0);
   } catch {
-    showToast('Could not read the folder.', { type: 'error' });
+    if (operation === workspacePickerEpoch)
+      showToast('Could not read the folder.', { type: 'error' });
     return true; // it was a folder — handled, albeit with an error
   }
+  if (operation !== workspacePickerEpoch) return true;
   files.sort((a, b) => a.relPath.localeCompare(b.relPath));
   if (files.length === 0) {
     showToast('No markdown files found in that folder.', { type: 'warning' });
@@ -235,8 +268,15 @@ export async function tryOpenDroppedFolder(dataTransfer) {
  */
 export function applyWorkspace(workspace) {
   if (!workspace || !Array.isArray(workspace.files)) return;
+  workspaceEpoch += 1;
+  workspaceReadEpoch += 1;
+  workspacePickerEpoch += 1;
+  workspaceTabPaths.clear();
+  currentWorkspaceRelPath = '';
+  workspaceLoaded = true;
+  workspaceId = workspace.id || '';
   workspaceFiles = workspace.files;
-  workspaceSidebarVisible = workspaceFiles.length > 0;
+  workspaceSidebarVisible = true;
   collapsedDirs.clear();
   renderWorkspaceSidebar();
 
@@ -256,12 +296,11 @@ export function applyWorkspace(workspace) {
  * @param {WorkspaceFile | undefined} entry
  */
 function openWorkspaceEntry(entry) {
-  if (!entry) return;
-  currentWorkspaceRelPath = entry.relPath || '';
+  if (!entry || !workspaceLoaded || !workspaceFiles.includes(entry)) return;
   if (entry.handle) {
     readHandleAndOpen(entry);
   } else if (entry.path) {
-    workspaceOpenPath(entry.path);
+    workspaceOpenPath(entry.path, workspaceId);
   }
 }
 
@@ -270,16 +309,33 @@ function openWorkspaceEntry(entry) {
  * @param {WorkspaceFile} entry
  */
 async function readHandleAndOpen(entry) {
+  const epoch = workspaceEpoch;
+  const read = ++workspaceReadEpoch;
+  const isCurrent = () =>
+    epoch === workspaceEpoch &&
+    read === workspaceReadEpoch &&
+    workspaceFiles.includes(entry);
   try {
     const file = await entry.handle.getFile();
+    if (!isCurrent()) return;
     if (file.size > DOCUMENT_MAX_BYTES)
       throw new Error(
         'This document is too large. SpecDown supports files up to 8 MiB.'
       );
     const text = await file.text();
+    if (!isCurrent()) return;
     assertDocumentSize(text);
-    workspaceOpenFile(entry.name, text, entry.relPath);
+    if (
+      workspaceOpenFile(entry.name, text, entry.relPath) === true &&
+      state.activeTabId !== null
+    ) {
+      workspaceTabPaths.set(state.activeTabId, entry.relPath);
+      noteWorkspaceDocumentTab();
+      currentWorkspaceRelPath = entry.relPath;
+      renderWorkspaceSidebar();
+    }
   } catch (error) {
+    if (!isCurrent()) return;
     showToast(
       error instanceof Error ? error.message : 'Could not open the file.',
       { type: 'error' }
@@ -389,19 +445,47 @@ export function renderWorkspaceSidebar() {
   const list = wsEl('workspace-file-list');
   if (!sidebar || !list) return;
 
-  if (!workspaceSidebarVisible || workspaceFiles.length === 0) {
+  const toggle = wsEl('workspace-toggle');
+  if (toggle) {
+    toggle.style.display = workspaceLoaded ? '' : 'none';
+    toggle.classList.toggle(
+      'active',
+      workspaceLoaded && workspaceSidebarVisible
+    );
+    toggle.setAttribute(
+      'aria-pressed',
+      String(workspaceLoaded && workspaceSidebarVisible)
+    );
+  }
+  const closeEmpty = wsEl('close-folder-empty-button');
+  if (closeEmpty) closeEmpty.style.display = workspaceLoaded ? '' : 'none';
+  list.replaceChildren();
+  if (!workspaceSidebarVisible || !workspaceLoaded) {
     sidebar.style.display = 'none';
     return;
   }
   sidebar.style.display = '';
 
   const activePath = activeWorkspacePath();
-  list.innerHTML = '';
+  if (workspaceFiles.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'workspace-empty';
+    empty.textContent = 'No Markdown files in this folder.';
+    list.appendChild(empty);
+  }
+  for (const id of workspaceTabPaths.keys()) {
+    if (!state.tabs.some((tab) => tab.id === id)) workspaceTabPaths.delete(id);
+  }
+  currentWorkspaceRelPath =
+    state.activeTabId === null
+      ? ''
+      : workspaceTabPaths.get(state.activeTabId) || '';
   renderTreeNodes(buildWorkspaceTree(workspaceFiles), list, activePath);
 }
 
 /** @param {any[]} nodes @param {HTMLElement} container @param {string} activePath */
 function renderTreeNodes(nodes, container, activePath) {
+  const epoch = workspaceEpoch;
   for (const node of nodes) {
     const li = document.createElement('li');
 
@@ -423,7 +507,8 @@ function renderTreeNodes(nodes, container, activePath) {
       btn.append(caret, label);
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleDir(node.relPath);
+        if (epoch === workspaceEpoch && workspaceLoaded)
+          toggleDir(node.relPath);
       });
       li.appendChild(btn);
 
@@ -445,7 +530,7 @@ function renderTreeNodes(nodes, container, activePath) {
       btn.title = node.relPath;
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        openWorkspaceEntry(f);
+        if (epoch === workspaceEpoch) openWorkspaceEntry(f);
       });
       li.appendChild(btn);
     }
@@ -463,7 +548,7 @@ function toggleDir(relPath) {
 
 /** Toggle the workspace sidebar (when a workspace is active). */
 export function toggleWorkspaceSidebar() {
-  if (workspaceFiles.length === 0) return;
+  if (!workspaceLoaded) return;
   workspaceSidebarVisible = !workspaceSidebarVisible;
   const toggle = wsEl('workspace-toggle');
   if (toggle) toggle.classList.toggle('active', workspaceSidebarVisible);
@@ -472,7 +557,65 @@ export function toggleWorkspaceSidebar() {
 
 /** Whether a workspace folder is currently loaded. */
 export function hasWorkspace() {
-  return workspaceFiles.length > 0;
+  return workspaceLoaded;
+}
+
+/** Clear only workspace navigation; existing document/view state stays intact. */
+function clearWorkspaceNavigation() {
+  const focused = document.activeElement;
+  const restoreFocus =
+    focused instanceof HTMLElement &&
+    (!!focused.closest('#workspace-sidebar') ||
+      focused.id === 'close-folder-empty-button' ||
+      focused.id === 'workspace-toggle');
+  workspaceEpoch += 1;
+  workspacePickerEpoch += 1;
+  workspaceReadEpoch += 1;
+  workspaceLoaded = false;
+  workspaceId = '';
+  workspaceFiles = [];
+  workspaceSidebarVisible = false;
+  currentWorkspaceRelPath = '';
+  workspaceTabPaths.clear();
+  collapsedDirs.clear();
+  renderWorkspaceSidebar();
+  if (restoreFocus) {
+    const content = wsEl('content-area');
+    const target =
+      content?.style.display !== 'none'
+        ? wsEl('overflow-toggle')
+        : wsEl('open-folder-button');
+    target?.focus({ preventScroll: true });
+  }
+}
+
+/** Close the folder without closing documents or revoking their file access. */
+export function closeWorkspaceFolder() {
+  if (isDesktop && workspaceClosePending) return;
+  if (isDesktop) workspaceClosePending = true;
+  clearWorkspaceNavigation();
+  if (isDesktop) bridgeRequestCloseWorkspace();
+}
+
+/** Workspace-origin file messages queued before Close must not create tabs. */
+/** @param {unknown} id */
+export function isCurrentWorkspaceFileOpen(id) {
+  return (
+    typeof id === 'string' &&
+    !!id &&
+    !workspaceClosePending &&
+    workspaceLoaded &&
+    id === workspaceId
+  );
+}
+
+/** Record accepted tab ownership without retaining file or directory handles. */
+export function noteWorkspaceDocumentTab() {
+  const tab = state.tabs.find(
+    (candidate) => candidate.id === state.activeTabId
+  );
+  if (tab && workspaceLoaded)
+    workspaceDocumentContexts.set(tab, workspaceEpoch);
 }
 
 /**
@@ -482,7 +625,6 @@ export function hasWorkspace() {
  * @param {Event} e
  */
 export function handleWorkspaceLinkClick(e) {
-  if (!hasWorkspace()) return;
   const target = /** @type {HTMLElement} */ (e.target);
   const anchor = target && target.closest ? target.closest('a') : null;
   if (!anchor) return;
@@ -494,22 +636,39 @@ export function handleWorkspaceLinkClick(e) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return;
   if (!MARKDOWN_LINK_RE.test(href.split('#')[0].split('?')[0])) return;
 
+  const tab = state.tabs.find(
+    (candidate) => candidate.id === state.activeTabId
+  );
+  const origin = tab && workspaceDocumentContexts.get(tab);
+  if (origin !== undefined && (!workspaceLoaded || origin !== workspaceEpoch)) {
+    e.preventDefault();
+    showToast('Open this document from its folder to follow links.', {
+      type: 'info',
+    });
+    return;
+  }
+  if (!hasWorkspace()) return;
+
   if (isDesktop && hasDesktopBridge()) {
     const fromPath = activeWorkspacePath();
     if (!fromPath) return;
     e.preventDefault();
-    bridgeRequestOpenRelative(fromPath, href);
+    bridgeRequestOpenRelative(fromPath, href, workspaceId);
     return;
   }
 
   // Web: resolve against the current doc's relPath and open the matching entry.
-  if (currentWorkspaceRelPath) {
-    const targetRel = resolveRelativeRelPath(currentWorkspaceRelPath, href);
+  const activeRelPath =
+    state.activeTabId === null ? '' : workspaceTabPaths.get(state.activeTabId);
+  if (activeRelPath) {
+    const targetRel = resolveRelativeRelPath(activeRelPath, href);
     const entry = workspaceFiles.find((f) => f.relPath === targetRel);
-    if (entry) {
-      e.preventDefault();
-      openWorkspaceEntry(entry);
-    }
+    e.preventDefault();
+    if (entry) openWorkspaceEntry(entry);
+    else
+      showToast('That document is not in the open folder.', {
+        type: 'warning',
+      });
   }
 }
 
@@ -519,7 +678,7 @@ export function setupWorkspace() {
   // the Electron shell, or a browser with the File System Access API.
   const openBtn = wsEl('open-folder-button');
   if (openBtn) {
-    if (isDesktop || isWebFolderSupported()) openBtn.style.display = '';
+    if (canOpenWorkspaceFolder()) openBtn.style.display = '';
     openBtn.addEventListener('click', (e) => {
       // Stop the drop-zone's click-to-browse handler from also firing.
       e.stopPropagation();
@@ -532,8 +691,38 @@ export function setupWorkspace() {
     toggle.addEventListener('click', () => toggleWorkspaceSidebar());
   }
 
-  // Receive scanned folders from the desktop shell.
-  bridgeOnWorkspaceOpened((workspace) => applyWorkspace(workspace));
+  for (const id of ['workspace-close-button', 'close-folder-empty-button']) {
+    wsEl(id)?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      closeWorkspaceFolder();
+    });
+  }
+
+  // Main sends ordered context revisions. The local close barrier also rejects
+  // a queued replacement snapshot we had not seen when Close was clicked.
+  bridgeOnWorkspaceOpened((workspace) => {
+    if (
+      workspaceClosePending ||
+      !workspace ||
+      typeof workspace.id !== 'string' ||
+      !Number.isSafeInteger(workspace.generation) ||
+      workspace.generation <= workspaceNativeGeneration
+    )
+      return;
+    workspaceNativeGeneration = workspace.generation;
+    applyWorkspace(workspace);
+  });
+  bridgeOnWorkspaceClosed((info) => {
+    if (
+      !info ||
+      !Number.isSafeInteger(info.generation) ||
+      info.generation <= workspaceNativeGeneration
+    )
+      return;
+    workspaceNativeGeneration = info.generation;
+    workspaceClosePending = false;
+    clearWorkspaceNavigation();
+  });
 
   // Follow relative markdown links between workspace documents.
   const content = wsEl('markdown-content');

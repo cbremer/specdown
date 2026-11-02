@@ -30,6 +30,13 @@ if (isBundledViewerPage()) ipcRenderer.on('session-save-ready', (_event, info) =
   sessionSaveToken = typeof info?.token === 'string' && info.token.length === 36 ? info.token : null;
 });
 
+// Per-load workspace commands cannot survive a renderer reload or act on a
+// newer window. The token stays in the isolated preload, alongside sessionSaveToken.
+let workspacePageToken = null;
+if (isBundledViewerPage()) ipcRenderer.on('workspace-ready', (_event, info) => {
+  workspacePageToken = typeof info?.token === 'string' && info.token.length === 36 ? info.token : null;
+});
+
 if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   isDesktop: true,
 
@@ -60,13 +67,22 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // Workspace mode: open a folder picker; the main process scans it and replies
   // via onWorkspaceOpened with the file list.
   requestOpenFolder: () => {
-    ipcRenderer.send('request-open-folder');
+    ipcRenderer.send('request-open-folder', { pageToken: workspacePageToken });
   },
 
   // Workspace mode: open a relative link clicked inside a workspace document,
   // resolved by the main process against the source document's directory.
-  requestOpenRelative: (fromPath, href) => {
-    ipcRenderer.send('request-open-relative', { fromPath, href });
+  requestOpenRelative: (fromPath, href, id) => {
+    ipcRenderer.send('request-open-relative', { fromPath, href, id, pageToken: workspacePageToken });
+  },
+  requestWorkspaceFile: (filePath, id) => {
+    ipcRenderer.send('request-workspace-file', { filePath, id, pageToken: workspacePageToken });
+  },
+  requestCloseWorkspace: () => {
+    ipcRenderer.send('request-close-workspace', { pageToken: workspacePageToken });
+  },
+  onWorkspaceClosed: (callback) => {
+    ipcRenderer.on('workspace-closed', (_event, info) => callback(info));
   },
 
   // Workspace mode: receive the scanned folder ({ root, files }).
@@ -159,7 +175,7 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // and either opens the file (file-opened) or scans the directory into a
   // workspace (workspace-opened).
   openDroppedPath: (absPath) => {
-    ipcRenderer.send('open-dropped-path', absPath);
+    ipcRenderer.send('open-dropped-path', absPath, workspacePageToken);
   },
 
   // Register a callback for when a watched file changes on disk

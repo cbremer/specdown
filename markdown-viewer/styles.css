@@ -2386,6 +2386,10 @@ body {
 }
 
 .workspace-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -2394,6 +2398,27 @@ body {
     padding: 0.75rem 1rem 0.5rem;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+}
+
+#workspace-close-button {
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+#workspace-close-button:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.workspace-empty {
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
 }
 
 .workspace-file-list {

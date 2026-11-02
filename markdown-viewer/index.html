@@ -106,6 +106,7 @@
                 <input type="file" id="file-input" accept=".md,.markdown" multiple hidden>
                 <div class="drop-zone-buttons">
                     <button id="browse-button" class="browse-button">Browse Files</button>
+                    <button id="close-folder-empty-button" class="browse-button browse-button-secondary" style="display: none;" title="Close folder; keep open documents">Close Folder</button>
                     <button id="open-folder-button" class="browse-button browse-button-secondary" style="display: none;">Open Folder</button>
                 </div>
                 <div id="ios-sample-section" class="sample-section" style="display: none;">
@@ -240,7 +241,7 @@
             <div class="content-body">
                 <!-- Workspace (folder) Sidebar -->
                 <aside id="workspace-sidebar" class="workspace-sidebar" style="display: none;">
-                    <div class="workspace-header">Workspace</div>
+                    <div class="workspace-header"><span>Workspace</span><button id="workspace-close-button" type="button" aria-label="Close folder" title="Close folder; keep open documents">×</button></div>
                     <ul id="workspace-file-list" class="workspace-file-list"></ul>
                 </aside>
 

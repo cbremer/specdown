@@ -3,6 +3,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const fs = require('fs');
 const os = require('os');
+const { randomUUID } = require('crypto');
 const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
 const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
@@ -509,6 +510,8 @@ function createWindow() {
     },
   });
   const appWindow = mainWindow;
+  resetWorkspaceContext(false);
+  workspacePageToken = randomUUID();
   viewerReadyWindow = null;
 
   appIconController.restore();
@@ -555,6 +558,10 @@ function createWindow() {
   };
   const invalidateStartup = () => {
     loadGeneration += 1;
+    if (mainWindow === appWindow && appWindow.webContents === windowWebContents) {
+      resetWorkspaceContext(false);
+      workspacePageToken = randomUUID();
+    }
     successfulLoad = null;
     restored = false;
     if (viewerReadyWindow === appWindow) viewerReadyWindow = null;
@@ -569,6 +576,7 @@ function createWindow() {
     successfulLoad = null;
     restored = true;
     viewerReadyWindow = appWindow;
+    windowWebContents.mainFrame.send('workspace-ready', { token: workspacePageToken });
     // Seed retained entries and a per-load save nonce before any renderer can
     // synchronously persist a cold Finder open. Displayed open order is unchanged.
     const restoredEntries = openRecovery.beginRestore();
@@ -712,7 +720,10 @@ function openFileByPath(filePath, context) {
       notifyFileAccessNeeded(filePath, context?.entry);
       return false;
     }
-    if (!fileOpenReceipts.deliver(access.value, context)) {
+    const delivered = context?.workspaceId
+      ? { ...access.value, workspaceId: context.workspaceId }
+      : access.value;
+    if (!fileOpenReceipts.deliver(delivered, context)) {
       logInfo('File open was not delivered; recents remain unchanged.');
       return false;
     }
@@ -811,6 +822,7 @@ function scanWorkspace(rootDir) {
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
     } catch (err) {
+      if (depth === 0) throw err;
       logError(`Failed to read workspace directory: ${dir}`, err);
       return;
     }
@@ -839,34 +851,79 @@ function scanWorkspace(rootDir) {
   return out;
 }
 
-// Roots of every workspace opened this session. Relative-link navigation is
-// contained to these directories (see openRelativeFromFile).
+// One active navigation context. Closing it does not revoke saved file grants,
+// close document tabs, stop their watchers, or change recents/session data.
 const workspaceRoots = new Set();
+let activeWorkspaceId = null;
+let workspaceGeneration = 0;
+let workspaceOperationGeneration = 0;
+let workspacePageToken = null;
+
+function resetWorkspaceContext(notify = true) {
+  workspaceOperationGeneration += 1;
+  workspaceGeneration += 1;
+  activeWorkspaceId = null;
+  workspaceRoots.clear();
+  if (notify && isViewerNotLoading(mainWindow)) {
+    mainWindow.webContents.mainFrame.send('workspace-closed', { generation: workspaceGeneration });
+  }
+  if (mainWindow) rebuildMenu();
+}
+
+function isCurrentWorkspaceRequest(event, payload) {
+  return !!(payload && workspacePageToken && payload.pageToken === workspacePageToken &&
+    mainWindow && event.sender === mainWindow.webContents &&
+    event.senderFrame === mainWindow.webContents.mainFrame &&
+    !event.senderFrame.detached && isViewerNotLoading(mainWindow));
+}
+
+function captureWorkspaceOperation() {
+  return {
+    generation: ++workspaceOperationGeneration,
+    window: mainWindow,
+    frame: mainWindow?.webContents.mainFrame,
+    pageToken: workspacePageToken,
+  };
+}
+
+function isWorkspaceOperationCurrent(operation) {
+  return operation.generation === workspaceOperationGeneration &&
+    operation.window === mainWindow && operation.pageToken === workspacePageToken &&
+    (!mainWindow || (operation.frame === mainWindow.webContents.mainFrame &&
+      !operation.frame?.detached && !mainWindow.webContents.isDestroyed()));
+}
 
 async function showOpenFolderDialog() {
   if (!mainWindow) return;
-
-  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
+  const operation = captureWorkspaceOperation();
+  const result = await dialog.showOpenDialog(operation.window, withBookmarkOption({
     title: 'Open Folder',
     properties: ['openDirectory'],
   }));
-
-  if (result.canceled || !result.filePaths.length) return;
+  // A cancelled/replaced/closed picker must not resurrect a workspace or even
+  // record a grant after its receiving page ceased to exist.
+  if (!isWorkspaceOperationCurrent(operation) || result.canceled || !result.filePaths.length) return;
   noteDialogGrants(result, 'folder');
-  openWorkspace(result.filePaths[0]);
+  openWorkspace(result.filePaths[0], operation);
 }
 
-// Scan a user-chosen folder (picker or drop) into a workspace. Its grant
-// covers every file inside, so relative links and live reload work there.
-function openWorkspace(root) {
-  const scan = fileAccess.withAccess(root, scanWorkspace);
-  if (!scan.ok) {
-    logInfo(`No sandbox access to workspace folder ${root}`);
+function openWorkspace(root, operation = captureWorkspaceOperation()) {
+  if (!isWorkspaceOperationCurrent(operation)) return;
+  let scan;
+  try { scan = fileAccess.withAccess(root, scanWorkspace); } catch (error) {
+    logError('Could not read workspace folder.', error);
     return;
   }
-  workspaceRoots.add(root);
+  if (!scan.ok || !isWorkspaceOperationCurrent(operation)) return;
+  workspaceRoots.clear();
+  workspaceRoots.add(scan.path);
+  activeWorkspaceId = randomUUID();
+  workspaceGeneration += 1;
   if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('workspace-opened', { root, files: scan.value });
+    mainWindow.webContents.mainFrame.send('workspace-opened', {
+      root: scan.path, files: scan.value, id: activeWorkspaceId, generation: workspaceGeneration,
+    });
+    rebuildMenu();
   }
 }
 
@@ -885,9 +942,9 @@ function isInsideAnyWorkspace(targetPath) {
 // directory of the document it came from, then open it. Used for in-workspace
 // navigation via relative `.md` links. The resolved path is validated by
 // openFileByPath, so a broken link is a safe no-op.
-function openRelativeFromFile(fromPath, href) {
+function openRelativeFromFile(fromPath, href, workspaceId) {
   if (typeof fromPath !== 'string' || !fromPath) return;
-  if (typeof href !== 'string' || !href) return;
+  if (typeof href !== 'string' || !href || !isInsideAnyWorkspace(fromPath)) return;
 
   // Strip any query/hash and percent-decode so links like `./b.md#section`
   // or `../my%20doc.md` resolve to the real file on disk.
@@ -909,7 +966,7 @@ function openRelativeFromFile(fromPath, href) {
     logInfo(`Blocked relative link outside workspace roots: ${target}`);
     return;
   }
-  openFileByPath(target);
+  openFileByPath(target, workspaceId ? { workspaceId } : undefined);
 }
 
 // ===========================
@@ -1266,14 +1323,24 @@ onTrustedIpc('request-open-path', (_event, filePath) => {
 });
 
 // Workspace: open a folder picker and scan it for markdown files.
-onTrustedIpc('request-open-folder', () => {
-  showOpenFolderDialog();
+onTrustedIpc('request-open-folder', (event, payload) => {
+  if (isCurrentWorkspaceRequest(event, payload)) showOpenFolderDialog();
+});
+
+onTrustedIpc('request-close-workspace', (event, payload) => {
+  if (isCurrentWorkspaceRequest(event, payload)) resetWorkspaceContext();
+});
+
+onTrustedIpc('request-workspace-file', (event, payload) => {
+  if (!isCurrentWorkspaceRequest(event, payload) || !activeWorkspaceId || payload.id !== activeWorkspaceId ||
+      typeof payload.filePath !== 'string' || !isInsideAnyWorkspace(payload.filePath)) return;
+  openFileByPath(payload.filePath, { workspaceId: activeWorkspaceId });
 });
 
 // Workspace: open a relative link clicked inside a workspace document.
-onTrustedIpc('request-open-relative', (_event, payload) => {
-  if (payload && typeof payload === 'object') {
-    openRelativeFromFile(payload.fromPath, payload.href);
+onTrustedIpc('request-open-relative', (event, payload) => {
+  if (isCurrentWorkspaceRequest(event, payload) && activeWorkspaceId && payload.id === activeWorkspaceId) {
+    openRelativeFromFile(payload.fromPath, payload.href, activeWorkspaceId);
   }
 });
 
@@ -1341,14 +1408,16 @@ onTrustedIpc('refresh-file', (_event, filePath) => {
 // the legacy File.path). A markdown file opens like any native open (real
 // file-backed tab: live reload + Reload from disk); a directory becomes a
 // full desktop workspace (real paths, relative-link navigation, containment).
-onTrustedIpc('open-dropped-path', (_event, absPath) => {
+onTrustedIpc('open-dropped-path', (event, absPath, pageToken) => {
   if (typeof absPath !== 'string' || !path.isAbsolute(absPath)) return;
   try {
     // A saved MAS grant is only metadata until acquired. Resolve moved
     // bookmarks and activate the scope before touching the dropped path.
     const access = fileAccess.withAccess(absPath, (resolved) => fs.statSync(resolved));
     if (!access.ok) return;
-    if (access.value.isDirectory()) openWorkspace(access.path);
+    if (access.value.isDirectory()) {
+      if (isCurrentWorkspaceRequest(event, { pageToken })) openWorkspace(access.path);
+    }
     else if (access.value.isFile()) openFileByPath(access.path);
   } catch (err) {
     logError(`Failed to stat dropped path: ${absPath}`, err);
@@ -1516,6 +1585,11 @@ function buildMenu() {
           label: 'Open Folder...',
           accelerator: 'CmdOrCtrl+Shift+O',
           click: () => showOpenFolderDialog(),
+        },
+        {
+          label: 'Close Folder',
+          enabled: workspaceRoots.size > 0,
+          click: () => resetWorkspaceContext(),
         },
         {
           label: 'Open Recent',
@@ -1788,6 +1862,9 @@ module.exports = {
   openRelativeFromFile,
   isInsideAnyWorkspace,
   workspaceRoots,
+  openWorkspace,
+  resetWorkspaceContext,
+  showOpenFolderDialog,
   isSignedUpdatePlatform,
   initAutoUpdater,
   DISTRIBUTION_CHANNEL,
