@@ -84,6 +84,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 58: Marked validation](2026-11-01-tasks-session-58-marked-validation.md) | Marked 18.1.2 real-parser/sanitizer compatibility and admission regressions; 1,367 tests, coverage, lint/types/build pass; frozen Store 230 remains unchanged. |
 | Nov 1, 2026 | Tasks | [Session 59: tooling and Electron 45 validation](2026-11-01-tasks-session-59-tooling-electron-validation.md) | Seven tooling updates validated with real Electron/frame/Close Folder/addon checks and unsigned MAS packaging; narrow destroyed-window cleanup fix; frozen Store230 artifacts preserved. |
 | Nov 1, 2026 | Tasks | [Session 60: README and copy proof](2026-11-01-tasks-session-60-readme-copy-proof.md) | Reading-first README with accurate platform scope and a consistent side-by-side copy proposal; existing Store copy and frozen build 230 artifacts remain unchanged. |
+| Nov 1, 2026 | Tasks | [Session 61: Store metadata proof](2026-11-01-tasks-session-61-store-metadata-proof.md) | Extend the clean copy proof with search fields, dated submission settings, private-contact placeholders and side-by-side reviewer/TestFlight notes; no Apple fields or build numbers changed. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

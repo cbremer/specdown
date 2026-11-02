@@ -126,6 +126,13 @@
       .field:not(.description) p {
         margin-bottom: 0;
       }
+      .muted {
+        color: var(--muted);
+        font-size: 15px;
+      }
+      dd {
+        overflow-wrap: anywhere;
+      }
       .prose {
         max-width: 780px;
       }
@@ -222,14 +229,17 @@
         <p class="eyebrow">Copy proposal</p>
         <h1>SpecDown</h1>
         <nav aria-label="Copy sections">
-          <a href="#app-store">App Store</a><a href="#website">Website</a
+          <a href="#app-store">App Store</a
+          ><a href="#metadata">Store metadata</a
+          ><a href="#review">Review &amp; testing</a
+          ><a href="#website">Website</a
           ><a href="#screenshots">Screenshot captions</a
           ><a href="#support">Support</a><a href="#privacy">Privacy</a
           ><a href="#app-wording">App wording</a>
         </nav>
       </header>
       <section id="app-store" aria-labelledby="store-title">
-        <h2 id="store-title">App Store</h2>
+        <h2 id="store-title">App Store listing &amp; search</h2>
         <div class="columns">
           <article class="listing">
             <h3>iPhone &amp; iPad</h3>
@@ -413,6 +423,356 @@
             >Privacy policy</a
           >
         </p>
+      </section>
+      <section id="metadata" aria-labelledby="metadata-title">
+        <h2 id="metadata-title">App Store metadata</h2>
+        <p class="prose">
+          Shared by the iPhone, iPad and Mac listings. The proposed name,
+          subtitle and keywords are in the
+          <a href="#app-store">App Store listing</a> above.
+        </p>
+        <h3>Shared listing fields</h3>
+        <div class="prose">
+          <dl>
+            <dt>Primary language</dt>
+            <dd>English (U.S.) — en-US</dd>
+            <dt>Primary category</dt>
+            <dd>Developer Tools</dd>
+            <dt>Secondary category</dt>
+            <dd>Productivity</dd>
+            <dt>Copyright</dt>
+            <dd>2026 SpecDown</dd>
+            <dt>Marketing URL</dt>
+            <dd>
+              <a href="https://specdown.mosaicpando.com/"
+                >https://specdown.mosaicpando.com/</a
+              >
+            </dd>
+            <dt>Support URL</dt>
+            <dd>
+              <a href="https://specdown.mosaicpando.com/support.html"
+                >https://specdown.mosaicpando.com/support.html</a
+              >
+            </dd>
+            <dt>Privacy policy URL</dt>
+            <dd>
+              <a href="https://specdown.mosaicpando.com/privacy.html"
+                >https://specdown.mosaicpando.com/privacy.html</a
+              >
+            </dd>
+          </dl>
+        </div>
+        <h3>Store and submission settings</h3>
+        <p class="muted prose">
+          Recorded Apple settings were last checked on November 1, 2026. Fields
+          marked “to confirm” remain open.
+        </p>
+        <div class="prose">
+          <dl>
+            <dt>App Privacy</dt>
+            <dd>Data Not Collected</dd>
+            <dt>Age rating</dt>
+            <dd>
+              4+ globally, with regional exceptions. Regional ratings and
+              detailed questionnaire answers: to confirm.
+            </dd>
+            <dt>Price and availability</dt>
+            <dd>US$0.00; 175 countries or regions available.</dd>
+            <dt>License agreement</dt>
+            <dd>Standard Apple license agreement</dd>
+            <dt>Version release</dt>
+            <dd>Manually release this version — iOS and Mac.</dd>
+            <dt>Content rights</dt>
+            <dd>Existing answer: to confirm.</dd>
+            <dt>App tags</dt>
+            <dd>To confirm in App Store Connect.</dd>
+            <dt>Accessibility labels and accessibility URL</dt>
+            <dd>To confirm separately for iOS and Mac.</dd>
+            <dt>Privacy Choices URL</dt>
+            <dd>To confirm whether supplied.</dd>
+            <dt>EU trader information</dt>
+            <dd>
+              Status and required public business details: confirm privately.
+            </dd>
+            <dt>Tax category and applicable regulatory declarations</dt>
+            <dd>
+              Confirm existing tax category, Regulated Medical Device status and
+              Digital Goods and Services questionnaire responses.
+            </dd>
+            <dt>Phased release</dt>
+            <dd>To confirm for the iOS update.</dd>
+          </dl>
+        </div>
+        <h3>App identity and build selection</h3>
+        <div class="prose">
+          <dl>
+            <dt>App Store record</dt>
+            <dd>6822086808</dd>
+            <dt>Production bundle ID</dt>
+            <dd><code>com.mosaicpando.specdown</code></dd>
+            <dt>SKU</dt>
+            <dd>
+              <code>specdown</code> — recorded October 20; confirm in App Store
+              Connect.
+            </dd>
+            <dt>Version</dt>
+            <dd>1.0.1 — iOS and Mac</dd>
+            <dt>Build</dt>
+            <dd>
+              230 — preparation target; final signed build selection and
+              TestFlight acceptance pending.
+            </dd>
+            <dt>Minimum operating systems</dt>
+            <dd>iPhone and iPad: iOS / iPadOS 16.0. Mac: macOS 13.0.</dd>
+            <dt>Sign-in required</dt>
+            <dd>No. No demo account or password is required.</dd>
+            <dt>Non-exempt encryption</dt>
+            <dd>
+              No — <code>ITSAppUsesNonExemptEncryption = false</code> in both
+              build configurations. Final export-compliance answers: confirm
+              against the selected builds.
+            </dd>
+            <dt>App Review contact</dt>
+            <dd>
+              Existing owner contact. Confirm name, email and phone privately in
+              App Store Connect.
+            </dd>
+          </dl>
+        </div>
+        <h3>Store artwork</h3>
+        <p class="muted prose">
+          Recorded review and placement status as of November 1, 2026.
+        </p>
+        <div class="prose">
+          <dl>
+            <dt>Search Results artwork</dt>
+            <dd>
+              <a
+                href="release-proof-2026-11-01/artwork/specdown-halo-search-results-1920x1280.png"
+                >Brand Halo — 1920 × 1280</a
+              >. Submitted for artwork review; Waiting for Review. No placement
+              assigned.
+            </dd>
+            <dt>Product page header</dt>
+            <dd>
+              <a
+                href="release-proof-2026-11-01/artwork/specdown-brand-halo-header-3840x1646.png"
+                >Brand Halo — 3840 × 1646</a
+              >. Approved; recorded on the iOS 1.0.1 English (U.S.) draft. Mac
+              placement: to confirm.
+            </dd>
+          </dl>
+        </div>
+      </section>
+      <section id="review" aria-labelledby="review-title">
+        <h2 id="review-title">App Review and TestFlight</h2>
+        <p class="muted">Proposed submission text</p>
+        <h3>App Review notes</h3>
+        <div class="columns">
+          <article>
+            <h3>iPhone &amp; iPad</h3>
+            <p>
+              SpecDown is a viewer for Markdown (.md/.markdown) documents and
+              Mermaid diagrams. No account, sign-in or purchase is required. The
+              viewer and bundled Sample/Diagram Showcase work offline. It reads
+              saved documents from external editors or AI tools; it does not
+              generate text or run an AI model.
+            </p>
+            <p>Review on iPhone or iPad:</p>
+            <ol>
+              <li>
+                Launch SpecDown and choose Open Diagram Showcase from the start
+                view, or from the sidebar on iPad.
+              </li>
+              <li>
+                Expand a diagram. Try the zoom controls, pan and Reset, then
+                close fullscreen. The diagram toolbar has no Link action.
+              </li>
+              <li>
+                Use Contents, Raw/Preview and Find. Try Find with the keyboard
+                open, then dismiss it.
+              </li>
+              <li>
+                Open Sample to inspect headings, tables, code and document
+                comments.
+              </li>
+              <li>
+                Use Open or Open Markdown File to choose a Markdown file from
+                Files/iCloud Drive. Opening a document from another app is also
+                supported.
+              </li>
+              <li>
+                Open another document and switch tabs. Try light/dark appearance
+                and the App Icon choices.
+              </li>
+            </ol>
+            <p>
+              Remote documents and images loaded by the viewer require HTTPS.
+              Tapped external web links open in the system browser. Documents
+              are limited to 8 MiB, with additional rendering limits.
+              Document-supplied active HTML, forms and styling are removed.
+            </p>
+            <p>
+              Annotation display, editing, import and export are disabled on
+              native iPhone/iPad in this release. Existing stored annotation
+              data is left untouched. HTML comments already present in a
+              document are a separate viewing feature.
+            </p>
+            <p>
+              No ads, analytics or tracking SDK is included. Local documents
+              render on the device; online documents and remote images contact
+              their hosts. The app does not require an AI account.
+            </p>
+          </article>
+          <article>
+            <h3>Mac</h3>
+            <p>
+              SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown)
+              documents and Mermaid diagrams. No account, sign-in or purchase is
+              required. It reads saved documents from external editors or AI
+              tools; it does not generate text or run an AI model.
+            </p>
+            <p>Review on Mac:</p>
+            <ol>
+              <li>
+                Launch SpecDown and click Try diagram showcase on the start view
+                for an offline review.
+              </li>
+              <li>
+                Choose File &gt; Open... (Command-O) and select a Markdown file.
+                The system picker grants access to the selected file.
+              </li>
+              <li>
+                Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then
+                close fullscreen. The diagram toolbar has no Link action.
+              </li>
+              <li>
+                Use Raw/Preview or Split to inspect the source and result. Try
+                Contents, Command-F and more than one document tab.
+              </li>
+              <li>
+                Choose File &gt; Open Folder... and select a folder containing
+                two Markdown files. Open both, then choose File &gt; Close
+                Folder. The folder browser closes and the document tabs stay
+                open. Workspace files only hides or shows the browser; it does
+                not close the folder.
+              </li>
+              <li>
+                Quit and relaunch, then try File &gt; Open Recent for the chosen
+                file. If access is no longer available or the file moved, choose
+                the file again through the system picker or the Locate access
+                prompt. No Full Disk Access is required.
+              </li>
+            </ol>
+            <p>
+              This Mac App Store build uses the App Sandbox and security-scoped
+              bookmarks for user-selected files. It contains no self-updater or
+              GitHub update check; updates are delivered through the App Store.
+            </p>
+            <p>
+              The viewer and bundled examples are local. Online documents and
+              remote images require HTTPS and contact their hosts; external web
+              links open in the system browser. Documents are limited to 8 MiB,
+              with additional rendering limits. Document-supplied active HTML,
+              forms and styling are removed.
+            </p>
+            <p>
+              This is a document viewer, not a Markdown editor. No ads,
+              analytics or tracking SDK is included.
+            </p>
+          </article>
+        </div>
+        <h3>TestFlight description</h3>
+        <div class="prose">
+          <p>
+            SpecDown is a dedicated reader for Markdown specs, plans, READMEs
+            and Mermaid diagrams saved from editors or AI tools. Read formatted
+            documents, explore diagrams, compare source and preview, and move
+            between open documents. No account is required. The bundled examples
+            work offline.
+          </p>
+        </div>
+        <h3>What to Test</h3>
+        <div class="columns">
+          <article>
+            <h3>iPhone &amp; iPad</h3>
+            <ol>
+              <li>
+                Open the bundled Sample and Diagram Showcase, then open your own
+                Markdown from Files or iCloud Drive and from another app.
+              </li>
+              <li>
+                Expand a diagram. Check centered zoom, pan and Reset in portrait
+                and landscape. Confirm the Link button is absent.
+              </li>
+              <li>
+                Try Contents, Raw/Preview, Split and multiple tabs. Use Find,
+                dismiss its keyboard and open a diagram fullscreen. Check that
+                focus and the visible document remain correct.
+              </li>
+              <li>
+                Switch between Light and the other app icons, then return to
+                Original. Check the Home Screen appearance and light/dark
+                themes.
+              </li>
+              <li>
+                Try an oversized document and an HTTP document URL. Rejection
+                should leave the current document intact.
+              </li>
+              <li>
+                Quit and reopen the app. On iPad, repeat document, sidebar and
+                diagram checks. Report the device, OS version, build number and
+                steps for any problem.
+              </li>
+            </ol>
+          </article>
+          <article>
+            <h3>Mac</h3>
+            <ol>
+              <li>
+                Open the bundled Diagram Showcase, then use File &gt; Open to
+                choose your own Markdown through the system picker.
+              </li>
+              <li>
+                Expand a diagram and check centered zoom, pan and Reset. Confirm
+                PNG/SVG export remains available and the Link button is absent.
+              </li>
+              <li>
+                Open a folder containing two Markdown files and open both.
+                Choose File &gt; Close Folder: the folder browser should close
+                while both document tabs remain open. Hiding Workspace files
+                alone should leave the folder open.
+              </li>
+              <li>
+                Edit an open document in your editor and confirm the viewer
+                refreshes, including after Close Folder. Check Raw/Preview,
+                Split, Contents, Find and switching tabs.
+              </li>
+              <li>
+                Quit and relaunch. Check File &gt; Open Recent and access to a
+                previously selected file. For an unavailable saved startup file,
+                try Locate, cancel, retry and Stop reopening; unrelated tabs and
+                saved entries should remain intact. No QA filename should appear
+                on a clean installation.
+              </li>
+              <li>
+                Try an oversized file and an HTTP document URL; rejection should
+                preserve the current document. Report the Mac model, macOS
+                version, build number and steps for any problem.
+              </li>
+            </ol>
+          </article>
+        </div>
+        <div class="prose">
+          <dl>
+            <dt>TestFlight feedback email</dt>
+            <dd>
+              Existing owner address: confirm privately in App Store Connect.
+            </dd>
+            <dt>TestFlight access</dt>
+            <dd>Owner internal group only.</dd>
+          </dl>
+        </div>
       </section>
       <section id="website" aria-labelledby="website-title">
         <h2 id="website-title">Website</h2>
