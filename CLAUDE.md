@@ -10,10 +10,20 @@ It captures project conventions so any AI assistant can pick up context quickly.
 ## Project Overview
 
 **SpecDown** is a lightweight markdown viewer with interactive Mermaid diagram support.
-It has two surfaces that share the same `markdown-viewer/` codebase:
+Its four distribution surfaces share the same `markdown-viewer/` codebase:
 
 - **Web app** — deployed to GitHub Pages (`cbremer.github.io/specdown`)
-- **Desktop app** — Electron wrapper distributed as a macOS `.dmg`
+- **Direct desktop app** — Electron wrapper distributed as macOS DMG/ZIP,
+  Windows NSIS installer and Linux AppImage
+- **iOS/iPadOS app** — Swift/WKWebView shell with separate Dev, Beta and
+  production identities
+- **Mac App Store app** — sandboxed Electron MAS build, with separate Store
+  Dev/Beta identities and no direct updater
+
+Current channel evidence and acceptance boundaries are in
+`docs/project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md`.
+Use `docs/project-desktop/2026-11-02-spec-platform-testing-runbook.md` for a
+host-authorized test handoff; a runbook is not permission to access another host.
 
 ---
 
@@ -110,8 +120,8 @@ npm run test:coverage     # coverage report
 npm run lint              # ESLint (flat config) — must be clean before committing
 npm run typecheck         # tsc --noEmit (checkJs) — must be clean before committing
 npm run format            # Prettier — write
-npm run desktop           # build the web app, then launch Electron (macOS)
-npm run desktop:build     # build the web app + .dmg locally (macOS only)
+npm run desktop           # build the web app, then launch Electron (graphical host)
+npm run desktop:build     # build web + host package; use explicit target / --publish never for QA
 npm run desktop:mas-dev   # sandboxed Mac App Store dev build → dist-mas/ (needs a Mac Development profile, or SPECDOWN_MAS_UNPROVISIONED=1 for a local smoke run)
 npm run desktop:mas       # Store-signed .pkg (electron-builder.mas.js; Store certs + profile)
 ```
@@ -209,11 +219,13 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   hides the desktop toolbar** (`.content-header-actions`), so new toolbar
   controls must also be wired into the **iOS action sheet** to be reachable on
   iPhone (iPad keeps the toolbar).
-- **iOS has no auto-update channel** (build-from-source only) and **no
-  distribution lane yet** (TestFlight/App Store is scoped but unbuilt). Agents
-  can see source + CI output but **not** Xcode IDE prompts or device runtime
-  logs; CI also pipes the iOS build through `xcpretty`, which hides Swift
-  warnings.
+- **Native release evidence is channel-specific.** iOS and Mac Store Dev/Beta
+  builds and Owner-only TestFlight delivery are recorded in Session 78; Store
+  distribution is no longer merely planned. Simulator/CI results, a signed
+  archive, successful installation, Apple processing and owner acceptance are
+  different gates. Inspect actual available Xcode/device UI and unfiltered logs
+  when authorized; a formatter or a build-success summary can hide warnings.
+  Native Store apps update through Apple, not the direct desktop updater.
 - **The `window.specdown` bridge (`platform/bridge.js`) is the only shell
   coupling** — keep new desktop integration behind it (the portability seam).
 - **Never print the live app layout.** The shell is a viewport-fixed flex
@@ -236,11 +248,11 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   feed (`latest*.yml`) hyphenates spaces while GitHub's asset store dots them
   on upload, so a space makes every auto-update download 404 even though the
   check succeeds. A regression test in `desktop-main.test.js` enforces this.
-- **Notarization dies with Apple 403 "required agreement … expired"** whenever
-  Apple updates the Developer Program License Agreement and it hasn't been
-  re-accepted at developer.apple.com. The macOS release job fails (no DMG /
-  `latest-mac.yml` on the release) while Win/Linux keep publishing — so
-  update checks 404 until the account holder accepts and the job is re-run.
+- **Notarization can fail with Apple 403 "required agreement … expired"** when
+  the account holder must accept an updated agreement. Stop for the owner;
+  do not retry authentication or accept it on their behalf. The current release
+  workflow waits for all platform artifacts before publication, so a failed Mac
+  job leaves the new release unpublished rather than shipping a partial feed.
 - **Electron v32+ removed the legacy `File.path` property.** Any renderer code
   reading `file.path` on a dragged-in File silently gets `undefined` (this
   broke drag-and-drop live reload after the Electron 40→43 bump). The
@@ -255,7 +267,9 @@ context: `docs/project-modernization/2026-06-19-retrospective-handoff.md` and th
   folders can hang the main thread). Parent-directory watches fail under the
   sandbox — MAS live reload polls the granted file. No updater/update UI in
   MAS. Contract and evidence: `docs/project-appstore/mas-interface.md`.
-- **The GitHub release record appears minutes before its artifacts.** Every
-  merge has a ~5–15-min window where update checks find the new release but
-  its `latest*.yml` doesn't exist yet; the desktop app shows a "still being
-  packaged" notice for feed 404s rather than treating it as an error.
+- **A draft release is not a public update.** The reviewed version pipeline
+  creates an immutable tag and draft; desktop builds require explicit dispatch.
+  Publication waits for all artifacts and its protected approval gate. Verify
+  actual public assets and `latest*.yml` after publication. The existing
+  "still being packaged" handling for a missing feed remains a fallback,
+  not an expected public gap after every merge.
