@@ -98,6 +98,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 68: approved support and privacy copy](2026-11-02-tasks-session-68-support-privacy-copy.md) | Synchronize public help, Files/PWA/Live guidance and specific privacy disclosures; preserve page design and links, with Mac Store availability still coming. |
 | Nov 2, 2026 | Tasks | [Session 69: portal sync and submission](2026-11-02-tasks-session-69-portal-sync-handoff.md) | Record exact copy readback, installed Mac 230, owner-reported acceptance, uploaded Mac screenshots and both Waiting for Review submissions with manual release. |
 | Nov 2, 2026 | Tasks | [Session 73: owner release approval](2026-11-02-tasks-session-73-owner-release-approval.md) | Explicit solo-owner deployment approval with live owner identity checks; default independent review and contributor protection remain. |
+| Nov 2, 2026 | Tasks | [Session 75: Windows test portability](2026-11-02-tasks-session-75-windows-test-portability.md) | Run Mac permission contracts on every host with real POSIX integration retained; add full Windows PR coverage without changing application or Store 230 source. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

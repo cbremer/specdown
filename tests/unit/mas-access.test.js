@@ -5,6 +5,10 @@
  * files and the "never touch an ungranted path" rule are all observable.
  */
 
+// Native bookmarks return macOS paths, even when these synthetic tests run
+// on Windows. This mock is local to this suite; direct-access.test.js exercises
+// the real host filesystem and native Windows path handling independently.
+jest.mock('path', () => jest.requireActual('path').posix);
 const path = require('path');
 const {
   createDirectAccess,
