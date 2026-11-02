@@ -258,4 +258,25 @@ describe.each([false, true])('startup delivery (MAS=%s)', (mas) => {
       'session.md',
     ]);
   });
+
+  test.each(['closed', 'destroyed'])(
+    '%s cleanup does not read the destroyed BrowserWindow webContents getter',
+    (event) => {
+      wc.emit('did-finish-load');
+      main.workspaceRoots.add(root);
+      Object.defineProperty(window, 'webContents', {
+        get() {
+          throw new Error('Object has been destroyed');
+        },
+      });
+      expect(() =>
+        (event === 'closed' ? window : wc).emit(event)
+      ).not.toThrow();
+      expect(main.workspaceRoots.size).toBe(0);
+      expect(wc.listenerCount('did-stop-loading')).toBe(0);
+      expect(wc.listenerCount('did-finish-load')).toBe(0);
+      stopLoading();
+      expect(docs()).toHaveLength(0);
+    }
+  );
 });
