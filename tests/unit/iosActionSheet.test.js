@@ -109,13 +109,13 @@ describe('iOS 1.0 reviewer-facing fixes', () => {
     expect(toast.textContent).toContain('couldn’t be opened');
   });
 
-  it('hides diagram download and copy-link controls on iOS', () => {
+  it('keeps diagram download controls hidden on iOS', () => {
     const css = fs.readFileSync(
       path.join(__dirname, '../../markdown-viewer/styles.css'),
       'utf8'
     );
     expect(css).toMatch(
-      /\.ios-native \.fullscreen-controls \.export-svg,\s*\.ios-native \.fullscreen-controls \.export-png,\s*\.ios-native \.fullscreen-controls \.share-diagram\s*\{\s*display: none;/
+      /\.ios-native \.fullscreen-controls \.export-svg,\s*\.ios-native \.fullscreen-controls \.export-png\s*\{\s*display: none;/
     );
   });
 });
