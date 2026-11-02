@@ -13,7 +13,6 @@ import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
 import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
-import { shareDiagramLink } from './share-links.js';
 
 /** @typedef {import('@panzoom/panzoom').PanzoomObject} PanzoomObject */
 /** @typedef {{ scale: number, x: number, y: number }} HomeState */
@@ -154,7 +153,7 @@ function createDiagramContainer(svg, diagramId, mermaidSource) {
     container.setAttribute('data-diagram-id', diagramId);
 
     // Single affordance: inline diagrams are static document content, and all
-    // interactive machinery (zoom/pan, export, share, minimap) lives in the
+    // interactive machinery (zoom/pan, export, minimap) lives in the
     // fullscreen overlay this button opens.
     const expandBtn = document.createElement('button');
     expandBtn.className = 'diagram-expand';
@@ -565,7 +564,6 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const resetBtn = controls.querySelector('.reset');
     const exportSvgBtn = controls.querySelector('.export-svg');
     const exportPngBtn = controls.querySelector('.export-png');
-    const shareBtn = controls.querySelector('.share-diagram');
     const closeBtn = controls.querySelector('.close-fullscreen');
     if (!zoomInBtn || !zoomOutBtn || !resetBtn || !closeBtn) return;
 
@@ -577,7 +575,6 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     const newZoomRangeLabel = zoomRangeLabel ? zoomRangeLabel.cloneNode(true) : null;
     const newExportSvg = exportSvgBtn ? exportSvgBtn.cloneNode(true) : null;
     const newExportPng = exportPngBtn ? exportPngBtn.cloneNode(true) : null;
-    const newShare = shareBtn ? shareBtn.cloneNode(true) : null;
     const newClose = closeBtn.cloneNode(true);
 
     zoomInBtn.replaceWith(newZoomIn);
@@ -586,7 +583,6 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
     if (zoomRangeLabel && newZoomRangeLabel) zoomRangeLabel.replaceWith(newZoomRangeLabel);
     if (exportSvgBtn && newExportSvg) exportSvgBtn.replaceWith(newExportSvg);
     if (exportPngBtn && newExportPng) exportPngBtn.replaceWith(newExportPng);
-    if (shareBtn && newShare) shareBtn.replaceWith(newShare);
     closeBtn.replaceWith(newClose);
 
     const markControlZoom = () => {
@@ -649,12 +645,6 @@ function setupFullscreenControls(panzoomInstance, wrapper, fullscreenState) {
         e.stopPropagation();
         if (!isActive()) return;
         downloadDiagramPng(fsOverlay.diagramId || '');
-    });
-
-    on(newShare, 'click', (e) => {
-        e.stopPropagation();
-        if (!isActive()) return;
-        shareDiagramLink(fsOverlay.diagramId || '');
     });
 
     on(newClose, 'click', (e) => {

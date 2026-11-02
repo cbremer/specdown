@@ -42,6 +42,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 44: MAS package permissions](2026-11-01-tasks-session-44-mas-package-permissions.md) | Normalize only the embedded public profile and gate full installer permissions/ownership; real rejected and corrected package controls. |
 | Nov 1, 2026 | Tasks | [Session 45: native open recovery](2026-11-01-tasks-session-45-native-open-recovery.md) | Visible native rejection feedback, exact-entry Stop reopening and non-destructive Dismiss, with frame-bound recovery and per-load session writes. |
 | Nov 1, 2026 | Tasks | [Session 46: Store release proof](2026-11-01-tasks-session-46-store-release-proof.md) | Reviewed recovery and package guard integrated for aligned iOS/MAS 1.0.1 (229), with owner proof and TestFlight gates. |
+| Nov 1, 2026 | Tasks | [Session 47: remove diagram link](2026-11-01-tasks-session-47-remove-diagram-link.md) | Remove the unsupported fullscreen link action and its dead helper/toast while preserving PNG/SVG, incoming links and existing diagram behavior. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

@@ -2205,7 +2205,6 @@ body {
     .fullscreen-overlay,
     .presentation-overlay,
     .overflow-menu,
-    .share-toast,
     .toast,
     .theme-toggle,
     .watch-chip,
@@ -2634,25 +2633,6 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   Share Toast
-   =========================== */
-.share-toast {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #323232;
-    color: #fff;
-    padding: 0.6rem 1.4rem;
-    border-radius: var(--radius-lg);
-    font-size: 0.9rem;
-    z-index: 9999;
-    box-shadow: var(--shadow-lg);
-    pointer-events: none;
-    animation: fadeIn 0.2s ease;
-}
-
-/* ===========================
    Toast Notifications
    =========================== */
 .toast-region {
@@ -2673,8 +2653,8 @@ mark.search-highlight-current {
 .toast {
     pointer-events: auto;
     cursor: pointer;
-    /* Dark chip in both themes (matches the existing share toast) for a
-       consistent, high-contrast notification surface. */
+    /* Dark chip in both themes for a consistent, high-contrast
+       notification surface. */
     background-color: #323232;
     color: #fff;
     padding: 0.6rem 1.4rem;
@@ -3832,11 +3812,10 @@ mark.search-highlight-current {
     background-color: var(--accent-color, #1f6bb8);
 }
 
-/* iOS 1.0: diagram SVG/PNG download and copy-link need native save/share
+/* iOS 1.0: diagram SVG/PNG downloads need native save/share
    handling the WKWebView shell doesn't provide yet (planned for 1.1). */
 .ios-native .fullscreen-controls .export-svg,
-.ios-native .fullscreen-controls .export-png,
-.ios-native .fullscreen-controls .share-diagram {
+.ios-native .fullscreen-controls .export-png {
     display: none;
 }
 

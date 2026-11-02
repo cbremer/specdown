@@ -612,20 +612,7 @@ describe('Mermaid Diagram Processing', () => {
       }
     });
 
-    it('fullscreen share button copies a diagram deep link', async () => {
-      const container = await renderOneDiagram();
-      const writeSpy = jest.fn(() => Promise.resolve());
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText: writeSpy },
-        configurable: true,
-      });
 
-      const diagramId = container.getAttribute('data-diagram-id');
-      openFullscreen(diagramId);
-      document.querySelector('#fullscreen-overlay .share-diagram').click();
-
-      expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('?diagram='));
-    });
   });
 
   describe('markDiagramScaledState', () => {
