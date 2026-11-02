@@ -611,8 +611,6 @@ describe('Mermaid Diagram Processing', () => {
         window.matchMedia = originalMatchMedia;
       }
     });
-
-
   });
 
   describe('markDiagramScaledState', () => {

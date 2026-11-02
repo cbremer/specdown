@@ -40,4 +40,3 @@ No words, no readable text, no letters or numerals, no app title, no logo, no sc
 ```
 
 The tool returned preview-sized PNGs despite the requested export target. The returned compositions also exceed the requested safe-area bounds; do not treat prompt constraints as validated output. Final production needs a smaller central group, exact output dimensions and Apple's Device Preview.
-
