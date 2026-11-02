@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-02T02:40:04.065955+00:00",
+  "selection": "retained_saved_portal_copy",
+  "status": "Selected for this release pass; final owner proof and draft readback pending",
+  "decision": "Proceed with both 1.0.1 (229) releases using the existing saved copy. Defer the optional Session49 AI workflow revision without discarding it.",
+  "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+  "source_or_build_changed": false,
+  "portal_changed": false,
+  "selected": {
+    "ios-en-US.json": {
+      "file": "copy/selected/ios-en-US.json",
+      "sha256": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82"
+    },
+    "mac-en-US.json": {
+      "file": "copy/selected/mac-en-US.json",
+      "sha256": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2"
+    },
+    "screenshot-captions.json": {
+      "file": "copy/selected/screenshot-captions.json",
+      "sha256": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf"
+    },
+    "proof.md": {
+      "file": "copy/selected/proof.md",
+      "sha256": "a657543d8938f7f28147a6555e49797bec9efe357cdc02936f1f6c11f4caad1a"
+    },
+    "validation.json": {
+      "file": "copy/selected/validation.json",
+      "sha256": "61a14d96711cfa34e4f5cf8ca9a78d9b1efec1073d86a88a12d2e11e46845ad8"
+    }
+  },
+  "optional_later": {
+    "status": "Deferred; not required for this release pass",
+    "session": "docs/project-appstore/2026-11-01-tasks-session-49-ai-workflow-copy.md",
+    "files": {
+      "ios-en-US.json": "cdce9872c17093a1d2e5a12d8fe03183f8b03f9ce4a4d03d6db3a67925b34bb2",
+      "mac-en-US.json": "9d781571fd305deaecb1e751ef4a0e96a0035da96c7319a62b44ad9f90e8d8c0",
+      "screenshot-captions.json": "d4e4ef44a875dcf166fa40e061781a44fa0267d65c69106e703346249be5e507",
+      "proof.md": "88a14d289fe7976358e7406c55107bc6de68584a2c6ed6ee62ee8239caff337a",
+      "validation.json": "9825f6ff58356fb75e6bc243286b00c7f1783e849eae340ea3b4b91e50c721a4",
+      "ios-review-notes.txt": "ce251d61a45062905d25b5fd6ce2576434f97d5c9c11a882e5c751d30a546425",
+      "mac-review-notes.txt": "c9fb1af8807303b1248b31e856c7e49060c78f9d1b1bccb014af54e14b0f79d5"
+    },
+    "proof": "copy/proof.md",
+    "scope_note": "Preserved byte-for-byte. Original current-draft/pending-sync wording is historical proposal wording; selection.json and selected/proof.md define the current selection."
+  },
+  "owner_final_proof": "Pending",
+  "historical_readback_limit": "Historical Session43 version-field readbacks, not a new portal observation. Subtitle and other App Information fields need current confirmation before final app-build submission."
+}

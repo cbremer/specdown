@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "purpose": "Local proof gallery only. These manifests neither upload nor approve anything.",
+  "screenshots": {
+    "file": "screenshots/manifest.json",
+    "set_keys": ["iphone63", "iphone69", "ipad13", "duo", "mac"],
+    "instructions": [
+      "Keep schema_version 1. Fill sets[set_key].images with the actual current captures; leave unfinished slots absent.",
+      "Each image uses a unique order 1 through 5, matched to copy/screenshot-captions.json. iPhone 6.3 and 6.9 use iphone captions, ipad13 uses ipad, duo uses iphone_duo, and mac uses mac.",
+      "file is a relative path from index.html inside screenshots/<set_key>/, with a PNG, JPEG or WebP extension. Use plain filenames without percent escapes. No absolute paths, remote URLs, SVGs or query strings.",
+      "Use in_preparation until ready for Chris to inspect, ready_for_proof when complete, and proof_accepted only after explicit proof acceptance. None means uploaded, submitted or released.",
+      "Add optional width, height, sha256, source_revision, app_version, app_build and capture_surface for evidence. Use only non-private capture metadata. The gallery does not verify hashes or infer source identity from an image.",
+      "A missing, duplicate, invalid or unavailable image remains In preparation. Captions come from the existing copy file; do not imply its title/subtitle are already baked into the image."
+    ],
+    "image_example": {
+      "order": 1,
+      "file": "screenshots/iphone63/01-markdown.png",
+      "alt": "SpecDown displaying the synthetic system architecture document on iPhone",
+      "status": "ready_for_proof",
+      "width": 1206,
+      "height": 2622,
+      "sha256": null,
+      "source_revision": null,
+      "app_version": "1.0.1",
+      "app_build": null,
+      "capture_surface": null
+    }
+  },
+  "build_status": {
+    "file": "build-status.json",
+    "instructions": [
+      "Optional: leave absent until actual build evidence is ready. Missing or unknown status renders In preparation.",
+      "Use schema_version 1 and platforms.ios / platforms.mac. status must be in_preparation, ready_for_proof or proof_accepted.",
+      "The status is for this proof, not App Store availability. Supply a concise factual summary separating build, Apple processing and physical acceptance.",
+      "Record exact version/build/revision and local evidence as appropriate; do not infer production acceptance from a separate Dev/Beta build. Extra evidence fields are visible in the collapsed manifest detail.",
+      "Use proof_accepted only after acceptance of this exact intended build. Public release remains manual. No automatic upload, submission or release is performed by this gallery."
+    ],
+    "example": {
+      "schema_version": 1,
+      "updated_at": null,
+      "platforms": {
+        "ios": {
+          "status": "in_preparation",
+          "summary": "The final production iOS build and its acceptance evidence are in preparation.",
+          "version": "1.0.1",
+          "build": null,
+          "source_revision": null
+        },
+        "mac": {
+          "status": "in_preparation",
+          "summary": "The final Mac App Store build and its acceptance evidence are in preparation.",
+          "version": "1.0.1",
+          "build": null,
+          "source_revision": null
+        }
+      }
+    }
+  },
+  "preview": "Serve this folder within a loopback-only local web preview. file:// browsers can block JSON loading; the gallery reports that limitation. Do not deploy. No external fonts, scripts, libraries or media are used."
+}

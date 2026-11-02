@@ -1,0 +1,152 @@
+{
+  "status": "pass",
+  "scope": "Selected retained-copy limits, baseline byte equality and historical field readback only; no new portal read or owner acceptance",
+  "files": {
+    "ios-en-US.json": {
+      "sha256": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82",
+      "baseline_exact": true,
+      "reviewer_notes_unchanged": true,
+      "historical_readback_fields": [
+        "promotional_text",
+        "description",
+        "whats_new",
+        "keywords",
+        "app_review_notes"
+      ],
+      "historical_readback_file": "ios/DerivedData/store-asset-audit-20261101/ios-draft-copy-verification.json",
+      "historical_readback_sha256": "b67320d0db32812d4b16e35230977d34729b3cff29fafc04e47a1c72b0f6a695",
+      "fields": {
+        "version": {
+          "characters": 5,
+          "utf8_bytes": 5
+        },
+        "name": {
+          "characters": 8,
+          "utf8_bytes": 8,
+          "character_limit": 30
+        },
+        "subtitle": {
+          "characters": 25,
+          "utf8_bytes": 25,
+          "character_limit": 30
+        },
+        "support_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "marketing_url": {
+          "characters": 33,
+          "utf8_bytes": 33
+        },
+        "privacy_policy_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "copyright": {
+          "characters": 13,
+          "utf8_bytes": 13
+        },
+        "promotional_text": {
+          "characters": 139,
+          "utf8_bytes": 139,
+          "character_limit": 170
+        },
+        "description": {
+          "characters": 1283,
+          "utf8_bytes": 1309,
+          "character_limit": 4000
+        },
+        "keywords": {
+          "characters": 87,
+          "utf8_bytes": 87,
+          "byte_limit": 100
+        },
+        "whats_new": {
+          "characters": 564,
+          "utf8_bytes": 578,
+          "character_limit": 4000
+        },
+        "app_review_notes": {
+          "characters": 1555,
+          "utf8_bytes": 1555,
+          "byte_limit": 4000
+        }
+      }
+    },
+    "mac-en-US.json": {
+      "sha256": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2",
+      "baseline_exact": true,
+      "reviewer_notes_unchanged": true,
+      "historical_readback_fields": [
+        "promotional_text",
+        "description",
+        "keywords",
+        "app_review_notes"
+      ],
+      "historical_readback_file": "ios/DerivedData/store-asset-audit-20261101/mac-draft-copy-verification.json",
+      "historical_readback_sha256": "b570bad08952afcf79c60e8888427cc452d0261d7c76c0578b2613b88f5c9756",
+      "fields": {
+        "version": {
+          "characters": 5,
+          "utf8_bytes": 5
+        },
+        "name": {
+          "characters": 8,
+          "utf8_bytes": 8,
+          "character_limit": 30
+        },
+        "subtitle": {
+          "characters": 25,
+          "utf8_bytes": 25,
+          "character_limit": 30
+        },
+        "support_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "marketing_url": {
+          "characters": 33,
+          "utf8_bytes": 33
+        },
+        "privacy_policy_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "copyright": {
+          "characters": 13,
+          "utf8_bytes": 13
+        },
+        "promotional_text": {
+          "characters": 140,
+          "utf8_bytes": 140,
+          "character_limit": 170
+        },
+        "description": {
+          "characters": 1092,
+          "utf8_bytes": 1114,
+          "character_limit": 4000
+        },
+        "keywords": {
+          "characters": 85,
+          "utf8_bytes": 85,
+          "byte_limit": 100
+        },
+        "whats_new": {
+          "characters": 229,
+          "utf8_bytes": 229,
+          "character_limit": 4000
+        },
+        "app_review_notes": {
+          "characters": 1498,
+          "utf8_bytes": 1498,
+          "byte_limit": 4000
+        }
+      }
+    },
+    "screenshot-captions.json": {
+      "sha256": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf",
+      "baseline_exact": true,
+      "scope": "Selected caption text only; no screenshot pixels or manifest changed"
+    }
+  }
+}

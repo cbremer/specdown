@@ -1,0 +1,82 @@
+{
+  "status": "Submitted to Apple; Waiting for Review; not assigned",
+  "reference": "specdown-brand-halo-header-3840x1646.png",
+  "reference_sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+  "method": "Built-in image generator edit, then sips deterministic 1.25x export to Apple minimum Search Results dimensions",
+  "files": [
+    {
+      "file": "halo-search-results-generated.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": false,
+      "sha256": "0e81e8db3a731d5f38453d99e1d65483f3a7537113132f9683c1bc984f219285"
+    },
+    {
+      "file": "specdown-halo-search-results-1920x1280.png",
+      "size": [
+        1920,
+        1280
+      ],
+      "alpha": false,
+      "sha256": "145100f59dfcd82464ef3af665f4feb911136aafdb10b0f39554c8182da8af79"
+    },
+    {
+      "file": "specdown-brand-halo-header-3840x1646.png",
+      "role": "approved-header-reference",
+      "size": [
+        3840,
+        1646
+      ],
+      "alpha": false,
+      "sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "provenance": "Byte-for-byte copy of the approved owner-selected Brand Halo header; no resampling or redesign."
+    }
+  ],
+  "apple_asset_id": "c7c00019-6a0c-8898-8036-5a719f4c0b25",
+  "apple_name": "SpecDown — Brand Halo Search Results",
+  "apple_works_with": "Search Results",
+  "apple_url": "https://appstoreconnect.apple.com/apps/6822086808/distribution/asset-library/assets/c7c00019-6a0c-8898-8036-5a719f4c0b25",
+  "reference_source": "../../assets/2026-10-20-header-mocks/specdown-brand-halo-header-3840x1646.png",
+  "header_assignment": {
+    "apple_asset_id": "fe000019-6a0c-8898-8029-cae241fa2fe2",
+    "apple_status": "Approved",
+    "placement": "Product Page Header",
+    "platform": "iOS",
+    "version": "1.0.1",
+    "locale": "en-US",
+    "version_status": "Prepare for Submission",
+    "confirmation": "Parent directly observed Recent Usage for iOS 1.0.1 at 3:52 PM and live iOS 1.0 at 3:43 PM; no agent assignment change.",
+    "crop_proof": "Apple reference previews checked; Chris final acceptance pending.",
+    "evidence_names": [
+      "halo-assignment-confirmed.txt",
+      "halo-assignment-confirmed.png"
+    ],
+    "reference_preview_review": {
+      "status": "Passed parent visual inspection",
+      "surfaces": [
+        "iPhone portrait",
+        "Duo outer",
+        "Duo inner landscape",
+        "iPad landscape",
+        "iPad landscape dark"
+      ],
+      "result": "Emblem centered and intact; no text clipping.",
+      "limits": "Apple reference preview may differ from final experience. Placeholder icon and inherited screenshots are not final229 evidence.",
+      "owner_acceptance": false,
+      "evidence": "ios/DerivedData/store-asset-audit-20261101/halo-header-crop-review.json"
+    }
+  },
+  "review_submission": {
+    "observed_at_utc": "2026-11-02T01:06:04.532945+00:00",
+    "asset_status": "Waiting for Review",
+    "submitted": true,
+    "assigned": false,
+    "approved": false,
+    "submission_id": "4c7f69e9-9e71-4dda-94ed-f01cce88816a",
+    "submission_url": "https://appstoreconnect.apple.com/apps/6822086808/distribution/reviewsubmissions/details/4c7f69e9-9e71-4dda-94ed-f01cce88816a",
+    "evidence": "ios/DerivedData/store-asset-audit-20261101/halo-search-review-verification.json",
+    "evidence_sha256": "9ce1e9f5dbc28532348510674043e31b731bfd727010778de37c9df60b1cec13"
+  }
+}
