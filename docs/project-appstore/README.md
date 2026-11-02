@@ -105,6 +105,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 76: direct desktop 232 recovery](2026-11-02-tasks-session-76-direct-desktop-232-recovery.md) | Preserve the unpublished 231 outcome, reviewed Windows test correction, exact 232 provenance and protected release checkpoint; Store 230 remains unchanged. |
 | Nov 2, 2026 | Tasks | [Session 77: direct desktop 232 published](2026-11-02-tasks-session-77-direct-desktop-232-published.md) | Record separate owner approvals, successful three-platform release with signed/notarized Mac artifacts and exact verification of all ten public assets; Store 230 remains unchanged. |
 | Nov 2, 2026 | Tasks | [Session 78: Dev/Beta signing handoff](2026-11-02-tasks-session-78-test-channels-signing-handoff.md) | Record signed Dev/Beta 230, separate Dev installations, Mac runtime checks and both Owner-only TestFlight deliveries; new Owner acceptance remains pending. |
+| Nov 2, 2026 | Tasks | [Session 80: remaining build-tool advisories](2026-11-02-tasks-session-80-toolchain-advisory-recheck.md) | Recheck the two open development-tool advisories against live upstream releases, preserve precise compatibility blockers and keep WK-19 open without changing release dependencies. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
