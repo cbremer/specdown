@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "platform": "iphone-duo",
+  "locale": "en-US",
+  "version": "1.0.1",
+  "build": "230",
+  "source_commit": "9d27fc1a6961e29c86def43cee17c6fbb7d66db1",
+  "captions_source_commit": "e8dd3cb95a41c19ad10c14e6f1efba3287866625",
+  "caption_packet": "docs/project-appstore/submission-copy-2026-11-02/screenshot-captions.json",
+  "caption_packet_sha256": "dce86ec28c7d021e71fa8eed154d3dd603e18c4e8322b218d6e70f231accc5f2",
+  "status": "Owner-approved five-image screenshot set; Apple upload/resubmission status recorded separately in Session 70.",
+  "approved_on": "2026-11-02",
+  "capture_method": "Synthetic app-store/demo documents opened through the normal native Files picker in a dedicated local iPhone Duo simulator; inner portrait display 2007 \u00d7 2853. Scene 5 uses actual native and web Dark Mode.",
+  "provenance": {
+    "file": "provenance.json",
+    "sha256": "370ab75335139ef54855f6c0290fec25350ca8bc0b56f60878ccb78390639b8e"
+  },
+  "composition": {
+    "composer": "app-store/compose-screenshots.py",
+    "composer_sha256": "7e2c228162dddce243eadc058950cd551f349d8649c297bcf645c079d2137f8a",
+    "original_local_wrapper_sha256": "8f71bc35790564cf40eb866f3c6c106fc42dda40b5df6b259eb06b84845af9b1",
+    "method": "Existing compositor with the recorded Duo-inner profile; uniform Lanczos downscale, rounded frame and caption only; complete raw viewport retained, no stretching, generated UI or capability additions.",
+    "pillow_version": "12.2.0",
+    "font": "SFNS.ttf (system font, not redistributed)",
+    "font_sha256": "44890958f3e0b997028121ed7c7a789f3f5cce227c7a93ce8f86ec0db26da571",
+    "profile": {
+      "size": [
+        2007,
+        2853
+      ],
+      "head": 440,
+      "title": 106,
+      "sub": 58,
+      "radius": 40
+    }
+  },
+  "original_capture_manifest_sha256": "ba907644dc78b45d62cc3b5855a6d4f7b902634afc2eadc3ddd2d3d58b83c99a",
+  "contact_sheet": {
+    "file": "contact-sheet.jpg",
+    "sha256": "01c0567986e3aa006b58e3d61510ff06e21bbc9e3ebe67d7a5212b978040ee71",
+    "size": [
+      1896,
+      1778
+    ],
+    "mode": "RGB",
+    "purpose": "Owner review proof only; not an App Store upload image.",
+    "recipe": {
+      "canvas": [
+        1896,
+        1778
+      ],
+      "background": [
+        14,
+        23,
+        42
+      ],
+      "thumbnail": [
+        600,
+        853
+      ],
+      "positions": [
+        [
+          24,
+          24
+        ],
+        [
+          648,
+          24
+        ],
+        [
+          1272,
+          24
+        ],
+        [
+          336,
+          901
+        ],
+        [
+          960,
+          901
+        ]
+      ],
+      "resampling": "Lanczos",
+      "jpeg_quality": 94
+    }
+  },
+  "images": [
+    {
+      "order": 1,
+      "file": "final/inner-01.png",
+      "raw": "raw/inner-01.png",
+      "raw_size": [
+        2007,
+        2853
+      ],
+      "raw_sha256": "91aef5057de59efdf1329d3dcac127001dfddee4e4f13ea234eac071fe68fc14",
+      "sha256": "1409ce823f59d36dee381bdddc1bd65f45febd12b8f6fd1c760fd830c098d912",
+      "size": [
+        2007,
+        2853
+      ],
+      "mode": "RGB",
+      "title": "Room for your Markdown",
+      "subtitle": "Specs, diagrams and reading controls together",
+      "demo_source": "app-store/demo/system-architecture.md",
+      "demo_sha256": "24e2f2fe234532be4f5b909f19dc6c7f8dc4794d1dbf9eea52e7485520d1f419",
+      "view": "light / preview"
+    },
+    {
+      "order": 2,
+      "file": "final/inner-02.png",
+      "raw": "raw/inner-02.png",
+      "raw_size": [
+        2007,
+        2853
+      ],
+      "raw_sha256": "876c3c16964b7d9550b19035927254b78b21905cac8a09e7dcd5db3460705650",
+      "sha256": "3d4ed4c96ac2a30d8a98c7766d4d33fd02d587ad450256ffeb1f6e57f83d322d",
+      "size": [
+        2007,
+        2853
+      ],
+      "mode": "RGB",
+      "title": "A closer look at diagrams",
+      "subtitle": "Zoom controls center the diagram",
+      "demo_source": "app-store/demo/sign-in-flow.md",
+      "demo_sha256": "b096173e4efc834b5bbdf939752c8d8a9963319653788ac96ca9656c0d18e14f",
+      "view": "light / fullscreen diagram"
+    },
+    {
+      "order": 3,
+      "file": "final/inner-03.png",
+      "raw": "raw/inner-03.png",
+      "raw_size": [
+        2007,
+        2853
+      ],
+      "raw_sha256": "56ff1a8c2f2a42066f6394cb37e24a54c49b0ebbc9094bc0d7a60e0a3656d319",
+      "sha256": "42674d54ed51a32b22868e210100c44e6bda4945a64bb61229b665653ba52013",
+      "size": [
+        2007,
+        2853
+      ],
+      "mode": "RGB",
+      "title": "Source when you need it",
+      "subtitle": "Switch between Raw and Preview",
+      "demo_source": "app-store/demo/api-reference.md",
+      "demo_sha256": "8badff52e8346305ca0211e2887ed1cd8279b186a0f9bb5170cf22312b9da376",
+      "view": "light / raw"
+    },
+    {
+      "order": 4,
+      "file": "final/inner-04.png",
+      "raw": "raw/inner-04.png",
+      "raw_size": [
+        2007,
+        2853
+      ],
+      "raw_sha256": "7caa9641d291c7ebb4facff362dc8a3c16186a2fbfec0e9344bef245b7b6883f",
+      "sha256": "2700837d909206907b4edbf56b4b515c4f4d80fbe4d5d5102b1f1ec9d46dc6db",
+      "size": [
+        2007,
+        2853
+      ],
+      "mode": "RGB",
+      "title": "Find the detail",
+      "subtitle": "Search the document and move through matches",
+      "demo_source": "app-store/demo/api-reference.md",
+      "demo_sha256": "8badff52e8346305ca0211e2887ed1cd8279b186a0f9bb5170cf22312b9da376",
+      "view": "light / preview with Find"
+    },
+    {
+      "order": 5,
+      "file": "final/inner-05.png",
+      "raw": "raw/inner-05-system-dark.png",
+      "raw_size": [
+        2007,
+        2853
+      ],
+      "raw_sha256": "609e6adad4db61b25c38463c1ce6101bf406ed36685c560eba0b03c2b3c14ad7",
+      "sha256": "4253b810dde1ade8a2ce610c8c892f92fb9d3612f48ac7fd938c335c0ee25a93",
+      "size": [
+        2007,
+        2853
+      ],
+      "mode": "RGB",
+      "title": "Read in Dark Mode",
+      "subtitle": "A clear view for late-night reviewing",
+      "demo_source": "app-store/demo/order-lifecycle.md",
+      "demo_sha256": "67bd9da910aa9b734a725af357cdfdaa22fbb98b6fbf4ae42eb600cca0d61d29",
+      "view": "dark / preview"
+    }
+  ]
+}

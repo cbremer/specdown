@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "source_commit": "9d27fc1a6961e29c86def43cee17c6fbb7d66db1",
+  "scope": "Real iPhone Duo simulator screenshots of the retained production-identity 1.0.1 (230) app, using the same frozen source and native inputs as the submitted iOS build. No new app build was produced for this capture. These are not physical-device captures.",
+  "app": {
+    "bundleIdentifier": "com.mosaicpando.specdown",
+    "version": "1.0.1",
+    "build": "230",
+    "platform": "iphonesimulator",
+    "sdk": "iphonesimulator27.2",
+    "minimumOS": "16.0",
+    "deviceFamilies": [
+      1,
+      2
+    ],
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "executableSha256": "da52760c87c28ab7b2c90a3438030c85d01e22f08b45fd7a7495a7ffcf66b3f9",
+    "infoPlistSha256": "c3321ed481759f65fece4e331cb44ea7ab52161ac10bc6a0c9cedb58f8acfbd0",
+    "signatureScope": {
+      "x86_64": "Unsigned",
+      "arm64": "Linker ad-hoc only; no owner/team identity"
+    }
+  },
+  "verified_capture_evidence": {
+    "actualAppFiles": 117,
+    "all117FileNamesAndSha256ExactlyMatchOriginalUnsignedReport": true,
+    "appInventoryCanonicalJsonSha256": "e7d0d639b94b70025bc924b5e64d0406e20106248dc289d44ffc945e5764a986",
+    "actualWebFiles": 110,
+    "all110WebBytesEqualSimulatorArchiveActualExportedIpaAndCurrentDist": true,
+    "webInventoryCanonicalJsonSha256": "f19d1a37bda0089db1bd853635b0e5dfd5037f1627b1ab2dcdbb0f0483967cd2",
+    "currentTrackedFilesMatchFrozenInputs": 548,
+    "sourceAndNativeInputsSharedWithSubmittedArchive": true
+  },
+  "capture_method": "Synthetic app-store/demo documents opened through the normal native Files picker in a dedicated local iPhone Duo simulator; inner portrait display 2007 \u00d7 2853. Scene 5 uses actual native and web Dark Mode.",
+  "limits": [
+    "Simulator screenshot evidence does not establish physical Duo acceptance.",
+    "This packet contains only the five approved inner-display document views; no outer-display marketing screenshot is included.",
+    "Submission and publication status are recorded separately in Session 70."
+  ],
+  "original_private_audit_sha256": "7193bc217fe834e36a051342d523d4ed8d75c0643d690d7a9ff7d7fb0a1736fb"
+}
