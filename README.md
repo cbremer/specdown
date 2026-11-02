@@ -1,12 +1,15 @@
 # SpecDown
 
-A lightweight markdown viewer with **first-class interactive Mermaid diagrams** —
-zoom, pan, fullscreen, and present your architecture diagrams instead of squinting
-at static images. One shared web app runs on three surfaces: in the **browser**, as
-a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
+SpecDown is a Markdown reader for developers working with specs, plans and
+READMEs, including documents created with AI tools. Open saved Markdown for
+focused reading, with formatted tables, highlighted code and **interactive
+Mermaid diagrams** you can zoom, pan and explore in fullscreen.
 
-- 🌐 **Web** — runs on GitHub Pages, installable as a PWA (works offline)
-- 🖥️ **Desktop** — Electron app, signed & notarized on macOS
+One shared viewer runs in the **browser**, as a **desktop app** (macOS / Windows /
+Linux), and as an **iOS / iPadOS** app.
+
+- 🌐 **Web** — runs on GitHub Pages, installable as a PWA
+- 🖥️ **Desktop downloads** — Electron app, signed & notarized on macOS
 - 📱 **iOS / iPadOS** — [free on the App Store](https://apps.apple.com/app/specdown/id6822086808)
 
 ---
@@ -14,7 +17,7 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 ## Features
 
 ### Markdown
-- Full GitHub Flavored Markdown (tables, task lists, blockquotes, footnotes…)
+- GitHub Flavored Markdown features, including tables, task lists and blockquotes
 - Syntax highlighting for code blocks, with a hover **Copy** button
 - Clean, readable typography in light and dark themes
 - **Raw / preview toggle** and a side-by-side **split view**
@@ -23,31 +26,37 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 - **Print / Save as PDF** (`Cmd/Ctrl + P`) — prints the full document as a clean,
   paginated layout (diagrams re-rendered light for paper); the desktop app also
   has **File > Export as PDF…** (`Cmd/Ctrl + Shift + E`) for one-step PDF files
-- **Annotations** — double-click any block to attach a sticky note; **export / import**
-  the whole annotation set as JSON to move it between devices
+- **Notes (web and desktop)** — double-click a document block to attach a note;
+  export and import notes as JSON. Imports are limited to 2 MiB. Notes are saved
+  in local app or browser storage; native iOS does not expose annotation tools
 
 ### Interactive Mermaid diagrams
 - Per-diagram **zoom, pan, reset, and fullscreen** controls
-- **Mouse-wheel zoom** and **click-drag pan**; minimap in fullscreen
-- **Export** any diagram as **SVG** or **PNG**
+- **Mouse-wheel zoom** and **click-drag pan** with a pointer; touch controls on iOS
+- **Web and desktop:** minimap in fullscreen and diagram export as **SVG** or **PNG**
 - **Presentation mode** — step through a document's diagrams full-screen
 - Diagrams re-theme automatically with light/dark
 
 ### Getting documents in
-- **Drag & drop** or **browse** for `.md` / `.markdown` files
-- **Open from URL**, including **GitHub repo browsing** (paste a repo URL and pick a file)
+- **Drag & drop** or **browse** for `.md` / `.markdown` files on web and desktop;
+  use **Files**, **iCloud Drive** or a compatible app on iPhone and iPad
+- **Open from URL** using a public HTTPS link to a Markdown file. Links requiring
+  sign-in or blocked by the host may not open; download the file and open it locally
 - **Bookmarks** — save frequently used files with **Bookmark** (`Cmd/Ctrl + D`), then recall them from the header’s **Bookmarks** list. Search, rename, remove, or **Locate file** when a desktop file moves. Desktop files and URLs reopen their current source; browser/iOS files without a reusable path retain a clearly labeled **saved copy**, with **Replace copy** to update it. Bookmarks stay separate from recents and are stored on this device (clearing app/browser data removes them).
-- **Recent files** list for one-click re-open; **session restore** reopens your last doc on the web
-- **Workspace (folder) mode** — open a folder (desktop picker, or drag a folder
-  onto the web app in Chromium), browse its markdown in a sidebar, and follow
-  relative `.md` links between documents
+- **Recent files (web and desktop)** for reopening documents; **session restore**
+  reopens your last document on the web
+- **Workspace (folder) mode (desktop and supported browsers)** — use **Open Folder**
+  or drop a folder in a compatible browser, browse its Markdown in a sidebar, and
+  follow relative `.md` links. **Close Folder** closes the folder browser
+  while keeping open document tabs. **Workspace files** hides or shows the sidebar
+  without closing the folder. Folder mode is unavailable in native iOS
 - **Live reload** (desktop) — file-backed documents refresh automatically when
   they change on disk. The **Live** chip next to the filename shows the state
   (click to pause / resume); **Reload from disk** (⋮ menu or command palette)
   re-reads the file on demand
 
 ### Navigation & UX
-- **Command palette** (`Cmd/Ctrl + K`) for everything, with fuzzy search
+- **Command palette** (`Cmd/Ctrl + K`) with fuzzy search for available commands
 - **Keyboard shortcut sheet** (`?`)
 - Auto / light / dark theme that follows your OS, plus reduced-motion support
 - Accessible: skip link, ARIA roles, keyboard navigation
@@ -58,10 +67,11 @@ a **desktop app** (macOS / Windows / Linux), and as an **iOS / iPadOS** app.
 
 ### Web
 The hosted app lives at **<https://specdown.mosaicpando.com>**. Open it, drop in a
-markdown file (or open one from a URL), and go. Click **Install** in your browser to
-add it as a PWA — it then works offline.
+Markdown file (or open one from a public HTTPS URL), and go. Use your browser's
+**Install** option to add it as a PWA. Offline use depends on the app resources
+your browser has saved; online documents and remote images still need a connection.
 
-### Desktop (macOS / Windows / Linux)
+### Desktop downloads (macOS / Windows / Linux)
 Download the latest installer from the **[Releases page](../../releases)**:
 
 | Platform | Artifact | Notes |
@@ -70,25 +80,42 @@ Download the latest installer from the **[Releases page](../../releases)**:
 | Windows | `Specdown-Desktop-Setup-<version>.exe` | NSIS installer |
 | Linux | `Specdown-Desktop-<version>.AppImage` | mark executable, then run |
 
-On macOS, open the DMG, drag **Specdown Desktop** to Applications, and launch — no
-Gatekeeper warning, because the app is signed with a Developer ID certificate and
-notarized by Apple.
+On macOS, open the DMG, drag **Specdown Desktop** to Applications, and launch.
+The direct-download macOS release uses Developer ID signing and Apple notarization.
+
+The **Mac App Store edition is being prepared separately**. Its sandboxed build
+uses system file access and Apple-delivered updates. It is a separate distribution
+channel from the existing desktop download; a local build or TestFlight build is
+not a public Mac App Store release. See the [App Store preparation docs](docs/project-appstore/README.md).
 
 ### iOS / iPadOS
 SpecDown 1.0 is available free for iPhone and iPad on the
 **[App Store](https://apps.apple.com/app/specdown/id6822086808)**. Requires iOS or
 iPadOS 16.0 or later.
 
-For development, you can also build the app from source and run it via Xcode:
+For development from a new checkout, build the shared viewer and generate the
+Xcode project:
 
 ```bash
-npm install
+npm ci
 npm run build                       # build the shared web bundle
 brew install xcodegen               # one-time, if you don't have it
 cd ios && xcodegen generate         # generate the Xcode project
 open SpecDown.xcodeproj
-# In Xcode: select your device + your signing team, then Run (⌘R)
+# In Xcode: select SpecDown Dev, your device and your signing team, then Run (⌘R)
 ```
+
+For an existing local setup, open this checkout's `ios/SpecDown.xcodeproj` and
+preserve its signing settings. `ios/project.yml` is the tracked project source;
+the generated Xcode project is ignored by Git.
+
+Use **SpecDown Dev** for ordinary local development. **SpecDown Beta** has a
+separate TestFlight identity. Both can coexist with production **SpecDown** and
+keep separate app data. The production scheme uses the App Store identity, so
+running it on a device can replace the installed production copy. Follow the
+[development-channel contract](docs/project-appstore/2026-10-31-spec-ios-development-channels.md)
+for identity and signing setup. Final release acceptance uses the exact
+production-ID TestFlight build.
 
 CI validates simulator builds on every change. The iOS release-validation
 workflow also checks the Release configuration without signing in to Apple.
@@ -137,6 +164,7 @@ npm run desktop:build  # build the web app + a desktop installer (in dist/)
 npm test               # Jest unit + integration suite
 npm run lint           # ESLint (flat config) — must be clean
 npm run typecheck      # tsc --noEmit (checkJs over JSDoc) — must be clean
+npm run test:watchers  # real synthetic-file watcher checks for desktop validation
 npm run format         # Prettier (write)
 ```
 
@@ -173,6 +201,7 @@ Project history, specs, and design docs live under **`docs/`** (start at
 
 - `docs/project-desktop/` — the Electron desktop project
 - `docs/project-ios/` — the iOS/iPadOS shell
+- `docs/project-appstore/` — Store release preparation and platform-specific proof
 - `docs/project-url/` — URL opening / GitHub repo browsing
 - `docs/project-modernization/` — the cross-platform modernization roadmap (the most
   recent and comprehensive)
