@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.0.233 — 2026-11-02
+
+### Features
+
+- isolate Mac Store development and beta channels
+
+### Documentation
+
+- record Dev and Beta 230 delivery and acceptance handoff
+- record artwork and published desktop release
+
 ## v0.0.232 — 2026-11-02
 
 ### Tests
