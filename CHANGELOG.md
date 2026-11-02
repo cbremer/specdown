@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.0.232 — 2026-11-02
+
+### CI
+
+- add explicit owner approval for desktop releases
+
 ## v0.0.231 — 2026-11-02
 
 ### Features
