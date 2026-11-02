@@ -1,9 +1,10 @@
 # SpecDown
 
-SpecDown is a Markdown reader for developers working with specs, plans and
-READMEs, including documents created with AI tools. Open saved Markdown for
-focused reading, with formatted tables, highlighted code and **interactive
-Mermaid diagrams** you can zoom, pan and explore in fullscreen.
+Read the specs, plans and diagrams your AI workflow produces. SpecDown gives
+your Markdown a clean reading view, with formatted tables, highlighted code and
+**interactive Mermaid diagrams** right in the document. Read technical specs,
+design docs, READMEs and notes with clean typography, and zoom, pan or expand
+diagrams for a closer look.
 
 One shared viewer runs in the **browser**, as a **desktop app** (macOS / Windows /
 Linux), and as an **iOS / iPadOS** app.

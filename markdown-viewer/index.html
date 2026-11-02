@@ -15,20 +15,20 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
-    <meta name="description" content="A markdown viewer where Mermaid diagrams are first-class — zoom, pan, present, and export. Try it in the browser or download the desktop app.">
+    <meta name="description" content="Read Markdown specs, plans and Mermaid diagrams from your AI workflow. Desktop Live reload follows saved changes to open files.">
     <link rel="canonical" href="https://specdown.mosaicpando.com/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="SpecDown">
-    <meta property="og:title" content="SpecDown — Markdown viewer with interactive Mermaid">
-    <meta property="og:description" content="Zoom, pan, present, and export architecture diagrams instead of squinting at static images. No account. MIT licensed.">
+    <meta property="og:title" content="SpecDown | Read Markdown specs and diagrams">
+    <meta property="og:description" content="Read Markdown specs, plans and Mermaid diagrams from your AI workflow. Desktop Live reload follows saved changes to open files.">
     <meta property="og:url" content="https://specdown.mosaicpando.com/">
     <meta property="og:image" content="https://specdown.mosaicpando.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="SpecDown — Markdown viewer with interactive Mermaid diagrams">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SpecDown — Markdown viewer with interactive Mermaid">
-    <meta name="twitter:description" content="Zoom, pan, present, and export architecture diagrams instead of squinting at static images. No account. MIT licensed.">
+    <meta name="twitter:title" content="SpecDown | Read Markdown specs and diagrams">
+    <meta name="twitter:description" content="Read Markdown specs, plans and Mermaid diagrams from your AI workflow. Desktop Live reload follows saved changes to open files.">
     <meta name="twitter:image" content="https://specdown.mosaicpando.com/og-image.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
@@ -91,9 +91,9 @@
             <!-- Web-only showcase chrome. Hidden on desktop/iOS; siblings of the
                  dashed card so native empty-state layout stays the compact card. -->
             <div id="landing-hero" class="landing-hero landing-interactive" hidden>
-                <p class="landing-eyebrow"><span class="landing-signal" aria-hidden="true"></span> Diagram drive online</p>
-                <h2 class="landing-title">Present the diagram, not a screenshot</h2>
-                <p class="landing-lede">SpecDown is a markdown viewer where Mermaid diagrams are first-class — zoom, pan, present, and export. No account. No editor chrome. Your architecture becomes a place you can fly through.</p>
+                <p class="landing-eyebrow"><span class="landing-signal" aria-hidden="true"></span> Markdown &amp; Mermaid reader</p>
+                <h2 class="landing-title">Read the specs, plans and diagrams your AI workflow produces.</h2>
+                <p class="landing-lede">SpecDown gives your Markdown a clean reading view, with formatted tables, highlighted code and interactive Mermaid diagrams right in the document.</p>
             </div>
             <div class="drop-zone-content">
                 <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -134,34 +134,39 @@
                 </div>
             </div>
             <div id="landing-diagram-host" class="landing-diagram-host landing-interactive" hidden>
-                <p class="landing-diagram-caption">Live Mermaid in the viewport — expand it and fly</p>
+                <p class="landing-diagram-caption">Interactive Mermaid diagrams, right in the document</p>
                 <div id="landing-diagram" class="landing-diagram"></div>
             </div>
             <div id="landing-pillars" class="landing-pillars landing-interactive" hidden>
                 <article class="landing-pillar">
-                    <p class="landing-kicker">Holodeck</p>
-                    <h3>Present diagrams</h3>
-                    <p>Fullscreen pan/zoom, a minimap, and presentation mode that steps through every Mermaid in the doc.</p>
+                    <p class="landing-kicker">Diagrams</p>
+                    <h3>Explore diagrams</h3>
+                    <p>Zoom, pan and expand Mermaid diagrams for a closer look.</p>
                 </article>
                 <article class="landing-pillar">
-                    <p class="landing-kicker">Any vector</p>
-                    <h3>Open from anywhere</h3>
-                    <p>Drop a file, open a folder, paste a raw URL, or paste a GitHub repo and pick the markdown.</p>
+                    <p class="landing-kicker">Files</p>
+                    <h3>Open files your way</h3>
+                    <p>Open a file or paste a public HTTPS link to Markdown. Browse folders in supported browsers.</p>
                 </article>
                 <article class="landing-pillar">
-                    <p class="landing-kicker">Observer mode</p>
-                    <h3>Read, don't edit</h3>
-                    <p>TOC, find, split view, annotations, print/PDF. No vault, no account, no editor chrome.</p>
+                    <p class="landing-kicker">Reading</p>
+                    <h3>Made for reading technical docs</h3>
+                    <p>Read specs, design docs, READMEs and notes with clean typography. Move between headings, find a term, or compare the Markdown source beside the rendered page.</p>
                 </article>
             </div>
             <div id="landing-desktop" class="landing-desktop landing-interactive" hidden>
-                <p class="landing-kicker">Ground control</p>
+                <p class="landing-kicker">Web, desktop &amp; mobile</p>
+                <h3>Follow your work as it changes</h3>
+                <p>Keep the desktop reader beside your editor or AI agent. When it saves changes to an open local Markdown file, SpecDown refreshes the document while Live reload is on. Click Live beside the filename to pause, or Paused to resume.</p>
                 <h3>Get the desktop app</h3>
-                <p>Signed &amp; notarized on macOS. Windows and Linux builds on the same Releases page.</p>
+                <p>Choose a direct desktop download for Mac, Windows or Linux. The macOS download is signed and notarized. Windows and Linux builds have received less testing than macOS.</p>
                 <p><a class="landing-download" href="https://github.com/cbremer/specdown/releases/latest" target="_blank" rel="noopener noreferrer">Download for macOS, Windows, or Linux</a></p>
+                <p>The Mac App Store edition is coming. It is being tested in TestFlight and is not yet publicly available on the Mac App Store.</p>
                 <h3>SpecDown for iPhone and iPad</h3>
-                <p>Read Markdown and explore Mermaid diagrams on the go. Free on the App Store.</p>
+                <p>Get SpecDown free on the App Store for iPhone and iPad. Open Markdown through Files, including iCloud Drive, OneDrive and Dropbox when those providers are installed and enabled in Files.</p>
                 <p><a class="landing-download" href="https://apps.apple.com/app/specdown/id6822086808" target="_blank" rel="noopener noreferrer">Get SpecDown for iPhone and iPad</a></p>
+                <h3>Keep the web app close</h3>
+                <p>In a supported browser, install SpecDown as a web app or use Add to Home Screen for quick access. Open it online first; offline use depends on the app resources your browser has saved. Online documents and remote images still need an internet connection.</p>
                 <p class="landing-resource-links"><a href="support.html" target="_blank" rel="noopener noreferrer">Support</a> · <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></p>
             </div>
             <div class="drop-zone-overlay">
