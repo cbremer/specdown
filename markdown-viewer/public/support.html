@@ -6,7 +6,7 @@
     <title>SpecDown Support</title>
     <meta
       name="description"
-      content="Help and contact for SpecDown, the Markdown viewer with live Mermaid diagrams."
+      content="Help with reading Markdown, opening files, desktop Live reload and installing the SpecDown web app."
     />
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
     <style>
@@ -70,56 +70,114 @@
     <main>
       <h1>SpecDown Support</h1>
       <p class="meta">
-        A Markdown viewer with live Mermaid diagrams for iPhone, iPad, Mac and
-        the web.
+        SpecDown is a reading companion for developers working with specs,
+        design docs, READMEs and notes from their editor or AI tools. Read
+        formatted tables, highlighted code and interactive Mermaid diagrams
+        right in the document.
       </p>
 
       <h2>Get SpecDown</h2>
       <p>
-        <a href="https://apps.apple.com/app/specdown/id6822086808">Download free for iPhone and iPad on the App Store</a>
-        (iOS/iPadOS 16.0 or later). For macOS, Windows and Linux, get the
-        <a href="https://github.com/cbremer/specdown/releases/latest">desktop download</a>.
+        <a href="https://apps.apple.com/app/specdown/id6822086808"
+          >Download free for iPhone and iPad on the App Store</a
+        >
+        (iOS or iPadOS 16.0 or later). You can also choose a
+        <a href="https://github.com/cbremer/specdown/releases/latest"
+          >direct desktop download for Mac, Windows or Linux</a
+        >.
+      </p>
+      <p>
+        The Mac App Store edition is coming and is currently in TestFlight, not
+        publicly available on the Mac App Store. Windows and Linux desktop
+        downloads have received less testing than macOS.
       </p>
 
       <h2>Getting started</h2>
       <ul>
         <li>
-          <strong>Open a file:</strong> tap <strong>Open</strong> (iPhone),
-          <strong>Open Markdown File</strong> (iPad sidebar) or choose
-          <strong>File → Open…</strong> (Mac) and pick any
-          <code>.md</code> file, including files in iCloud Drive.
+          <strong>Open a file:</strong> tap Open on iPhone, use Open Markdown
+          File in the iPad sidebar, or choose File → Open… on Mac. Select a
+          UTF-8 <code>.md</code> or <code>.markdown</code> file. On iPhone and
+          iPad, Files also gives you access to iCloud Drive, OneDrive and
+          Dropbox when those providers are installed and enabled in Files.
         </li>
         <li>
           <strong>From other apps:</strong> use
-          <strong>Open With… → SpecDown</strong> or the share sheet.
+          <strong>Open With… → SpecDown</strong> or the share sheet when the app
+          supports it.
         </li>
         <li>
-          <strong>From the web:</strong> paste a web or GitHub link to a
-          Markdown file on the start screen.
+          <strong>From the web:</strong> paste a public HTTPS link to a Markdown
+          file on the start screen.
         </li>
         <li>
           <strong>Try it:</strong> open the bundled
-          <strong>Diagram Showcase</strong> to see every diagram type.
+          <strong>Diagram Showcase</strong> to explore example Mermaid diagrams.
+        </li>
+        <li>
+          <strong>Browse a folder:</strong> on desktop or in a supported
+          browser, choose Open Folder. In the current web app and upcoming Mac
+          App Store edition, choose Close Folder to close the folder browser
+          while keeping your document tabs open.
         </li>
       </ul>
+
+      <h2>Follow saved changes on desktop</h2>
+      <p>
+        Live reload is on by default for local files opened in the desktop app.
+        When your editor or AI agent saves changes to an open Markdown file,
+        SpecDown refreshes the reading view while Live reload is on. Click Live
+        beside the filename to pause, or Paused to resume. iPhone and iPad do
+        not watch files for changes.
+      </p>
+
+      <h2>Install the web app</h2>
+      <p>
+        Open SpecDown in a supported browser and choose its Install app or Add
+        to Home Screen option. Open it online first so the browser can save the
+        app resources. Offline availability depends on what the browser has
+        saved; online documents and remote images still need an internet
+        connection.
+      </p>
 
       <h2>Common questions</h2>
       <ul>
         <li>
           <strong>A diagram shows an error.</strong> SpecDown uses Mermaid
-          syntax; check that the diagram's code block starts with
+          syntax. Check that the diagram’s code block starts with
           <code>```mermaid</code>.
         </li>
         <li>
-          <strong>Images don't appear.</strong> Images linked by a full web
-          address (<code>https://…</code>) need an internet connection. On
-          iPhone and iPad, images referenced by a relative path (such as
-          <code>./diagram.png</code>) aren't shown yet. Use a full HTTPS image
-          address when sharing a document across platforms.
+          <strong>A document won’t open.</strong> SpecDown supports UTF-8
+          Markdown files up to 8 MiB. Additional limits apply to long lines,
+          deeply nested content and complex diagrams.
         </li>
         <li>
-          <strong>An enterprise GitHub link doesn't open.</strong> Some
-          enterprise instances require sign-in, which SpecDown doesn't support.
+          <strong>Images don’t appear.</strong> Images linked by a full HTTPS
+          address need an internet connection. On iPhone and iPad, images
+          referenced by a relative path, such as <code>./diagram.png</code>,
+          aren’t shown yet. Use a full HTTPS image address when sharing a
+          document across platforms.
+        </li>
+        <li>
+          <strong>A link requires sign-in.</strong> SpecDown opens public links
+          without signing in to the host. Some hosts also prevent documents from
+          loading in other apps. Download the Markdown file, then open it in
+          SpecDown.
+        </li>
+        <li>
+          <strong>How do I close a folder?</strong> In the current web app and
+          upcoming Mac App Store edition, choose Close Folder in the folder
+          browser. The upcoming Mac App Store edition also offers File → Close
+          Folder. Your document tabs stay open. Hiding the folder browser only
+          changes its visibility; it does not close the folder.
+        </li>
+        <li>
+          <strong>Can I use the web app offline?</strong> In a supported
+          browser, install SpecDown as a web app or use Add to Home Screen for
+          quick access. Open it online first; offline use depends on the app
+          resources your browser has saved. Online documents and remote images
+          still need an internet connection.
         </li>
       </ul>
 
@@ -129,8 +187,9 @@
         <a href="mailto:support@mosaicpando.com">support@mosaicpando.com</a>.
       </p>
       <p>
-        <a href="https://github.com/cbremer/specdown/issues">Browse GitHub issues</a>.
-        A GitHub account is required to report an issue there.
+        <a href="https://github.com/cbremer/specdown/issues"
+          >Browse GitHub issues</a
+        >. A GitHub account is required to report an issue there.
       </p>
       <footer>
         <a href="./">SpecDown</a> · <a href="privacy.html">Privacy</a> ·
