@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src 'self'; font-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'"
+    />
+    <title>SpecDown 1.0.1 · Release proof</title>
+    <style>
+      :root {
+        --paper: #f5f6f1;
+        --card: #fff;
+        --ink: #173b40;
+        --muted: #536b70;
+        --line: #dbe3df;
+        --teal: #086b70;
+        --tint: #e8f3ee;
+        --amber: #7a4d10;
+        --amber-tint: #fff0d9;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-padding-top: 5rem;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          16px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      a {
+        color: var(--teal);
+        text-underline-offset: 0.2em;
+      }
+      button,
+      select {
+        font: inherit;
+      }
+      button,
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 0.45rem 0.8rem;
+        background: var(--card);
+        color: var(--ink);
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      button:hover,
+      .button:hover {
+        background: var(--tint);
+        border-color: #82b6b0;
+      }
+      :focus-visible {
+        outline: 3px solid #ad6616;
+        outline-offset: 4px;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+      h1 {
+        max-width: 780px;
+        font-size: clamp(2.1rem, 5.2vw, 4.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.055em;
+        margin-bottom: 1.2rem;
+        font-weight: 680;
+      }
+      h2 {
+        font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+        line-height: 1.18;
+        letter-spacing: -0.035em;
+        margin-bottom: 0.55rem;
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin-bottom: 0.35rem;
+      }
+      .wrap {
+        width: min(1160px, calc(100% - 48px));
+        margin: auto;
+      }
+      .hero {
+        padding: 64px 0 36px;
+      }
+      .eyebrow {
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin-bottom: 20px;
+      }
+      .intro {
+        max-width: 700px;
+        font-size: 1.12rem;
+        color: var(--muted);
+      }
+      .status-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        font-weight: 650;
+        padding: 0.35rem 0.65rem;
+        border-radius: 99px;
+        background: var(--tint);
+        color: var(--teal);
+      }
+      .badge.pending {
+        background: var(--amber-tint);
+        color: var(--amber);
+      }
+      .nav-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f5f6f1f5;
+        border-block: 1px solid var(--line);
+      }
+      .nav {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-block: 15px;
+      }
+      .nav a {
+        font-size: 0.92rem;
+        font-weight: 650;
+        text-decoration: none;
+      }
+      main > section {
+        padding-block: 52px;
+        border-bottom: 1px solid var(--line);
+      }
+      .section-heading {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+      }
+      .section-heading p {
+        color: var(--muted);
+        margin-bottom: 0;
+      }
+      .summary-grid,
+      .copy-grid,
+      .artwork-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 32px;
+      }
+      .card,
+      .field,
+      .artwork-card,
+      .shot-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .card {
+        padding: 22px;
+      }
+      .card p:last-child {
+        margin-bottom: 0;
+      }
+      .card .label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-bottom: 0.4rem;
+      }
+      .card .value {
+        font-size: 1.15rem;
+        font-weight: 650;
+        margin-bottom: 0.25rem;
+      }
+      .card .note {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .build-card {
+        margin-bottom: 24px;
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .build-card p {
+        margin-bottom: 0;
+      }
+      .build-card .build-identity {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .field {
+        padding: 22px;
+      }
+      .field.wide {
+        grid-column: 1 / -1;
+      }
+      .field-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .field-label {
+        font-size: 0.83rem;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .copy-value {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 0;
+        line-height: 1.7;
+      }
+      .field-count {
+        color: var(--muted);
+        font-size: 0.73rem;
+        margin-top: 14px;
+      }
+      .copy-details {
+        margin-top: 18px;
+      }
+      details {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #ffffff80;
+        padding: 16px 20px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 650;
+      }
+      details[open] > summary {
+        margin-bottom: 18px;
+      }
+      details .copy-grid {
+        margin-top: 18px;
+      }
+      .subheading {
+        margin: 36px 0 16px;
+      }
+      .section-note {
+        color: var(--muted);
+        font-size: 0.9rem;
+        max-width: 800px;
+      }
+      .set-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .set-picker [aria-pressed='true'] {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: white;
+      }
+      .shot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .shot-visual {
+        min-height: 220px;
+        background: #edf1ed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+      .shot-visual img {
+        display: block;
+        max-width: 100%;
+        height: 290px;
+        object-fit: contain;
+      }
+      .shot-empty {
+        text-align: center;
+        color: var(--muted);
+        max-width: 170px;
+        font-size: 0.86rem;
+      }
+      .shot-empty span {
+        display: block;
+        font-size: 2rem;
+        color: #789992;
+        margin-bottom: 10px;
+      }
+      .shot-copy {
+        padding: 18px;
+      }
+      .shot-copy .subtitle {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 12px;
+      }
+      .shot-copy details {
+        margin-top: 14px;
+        font-size: 0.8rem;
+        padding: 10px 12px;
+      }
+      .shot-copy details p {
+        margin: 0;
+      }
+      .shot-copy .button {
+        margin-top: 12px;
+      }
+      .artwork-image {
+        background: #eaf0ef;
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .artwork-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .artwork-body {
+        padding: 24px;
+      }
+      .artwork-body p {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .artwork-body .button {
+        margin-top: 12px;
+      }
+      .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 24px 0 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 32px;
+      }
+      .checklist li {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .checklist input {
+        flex: none;
+        margin-top: 6px;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--teal);
+      }
+      .evidence-grid {
+        display: grid;
+        gap: 14px;
+      }
+      .evidence-grid ul {
+        margin-bottom: 0;
+        padding-left: 22px;
+      }
+      .evidence-json {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font:
+          0.78rem/1.6 ui-monospace,
+          monospace;
+        max-height: 380px;
+        overflow-y: auto;
+      }
+      .notice {
+        padding: 18px 22px;
+        border: 1px solid #d4b783;
+        border-radius: 12px;
+        background: var(--amber-tint);
+        margin-bottom: 20px;
+      }
+      .notice:empty {
+        display: none;
+      }
+      .copy-dialog {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 22px;
+        width: min(720px, calc(100% - 32px));
+        color: var(--ink);
+      }
+      .copy-dialog::backdrop {
+        background: #173b4070;
+      }
+      .copy-dialog textarea {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        height: 48vh;
+        margin-bottom: 18px;
+        padding: 14px;
+        font:
+          14px/1.5 ui-monospace,
+          monospace;
+      }
+      footer {
+        padding: 28px 0 40px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      #copy-status {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        background: var(--ink);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 99px;
+        max-width: calc(100% - 32px);
+        font-size: 0.88rem;
+      }
+      #copy-status:empty {
+        display: none;
+      }
+      .skip-link {
+        position: absolute;
+        left: 12px;
+        top: -80px;
+        background: white;
+        padding: 10px;
+        z-index: 30;
+      }
+      .skip-link:focus {
+        top: 10px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 760px) {
+        .wrap {
+          width: calc(100% - 32px);
+        }
+        .hero {
+          padding-top: 40px;
+        }
+        .summary-grid,
+        .copy-grid,
+        .artwork-grid,
+        .checklist {
+          grid-template-columns: 1fr;
+        }
+        .shot-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .summary-grid {
+          gap: 10px;
+        }
+        .section-heading {
+          flex-direction: column;
+        }
+        .nav {
+          gap: 1.25rem;
+        }
+        .field {
+          padding: 18px;
+        }
+        .build-card {
+          flex-direction: column;
+        }
+      }
+      @media (max-width: 450px) {
+        .shot-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        .nav-bar,
+        button,
+        .button,
+        #copy-status,
+        .skip-link {
+          display: none;
+        }
+        body {
+          background: white;
+        }
+        .wrap {
+          width: 100%;
+        }
+        .card,
+        .field,
+        .shot-card,
+        .artwork-card {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#ios">Skip to the iOS proof</a>
+    <header class="hero wrap">
+      <p class="eyebrow">SpecDown · 1.0.1 · Release proof</p>
+      <h1>A final look,<br />before submission.</h1>
+      <p class="intro">
+        Review the words, artwork and screenshots for iPhone, iPad and Mac. This
+        is a public repository snapshot for release proof, with unfinished items
+        clearly marked. Private operational records and generated builds are
+        retained locally and are not included in this packet.
+      </p>
+      <div class="status-row">
+        <span class="badge pending">Draft · not submitted to App Review</span>
+        <span class="badge">Public release stays manual</span>
+        <span class="badge">English (U.S.)</span>
+      </div>
+      <div class="summary-grid">
+        <div class="card">
+          <p class="label">Listing copy</p>
+          <p class="value">Existing saved copy</p>
+          <p class="note">Selected for this release. Optional AI workflow refinements are deferred.</p>
+        </div>
+        <div class="card">
+          <p class="label">Artwork</p>
+          <p class="value">Brand Halo</p>
+          <p class="note">
+            Halo is confirmed as the iOS 1.0.1 Header. Search Results artwork
+            is Waiting for Review and remains unassigned.
+          </p>
+        </div>
+        <div class="card">
+          <p class="label">Release decision</p>
+          <p class="value">Awaiting proof</p>
+          <p class="note">
+            Build 230 includes Close Folder and the diagram-link removal.
+            Signing, TestFlight acceptance and final screenshot proof remain pending.
+          </p>
+        </div>
+      </div>
+    </header>
+    <div class="nav-bar">
+      <nav class="nav wrap" aria-label="Proof sections">
+        <a href="#ios">iPhone &amp; iPad</a><a href="#mac">Mac</a
+        ><a href="#artwork">Artwork</a
+        ><a href="#proof-checklist">Proof checklist</a
+        ><a href="#evidence">Evidence</a>
+      </nav>
+    </div>
+    <main class="wrap">
+      <div id="load-notice" class="notice" role="status"></div>
+      <noscript
+        ><p class="notice">
+          This proof uses local JSON files. Enable JavaScript or read
+          <a href="copy/selected/proof.md">the selected copy proof</a> directly.
+        </p></noscript
+      >
+      <section id="ios" aria-labelledby="ios-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">iOS &amp; iPadOS · 1.0.1</p>
+            <h2 id="ios-title">Made for a closer look.</h2>
+            <p>Exact listing text for the iPhone and iPad draft.</p>
+          </div>
+          <button type="button" id="ios-copy-all" disabled>
+            Copy all iOS fields
+          </button>
+        </div>
+        <div id="ios-build" class="card build-card">
+          <div>
+            <h3>Build for proof</h3>
+            <p>In preparation</p>
+          </div>
+          <span class="badge pending">In preparation</span>
+        </div>
+        <div id="ios-copy">
+          <p class="section-note">Loading the saved copy…</p>
+        </div>
+        <h3 class="subheading">Screenshots</h3>
+        <p class="section-note">
+          Captions are prepared. The retained iPhone images below are build 229
+          captures, not build 230 proof. Empty slots await captures; no local image
+          establishes upload, placement or owner acceptance.
+        </p>
+        <div
+          id="ios-set-picker"
+          class="set-picker"
+          aria-label="iOS screenshot size"
+        ></div>
+        <div id="ios-shots" aria-live="polite"></div>
+      </section>
+      <section id="mac" aria-labelledby="mac-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Mac App Store · 1.0.1</p>
+            <h2 id="mac-title">Room for the details.</h2>
+            <p>Exact listing text for the Mac draft.</p>
+          </div>
+          <button type="button" id="mac-copy-all" disabled>
+            Copy all Mac fields
+          </button>
+        </div>
+        <div id="mac-build" class="card build-card">
+          <div>
+            <h3>Build for proof</h3>
+            <p>In preparation</p>
+          </div>
+          <span class="badge pending">In preparation</span>
+        </div>
+        <div id="mac-copy">
+          <p class="section-note">Loading the saved copy…</p>
+        </div>
+        <h3 class="subheading">Screenshots</h3>
+        <p class="section-note">
+          Proof these against the intended Mac App Store build, including its
+          actual window, menus and sandbox behavior.
+        </p>
+        <div id="mac-shots"></div>
+      </section>
+      <section id="artwork" aria-labelledby="artwork-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Brand Halo</p>
+            <h2 id="artwork-title">One identity, two placements.</h2>
+            <p>The selected Halo design, shown without cropping.</p>
+          </div>
+        </div>
+        <div id="artwork-grid" class="artwork-grid">
+          <p class="section-note">Loading the local artwork…</p>
+        </div>
+      </section>
+      <section id="proof-checklist" aria-labelledby="checklist-title">
+        <p class="eyebrow">For Chris</p>
+        <h2 id="checklist-title">Before App Review.</h2>
+        <p class="section-note">
+          These checkboxes are a reading aid only. They are not saved and do not
+          submit, approve or release anything.
+        </p>
+        <ul class="checklist">
+          <li>
+            <input id="check-copy" type="checkbox" /><label for="check-copy"
+              >Read each platform’s description and What’s New. Confirm that the
+              wording matches the intended build.</label
+            >
+          </li>
+          <li>
+            <input id="check-shots" type="checkbox" /><label for="check-shots"
+              >Inspect every screenshot at full resolution and at small preview
+              size. Check captions, readable controls, crops and private
+              information.</label
+            >
+          </li>
+          <li>
+            <input id="check-art" type="checkbox" /><label for="check-art"
+              >Proof the assigned Halo Header’s device crops. Proof the Search
+              Results artwork and its eventual placement.</label
+            >
+          </li>
+          <li>
+            <input id="check-builds" type="checkbox" /><label for="check-builds"
+              >Accept the exact intended production iOS and Mac TestFlight
+              builds. Separate Dev or Beta tests do not substitute for
+              this.</label
+            >
+          </li>
+          <li>
+            <input id="check-store" type="checkbox" /><label for="check-store"
+              >Review privacy, age rating, price, availability, support links
+              and reviewer contact details in the store drafts.</label
+            >
+          </li>
+          <li>
+            <input id="check-release" type="checkbox" /><label
+              for="check-release"
+              >Complete the proof before App Review submission. Keep public
+              release manual.</label
+            >
+          </li>
+        </ul>
+      </section>
+      <section id="evidence" aria-labelledby="evidence-title">
+        <p class="eyebrow">Optional detail</p>
+        <h2 id="evidence-title">Sources &amp; evidence.</h2>
+        <p class="section-note">
+          The visible listing copy is read directly from the local field files.
+          Build preparation, Apple processing and physical acceptance remain
+          separate checks.
+        </p>
+        <div class="evidence-grid">
+          <details>
+            <summary>Copy files and verification</summary>
+            <p>
+              The gallery uses the retained copy saved and verified in App Store
+              Connect during Session 43. Chris selected it for this release pass.
+              Final wording proof and current draft confirmation remain pending.
+              The optional AI workflow refinements are preserved separately and
+              do not hold up build delivery.
+            </p>
+            <ul>
+              <li><a href="copy/selected/ios-en-US.json">Selected iOS exact fields</a></li>
+              <li><a href="copy/selected/mac-en-US.json">Selected Mac exact fields</a></li>
+              <li>
+                <a href="copy/selected/proof.md"
+                  >Selected readable copy proof</a
+                >
+              </li>
+              <li>
+                <a href="copy/selected/validation.json">Selected copy validation</a>
+              </li>
+              <li>
+                <a href="copy/selected/screenshot-captions.json"
+                  >Selected screenshot captions and individual proof checks</a
+                >
+              </li>
+              <li><a href="copy/selection.json">Copy selection and provenance</a></li>
+              <li><a href="copy/proof.md">Optional later AI workflow copy proposal</a> — deferred, not the current selection.</li>
+            </ul>
+          </details>
+          <details>
+            <summary>Artwork provenance and placement</summary>
+            <p>
+              Search Results asset c7c00019-6a0c-8898-8036-5a719f4c0b25 is
+              submitted to Apple and Waiting for Review, not assigned. Approved Halo Header
+              asset fe000019-6a0c-8898-8029-cae241fa2fe2 is confirmed as the iOS
+              1.0.1 English (U.S.) Product Page Header. Apple reference previews
+              were checked on iPhone, Duo outer/inner and iPad landscape/light
+              and dark: the emblem stays intact and centered. Chris’s final
+              proof remains pending. Apple’s reference preview, placeholder icon
+              and inherited screenshots are not evidence of the current 230 app or
+              store appearance.
+            </p>
+            <ul>
+              <li>
+                <a href="artwork/manifest.json"
+                  >Artwork files, dimensions and hashes</a
+                >
+              </li>
+              <li><a href="artwork/PROMPT.md">Artwork preparation notes</a></li>
+            </ul>
+            <pre id="artwork-evidence" class="evidence-json"></pre>
+          </details>
+          <details>
+            <summary>Build and screenshot manifests</summary>
+            <p>
+              This gallery does not infer readiness from the existence of a
+              build or image. Missing status remains In preparation.
+            </p>
+            <p>
+              Reviewed build 230 source (28848a2) includes the diagram-link
+              removal and Close Folder. Source gates pass: 1,341 tests, 58
+              independent Close Folder cases and 10 observed browser cases.
+              Signing-disabled production iOS device/simulator products pass
+              independent verification. The unsigned Mac arm64 review app also
+              passes static verification and 12 scoped native UI cases.
+              Provisioned sandbox, Intel and TestFlight acceptance remain pending.
+              No 230 signing, upload or physical acceptance is claimed.
+              Exact signed 229 artifacts remain historical Owner-only TestFlight
+              candidates; their hashes and delivery evidence are retained below.
+              Existing iPhone captures remain 229 evidence. Mac window sizing
+              and capture wait for Chris. Final proof remains pending.
+            </p>
+            <ul>
+              <li>
+                <a href="screenshots/manifest.json">Screenshot manifest</a>
+              </li>
+              <li>
+                <a href="gallery-manifest-contract.json"
+                  >Local manifest contract</a
+                >
+              </li>
+              <li>
+                <a href="acceptance-checklist.md"
+                  >Platform acceptance checklist</a
+                >
+              </li>
+              <li>
+                <a href="preparation-status.json"
+                  >Preparation status and hashes</a
+                >
+              </li>
+            </ul>
+            <pre id="build-evidence" class="evidence-json">
+No build-status.json supplied yet.</pre>
+            <pre id="screenshot-evidence" class="evidence-json"></pre>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer class="wrap">
+      Local proof · November 1, 2026 · Not deployed · No App Review submission
+      or public release from this page.
+    </footer>
+    <div id="copy-status" role="status" aria-live="polite"></div>
+    <script>
+      'use strict';
+      const proofRoot = new URL('./', window.location.href);
+      const artworkRoot = new URL('artwork/', proofRoot);
+      const notices = [];
+      const statusLabels = {
+        in_preparation: 'In preparation',
+        ready_for_proof: 'Ready for proof',
+        proof_accepted: 'Proof accepted',
+      };
+      const shotSets = {
+        iphone63: { label: 'iPhone 6.3-inch', captions: 'iphone' },
+        iphone69: { label: 'iPhone 6.9-inch', captions: 'iphone' },
+        ipad13: { label: 'iPad 13-inch', captions: 'ipad' },
+        duo: { label: 'iPhone Duo', captions: 'iphone_duo' },
+        mac: { label: 'Mac', captions: 'mac' },
+      };
+      function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+      function showNotice(text) {
+        notices.push(text);
+        document.getElementById('load-notice').textContent = notices.join(' ');
+      }
+      async function localJSON(path, optional = false) {
+        try {
+          const response = await fetch(new URL(path, proofRoot), {
+            cache: 'no-store',
+            credentials: 'omit',
+          });
+          if (optional && response.status === 404) return null;
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return await response.json();
+        } catch (error) {
+          const reason =
+            error && typeof error.message === 'string'
+              ? error.message.slice(0, 200)
+              : 'Unknown load error';
+          if (!optional || window.location.protocol !== 'file:')
+            showNotice(
+              'Could not load ' + path + '. Its proof remains incomplete. ' +
+                'Details: ' + reason
+            );
+          return null;
+        }
+      }
+      function localImageURL(path, base, allowedRoot) {
+        if (
+          typeof path !== 'string' ||
+          !path ||
+          /^[a-z][a-z\d+.-]*:/i.test(path) ||
+          path.startsWith('/') ||
+          path.includes('\\') ||
+          path.includes('%')
+        )
+          return null;
+        const url = new URL(path, base);
+        if (
+          url.origin !== allowedRoot.origin ||
+          url.search ||
+          url.hash ||
+          !url.pathname.startsWith(allowedRoot.pathname)
+        )
+          return null;
+        if (!/\.(png|jpe?g|webp)$/i.test(url.pathname)) return null;
+        return url.href;
+      }
+      let copyStatusTimer;
+      function copyFeedback(message) {
+        window.clearTimeout(copyStatusTimer);
+        document.getElementById('copy-status').textContent = message;
+        copyStatusTimer = window.setTimeout(() => {
+          document.getElementById('copy-status').textContent = '';
+        }, 4500);
+      }
+      async function copyValue(value, label) {
+        try {
+          if (!navigator.clipboard?.writeText)
+            throw new Error('Clipboard unavailable');
+          await navigator.clipboard.writeText(value);
+          copyFeedback(label + ' copied.');
+        } catch {
+          const dialog = element('dialog', 'copy-dialog');
+          dialog.setAttribute('aria-label', label + ' — copy text');
+          dialog.append(
+            element('p', '', 'Select this exact text and copy it manually.')
+          );
+          const input = element('textarea');
+          input.value = value;
+          input.readOnly = true;
+          input.setAttribute('aria-label', label + ' — select and copy');
+          const done = element('button', '', 'Close copy text');
+          done.type = 'button';
+          const previous = document.activeElement;
+          done.addEventListener('click', () => dialog.close());
+          dialog.addEventListener('close', () => {
+            dialog.remove();
+            if (previous instanceof HTMLElement && previous.isConnected)
+              previous.focus();
+          });
+          dialog.append(input, done);
+          document.body.append(dialog);
+          dialog.showModal();
+          input.focus();
+          input.select();
+          copyFeedback(
+            'Clipboard unavailable. Select the text and copy it manually.'
+          );
+        }
+      }
+      function field(label, value, wide = false, limit = null, bytes = false) {
+        const card = element('div', 'field' + (wide ? ' wide' : ''));
+        const heading = element('div', 'field-heading');
+        heading.append(element('span', 'field-label', label));
+        const button = element('button', '', 'Copy');
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Copy ' + label);
+        button.addEventListener('click', () => copyValue(value, label));
+        heading.append(button);
+        card.append(heading, element('p', 'copy-value', value));
+        if (limit) {
+          const count = bytes
+            ? new TextEncoder().encode(value).length
+            : Array.from(value).length;
+          card.append(
+            element(
+              'p',
+              'field-count',
+              count + ' / ' + limit + (bytes ? ' UTF-8 bytes' : ' characters')
+            )
+          );
+        }
+        return card;
+      }
+      function renderCopy(platform, data) {
+        const target = document.getElementById(platform + '-copy');
+        const keys = [
+          'name',
+          'subtitle',
+          'promotional_text',
+          'description',
+          'whats_new',
+          'keywords',
+          'app_review_notes',
+          'support_url',
+          'marketing_url',
+          'privacy_policy_url',
+          'copyright',
+        ];
+        if (!data || keys.some((key) => typeof data[key] !== 'string')) {
+          target.replaceChildren(
+            element(
+              'p',
+              'notice',
+              'Copy unavailable. Read the exact field file in Evidence; this section is not ready for proof.'
+            )
+          );
+          return;
+        }
+        const grid = element('div', 'copy-grid');
+        grid.append(
+          field('Name', data.name, false, 30),
+          field('Subtitle', data.subtitle, false, 30),
+          field('Promotional text', data.promotional_text, true, 170),
+          field('Description', data.description, true, 4000),
+          field('What’s New', data.whats_new, true, 4000)
+        );
+        const details = element('details', 'copy-details');
+        details.append(
+          element('summary', '', 'Review notes, keywords & shared fields')
+        );
+        const extra = element('div', 'copy-grid');
+        extra.append(
+          field('App Review notes', data.app_review_notes, true, 4000, true),
+          field('Keywords', data.keywords, true, 100, true),
+          field('Support URL', data.support_url),
+          field('Marketing URL', data.marketing_url),
+          field('Privacy policy URL', data.privacy_policy_url),
+          field('Copyright', data.copyright)
+        );
+        details.append(extra);
+        target.replaceChildren(grid, details);
+        const all = document.getElementById(platform + '-copy-all');
+        all.disabled = false;
+        all.addEventListener('click', () =>
+          copyValue(
+            JSON.stringify(data, null, 2),
+            platform === 'ios' ? 'iOS fields' : 'Mac fields'
+          )
+        );
+      }
+      function renderBuild(platform, data) {
+        const entry =
+          data?.schema_version === 1 ? data.platforms?.[platform] : null;
+        const known = entry && Object.hasOwn(statusLabels, entry.status);
+        const status = known ? statusLabels[entry.status] : 'In preparation';
+        const card = document.getElementById(platform + '-build');
+        const body = element('div');
+        body.append(
+          element('h3', '', 'Build for proof'),
+          element(
+            'p',
+            '',
+            known && typeof entry.summary === 'string'
+              ? entry.summary
+              : platform === 'ios'
+                ? 'iOS build evidence is unavailable. Native iOS does not expose folder controls; readiness remains in preparation.'
+                : 'Mac build evidence is unavailable. Exact artifact and acceptance checks must be confirmed.'
+          )
+        );
+        const identity = [
+          entry?.version ? 'Version ' + entry.version : null,
+          entry?.build ? 'Build ' + entry.build : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        if (identity) body.append(element('p', 'build-identity', identity));
+        card.replaceChildren(
+          body,
+          element(
+            'span',
+            'badge' + (status === 'In preparation' ? ' pending' : ''),
+            status
+          )
+        );
+      }
+      function fullResolutionLink(url) {
+        const link = element('a', 'button', 'Open full resolution ↗');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        return link;
+      }
+      function shotCard(caption, imageData, setKey) {
+        const card = element('article', 'shot-card');
+        const visual = element('div', 'shot-visual');
+        const placeholder = element(
+          'p',
+          'shot-empty',
+          'Capture in preparation'
+        );
+        placeholder.prepend(
+          element('span', '', String(caption.order).padStart(2, '0'))
+        );
+        visual.append(placeholder);
+        const body = element('div', 'shot-copy');
+        body.append(
+          element('h3', '', caption.title),
+          element('p', 'subtitle', caption.subtitle)
+        );
+        const status = element('span', 'badge pending', 'In preparation');
+        body.append(status);
+        const root = new URL('screenshots/' + setKey + '/', proofRoot);
+        const url = localImageURL(imageData?.file, proofRoot, root);
+        if (url) {
+          const img = element('img');
+          img.alt =
+            typeof imageData.alt === 'string'
+              ? imageData.alt
+              : shotSets[setKey].label + ': ' + caption.title;
+          img.loading = 'lazy';
+          const link = fullResolutionLink(url);
+          link.hidden = true;
+          body.append(link);
+          img.addEventListener('load', () => {
+            placeholder.remove();
+            const imageStatus = Object.hasOwn(statusLabels, imageData.status)
+              ? imageData.status
+              : 'in_preparation';
+            status.textContent = statusLabels[imageStatus];
+            status.className =
+              'badge' + (imageStatus === 'in_preparation' ? ' pending' : '');
+            link.hidden = false;
+          });
+          img.addEventListener('error', () => {
+            img.remove();
+            placeholder.textContent = 'Capture unavailable · In preparation';
+            link.hidden = true;
+            status.textContent = 'In preparation';
+            status.className = 'badge pending';
+          });
+          img.src = url;
+          visual.append(img);
+        }
+        const detail = element('details');
+        detail.append(
+          element('summary', '', 'Proof this shot'),
+          element('p', '', caption.proof_check)
+        );
+        body.append(detail);
+        card.append(visual, body);
+        return card;
+      }
+      function renderShots(container, setKey, captions, screenshots) {
+        const target = document.getElementById(container);
+        const captionSet = captions?.sets?.[shotSets[setKey].captions]?.images;
+        if (!Array.isArray(captionSet)) {
+          target.replaceChildren(
+            element(
+              'p',
+              'notice',
+              'Screenshot captions unavailable. Captures remain In preparation.'
+            )
+          );
+          return;
+        }
+        const images =
+          screenshots?.schema_version === 1 &&
+          Array.isArray(screenshots.sets?.[setKey]?.images)
+            ? screenshots.sets[setKey].images
+            : [];
+        const grid = element('div', 'shot-grid');
+        for (const caption of captionSet) {
+          const matches = images.filter((item) => item.order === caption.order);
+          grid.append(
+            shotCard(caption, matches.length === 1 ? matches[0] : null, setKey)
+          );
+        }
+        target.replaceChildren(grid);
+      }
+      function artworkCard(
+        title,
+        description,
+        badgeText,
+        url,
+        pending,
+        dimensions
+      ) {
+        const card = element('article', 'artwork-card');
+        const visual = element('div', 'artwork-image');
+        const body = element('div', 'artwork-body');
+        body.append(
+          element('h3', '', title),
+          element('p', '', description),
+          element('span', 'badge' + (pending ? ' pending' : ''), badgeText)
+        );
+        if (url) {
+          const img = element('img');
+          img.alt = title + ' — SpecDown Brand Halo artwork';
+          img.src = url;
+          img.loading = 'lazy';
+          img.addEventListener('error', () => {
+            visual.replaceChildren(
+              element(
+                'p',
+                'notice',
+                'Artwork could not be loaded. Proof is incomplete.'
+              )
+            );
+          });
+          visual.append(img);
+          if (dimensions)
+            body.append(
+              element('p', 'field-count', dimensions.join(' × ') + ' px')
+            );
+          body.append(fullResolutionLink(url));
+        } else {
+          visual.append(element('p', 'notice', 'Artwork in preparation'));
+        }
+        card.append(visual, body);
+        return card;
+      }
+      function renderArtwork(data) {
+        const target = document.getElementById('artwork-grid');
+        if (!data) {
+          target.replaceChildren(
+            element(
+              'p',
+              'notice',
+              'Artwork manifest unavailable. Proof is incomplete.'
+            )
+          );
+          return;
+        }
+        const header = localImageURL(data.reference, artworkRoot, artworkRoot);
+        const output = data.files?.find(
+          (file) => file.file === 'specdown-halo-search-results-1920x1280.png'
+        );
+        const search = localImageURL(output?.file, artworkRoot, artworkRoot);
+        target.replaceChildren(
+          artworkCard(
+            'App Store Header',
+            'The approved Halo design is assigned to iOS 1.0.1 English (U.S.). Apple’s reference previews have been checked; Chris’s final proof is pending.',
+            'Approved · assigned to iOS 1.0.1',
+            header,
+            false,
+            [3840, 1646]
+          ),
+          artworkCard(
+            'Search Results',
+            'Halo adapted for the Search Results placement. Submitted to Apple for creative review; not yet approved or assigned to the listing.',
+            'Waiting for Review · not assigned',
+            search,
+            true,
+            output?.size
+          )
+        );
+        document.getElementById('artwork-evidence').textContent =
+          JSON.stringify(data, null, 2);
+      }
+      async function initializeProof() {
+        if (window.location.protocol === 'file:')
+          showNotice(
+            'Open this folder through a local web preview to load its JSON files. No external service is needed. The exact field files are also linked in Evidence.'
+          );
+        const results = await Promise.all([
+          localJSON('copy/selected/ios-en-US.json'),
+          localJSON('copy/selected/mac-en-US.json'),
+          localJSON('copy/selected/screenshot-captions.json'),
+          localJSON('artwork/manifest.json'),
+          localJSON('screenshots/manifest.json'),
+          localJSON('build-status.json', true),
+        ]);
+        const [ios, mac, captions, artwork, screenshots, builds] = results;
+        renderCopy('ios', ios);
+        renderCopy('mac', mac);
+        renderBuild('ios', builds);
+        renderBuild('mac', builds);
+        renderArtwork(artwork);
+        if (builds)
+          document.getElementById('build-evidence').textContent =
+            JSON.stringify(builds, null, 2);
+        document.getElementById('screenshot-evidence').textContent = screenshots
+          ? JSON.stringify(screenshots, null, 2)
+          : 'Screenshot manifest unavailable.';
+        const picker = document.getElementById('ios-set-picker');
+        for (const key of ['iphone63', 'iphone69', 'ipad13', 'duo']) {
+          const button = element('button', '', shotSets[key].label);
+          button.type = 'button';
+          button.setAttribute('aria-pressed', String(key === 'iphone63'));
+          button.addEventListener('click', () => {
+            for (const child of picker.children)
+              child.setAttribute('aria-pressed', String(child === button));
+            renderShots('ios-shots', key, captions, screenshots);
+          });
+          picker.append(button);
+        }
+        renderShots('ios-shots', 'iphone63', captions, screenshots);
+        renderShots('mac-shots', 'mac', captions, screenshots);
+      }
+      initializeProof().catch(() =>
+        showNotice(
+          'Some proof content could not be displayed. Use the source files in Evidence; incomplete sections are not ready for proof.'
+        )
+      );
+    </script>
+  </body>
+</html>

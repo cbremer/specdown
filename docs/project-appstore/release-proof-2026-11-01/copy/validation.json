@@ -1,0 +1,241 @@
+{
+  "status": "pass",
+  "scope": "Local copy limits and consistency only; no portal or runtime validation",
+  "files": {
+    "ios-en-US.json": {
+      "sha256": "cdce9872c17093a1d2e5a12d8fe03183f8b03f9ce4a4d03d6db3a67925b34bb2",
+      "fields": {
+        "version": {
+          "characters": 5,
+          "utf8_bytes": 5
+        },
+        "name": {
+          "characters": 8,
+          "utf8_bytes": 8,
+          "character_limit": 30
+        },
+        "subtitle": {
+          "characters": 29,
+          "utf8_bytes": 29,
+          "character_limit": 30
+        },
+        "support_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "marketing_url": {
+          "characters": 33,
+          "utf8_bytes": 33
+        },
+        "privacy_policy_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "copyright": {
+          "characters": 13,
+          "utf8_bytes": 13
+        },
+        "promotional_text": {
+          "characters": 139,
+          "utf8_bytes": 139,
+          "character_limit": 170
+        },
+        "description": {
+          "characters": 1347,
+          "utf8_bytes": 1373,
+          "character_limit": 4000
+        },
+        "keywords": {
+          "characters": 95,
+          "utf8_bytes": 95,
+          "byte_limit": 100
+        },
+        "whats_new": {
+          "characters": 564,
+          "utf8_bytes": 578,
+          "character_limit": 4000
+        },
+        "app_review_notes": {
+          "characters": 1555,
+          "utf8_bytes": 1555,
+          "byte_limit": 4000
+        }
+      }
+    },
+    "mac-en-US.json": {
+      "sha256": "9d781571fd305deaecb1e751ef4a0e96a0035da96c7319a62b44ad9f90e8d8c0",
+      "fields": {
+        "version": {
+          "characters": 5,
+          "utf8_bytes": 5
+        },
+        "name": {
+          "characters": 8,
+          "utf8_bytes": 8,
+          "character_limit": 30
+        },
+        "subtitle": {
+          "characters": 29,
+          "utf8_bytes": 29,
+          "character_limit": 30
+        },
+        "support_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "marketing_url": {
+          "characters": 33,
+          "utf8_bytes": 33
+        },
+        "privacy_policy_url": {
+          "characters": 45,
+          "utf8_bytes": 45
+        },
+        "copyright": {
+          "characters": 13,
+          "utf8_bytes": 13
+        },
+        "promotional_text": {
+          "characters": 140,
+          "utf8_bytes": 140,
+          "character_limit": 170
+        },
+        "description": {
+          "characters": 1211,
+          "utf8_bytes": 1233,
+          "character_limit": 4000
+        },
+        "keywords": {
+          "characters": 96,
+          "utf8_bytes": 96,
+          "byte_limit": 100
+        },
+        "whats_new": {
+          "characters": 264,
+          "utf8_bytes": 264,
+          "character_limit": 4000
+        },
+        "app_review_notes": {
+          "characters": 1498,
+          "utf8_bytes": 1498,
+          "byte_limit": 4000
+        }
+      }
+    },
+    "screenshot-captions.json": {
+      "sha256": "d4e4ef44a875dcf166fa40e061781a44fa0267d65c69106e703346249be5e507",
+      "editorial_title_limit": 42,
+      "editorial_subtitle_limit": 72,
+      "sets": {
+        "iphone": [
+          {
+            "order": 1,
+            "title_characters": 33,
+            "subtitle_characters": 42
+          },
+          {
+            "order": 2,
+            "title_characters": 24,
+            "subtitle_characters": 37
+          },
+          {
+            "order": 3,
+            "title_characters": 30,
+            "subtitle_characters": 37
+          },
+          {
+            "order": 4,
+            "title_characters": 23,
+            "subtitle_characters": 36
+          },
+          {
+            "order": 5,
+            "title_characters": 24,
+            "subtitle_characters": 36
+          }
+        ],
+        "ipad": [
+          {
+            "order": 1,
+            "title_characters": 28,
+            "subtitle_characters": 44
+          },
+          {
+            "order": 2,
+            "title_characters": 23,
+            "subtitle_characters": 35
+          },
+          {
+            "order": 3,
+            "title_characters": 23,
+            "subtitle_characters": 38
+          },
+          {
+            "order": 4,
+            "title_characters": 24,
+            "subtitle_characters": 38
+          },
+          {
+            "order": 5,
+            "title_characters": 17,
+            "subtitle_characters": 41
+          }
+        ],
+        "iphone_duo": [
+          {
+            "order": 1,
+            "title_characters": 32,
+            "subtitle_characters": 45
+          },
+          {
+            "order": 2,
+            "title_characters": 25,
+            "subtitle_characters": 32
+          },
+          {
+            "order": 3,
+            "title_characters": 23,
+            "subtitle_characters": 30
+          },
+          {
+            "order": 4,
+            "title_characters": 15,
+            "subtitle_characters": 44
+          },
+          {
+            "order": 5,
+            "title_characters": 17,
+            "subtitle_characters": 37
+          }
+        ],
+        "mac": [
+          {
+            "order": 1,
+            "title_characters": 33,
+            "subtitle_characters": 41
+          },
+          {
+            "order": 2,
+            "title_characters": 26,
+            "subtitle_characters": 43
+          },
+          {
+            "order": 3,
+            "title_characters": 20,
+            "subtitle_characters": 36
+          },
+          {
+            "order": 4,
+            "title_characters": 27,
+            "subtitle_characters": 38
+          },
+          {
+            "order": 5,
+            "title_characters": 24,
+            "subtitle_characters": 39
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-11-01",
+  "status": "In preparation",
+  "sets": {
+    "iphone63": {
+      "status": "in_preparation",
+      "images": [
+        {
+          "order": 1,
+          "file": "screenshots/iphone63/01-system-architecture.jpg",
+          "alt": "SpecDown showing the System Architecture Markdown document and inline diagram in light appearance.",
+          "status": "ready_for_proof",
+          "width": 1206,
+          "height": 2622,
+          "sha256": "8320ee7cb6de3c219ef132ed3612f3ae1e22a2e8d94a032c4b26cae26c90672e",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / document preview",
+          "visual_review": "No blocking visual defect observed; document content continues below the viewport."
+        },
+        {
+          "order": 2,
+          "file": "screenshots/iphone63/02-sign-in-flow.jpg",
+          "alt": "SpecDown showing the complete sign-in sequence diagram in fullscreen with zoom, reset and close controls.",
+          "status": "ready_for_proof",
+          "width": 1206,
+          "height": 2622,
+          "sha256": "7574344382776924ab0a11927b52ad5a45549c3bd92ca377a14b3eb273804679",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / fullscreen diagram",
+          "visual_review": "No blocking visual defect observed."
+        },
+        {
+          "order": 3,
+          "file": "screenshots/iphone63/03-api-reference.jpg",
+          "alt": "SpecDown showing the API Reference Markdown table with document tabs and reading controls.",
+          "status": "ready_for_proof",
+          "width": 1206,
+          "height": 2622,
+          "sha256": "644d44f7318c77cb949643c44c738ce6dcfd6f903ea7b6f8e20d7eb3862dd011",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / document table",
+          "visual_review": "No blocking visual defect observed; this viewport shows the table, not a code excerpt."
+        },
+        {
+          "order": 4,
+          "file": "screenshots/iphone63/04-order-lifecycle.jpg",
+          "alt": "SpecDown showing the order-lifecycle state diagram in fullscreen with zoom, reset and close controls.",
+          "status": "in_preparation",
+          "width": 1206,
+          "height": 2622,
+          "sha256": "56d809794ad5ef2042803340eb37f4c83e33715f5016757b4ee493ddda3790c0",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / fullscreen diagram",
+          "visual_review": "Recapture requested: top state and start node are obscured by the floating fullscreen toolbar at 89% zoom."
+        },
+        {
+          "order": 5,
+          "file": "screenshots/iphone63/05-dark-architecture.jpg",
+          "alt": "SpecDown showing the System Architecture Markdown document and inline diagram in dark appearance.",
+          "status": "ready_for_proof",
+          "width": 1206,
+          "height": 2622,
+          "sha256": "4dcbe1023a57ccdfa178eebd056ace895b48de7f09ee4361699dcbd2e568aabc",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "dark / document preview",
+          "visual_review": "No blocking visual defect observed; app document is dark while the native status safe area remains light."
+        }
+      ],
+      "provenance": {
+        "simulator_name": "SpecDown Release Proof iPhone63",
+        "capture_method": "Parent captured raw JPEG using xcrun simctl io screenshot; no resizing, compositing or pixel editing performed by reviewer.",
+        "frozen_source_sha256": "2d406b497ad884b6ea01e05620ae2f717b255857075f57e705fa91d00f298f77",
+        "simulator_verification_sha256": "0d49dfabf6f3e38230565cafd99e32aa1e3e4f99527eebef9155eab581644706",
+        "review_scope": "Visual and local artifact metadata checks only; no physical-device, Apple upload or proof-acceptance claim.",
+        "matching_packaged_web_files": 110
+      }
+    },
+    "iphone69": {
+      "status": "ready_for_proof",
+      "images": [
+        {
+          "order": 1,
+          "file": "screenshots/iphone69/01-system-architecture.jpg",
+          "alt": "SpecDown showing the System Architecture Markdown document and inline diagram in light appearance.",
+          "status": "ready_for_proof",
+          "width": 1320,
+          "height": 2868,
+          "sha256": "3ef440905e9b14fa4251619f78b16b5165e1637ce0ae15bf81140bfd703a946d",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro Max simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / document preview",
+          "visual_review": "No blocking visual defect observed."
+        },
+        {
+          "order": 2,
+          "file": "screenshots/iphone69/02-sign-in-flow.jpg",
+          "alt": "SpecDown showing the complete sign-in sequence diagram in fullscreen with zoom, reset and close controls.",
+          "status": "ready_for_proof",
+          "width": 1320,
+          "height": 2868,
+          "sha256": "9e6031cd79f18db9cd0ccaaca5d3050bc015f539dff4d138b10ea36e37de9ad2",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro Max simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / fullscreen diagram",
+          "visual_review": "No blocking visual defect observed."
+        },
+        {
+          "order": 3,
+          "file": "screenshots/iphone69/03-api-reference.jpg",
+          "alt": "SpecDown showing the API Reference Markdown table with document tabs and reading controls.",
+          "status": "ready_for_proof",
+          "width": 1320,
+          "height": 2868,
+          "sha256": "8312fad7f342f5cf8cc11667a6527f6e41836c41d36a434ece7a0cf83297410c",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro Max simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / document table",
+          "visual_review": "No blocking visual defect observed; table is fully visible, while only the beginning of the code excerpt is visible below it."
+        },
+        {
+          "order": 4,
+          "file": "screenshots/iphone69/04-order-lifecycle.jpg",
+          "alt": "SpecDown showing the order-lifecycle state diagram in fullscreen with zoom, reset and close controls.",
+          "status": "ready_for_proof",
+          "width": 1320,
+          "height": 2868,
+          "sha256": "c0889f87e30bef0aa4a67be83cb386f4a7f3da66ad2e9f71d9c97c224f07c726",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro Max simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "light / fullscreen diagram",
+          "visual_review": "All state nodes and start/end markers fit below the fullscreen toolbar at 66% zoom."
+        },
+        {
+          "order": 5,
+          "file": "screenshots/iphone69/05-dark-architecture.jpg",
+          "alt": "SpecDown showing the System Architecture Markdown document and inline diagram in dark appearance.",
+          "status": "ready_for_proof",
+          "width": 1320,
+          "height": 2868,
+          "sha256": "45114e57078fda007c63c1971ae29315b812c85bc2a2eed1ff320ac12d89c319",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "app_version": "1.0.1",
+          "app_build": "229",
+          "capture_surface": "Local iPhone 16 Pro Max simulator; iOS 26.4.1; production app; raw direct simctl JPEG",
+          "view": "dark / document preview",
+          "visual_review": "Dark document and app controls are visible; native status safe area remains light."
+        }
+      ],
+      "provenance": {
+        "simulator_name": "SpecDown Release Proof iPhone69",
+        "capture_method": "Parent captured raw JPEG using xcrun simctl io screenshot; no resizing, compositing or pixel editing performed by reviewer.",
+        "frozen_source_sha256": "2d406b497ad884b6ea01e05620ae2f717b255857075f57e705fa91d00f298f77",
+        "simulator_verification_sha256": "0d49dfabf6f3e38230565cafd99e32aa1e3e4f99527eebef9155eab581644706",
+        "review_scope": "Visual and local artifact metadata checks only; no physical-device, Apple upload or proof-acceptance claim.",
+        "matching_packaged_web_files": 110
+      }
+    },
+    "ipad13": {
+      "images": []
+    },
+    "duo": {
+      "images": []
+    },
+    "mac": {
+      "images": []
+    }
+  },
+  "publication_note": "Local QA simulator instance identifiers omitted. Original image hashes, source/build229 provenance, device models, OS and screenshot paths are retained."
+}
