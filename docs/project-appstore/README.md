@@ -80,6 +80,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 54: Store build 230 replacement](2026-11-01-tasks-session-54-release-230.md) | Version-only alignment to iOS/MAS 1.0.1 (230) atop reviewed Close Folder; build 229 stays historical and new native/signing/TestFlight evidence remains required. |
 | Nov 1, 2026 | Tasks | [Session 55: canonical build 230 preparation](2026-11-01-tasks-session-55-canonical-230-preparation.md) | Reviewed Close Folder and aligned source promoted with owner preservation; actual unsigned iOS device/simulator and Mac arm64 artifact verification passes; 12 scoped unsigned Mac native UI cases pass; provisioned sandbox and release acceptance remain pending. |
 | Nov 1, 2026 | Tasks | [Session 56: source and public proof publication](2026-11-01-tasks-session-56-publication.md) | Eight source PRs ready for review;21 workflows passed; required approvals still pending; public proof inventory and private-original preservation. |
+| Nov 1, 2026 | Tasks | [Session 58: Marked validation](2026-11-01-tasks-session-58-marked-validation.md) | Marked 18.1.2 real-parser/sanitizer compatibility and admission regressions; 1,367 tests, coverage, lint/types/build pass; frozen Store 230 remains unchanged. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
