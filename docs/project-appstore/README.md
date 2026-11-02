@@ -39,6 +39,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Oct 31, 2026 | Tasks | [Session 32: iOS development channels](2026-10-31-tasks-session-32-ios-development-channels.md) | Three explicit schemes, channel-aware default icons and compiled identity checks; Apple setup remains owner-led. |
 | Nov 1, 2026 | Tasks | [Session 37: Mac Store version and local test](2026-11-01-tasks-session-37-mac-store-version-local-test.md) | Align MAS with iOS 1.0.1 (228), development-sign and test a separate app; startup-session delivery follow-up identified. |
 | Nov 1, 2026 | Tasks | [Session 38: Mac startup delivery](2026-11-01-tasks-session-38-mac-startup-delivery.md) | Preserve receipt security while waiting for the matching viewer to stop loading; reviewed fix and signed quit/relaunch acceptance passed. |
+| Nov 1, 2026 | Tasks | [Session 44: MAS package permissions](2026-11-01-tasks-session-44-mas-package-permissions.md) | Normalize only the embedded public profile and gate full installer permissions/ownership; real rejected and corrected package controls. |
 
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 

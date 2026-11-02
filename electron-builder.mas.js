@@ -20,6 +20,7 @@
 //                                 a build that leaves this Mac.
 
 const base = require('./package.json').build;
+const permissions = require('./scripts/mas-package-permissions');
 
 const TEAM_ID = '582YQWPT9G';
 const APP_ID = 'com.mosaicpando.specdown';
@@ -67,6 +68,10 @@ module.exports = {
   ],
   // No update feed in the Store build (Guideline 2.4.5): no app-update.yml.
   publish: null,
+  // osx-sign preserves the source profile's private mode when embedding it.
+  // Fix only that public copy, then gate the complete installer before delivery.
+  afterSign: permissions.afterSign,
+  artifactBuildCompleted: permissions.artifactBuildCompleted,
   mac: {
     ...shared,
     target: [{ target: 'mas', arch: ['universal'] }],
