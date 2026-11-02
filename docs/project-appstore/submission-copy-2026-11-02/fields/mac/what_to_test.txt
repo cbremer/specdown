@@ -1,0 +1,6 @@
+1. Open the bundled Diagram Showcase, then use File > Open to choose your own Markdown through the system picker.
+2. Expand a diagram and check centered zoom, pan and Reset. Confirm PNG/SVG export remains available and the Link button is absent.
+3. Open a folder containing two Markdown files and open both. Choose File > Close Folder: the folder browser should close while both document tabs remain open. Hiding Workspace files alone should leave the folder open.
+4. With Live reload on, save changes to an open local document in your editor or AI tool and confirm the viewer refreshes, including after Close Folder. Pause and resume with the Live control. Check Raw/Preview, Split, Contents, Find and switching tabs. Try the seven Dock Icon choices; the Finder icon should stay the same.
+5. Quit and relaunch. Check File > Open Recent and access to a previously selected file. For an unavailable saved startup file, try Locate, cancel, retry and Stop reopening; unrelated tabs and saved entries should remain intact. No QA filename should appear on a clean installation.
+6. Try an oversized file and an HTTP document URL; rejection should preserve the current document. Report the Mac model, macOS version, build number and steps for any problem.

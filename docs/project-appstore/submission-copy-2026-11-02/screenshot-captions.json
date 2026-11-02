@@ -1,0 +1,195 @@
+{
+  "locale": "en-US",
+  "scope": "Approved caption text and retained capture references only; no screenshot pixel, asset upload or placement change.",
+  "sets": {
+    "iphone": {
+      "slots": [
+        "iPhone 6.3-inch",
+        "iPhone 6.9-inch"
+      ],
+      "images": [
+        {
+          "order": 1,
+          "title": "Markdown, clearly rendered",
+          "subtitle": "Specs and READMEs with room to breathe",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "light / preview",
+          "proof_check": "Document title, rendered diagram and readable native viewer controls are visible."
+        },
+        {
+          "order": 2,
+          "title": "Diagrams you can explore",
+          "subtitle": "Zoom, pan and Reset for a closer look",
+          "demo_document": "app-store/demo/sign-in-flow.md",
+          "view": "light / fullscreen diagram",
+          "proof_check": "Show real fullscreen controls; diagram is centered and not clipped by native chrome."
+        },
+        {
+          "order": 3,
+          "title": "Technical tables, easy to read",
+          "subtitle": "Inspect the details in technical docs",
+          "demo_document": "app-store/demo/api-reference.md",
+          "view": "light / preview",
+          "proof_check": "The API table and its labels are legible; do not imply a complete code excerpt is visible in this capture."
+        },
+        {
+          "order": 4,
+          "title": "Follow every transition",
+          "subtitle": "Mermaid state diagrams from Markdown",
+          "demo_document": "app-store/demo/order-lifecycle.md",
+          "view": "light / fullscreen diagram",
+          "proof_check": "Show the fullscreen state diagram with all nodes below the toolbar and labels legible; the diagram is document content."
+        },
+        {
+          "order": 5,
+          "title": "Comfortable in Dark Mode",
+          "subtitle": "Choose the appearance that suits you",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "dark / preview",
+          "proof_check": "The document and app controls use the actual dark theme; the native status safe area may retain its system appearance."
+        }
+      ]
+    },
+    "mac": {
+      "slots": [
+        "Mac"
+      ],
+      "images": [
+        {
+          "order": 1,
+          "title": "Source beside the preview",
+          "subtitle": "Compare Markdown with its rendered result",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "light / split view",
+          "proof_check": "Both panes show the same synthetic file; no editing or live-refresh promise."
+        },
+        {
+          "order": 2,
+          "title": "Mermaid diagrams, rendered",
+          "subtitle": "Explore flowcharts with zoom, pan and Reset",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "light / fullscreen diagram",
+          "proof_check": "Capture the actual MAS/TestFlight app, not the direct-download build or browser."
+        },
+        {
+          "order": 3,
+          "title": "Plans you can follow",
+          "subtitle": "Gantt charts inside your Markdown",
+          "demo_document": "app-store/demo/release-plan.md",
+          "view": "light / preview",
+          "proof_check": "Show the document Gantt diagram; do not imply task editing or scheduling integration."
+        },
+        {
+          "order": 4,
+          "title": "Tables and highlighted code",
+          "subtitle": "A readable view of technical documents",
+          "demo_document": "app-store/demo/api-reference.md",
+          "view": "light / preview",
+          "proof_check": "Readable table and highlighted code; no private paths, documents or account details."
+        },
+        {
+          "order": 5,
+          "title": "Comfortable in Dark Mode",
+          "subtitle": "Choose light, dark or system appearance",
+          "demo_document": "app-store/demo/order-lifecycle.md",
+          "view": "dark / preview",
+          "proof_check": "Actual MAS dark theme, no recoloring; no untested custom-CSS claim."
+        }
+      ]
+    },
+    "ipad": {
+      "slots": [
+        "iPad 13-inch"
+      ],
+      "images": [
+        {
+          "order": 1,
+          "title": "More room for your documents",
+          "subtitle": "Read Markdown with the iPad sidebar",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "light / preview with sidebar",
+          "proof_check": "Sidebar, document and controls fit without truncation; no disabled annotation tools advertised."
+        },
+        {
+          "order": 2,
+          "title": "See the plan take shape",
+          "subtitle": "Gantt charts rendered from Markdown",
+          "demo_document": "app-store/demo/release-plan.md",
+          "view": "light / preview",
+          "proof_check": "The Gantt chart shown is document content, not an in-app project-management feature."
+        },
+        {
+          "order": 3,
+          "title": "Inspect tables and code",
+          "subtitle": "Clear formatting for technical details",
+          "demo_document": "app-store/demo/api-reference.md",
+          "view": "light / preview",
+          "proof_check": "Both table and code excerpt appear in the captured viewport."
+        },
+        {
+          "order": 4,
+          "title": "Follow each step",
+          "subtitle": "Sequence diagrams you can zoom and pan",
+          "demo_document": "app-store/demo/sign-in-flow.md",
+          "view": "light / fullscreen diagram",
+          "proof_check": "Real fullscreen diagram, zoom controls and Reset are visible and centered."
+        },
+        {
+          "order": 5,
+          "title": "Read in Dark Mode",
+          "subtitle": "The same document, a different appearance",
+          "demo_document": "app-store/demo/order-lifecycle.md",
+          "view": "dark / preview",
+          "proof_check": "Real dark theme; no synthetic recoloring of captured UI."
+        }
+      ]
+    },
+    "iphone_duo": {
+      "slots": [
+        "iPhone Duo"
+      ],
+      "images": [
+        {
+          "order": 1,
+          "title": "Room for your Markdown",
+          "subtitle": "Specs, diagrams and reading controls together",
+          "demo_document": "app-store/demo/system-architecture.md",
+          "view": "light / preview",
+          "proof_check": "Use the intended Duo slot and a real candidate capture; no blanket hardware compatibility claim."
+        },
+        {
+          "order": 2,
+          "title": "A closer look at diagrams",
+          "subtitle": "Zoom controls center the diagram",
+          "demo_document": "app-store/demo/sign-in-flow.md",
+          "view": "light / fullscreen diagram",
+          "proof_check": "Capture actual centered diagram and unobscured fullscreen controls."
+        },
+        {
+          "order": 3,
+          "title": "Source when you need it",
+          "subtitle": "Switch between Raw and Preview",
+          "demo_document": "app-store/demo/api-reference.md",
+          "view": "light / raw",
+          "proof_check": "Show the actual Raw view; caption does not promise editing."
+        },
+        {
+          "order": 4,
+          "title": "Find the detail",
+          "subtitle": "Search the document and move through matches",
+          "demo_document": "app-store/demo/api-reference.md",
+          "view": "light / preview with Find",
+          "proof_check": "Find field, match controls and close control remain visible; keyboard must not hide them."
+        },
+        {
+          "order": 5,
+          "title": "Read in Dark Mode",
+          "subtitle": "A clear view for late-night reviewing",
+          "demo_document": "app-store/demo/order-lifecycle.md",
+          "view": "dark / preview",
+          "proof_check": "Use a real dark capture and confirm all safe-area edges."
+        }
+      ]
+    }
+  }
+}

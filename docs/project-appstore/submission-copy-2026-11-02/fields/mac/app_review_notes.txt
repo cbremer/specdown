@@ -1,0 +1,17 @@
+SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.
+
+Review on Mac:
+
+1. Launch SpecDown and click Try diagram showcase on the start view for an offline review.
+2. Choose File > Open... (Command-O) and select a Markdown file. The system picker grants access to the selected file.
+3. Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then close fullscreen. The diagram toolbar has no Link action.
+4. Use Raw/Preview or Split to inspect the source and result. Try Contents, Command-F and more than one document tab.
+5. With Live reload on, save a change to the open file in an external editor and confirm the viewer updates. Use the Live control beside the filename to pause and resume.
+6. Choose File > Open Folder... and select a folder containing two Markdown files. Open both, then choose File > Close Folder. The folder browser closes and the document tabs stay open. Workspace files only hides or shows the browser; it does not close the folder.
+7. Quit and relaunch, then try File > Open Recent for the chosen file. If access is no longer available or the file moved, choose the file again through the system picker or the Locate access prompt. No Full Disk Access is required.
+
+This Mac App Store build uses the App Sandbox and security-scoped bookmarks for user-selected files. It contains no self-updater or GitHub update check; updates are delivered through the App Store.
+
+The viewer and bundled examples are local. Online documents and remote images require HTTPS and contact their hosts; external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.
+
+This is a document viewer, not a Markdown editor. No ads, analytics or tracking SDK is included.

@@ -1,0 +1,1 @@
+Read Markdown beside your editor or AI assistant. With Live reload enabled, open local files refresh as changes are saved. Explore specs, plans and Mermaid diagrams.

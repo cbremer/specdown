@@ -1,0 +1,159 @@
+{
+  "baseline_commit": "e8dd3cb95a41c19ad10c14e6f1efba3287866625",
+  "baseline_kind": "Retained selected field files; not a current live portal readback.",
+  "platforms": {
+    "ios": {
+      "app_review_notes": {
+        "changed": true,
+        "before": "SpecDown is a viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. The viewer and bundled Sample/Diagram Showcase work offline. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.\n\nReview on iPhone or iPad:\n1. Launch SpecDown and choose Open Diagram Showcase from the start view, or from the sidebar on iPad.\n2. Expand a diagram. Try the zoom controls, pan and Reset, then close fullscreen.\n3. Use Contents, Raw/Preview and Find. Try Find with the keyboard open, then dismiss it.\n4. Open Sample to inspect headings, tables, code and document comments.\n5. Use Open or Open Markdown File to choose a Markdown file from Files/iCloud Drive. Opening a document from another app is also supported.\n6. Open another document and switch tabs. Try light/dark appearance and the App Icon choices.\n\nRemote documents and images loaded by the viewer require HTTPS. Tapped external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.\n\nAnnotation display, editing, import and export are disabled on native iPhone/iPad in this release. Existing stored annotation data is left untouched. HTML comments already present in a document are a separate viewing feature.\n\nNo ads, analytics or tracking SDK is included. Local documents render on the device; online documents and remote images contact their hosts. The app does not require an AI account.",
+        "after": "SpecDown is a viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. The viewer and bundled Sample/Diagram Showcase work offline. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.\n\nReview on iPhone or iPad:\n\n1. Launch SpecDown and choose Open Diagram Showcase from the start view, or from the sidebar on iPad.\n2. Expand a diagram. Try the zoom controls, pan and Reset, then close fullscreen. The diagram toolbar has no Link action.\n3. Use Contents, Raw/Preview and Find. Try Find with the keyboard open, then dismiss it.\n4. Open Sample to inspect headings, tables, code and document comments.\n5. Use Open or Open Markdown File to choose a Markdown file from Files, including iCloud Drive, OneDrive or Dropbox when enabled there. Opening a document from another app is also supported.\n6. Open another document and switch tabs. Try light/dark appearance and the App Icon choices.\n\nRemote documents and images loaded by the viewer require HTTPS. Tapped external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.\n\nAnnotation display, editing, import and export are disabled on native iPhone/iPad in this release. Existing stored annotation data is left untouched. HTML comments already present in a document are a separate viewing feature.\n\nNo ads, analytics or tracking SDK is included. Local documents render on the device; online documents and remote images contact their hosts. The app does not require an AI account."
+      },
+      "copyright": {
+        "changed": false,
+        "before": "2026 SpecDown",
+        "after": "2026 SpecDown"
+      },
+      "description": {
+        "changed": true,
+        "before": "Turn saved Markdown into a clear, readable document on iPhone and iPad.\n\nSpecDown helps you review specs, plans, READMEs and technical notes, with formatted tables, highlighted code and interactive Mermaid diagrams. Open Markdown created in your preferred editor or AI assistant, then take a closer look at the details.\n\nREAD YOUR DOCUMENTS\n• Open Markdown from Files or iCloud Drive\n• Send a Markdown document to SpecDown from another app\n• Read headings, lists, tables and highlighted code\n• Jump between sections with the table of contents\n• Find text and move through matching passages\n• Switch between the rendered preview and raw Markdown\n• Keep several documents open in tabs\n\nEXPLORE MERMAID DIAGRAMS\n• View flowcharts, sequence diagrams, state diagrams and Gantt charts\n• Expand a diagram to zoom and pan\n• Use Reset to fit the diagram to the current view\n\nMAKE READING COMFORTABLE\n• Choose light, dark or system appearance\n• Use the iPad sidebar to open files and bundled examples\n• Choose from eight app icons, including a separate Light option\n\nThe bundled Sample and Diagram Showcase work offline. Local documents render on your device. Opening an online document or loading a remote image connects to its host.\n\nNo account is required. SpecDown has no ads or analytics.",
+        "after": "Read the specs, plans and diagrams your AI workflow produces. SpecDown gives your Markdown a clean reading view, with formatted tables, highlighted code and interactive Mermaid diagrams right in the document.\n\nBuilt for developers and people using AI tools to review specs, design docs, READMEs and notes. Open saved Markdown from your editor or AI assistant.\n\nMade for reading technical docs\n\n• Clean typography for long documents\n• Read headings, lists, tables and highlighted code\n• Jump between sections with the table of contents\n• Find text and move through matching passages\n• Switch between the rendered preview and raw Markdown\n• Compare raw Markdown and the rendered preview in split view\n• Keep several documents open in tabs\n\nExplore Mermaid diagrams\n\n• View Mermaid flowcharts, sequence diagrams, state diagrams and Gantt charts\n• Expand a diagram to zoom and pan\n• Use Reset to fit the diagram to the current view\n\nOpen files your way\n\n• Open Markdown through Files, including iCloud Drive, OneDrive and Dropbox when those providers are enabled in Files\n• Send a Markdown document to SpecDown from a compatible app\n\nMake reading comfortable\n\n• Choose light, dark or system appearance\n• Use the iPad sidebar to open files and bundled examples\n\nThe bundled Diagram Showcase works offline. Local documents render on your device. Opening an online document or loading a remote image connects to its host.\n\nNo account is required. SpecDown has no ads or analytics."
+      },
+      "keywords": {
+        "changed": true,
+        "before": "readme,flowchart,sequence,gantt,uml,specs,docs,reader,code,tables,architecture,planning",
+        "after": "ai workflows,si workflows,markdown,readme,flowchart,sequence,specs,docs,reader,tables,architecture"
+      },
+      "marketing_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/",
+        "after": "https://specdown.mosaicpando.com/"
+      },
+      "name": {
+        "changed": false,
+        "before": "SpecDown",
+        "after": "SpecDown"
+      },
+      "privacy_policy_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/privacy.html",
+        "after": "https://specdown.mosaicpando.com/privacy.html"
+      },
+      "promotional_text": {
+        "changed": true,
+        "before": "Read Markdown on iPhone and iPad. Explore Mermaid diagrams, inspect code and tables, and keep your specs, plans and READMEs easy to follow.",
+        "after": "Read the specs, plans and diagrams your AI workflow produces. See formatted Markdown, highlighted code and interactive Mermaid diagrams right in the document."
+      },
+      "subtitle": {
+        "changed": false,
+        "before": "Markdown & Mermaid viewer",
+        "after": "Markdown & Mermaid viewer"
+      },
+      "support_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/support.html",
+        "after": "https://specdown.mosaicpando.com/support.html"
+      },
+      "testflight_description": {
+        "changed": true,
+        "before": null,
+        "after": "SpecDown is a dedicated reader for Markdown specs, plans, READMEs and Mermaid diagrams saved from editors or AI tools. Read formatted documents, explore diagrams, compare source and preview, and move between open documents. No account is required. The bundled examples work offline. On desktop, open local Markdown files refresh when changes are saved while Live reload is on."
+      },
+      "what_to_test": {
+        "changed": true,
+        "before": null,
+        "after": "1. Open the bundled Sample and Diagram Showcase, then open your own Markdown through Files, including an enabled cloud provider such as iCloud Drive, OneDrive or Dropbox, and from another app.\n2. Expand a diagram. Check centered zoom, pan and Reset in portrait and landscape. Confirm the Link button is absent.\n3. Try Contents, Raw/Preview, Split and multiple tabs. Use Find, dismiss its keyboard and open a diagram fullscreen. Check that focus and the visible document remain correct.\n4. Switch between Light and the other app icons, then return to Original. Check the Home Screen appearance and light/dark themes.\n5. Try an oversized document and an HTTP document URL. Rejection should leave the current document intact.\n6. Quit and reopen the app. On iPad, repeat document, sidebar and diagram checks. Report the device, OS version, build number and steps for any problem."
+      },
+      "whats_new": {
+        "changed": true,
+        "before": "Security and reliability improvements for reading Markdown.\n\n• Safer handling of document content, large files and complex diagrams.\n• Web documents and remote images now require HTTPS.\n• Rejected documents leave your current document intact.\n• Improved Find behavior for documents with many matches and when the keyboard is open.\n• Diagram zoom controls center the diagram, and Reset fits the current view.\n• Better fullscreen focus and cleanup when switching documents or views.\n• A separate Light app icon, plus improved sizing for the existing alternate icons.",
+        "after": "Security and reliability improvements for reading Markdown.\n\n• Safer handling of document content, large files and complex diagrams.\n• Web documents and remote images now require HTTPS.\n• If a file can’t be opened, the document you’re reading stays open.\n• Improved Find behavior for documents with many matches and when the keyboard is open.\n• Diagram zoom controls center the diagram, and Reset fits the current view.\n• Better fullscreen focus and cleanup when switching documents or views."
+      }
+    },
+    "mac": {
+      "app_review_notes": {
+        "changed": true,
+        "before": "SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.\n\nReview on Mac:\n1. Launch SpecDown and click Try diagram showcase on the start view for an offline review.\n2. Choose File > Open... (Command-O) and select a Markdown file. The system picker grants access to the selected file.\n3. Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then close fullscreen.\n4. Use Raw/Preview or Split to inspect the source and result. Try Contents, Command-F and more than one document tab.\n5. Quit and relaunch, then try File > Open Recent for the chosen file. If access is no longer available or the file moved, choose the file again through the system picker or the Locate access prompt. No Full Disk Access is required.\n\nThis Mac App Store build uses the App Sandbox and security-scoped bookmarks for user-selected files. It contains no self-updater or GitHub update check; updates are delivered through the App Store.\n\nThe viewer and bundled examples are local. Online documents and remote images require HTTPS and contact their hosts; external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.\n\nThis is a document viewer, not a Markdown editor. No ads, analytics or tracking SDK is included.",
+        "after": "SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.\n\nReview on Mac:\n\n1. Launch SpecDown and click Try diagram showcase on the start view for an offline review.\n2. Choose File > Open... (Command-O) and select a Markdown file. The system picker grants access to the selected file.\n3. Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then close fullscreen. The diagram toolbar has no Link action.\n4. Use Raw/Preview or Split to inspect the source and result. Try Contents, Command-F and more than one document tab.\n5. With Live reload on, save a change to the open file in an external editor and confirm the viewer updates. Use the Live control beside the filename to pause and resume.\n6. Choose File > Open Folder... and select a folder containing two Markdown files. Open both, then choose File > Close Folder. The folder browser closes and the document tabs stay open. Workspace files only hides or shows the browser; it does not close the folder.\n7. Quit and relaunch, then try File > Open Recent for the chosen file. If access is no longer available or the file moved, choose the file again through the system picker or the Locate access prompt. No Full Disk Access is required.\n\nThis Mac App Store build uses the App Sandbox and security-scoped bookmarks for user-selected files. It contains no self-updater or GitHub update check; updates are delivered through the App Store.\n\nThe viewer and bundled examples are local. Online documents and remote images require HTTPS and contact their hosts; external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.\n\nThis is a document viewer, not a Markdown editor. No ads, analytics or tracking SDK is included."
+      },
+      "copyright": {
+        "changed": false,
+        "before": "2026 SpecDown",
+        "after": "2026 SpecDown"
+      },
+      "description": {
+        "changed": true,
+        "before": "Keep a clear view of your Markdown on Mac.\n\nSpecDown is a reader for specs, plans, READMEs and technical notes. Review saved Markdown from your editor or AI assistant as a formatted document, with tables, highlighted code and interactive Mermaid diagrams.\n\nSEE SOURCE AND RESULT\n• Open Markdown files from your Mac\n• Compare raw Markdown and the rendered preview in split view\n• Keep several documents open in tabs\n• Jump through headings with the table of contents\n• Find text with Command-F\n\nEXPLORE THE DIAGRAMS\n• View Mermaid flowcharts, sequence diagrams, state diagrams and Gantt charts\n• Expand a diagram to zoom and pan\n• Use Reset to fit the diagram to the current view\n\nFOCUS ON THE DETAILS\n• Read formatted headings, lists, tables and highlighted code\n• Choose light, dark or system appearance\n• Try the bundled Diagram Showcase offline\n\nOpen a file through the system file picker to give SpecDown access to it. Local documents render on your Mac. Opening an online document or loading a remote image connects to its host.\n\nNo account is required. SpecDown has no ads or analytics.",
+        "after": "Read the specs, plans and diagrams your AI workflow produces. SpecDown gives your Markdown a clean reading view, with formatted tables, highlighted code and interactive Mermaid diagrams right in the document. Keep the document beside your editor or agent and follow saved changes automatically with Live reload on.\n\nBuilt for developers and people using AI tools to review specs, design docs, READMEs and notes. Open saved Markdown from your editor or AI assistant.\n\nFollow changes as they’re saved\n\nWhen your editor or AI agent saves changes to an open local Markdown file, SpecDown refreshes the document automatically while Live reload is on. Click Live beside the filename to pause, or Paused to resume.\n\nMade for reading technical docs\n\n• Clean typography for long documents\n• Read headings, lists, tables and highlighted code\n• Jump between sections with the table of contents\n• Find text and move through matching passages\n• Switch between the rendered preview and raw Markdown\n• Compare raw Markdown and the rendered preview in split view\n• Keep several documents open in tabs\n\nExplore Mermaid diagrams\n\n• View Mermaid flowcharts, sequence diagrams, state diagrams and Gantt charts\n• Expand a diagram to zoom and pan\n• Use Reset to fit the diagram to the current view\n\nOpen files your way\n\n• Open Markdown files from your Mac\n• Open a folder to browse its Markdown files\n• Close the folder while keeping your documents open\n\nMake reading comfortable\n\n• Choose light, dark or system appearance\n\nThe bundled Diagram Showcase works offline. Local documents render on your device. Opening an online document or loading a remote image connects to its host.\n\nNo account is required. SpecDown has no ads or analytics."
+      },
+      "keywords": {
+        "changed": true,
+        "before": "preview,readme,flowchart,sequence,gantt,uml,specs,docs,code,tables,architecture,split",
+        "after": "ai workflows,si workflows,markdown,preview,readme,flowchart,specs,docs,code,split,live reload"
+      },
+      "marketing_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/",
+        "after": "https://specdown.mosaicpando.com/"
+      },
+      "name": {
+        "changed": false,
+        "before": "SpecDown",
+        "after": "SpecDown"
+      },
+      "privacy_policy_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/privacy.html",
+        "after": "https://specdown.mosaicpando.com/privacy.html"
+      },
+      "promotional_text": {
+        "changed": true,
+        "before": "Read Markdown beside your editor. Compare source and preview, explore Mermaid diagrams, and inspect the details in specs, plans and READMEs.",
+        "after": "Read Markdown beside your editor or AI assistant. With Live reload enabled, open local files refresh as changes are saved. Explore specs, plans and Mermaid diagrams."
+      },
+      "subtitle": {
+        "changed": false,
+        "before": "Markdown & Mermaid viewer",
+        "after": "Markdown & Mermaid viewer"
+      },
+      "support_url": {
+        "changed": false,
+        "before": "https://specdown.mosaicpando.com/support.html",
+        "after": "https://specdown.mosaicpando.com/support.html"
+      },
+      "testflight_description": {
+        "changed": true,
+        "before": null,
+        "after": "SpecDown is a dedicated reader for Markdown specs, plans, READMEs and Mermaid diagrams saved from editors or AI tools. Read formatted documents, explore diagrams, compare source and preview, and move between open documents. No account is required. The bundled examples work offline. On desktop, open local Markdown files refresh when changes are saved while Live reload is on."
+      },
+      "what_to_test": {
+        "changed": true,
+        "before": null,
+        "after": "1. Open the bundled Diagram Showcase, then use File > Open to choose your own Markdown through the system picker.\n2. Expand a diagram and check centered zoom, pan and Reset. Confirm PNG/SVG export remains available and the Link button is absent.\n3. Open a folder containing two Markdown files and open both. Choose File > Close Folder: the folder browser should close while both document tabs remain open. Hiding Workspace files alone should leave the folder open.\n4. With Live reload on, save changes to an open local document in your editor or AI tool and confirm the viewer refreshes, including after Close Folder. Pause and resume with the Live control. Check Raw/Preview, Split, Contents, Find and switching tabs. Try the seven Dock Icon choices; the Finder icon should stay the same.\n5. Quit and relaunch. Check File > Open Recent and access to a previously selected file. For an unavailable saved startup file, try Locate, cancel, retry and Stop reopening; unrelated tabs and saved entries should remain intact. No QA filename should appear on a clean installation.\n6. Try an oversized file and an HTTP document URL; rejection should preserve the current document. Report the Mac model, macOS version, build number and steps for any problem."
+      },
+      "whats_new": {
+        "changed": true,
+        "before": "SpecDown arrives on the Mac App Store.\n\nRead Markdown with tables, highlighted code and Mermaid diagrams. Compare source and preview in split view, keep documents in tabs, and explore diagrams with fullscreen zoom, pan and Reset.",
+        "after": null,
+        "disposition": "Exclude historical reference text; no first-release field to apply."
+      }
+    }
+  },
+  "screenshot_caption_changes": [
+    {
+      "platform": "mac",
+      "order": 3,
+      "field": "subtitle",
+      "before": "Gantt charts right beside your notes",
+      "after": "Gantt charts inside your Markdown",
+      "scope": "Caption reference only; screenshot pixels unchanged."
+    },
+    {
+      "platform": "ipad",
+      "order": 4,
+      "field": "title",
+      "before": "Explore the conversation",
+      "after": "Follow each step",
+      "scope": "Caption reference only; screenshot pixels unchanged."
+    }
+  ]
+}

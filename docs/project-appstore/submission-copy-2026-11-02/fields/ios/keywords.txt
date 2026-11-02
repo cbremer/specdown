@@ -1,0 +1,1 @@
+ai workflows,si workflows,markdown,readme,flowchart,sequence,specs,docs,reader,tables,architecture

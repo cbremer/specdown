@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "source_commit": "e8dd3cb95a41c19ad10c14e6f1efba3287866625",
+  "source_html_sha256": "a56a892d8a1968f54d858a8053689932a8888d45a07b87ab56cbd9f2f386bafd",
+  "extractor_sha256": "cd3bbf89c6457138ccb93f96c9afcd8e166c58c9a1c9d47f454c3339b4b6593e",
+  "files": {
+    "DIFF.md": {
+      "sha256": "82a43d0f7eae2024c609264316897ed2ddbbc6fac13b90584059a31e5ed758e2",
+      "bytes": 1149
+    },
+    "PROOF.md": {
+      "sha256": "2dd5187c727f4a40e97314784c8adbc383d5de2432b6edf3e1a83abe7e08a4c7",
+      "bytes": 12340
+    },
+    "field-diff.json": {
+      "sha256": "0e4613da9d8bafa6f9e3c429bad120af264943c839f9f80c718d0a00a21c17e6",
+      "bytes": 21842
+    },
+    "fields/ios/app_review_notes.txt": {
+      "sha256": "cbd92f0cdbe2a2244ae838100c439d5e8f604188b554e81fc05589cbc0c01bea",
+      "bytes": 1647
+    },
+    "fields/ios/copyright.txt": {
+      "sha256": "e7ddb30a15768f59d2aaef29bb0e26fbe14121fe825d97c4a5d01cfaf785a21b",
+      "bytes": 13
+    },
+    "fields/ios/description.txt": {
+      "sha256": "9031608a07f22abfef1f4c51a0fc8fdb136bdd24d382f5f145cf28be1da66efd",
+      "bytes": 1501
+    },
+    "fields/ios/keywords.txt": {
+      "sha256": "5b95112c96cb4d9352b536f59af6ce299a1270b3f84d1f94ebd10981535981c0",
+      "bytes": 98
+    },
+    "fields/ios/marketing_url.txt": {
+      "sha256": "1a76dffada06a3b7f763520a5e81cf20d42c65b0ec9d6552621e8e952d4172bf",
+      "bytes": 33
+    },
+    "fields/ios/name.txt": {
+      "sha256": "51db14ff49103803b1cb7e73455742b27c510d40a79fa5a519409914efa99b64",
+      "bytes": 8
+    },
+    "fields/ios/privacy_policy_url.txt": {
+      "sha256": "5774bf8c8396345b41941a924781b92d721fc6a8e4309de849f1561006b967f8",
+      "bytes": 45
+    },
+    "fields/ios/promotional_text.txt": {
+      "sha256": "e6863acebae428d5a9fa4f4d6f76bfa123c6deee04d6d332beb3644a9e3b8d32",
+      "bytes": 158
+    },
+    "fields/ios/subtitle.txt": {
+      "sha256": "658bfb29d60dcded934fe9943b65a705b7ae5b4ddc3b54a7ea737b62d58b2e9e",
+      "bytes": 25
+    },
+    "fields/ios/support_url.txt": {
+      "sha256": "be6cae9c9b097e4c725ff27b31804c8c0ff0d5b25079bd088911975673cbc918",
+      "bytes": 45
+    },
+    "fields/ios/testflight_description.txt": {
+      "sha256": "06d7faa0a0fc814faaf521e10b0d3ba34ad2c604a89c481737ba84d97c2cf267",
+      "bytes": 376
+    },
+    "fields/ios/what_to_test.txt": {
+      "sha256": "e4f9d9ee08792a395a079037154cb15e43e22cc59242aefcc59a313a0d2d1341",
+      "bytes": 875
+    },
+    "fields/ios/whats_new.txt": {
+      "sha256": "479cd9328dcdfe09807bfb7f17e24e705a6cd4e50f6d503c906ea5d56056dc71",
+      "bytes": 508
+    },
+    "fields/mac/app_review_notes.txt": {
+      "sha256": "77c43657e141453aedbaa6279101d34d36608326172901df0f51b0a936373c8a",
+      "bytes": 1975
+    },
+    "fields/mac/copyright.txt": {
+      "sha256": "e7ddb30a15768f59d2aaef29bb0e26fbe14121fe825d97c4a5d01cfaf785a21b",
+      "bytes": 13
+    },
+    "fields/mac/description.txt": {
+      "sha256": "53247a13cf9f08b3d4e27659f56f5195917ef082f99701c8595a18f082aa2daa",
+      "bytes": 1748
+    },
+    "fields/mac/keywords.txt": {
+      "sha256": "67a57155a83435332b862762a804b6dcde7287d56f982ba7bff8336118208f1c",
+      "bytes": 93
+    },
+    "fields/mac/marketing_url.txt": {
+      "sha256": "1a76dffada06a3b7f763520a5e81cf20d42c65b0ec9d6552621e8e952d4172bf",
+      "bytes": 33
+    },
+    "fields/mac/name.txt": {
+      "sha256": "51db14ff49103803b1cb7e73455742b27c510d40a79fa5a519409914efa99b64",
+      "bytes": 8
+    },
+    "fields/mac/privacy_policy_url.txt": {
+      "sha256": "5774bf8c8396345b41941a924781b92d721fc6a8e4309de849f1561006b967f8",
+      "bytes": 45
+    },
+    "fields/mac/promotional_text.txt": {
+      "sha256": "5f7749157ef8ffff7cbee03ea31aa2251b3e4be05f3e48bfe70386a4eea97c2a",
+      "bytes": 165
+    },
+    "fields/mac/subtitle.txt": {
+      "sha256": "658bfb29d60dcded934fe9943b65a705b7ae5b4ddc3b54a7ea737b62d58b2e9e",
+      "bytes": 25
+    },
+    "fields/mac/support_url.txt": {
+      "sha256": "be6cae9c9b097e4c725ff27b31804c8c0ff0d5b25079bd088911975673cbc918",
+      "bytes": 45
+    },
+    "fields/mac/testflight_description.txt": {
+      "sha256": "06d7faa0a0fc814faaf521e10b0d3ba34ad2c604a89c481737ba84d97c2cf267",
+      "bytes": 376
+    },
+    "fields/mac/what_to_test.txt": {
+      "sha256": "baedec07e240d9b692c7a39ff539fd12c107b4ad85e0f4a01969b67be76a0519",
+      "bytes": 1248
+    },
+    "fields/shared/copyright.txt": {
+      "sha256": "e7ddb30a15768f59d2aaef29bb0e26fbe14121fe825d97c4a5d01cfaf785a21b",
+      "bytes": 13
+    },
+    "fields/shared/marketing_url.txt": {
+      "sha256": "1a76dffada06a3b7f763520a5e81cf20d42c65b0ec9d6552621e8e952d4172bf",
+      "bytes": 33
+    },
+    "fields/shared/name.txt": {
+      "sha256": "51db14ff49103803b1cb7e73455742b27c510d40a79fa5a519409914efa99b64",
+      "bytes": 8
+    },
+    "fields/shared/privacy_policy_url.txt": {
+      "sha256": "5774bf8c8396345b41941a924781b92d721fc6a8e4309de849f1561006b967f8",
+      "bytes": 45
+    },
+    "fields/shared/subtitle.txt": {
+      "sha256": "658bfb29d60dcded934fe9943b65a705b7ae5b4ddc3b54a7ea737b62d58b2e9e",
+      "bytes": 25
+    },
+    "fields/shared/support_url.txt": {
+      "sha256": "be6cae9c9b097e4c725ff27b31804c8c0ff0d5b25079bd088911975673cbc918",
+      "bytes": 45
+    },
+    "ios-en-US.json": {
+      "sha256": "d90552775d4d855249c7cd16a0cb13cca78d3a2b0eb01bc5e44f10b9a551098d",
+      "bytes": 5681
+    },
+    "mac-en-US.json": {
+      "sha256": "42b810c29058e4f5b4350167e390fee5f4c21c4bd354c9618255f25816b31537",
+      "bytes": 6102
+    },
+    "packet.json": {
+      "sha256": "393a93aded8cd7311bd76099da6f487bd41f870798ccdcbd86552d9cba76fbdf",
+      "bytes": 14849
+    },
+    "screenshot-captions.json": {
+      "sha256": "dce86ec28c7d021e71fa8eed154d3dd603e18c4e8322b218d6e70f231accc5f2",
+      "bytes": 7914
+    },
+    "shared-en-US.json": {
+      "sha256": "09725c6f196437b76c098e50fe5568bd3b47e4f07dea2883c618aca6b1cfc584",
+      "bytes": 295
+    },
+    "validation.json": {
+      "sha256": "c56d4754ffaba98d691660b411006c54858e6c4b37d4f88c196b8abce1ff2ab4",
+      "bytes": 2921
+    }
+  },
+  "historical_baseline_files_preserved": {
+    "docs/project-appstore/release-proof-2026-11-01/copy/selected/ios-en-US.json": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82",
+    "docs/project-appstore/release-proof-2026-11-01/copy/selected/mac-en-US.json": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2",
+    "docs/project-appstore/release-proof-2026-11-01/copy/selection.json": "ef9f056b337eb135f9134fe38106b849eed7b3aef89a54e41c1a8a3bb2677862",
+    "docs/project-appstore/release-proof-2026-11-01/copy/selected/screenshot-captions.json": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf"
+  },
+  "text_file_contract": "Per-field .txt files contain the exact field value with no trailing newline. JSON represents the same values with escaped line breaks."
+}

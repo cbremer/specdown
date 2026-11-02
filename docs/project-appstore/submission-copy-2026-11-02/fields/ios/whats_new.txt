@@ -1,0 +1,8 @@
+Security and reliability improvements for reading Markdown.
+
+• Safer handling of document content, large files and complex diagrams.
+• Web documents and remote images now require HTTPS.
+• If a file can’t be opened, the document you’re reading stays open.
+• Improved Find behavior for documents with many matches and when the keyboard is open.
+• Diagram zoom controls center the diagram, and Reset fits the current view.
+• Better fullscreen focus and cleanup when switching documents or views.
