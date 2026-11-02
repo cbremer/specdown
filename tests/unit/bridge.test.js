@@ -23,6 +23,9 @@ describe('Desktop bridge seam', () => {
         requestFileOpen: jest.fn(),
         requestOpenPath: jest.fn(),
         requestOpenFolder: jest.fn(),
+        requestCloseWorkspace: jest.fn(),
+        requestWorkspaceFile: jest.fn(),
+        onWorkspaceClosed: jest.fn(),
         requestOpenRelative: jest.fn(),
         onWorkspaceOpened: jest.fn(),
         onFileOpened: jest.fn(),
@@ -47,7 +50,9 @@ describe('Desktop bridge seam', () => {
       bridgeRequestFileOpen();
       bridgeRequestOpenPath('/a.md');
       bridgeRequestOpenFolder();
-      bridgeRequestOpenRelative('/a.md', './b.md');
+      bridgeRequestCloseWorkspace();
+      bridgeRequestWorkspaceFile('/A/a.md', 'A');
+      bridgeRequestOpenRelative('/a.md', './b.md', 'workspace');
       bridgeWatchFile('/a.md');
       bridgeUnwatchFile('/a.md');
       bridgeSaveSession([{ filePath: '/a.md', filename: 'a.md' }]);
@@ -55,7 +60,9 @@ describe('Desktop bridge seam', () => {
       expect(window.specdown.requestFileOpen).toHaveBeenCalled();
       expect(window.specdown.requestOpenPath).toHaveBeenCalledWith('/a.md');
       expect(window.specdown.requestOpenFolder).toHaveBeenCalled();
-      expect(window.specdown.requestOpenRelative).toHaveBeenCalledWith('/a.md', './b.md');
+      expect(window.specdown.requestCloseWorkspace).toHaveBeenCalled();
+      expect(window.specdown.requestWorkspaceFile).toHaveBeenCalledWith('/A/a.md', 'A');
+      expect(window.specdown.requestOpenRelative).toHaveBeenCalledWith('/a.md', './b.md', 'workspace');
       expect(window.specdown.watchFile).toHaveBeenCalledWith('/a.md');
       expect(window.specdown.unwatchFile).toHaveBeenCalledWith('/a.md');
       expect(window.specdown.saveSession).toHaveBeenCalledWith([{ filePath: '/a.md', filename: 'a.md' }]);
@@ -65,8 +72,10 @@ describe('Desktop bridge seam', () => {
       const cb = jest.fn();
       bridgeOnFileOpened(cb);
       bridgeOnWorkspaceOpened(cb);
+      bridgeOnWorkspaceClosed(cb);
       expect(window.specdown.onFileOpened).toHaveBeenCalledWith(cb);
       expect(window.specdown.onWorkspaceOpened).toHaveBeenCalledWith(cb);
+      expect(window.specdown.onWorkspaceClosed).toHaveBeenCalledWith(cb);
     });
   });
 
@@ -84,6 +93,9 @@ describe('Desktop bridge seam', () => {
         bridgeRequestFileOpen();
         bridgeRequestOpenPath('/a.md');
         bridgeRequestOpenFolder();
+        bridgeRequestCloseWorkspace();
+        bridgeRequestWorkspaceFile('/A/a.md', 'A');
+        bridgeOnWorkspaceClosed(() => {});
         bridgeOnFileOpened(() => {});
         bridgeSaveSession([]);
       }).not.toThrow();

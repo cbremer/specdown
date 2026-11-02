@@ -1,0 +1,28 @@
+# Session 53 — Close Folder for the Store release
+
+Chris promoted the missing Close Folder action from future backlog to a requirement for this release. Work starts at `b9e54727f3e18d02a874c5de768f6e0e47def493` in `codex/close-workspace-folder`, isolated under `.claude/worktrees/specdown-close-folder-20261101`. The canonical checkout, owner files, signed build 229 and all older artifacts remain unchanged.
+
+## Result and behavior
+
+- Add an accessible Close Folder control in the workspace header, a Close Folder command in the desktop File menu and supported desktop/web command palette, and a landing-area Close Folder button for an active folder with no open documents. Empty folders remain explicit, closable contexts.
+- Keep Workspace files as the existing reversible hide/show toggle. Close removes the folder tree, handles, collapse state and navigation context. It preserves accepted documents, tabs, notes, live-reload watchers, session/recents records and file access grants used by those documents.
+- Desktop has one active workspace root. Replacing A with B removes A from active workspace navigation; it does not revoke earlier user-granted file permissions. Relative opens require both source and destination inside the active root, with the existing file-access checks still authoritative. Moved MAS bookmarks use the resolved scan root.
+- Native workspace commands carry a per-page token retained by the isolated preload, and tree/relative opens carry the exact workspace identity. Main validates the receiving window/frame and lifecycle. Picker results are discarded after Close, replacement, navigation, crash or window disposal before recording grants. Old-window callbacks cannot invalidate a newer window.
+- Close clears renderer navigation synchronously and keeps a barrier until the ordered native acknowledgment. Queued snapshots and workspace-origin file deliveries cannot reopen it; stale file deliveries reject their receipt before creating a tab. Repeated Close is idempotent while that acknowledgment is pending.
+- Web picker, drag-and-drop scan and file-read completions use separate operation/context generations. Stale successes and errors cannot recreate a folder, open a document, or trigger the ordinary-file fallback. Cancelled/failed replacements preserve the existing folder.
+- A weak marker on accepted workspace-origin tab objects retains no folder path, root or handle. After Close/replacement, relative Markdown links in those retained documents stay in the app and explain: “Open this document from its folder to follow links.” Selecting a document from the newly opened folder establishes its new navigation context. External, fragment and non-Markdown routing is unchanged.
+- Native iOS has no folder capability or newly exposed folder commands.
+
+## Validation and review
+
+Author evidence lives in canonical `ios/DerivedData/close-folder-20261101/author/`:
+
+- 49 new renderer/native/preload regressions cover Close versus Hide, tab/note/watch/recents preservation, empty folders, focus, current-page sender/token checks, picker/scan/file-read races, stale event rejection, native root replacement and containment, cancel/failed replacement, dropped folders, retained relative links, and normal non-workspace opens.
+- The new tests run against untouched b9 source in a separate baseline worktree: 47 fail and 2 pass. `baseline-regressions.json` and `.log` retain this control. Some author controls explicitly assert the new API contract; independent reviewer controls separately reproduce behavioral baseline failures.
+- Full 1,341 tests across 77 suites and required coverage pass. Lint, typecheck and production web build pass (`lint.log`, `typecheck.log`, `build.log`). Results and exact source/test hashes are bound in `final-tests.json`, `final-coverage.log` and `candidate-manifest.json`. Renderer coverage remains a known eval-harness limitation; no false renderer coverage claim is made.
+- Independent security/race review uses synthetic direct/MAS/Web/Electron surfaces, including moved bookmark roots and old-window shutdown. Independent UX review checks actual workspace source with synthetic DOM. These are not physical Mac App Store acceptance.
+- Parent production-browser QA used the actual Comet directory picker with synthetic A/B/empty folders. The initial retained-relative-link navigation failure was preserved, then the corrected build passed: A/README opens, its relative link opens a second tab, header Close preserves both tabs/content and restores focus to More, retained relative links show guidance without leaving the app, replacing with B cannot resolve the retained A document into B, and an empty folder closes from the landing area with focus returning to Open Folder. Hide versus palette Close also passed in the earlier draft. Evidence is under `ios/DerivedData/close-folder-20261101/parent/`, including `folder-open.jpg`, `folder-closed-retained-document.jpg` and `empty-folder.jpg`; the parent inventory binds the exact browser output. This is real browser acceptance, not native MAS/File-menu UI acceptance.
+
+## Handoff boundaries
+
+No version/build change, source commit, push, merge, credential use, signing, upload, App Review submission or public release was performed by this implementation task. The final reviewed change must be bound to a new release build before Store submission; existing signed 229 packages do not contain this feature. Final independent source review and later replacement native package/TestFlight acceptance remain separate gates from the passing browser checks. No live note store, application preference store, OS recents, or other computer was accessed for these tests.

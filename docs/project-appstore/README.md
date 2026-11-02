@@ -44,6 +44,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 46: Store release proof](2026-11-01-tasks-session-46-store-release-proof.md) | Reviewed recovery and package guard integrated for aligned iOS/MAS 1.0.1 (229), with owner proof and TestFlight gates. |
 | Nov 1, 2026 | Tasks | [Session 47: remove diagram link](2026-11-01-tasks-session-47-remove-diagram-link.md) | Remove the unsupported fullscreen link action and its dead helper/toast while preserving PNG/SVG, incoming links and existing diagram behavior. |
 
+| Nov 1, 2026 | Tasks | [Session 53: Close Folder](2026-11-01-tasks-session-53-close-folder.md) | Explicit Close Folder with preserved open documents, single active navigation context, stale-operation rejection and retained-link safety; replacement release build remains separate. |
+
 **Google Sheet:** [Launch Weekend execution tab](https://docs.google.com/spreadsheets/d/1dGnVfCIzM4rgqb2_QsfNBh_yhvNYdjte0hs0ost1EKo/edit#gid=10312026)
 
 The Markdown plan owns scope/constraints; the live Sheet owns task status/evidence/accepted Decisions. Future work follows repo `CLAUDE.md`, preserves the phone checkout and Developer ID channel, and uses one logical change per PR with rebase merging. Add the next dated numbered tasks file and timeline entry for a future execution session.

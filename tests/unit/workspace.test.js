@@ -20,6 +20,7 @@ describe('Workspace (folder) mode — desktop', () => {
       isDesktop: true,
       requestFileOpen: jest.fn(),
       requestOpenPath: jest.fn(),
+      requestWorkspaceFile: jest.fn(),
       requestOpenFolder: jest.fn(),
       requestOpenRelative: jest.fn(),
       onWorkspaceOpened: jest.fn(),
@@ -60,22 +61,22 @@ describe('Workspace (folder) mode — desktop', () => {
       const dir = document.querySelector('.workspace-dir-item');
       expect(dir.textContent).toContain('docs');
 
-      expect(window.specdown.requestOpenPath).toHaveBeenCalledWith('/ws/a.md');
+      expect(window.specdown.requestWorkspaceFile).toHaveBeenCalledWith('/ws/a.md', '');
       expect(document.getElementById('workspace-sidebar').style.display).not.toBe('none');
     });
 
     it('prefers a top-level README when auto-opening', () => {
       applyWorkspace({ root: '/ws', files: [file('a.md'), file('README.md')] });
-      expect(window.specdown.requestOpenPath).toHaveBeenCalledWith('/ws/README.md');
+      expect(window.specdown.requestWorkspaceFile).toHaveBeenCalledWith('/ws/README.md', '');
     });
 
     it('opens a file by path when its item is clicked', () => {
       applyWorkspace({ root: '/ws', files: [file('a.md'), file('b.md')] });
-      window.specdown.requestOpenPath.mockClear();
+      window.specdown.requestWorkspaceFile.mockClear();
 
       const bItem = [...document.querySelectorAll('.workspace-file-item')].find((b) => b.textContent === 'b.md');
       bItem.dispatchEvent(new Event('click', { bubbles: true }));
-      expect(window.specdown.requestOpenPath).toHaveBeenCalledWith('/ws/b.md');
+      expect(window.specdown.requestWorkspaceFile).toHaveBeenCalledWith('/ws/b.md', '');
     });
 
     it('collapses and expands a folder', () => {
@@ -90,9 +91,11 @@ describe('Workspace (folder) mode — desktop', () => {
       expect(document.querySelector('.workspace-tree').style.display).not.toBe('none');
     });
 
-    it('hides the sidebar for an empty folder', () => {
+    it('keeps an empty folder closable', () => {
       applyWorkspace({ root: '/ws', files: [] });
-      expect(document.getElementById('workspace-sidebar').style.display).toBe('none');
+      expect(hasWorkspace()).toBe(true);
+      expect(document.getElementById('close-folder-empty-button').style.display).not.toBe('none');
+      expect(document.querySelector('.workspace-empty').textContent).toContain('No Markdown');
     });
 
     it('toggles sidebar visibility', () => {
@@ -121,7 +124,7 @@ describe('Workspace (folder) mode — desktop', () => {
     it('routes a relative .md link to the shell, resolved against the active doc', () => {
       const content = withActiveDoc('<a href="./b.md">b</a>');
       content.querySelector('a').dispatchEvent(new Event('click', { bubbles: true }));
-      expect(window.specdown.requestOpenRelative).toHaveBeenCalledWith('/ws/a.md', './b.md');
+      expect(window.specdown.requestOpenRelative).toHaveBeenCalledWith('/ws/a.md', './b.md', '');
     });
 
     it('leaves external, anchor, and non-markdown links alone', () => {
