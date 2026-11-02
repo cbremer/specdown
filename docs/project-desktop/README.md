@@ -1,6 +1,10 @@
 # Project: Specdown Desktop
 
-A macOS native desktop application wrapping the existing Specdown web viewer in an Electron shell. This document is the entry point for anyone trying to understand what was built, why, and how the project unfolded.
+An Electron desktop application wrapping the shared SpecDown web viewer, distributed directly for macOS, Windows and Linux. A separate sandboxed Mac App Store channel shares the viewer. This index retains the project's history and links current testing guidance.
+
+**Testing entry point:** [Cross-platform testing runbook](2026-11-02-spec-platform-testing-runbook.md), including host authorization, safe test data, separate Windows/Linux commands, an agent prompt and a results template. It does not request or execute a test run.
+
+**Last verified release checkpoint, November 2, 2026:** direct desktop [0.0.232 is public](../project-appstore/2026-11-02-tasks-session-77-direct-desktop-232-published.md), with signed/notarized Mac artifacts and unsigned Windows/Linux artifacts. Windows/Linux remain less tested in real desktop use than macOS; package/CI success is not hands-on acceptance. Separate Store [Dev/Beta 230 delivery](../project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md) is complete, with new Owner acceptance still pending. The earlier sections below describe the original Mac implementation, not a current cross-platform acceptance report.
 
 ---
 
@@ -44,10 +48,12 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Jun 21, 2026 | Tasks | [2026-06-21-tasks-session-06-auto-update.md](2026-06-21-tasks-session-06-auto-update.md) | Session 6 — Desktop auto-update via electron-updater (GitHub Releases feed, mac zip target, background download + install on quit) |
 | Sep 05, 2026 | Tasks | [2026-09-05-tasks-session-08-finder-icons.md](2026-09-05-tasks-session-08-finder-icons.md) | Session 8 — Compatible small macOS icons and packaged-icon release verification |
 | Sep 07, 2026 | Tasks | [2026-09-07-tasks-session-09-signing-keychain.md](2026-09-07-tasks-session-09-signing-keychain.md) | Session 9 — Backport temporary signing keychain password correction |
+| Nov 02, 2026 | Spec | [Cross-platform testing runbook](2026-11-02-spec-platform-testing-runbook.md) | Repeatable, host-authorized artifact/source testing with Windows/Linux commands, synthetic fixtures, agent handoff and result template; no tests executed by this document. |
+| Nov 02, 2026 | Tasks | [Session 79: testing and next-release handoffs](../project-appstore/2026-11-02-tasks-session-79-platform-testing-runbook.md) | Documentation-only runbook, saved six-feature 1.0.2 brief and current checkpoint/maintenance guidance. |
 
 ---
 
-## Current Status (as of Mar 02, 2026)
+## Historical status (Mar 02, 2026)
 
 | Feature | Status |
 |---|---|
