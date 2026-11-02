@@ -88,6 +88,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 62: Mac Store launch copy](2026-11-01-tasks-session-62-mac-store-launch-copy.md) | Name Mac App Store explicitly in the proposed listing, website and support downloads; retain the separate direct desktop option and gate public wording on native Mac launch. |
 | Nov 1, 2026 | Tasks | [Session 63: platform testing note](2026-11-01-tasks-session-63-platform-testing-note.md) | Clarify in the download README that Windows and Linux builds receive less testing than macOS, with a link for platform-specific issue reports. |
 | Nov 1, 2026 | Tasks | [Session 64: refreshed Store build 230](2026-11-01-tasks-session-64-release-230-refresh.md) | Rebuild from merged dependencies at 9d27fc1 with preserved owner settings; exact signed iOS and universal Mac 230 delivered, processed and Owner-only in TestFlight; physical acceptance pending. |
+| Nov 1, 2026 | Tasks | [Session 65: copy proof feedback](2026-11-01-tasks-session-65-copy-feedback.md) | Refine the clean proposal with Files providers, PWA installation, desktop Live reload and AI/SI search phrases; simplify release notes and separate icon parity as backlog. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
