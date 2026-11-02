@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: github.event_name == 'push'
         with:
-          node-version: '22'
+          node-version: '>=22.22.0 <23'
       - name: Classify the reviewed commit
         id: policy
         if: github.event_name == 'push'

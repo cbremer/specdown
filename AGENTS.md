@@ -39,7 +39,7 @@ When working with this repo, read and follow `CLAUDE.md` for:
   formatting noise. Format only the files you touch.
 - **Lockfile committed.** `package-lock.json` is committed; CI uses `npm ci`.
   Use `npm install` locally when adding/upgrading dependencies.
-- **Node.js >=22.12 required** (specified in `package.json` engines).
+- **Node.js >=22.22.0 required** (specified in `package.json` engines).
 - **Electron desktop app** cannot run in headless Cloud Agent environments (needs a display). Test the shared viewer code via Jest, or `npm run dev` / `npm run preview` in a browser.
 - **Coverage thresholds**: a hard `coverageThreshold` is enforced for
   `desktop/main.js` — the only file the tests both instrument and actually

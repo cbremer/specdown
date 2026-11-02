@@ -119,7 +119,7 @@ Device archives, uploads and Store submissions are separate release steps.
 The viewer is a **Vite + ES-module** app. All three surfaces load the same build
 output from `markdown-viewer/dist/`, so there's one codebase to work on.
 
-**Requirements:** Node.js **22.12+** (see `engines` in `package.json`).
+**Requirements:** Node.js **22.22.0+** (see `engines` in `package.json`).
 
 ```bash
 npm install            # install dependencies

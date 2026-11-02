@@ -708,8 +708,8 @@ describe('desktop/main.js', () => {
           watchFile('/path/to/file.md', mockWebContents);
 
           expect(chokidar.watch).toHaveBeenCalledWith('/path/to', expect.objectContaining({
-            usePolling: true,
-            interval: 500,
+            backend: 'polling',
+            pollingInterval: 500,
           }));
         });
 
@@ -720,8 +720,8 @@ describe('desktop/main.js', () => {
           watchFile('/path/to/file.md', mockWebContents);
 
           const options = chokidar.watch.mock.calls[0][1];
-          expect(options.usePolling).toBe(false);
-          expect(options.interval).toBeUndefined();
+          expect(options.backend).toBe('auto');
+          expect(options.pollingInterval).toBeUndefined();
         });
 
         it('does not enable polling for other truthy values', () => {
@@ -733,7 +733,7 @@ describe('desktop/main.js', () => {
           watchFile('/path/to/file.md', mockWebContents);
 
           const options = chokidar.watch.mock.calls[0][1];
-          expect(options.usePolling).toBe(false);
+          expect(options.backend).toBe('auto');
         });
       });
     });
