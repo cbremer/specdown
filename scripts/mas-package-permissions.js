@@ -5,12 +5,29 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const APP_ID = 'com.mosaicpando.specdown';
-const APP_NAME = 'SpecDown.app';
+const IDENTITIES = Object.freeze({
+  production: Object.freeze({
+    appId: 'com.mosaicpando.specdown',
+    appName: 'SpecDown.app',
+  }),
+  development: Object.freeze({
+    appId: 'com.mosaicpando.specdown.dev',
+    appName: 'SpecDown Store Dev.app',
+  }),
+  beta: Object.freeze({
+    appId: 'com.mosaicpando.specdown.beta',
+    appName: 'SpecDown Store Beta.app',
+  }),
+});
 const PROFILE = 'Contents/embedded.provisionprofile';
 
 function requireCondition(condition, message) {
   if (!condition) throw new Error(`MAS permissions: ${message}`);
+}
+
+function channelIdentity(channel) {
+  requireCondition(Object.hasOwn(IDENTITIES, channel), 'unknown MAS channel');
+  return IDENTITIES[channel];
 }
 
 function within(root, filename) {
@@ -128,8 +145,9 @@ function run(command, args) {
   });
 }
 
-function afterSign(context) {
+function afterSign(context, channel = 'production') {
   if (context.electronPlatformName !== 'mas') return;
+  const { appId: APP_ID, appName: APP_NAME } = channelIdentity(channel);
   requireCondition(
     context.packager.config.appId === APP_ID,
     'unexpected MAS app identifier'
@@ -153,7 +171,8 @@ function afterSign(context) {
   );
 }
 
-function validateBom(text) {
+function validateBom(text, channel = 'production') {
+  const { appName: APP_NAME } = channelIdentity(channel);
   const records = [];
   const seen = new Set();
   for (const line of text.trimEnd().split('\n')) {
@@ -247,7 +266,8 @@ function validateBom(text) {
   };
 }
 
-function validateInstaller(pkg) {
+function validateInstaller(pkg, channel = 'production') {
+  const { appId: APP_ID } = channelIdentity(channel);
   requireCondition(
     path.extname(pkg) === '.pkg' && fs.lstatSync(pkg).isFile(),
     'expected a real .pkg file'
@@ -282,11 +302,14 @@ function validateInstaller(pkg) {
     const info = fs.readFileSync(path.join(directory, 'PackageInfo'), 'utf8');
     requireCondition(
       /<pkg-info\b[^>]*\binstall-location="\/Applications"/.test(info) &&
-        /<pkg-info\b[^>]*\bidentifier="com\.mosaicpando\.specdown"/.test(info),
+        new RegExp(
+          `<pkg-info\\b[^>]*\\bidentifier="${APP_ID.replaceAll('.', '\\.')}"`
+        ).test(info),
       'unexpected install location or identity'
     );
     const result = validateBom(
-      run('/usr/bin/lsbom', [path.join(directory, 'Bom')])
+      run('/usr/bin/lsbom', [path.join(directory, 'Bom')]),
+      channel
     );
     return result;
   } finally {
@@ -294,16 +317,30 @@ function validateInstaller(pkg) {
   }
 }
 
-function artifactBuildCompleted(event) {
+function artifactBuildCompleted(event, channel = 'production') {
   if (path.extname(event.file) !== '.pkg') return;
+  const { appId: APP_ID } = channelIdentity(channel);
   requireCondition(
     event.packager.config.appId === APP_ID,
     'unexpected installer app identifier'
   );
-  const result = validateInstaller(event.file);
+  const result = validateInstaller(event.file, channel);
   console.log(
     `MAS installer ownership/public-permission guard passed: ${JSON.stringify(result)}`
   );
+}
+
+// Fixed allowlist only: test configs cannot disable the production permission
+// checks or supply an arbitrary installer identity. Default exports stay bound
+// to the production app, including the standalone command below.
+function forChannel(channel) {
+  channelIdentity(channel);
+  return Object.freeze({
+    afterSign: (context) => afterSign(context, channel),
+    artifactBuildCompleted: (event) => artifactBuildCompleted(event, channel),
+    validateBom: (text) => validateBom(text, channel),
+    validateInstaller: (pkg) => validateInstaller(pkg, channel),
+  });
 }
 
 if (require.main === module) {
@@ -315,6 +352,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  forChannel,
   afterSign,
   artifactBuildCompleted,
   normalizeEmbeddedProfile,
