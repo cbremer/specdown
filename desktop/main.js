@@ -975,11 +975,9 @@ function openRelativeFromFile(fromPath, href, workspaceId) {
 
 // Why we watch the parent directory instead of the file itself:
 // Most modern editors (VSCode, vim, Sublime, JetBrains) save atomically —
-// they write a temp file and rename it over the target. Renaming changes
-// the inode, and chokidar's single-file watch follows the inode, so the
-// watcher goes dead after the first save. Watching the parent directory
-// with a basename filter sidesteps this entirely and is robust against
-// unlink → add sequences.
+// they write a temp file and rename it over the target, changing its inode.
+// Watching the parent directory and routing by basename keeps the tab tied
+// to the selected path through replacement and unlink → add sequences.
 //
 // Why we share one chokidar watcher per directory across files:
 // Opening several tabs from the same folder shouldn't create redundant
@@ -1090,8 +1088,8 @@ function watchFile(filePath, _webContents) {
       ignoreInitial: true,
       depth: 0, // Only the directory itself, not subdirs.
       awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
-      usePolling,
-      interval: usePolling ? 500 : undefined,
+      backend: usePolling ? 'polling' : 'auto',
+      pollingInterval: usePolling ? 500 : undefined,
     });
 
     // 'change' covers in-place edits; 'add' covers the post-rename inode
