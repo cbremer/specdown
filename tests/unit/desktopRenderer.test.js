@@ -24,7 +24,9 @@ describe('Desktop renderer integration', () => {
       onApplyCustomCss: jest.fn(),
       saveSession: jest.fn(),
       requestRefreshFile: jest.fn(),
-      onFileAccessNeeded: jest.fn(),
+      onFileOpenFailed: jest.fn(),
+      onFileOpenRecoveryResolved: jest.fn(),
+      resolveFileOpenFailure: jest.fn(async () => true),
       requestGrantAccess: jest.fn(),
     };
 
@@ -178,18 +180,19 @@ describe('Desktop renderer integration', () => {
 
   describe('Mac App Store sandbox recovery', () => {
     it('offers Locate… for a file whose access was lost, and re-grants on click', () => {
-      const deliver = window.specdown.onFileAccessNeeded.mock.calls[0][0];
-      deliver({ filePath: '/Users/me/plan.md', filename: 'plan.md' });
+      const deliver = window.specdown.onFileOpenFailed.mock.calls[0][0];
+      deliver({ id: 'opaque-failure', filename: 'plan.md', message: 'SpecDown needs permission to open this file.', canForget: false });
       const toast = document.querySelector('.toast');
-      expect(toast.textContent).toContain('SpecDown needs permission to open “plan.md”.');
+      expect(toast.textContent).toContain('“plan.md”: SpecDown needs permission to open this file.');
       const locate = toast.querySelector('button');
       expect(locate.textContent).toBe('Locate…');
       locate.click();
-      expect(window.specdown.requestGrantAccess).toHaveBeenCalledWith('/Users/me/plan.md');
+      expect(window.specdown.resolveFileOpenFailure).toHaveBeenCalledWith({ id: 'opaque-failure', action: 'locate' });
+      expect(window.specdown.requestGrantAccess).not.toHaveBeenCalled();
     });
 
     it('ignores a malformed notice', () => {
-      const deliver = window.specdown.onFileAccessNeeded.mock.calls[0][0];
+      const deliver = window.specdown.onFileOpenFailed.mock.calls[0][0];
       deliver(null);
       expect(document.querySelector('.toast')).toBeNull();
     });

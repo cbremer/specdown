@@ -3853,3 +3853,23 @@ mark.search-highlight-current {
 .ios-native select {
     font-size: 16px;
 }
+
+/* Native open failures remain available until an explicit recovery action. */
+.native-file-recovery {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    cursor: default;
+    overflow-wrap: anywhere;
+}
+.native-file-recovery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.toast-region:has(.native-file-recovery) {
+    max-height: 70vh;
+    overflow-y: auto;
+    pointer-events: auto;
+}

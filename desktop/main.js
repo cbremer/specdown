@@ -9,6 +9,7 @@ const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribut
 const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
 const { createFileResourcePolicy } = require('./file-resource-policy');
 const { createFileOpenReceipts } = require('./file-open-receipts');
+const { createOpenRecovery } = require('./open-recovery');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -117,9 +118,15 @@ let mainWindow = null;
 let viewerReadyWindow = null;
 let store = null;
 let logFilePath = null;
+const openRecovery = createOpenRecovery({
+  isAppPage: isAppPageUrl,
+  getStore: () => store,
+  locate: (filePath, current, context) => requestGrantAccess(filePath, current, context),
+});
 const fileOpenReceipts = createFileOpenReceipts({
   isAppPage: isAppPageUrl,
   onAccepted: addRecentFile,
+  onResult: (filePath, accepted, context) => openRecovery.admitted(filePath, accepted, context),
 });
 
 // Every user-file read goes through fileAccess (see mas-access.js): a plain
@@ -398,11 +405,12 @@ function initStore() {
   // Rename is atomic on POSIX + NTFS, so a crash/kill mid-write can never
   // leave `specdown-state.json` truncated — the worst case is a leftover
   // `.tmp` file that gets overwritten on the next successful write.
-  const write = () => {
+  const write = (next) => {
     const tempPath = `${statePath}.tmp`;
     try {
-      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+      fs.writeFileSync(tempPath, JSON.stringify(next, null, 2));
       fs.renameSync(tempPath, statePath);
+      return true;
     } catch (err) {
       logError('Failed to write state file', err);
       // Best-effort cleanup of the temp file so it doesn't accumulate.
@@ -411,14 +419,17 @@ function initStore() {
       } catch {
         // Swallow — we've already logged the real failure.
       }
+      return false;
     }
   };
 
   store = {
     get: (key, fallback) => (Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback),
     set: (key, value) => {
-      data[key] = value;
-      write();
+      const next = { ...data, [key]: value };
+      if (!write(next)) return false;
+      data = next;
+      return true;
     },
   };
 }
@@ -448,21 +459,14 @@ function addRecentFile(filePath) {
   rebuildMenu();
 }
 
-function saveSession(tabs) {
-  if (!store) return;
-  // Only save file-path based tabs (not URL/dragged-in ones without a path)
-  const saveable = tabs
-    .filter((t) => t.filePath)
-    .map((t) => ({ filePath: t.filePath, filename: t.filename }));
-  store.set('session', { tabs: saveable });
+function saveSession(event, tabs, token) {
+  return openRecovery.save(event, tabs, token);
 }
 
-function restoreSession() {
-  if (!store) return;
-  const session = store.get('session', { tabs: [] });
-  for (const tabInfo of session.tabs) {
-    if (tabInfo.filePath && isValidMarkdownFile(tabInfo.filePath)) {
-      openFileByPath(tabInfo.filePath);
+function restoreSession(entries) {
+  for (const entry of entries) {
+    if (entry && typeof entry.filePath === 'string' && entry.filePath) {
+      openFileByPath(entry.filePath, { entry });
     }
   }
 }
@@ -514,6 +518,7 @@ function createWindow() {
   fileResourcePolicy.install(mainWindow.webContents.session);
   const windowWebContents = mainWindow.webContents;
   fileOpenReceipts.bind(windowWebContents);
+  openRecovery.bind(windowWebContents);
 
   // Keep the window on the bundled viewer. A crafted markdown link must not
   // drive it to another page — a remote site, or a local .html file that
@@ -564,10 +569,13 @@ function createWindow() {
     successfulLoad = null;
     restored = true;
     viewerReadyWindow = appWindow;
+    // Seed retained entries and a per-load save nonce before any renderer can
+    // synchronously persist a cold Finder open. Displayed open order is unchanged.
+    const restoredEntries = openRecovery.beginRestore();
     const queued = pendingFilePaths;
     pendingFilePaths = [];
     for (const filePath of queued) openFileByPath(filePath);
-    restoreSession();
+    restoreSession(restoredEntries);
     restoreCustomCss();
   };
   const failedLoad = (_event, _code, _description, _url, isMainFrame) => {
@@ -610,6 +618,7 @@ function createWindow() {
   mainWindow.on('closed', () => {
     disposeStartup();
     fileOpenReceipts.forget(windowWebContents);
+    openRecovery.forget(windowWebContents);
     if (mainWindow === appWindow) mainWindow = null;
   });
 
@@ -687,8 +696,11 @@ function buildFileMetadata(filePath) {
   };
 }
 
-function openFileByPath(filePath) {
-  if (!isValidMarkdownFile(filePath)) return;
+function openFileByPath(filePath, context) {
+  if (!isValidMarkdownFile(filePath)) {
+    openRecovery.report(filePath, 'Choose a Markdown file (.md or .markdown).', context?.entry);
+    return false;
+  }
 
   try {
     const access = fileAccess.withAccess(filePath, (resolved) => {
@@ -697,26 +709,30 @@ function openFileByPath(filePath) {
       return document;
     });
     if (!access.ok) {
-      notifyFileAccessNeeded(filePath);
-      return;
+      notifyFileAccessNeeded(filePath, context?.entry);
+      return false;
     }
-    if (!fileOpenReceipts.deliver(access.value)) {
+    if (!fileOpenReceipts.deliver(access.value, context)) {
       logInfo('File open was not delivered; recents remain unchanged.');
+      return false;
     }
+    return true;
   } catch (err) {
-    console.error('Failed to read file:', filePath, err);
+    logError(`Failed to read file: ${filePath}`, err);
+    reportFileReadFailure(filePath, err, context?.entry);
+    return false;
   }
 }
 
-// Mac App Store build: a by-path open (recents, session restore, bookmarks)
-// found no file grant. The renderer offers "Locate…", which re-grants via
-// the open panel (request-grant-access).
-function notifyFileAccessNeeded(filePath) {
-  logInfo(`No file access grant for ${filePath}; asking the user to locate it.`);
-  const wc = mainWindow && mainWindow.webContents;
-  if (wc && !wc.isDestroyed()) {
-    wc.send('file-access-needed', { filePath, filename: path.basename(filePath) });
-  }
+function reportFileReadFailure(filePath, error, entry) {
+  const message = error && String(error.message).includes('8 MiB')
+    ? 'This Markdown file exceeds the 8 MiB size limit.'
+    : 'This file could not be read. It may have moved, been deleted, or no longer be accessible.';
+  openRecovery.report(filePath, message, entry);
+}
+
+function notifyFileAccessNeeded(filePath, entry) {
+  openRecovery.report(filePath, 'SpecDown needs permission to open this file.', entry);
 }
 
 // Open-panel options: the MAS build asks for security-scoped bookmarks so the
@@ -752,7 +768,7 @@ async function showOpenDialog() {
   }
 }
 
-async function requestGrantAccess(filePath) {
+async function requestGrantAccess(filePath, current = () => true, context) {
   if (!mainWindow || typeof filePath !== 'string' || !filePath) return;
   const filename = path.basename(filePath);
   const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
@@ -762,9 +778,9 @@ async function requestGrantAccess(filePath) {
     properties: ['openFile'],
     filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown'] }],
   }));
-  if (result.canceled || !result.filePaths.length) return;
+  if (!current() || result.canceled || !result.filePaths.length) return false;
   noteDialogGrants(result, 'file');
-  openFileByPath(result.filePaths[0]);
+  return openFileByPath(result.filePaths[0], context);
 }
 
 // ===========================
@@ -1276,7 +1292,7 @@ onTrustedIpc('unwatch-file', (_event, filePath) => {
 });
 
 // Request/response lets bookmarks recover from moved or inaccessible files.
-handleTrustedIpc('read-bookmarked-file', async (_event, filePath) => {
+handleTrustedIpc('read-bookmarked-file', async (event, filePath) => {
   if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
       !isValidMarkdownFile(filePath)) return null;
   try {
@@ -1285,7 +1301,7 @@ handleTrustedIpc('read-bookmarked-file', async (_event, filePath) => {
       fileResourcePolicy.noteDocument(resolved);
       return document;
     });
-    return access.ok ? access.value : null;
+    return access.ok ? fileOpenReceipts.prepare(access.value, { requestedPath: filePath }, event) : null;
   } catch {
     return null;
   }
@@ -1316,6 +1332,7 @@ onTrustedIpc('refresh-file', (_event, filePath) => {
     }
   } catch (err) {
     logError(`Failed to refresh file from disk: ${filePath}`, err);
+    reportFileReadFailure(filePath, err);
   }
 });
 
@@ -1361,9 +1378,11 @@ onTrustedIpc('request-grant-access', (_event, filePath) => {
   requestGrantAccess(filePath);
 });
 
+handleTrustedIpc('resolve-file-open-failure', (event, request) => openRecovery.act(event, request));
+
 // Session save: renderer sends tab state when it changes
-onTrustedIpc('save-session', (_event, tabs) => {
-  saveSession(tabs);
+onTrustedIpc('save-session', (event, tabs, token) => {
+  saveSession(event, tabs, token);
 });
 
 // Renderer's "Restart now" toast asks the shell to install the downloaded update.

@@ -35,7 +35,7 @@ function getRegion() {
 /**
  * Show a toast notification.
  * @param {string} message
- * @param {{ type?: ToastType, duration?: number, action?: { label: string, onClick: () => void } }} [options]
+ * @param {{ type?: ToastType, duration?: number, dismissOnClick?: boolean, action?: { label: string, onClick: () => void } }} [options]
  * @returns {HTMLElement} the created toast element
  */
 export function showToast(message, options = {}) {
@@ -69,10 +69,13 @@ export function showToast(message, options = {}) {
   } else {
     toast.textContent = message;
   }
-  toast.addEventListener('click', () => dismissToast(toast));
+  if (options.dismissOnClick !== false) {
+    toast.addEventListener('click', () => dismissToast(toast));
+  }
   region.appendChild(toast);
 
-  const duration = options.duration != null ? options.duration : DEFAULT_DURATIONS[type];
+  const duration =
+    options.duration != null ? options.duration : DEFAULT_DURATIONS[type];
   if (duration > 0) {
     setTimeout(() => dismissToast(toast), duration);
   }

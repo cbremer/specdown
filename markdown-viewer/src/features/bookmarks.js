@@ -12,6 +12,7 @@ import { normalizeMarkdownUrl } from '../core/utils.js';
 import {
   bridgeGetPathForFile,
   bridgeReadBookmarkedFile,
+  bridgeReportFileOpenResult,
 } from '../platform/bridge.js';
 import { showToast } from './toast.js';
 
@@ -25,8 +26,8 @@ let bookmarkRecallGeneration = 0;
 let bookmarkPreviousFocus = null;
 /** @type {(() => void) | null} */
 let bookmarkReleaseFocus = null;
-/** @type {(name: string, content: string, path: string | null, meta: import('../core/state.js').TabSourceMeta | null) => void} */
-let bookmarkCreateTab = () => {};
+/** @type {(name: string, content: string, path: string | null, meta: import('../core/state.js').TabSourceMeta | null) => boolean} */
+let bookmarkCreateTab = () => false;
 /** @type {(id: number) => void} */
 let bookmarkSwitchTab = () => {};
 
@@ -199,6 +200,9 @@ export function removeBookmark(id) {
 /** @param {string} id @param {HTMLElement} [status] */
 export async function recallBookmark(id, status) {
   const generation = ++bookmarkRecallGeneration;
+  let bookmarkOpenReceipt;
+  let bookmarkFilePath = null;
+  let bookmarkOpenAccepted = false;
   try {
     const entry = getBookmarks().find((b) => b.id === id);
     if (!entry) return;
@@ -224,6 +228,8 @@ export async function recallBookmark(id, status) {
         throw new Error(
           'File unavailable. Use Locate file to reconnect this bookmark.'
         );
+      bookmarkOpenReceipt = file.openReceipt;
+      bookmarkFilePath = file.filePath;
       content = file.content;
       filename = file.filename;
     } else if (entry.type === 'url') {
@@ -255,16 +261,17 @@ export async function recallBookmark(id, status) {
     )
       return;
     const tabCount = state.tabs.length;
-    bookmarkCreateTab(
-      filename,
-      content,
-      entry.type === 'path' ? entry.ref : null,
-      entry.type === 'url'
-        ? { url: entry.ref }
-        : entry.type === 'copy'
-          ? { bookmarkId: id }
-          : null
-    );
+    bookmarkOpenAccepted =
+      bookmarkCreateTab(
+        filename,
+        content,
+        entry.type === 'path' ? bookmarkFilePath : null,
+        entry.type === 'url'
+          ? { url: entry.ref }
+          : entry.type === 'copy'
+            ? { bookmarkId: id }
+            : null
+      ) === true;
     if (state.tabs.length === tabCount) return; // Tab limit: leave the list open.
     closeBookmarks();
     if (entry.type === 'copy')
@@ -279,6 +286,10 @@ export async function recallBookmark(id, status) {
         : 'Could not open this bookmark. Check its location and try again.';
     if (status) status.textContent = message;
     else showToast(message, { type: 'error' });
+  } finally {
+    if (typeof bookmarkOpenReceipt === 'string') {
+      bridgeReportFileOpenResult(bookmarkOpenReceipt, bookmarkOpenAccepted);
+    }
   }
 }
 

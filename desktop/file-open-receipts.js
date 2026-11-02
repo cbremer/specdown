@@ -5,7 +5,12 @@ const { randomUUID } = require('crypto');
 const MAX_PENDING_OPENS = 256;
 const OPEN_RECEIPT_TTL_MS = 30000;
 
-function createFileOpenReceipts({ isAppPage, onAccepted, now = Date.now }) {
+function createFileOpenReceipts({
+  isAppPage,
+  onAccepted,
+  onResult = () => {},
+  now = Date.now,
+}) {
   const pending = new Map();
   let receiver = null;
   let epoch = 0;
@@ -52,26 +57,39 @@ function createFileOpenReceipts({ isAppPage, onAccepted, now = Date.now }) {
     return frame && !frame.detached && isAppPage(frame.url) ? frame : null;
   }
 
-  function deliver(fileData) {
+  // Request/response reads (bookmarks) and pushed opens share admission authority.
+  function prepare(fileData, context, event) {
     prune();
-    let id;
     try {
       const frame = usableFrame();
-      if (!frame || pending.size >= MAX_PENDING_OPENS) return false;
-      id = randomUUID();
+      if (!frame || pending.size >= MAX_PENDING_OPENS) return null;
+      if (event && (event.sender !== receiver || event.senderFrame !== frame))
+        return null;
+      const id = randomUUID();
       pending.set(id, {
         path: fileData.filePath,
+        context,
         receiver,
         frame,
         epoch,
         expiresAt: now() + OPEN_RECEIPT_TTL_MS,
       });
-      // Address the captured frame, rather than whichever frame is current
-      // after a navigation. A failed send must never leave a usable receipt.
-      frame.send('file-opened', { ...fileData, openReceipt: id });
+      return { ...fileData, openReceipt: id };
+    } catch {
+      return null;
+    }
+  }
+
+  function deliver(fileData, context) {
+    const prepared = prepare(fileData, context);
+    if (!prepared) return false;
+    const id = prepared.openReceipt;
+    try {
+      // Address the captured frame, not whichever frame follows navigation.
+      pending.get(id).frame.send('file-opened', prepared);
       return true;
     } catch {
-      if (id) pending.delete(id);
+      pending.delete(id);
       return false;
     }
   }
@@ -105,12 +123,14 @@ function createFileOpenReceipts({ isAppPage, onAccepted, now = Date.now }) {
     // after a newer rejected open; recents are history, not a current-title slot.
     pending.delete(result.receipt);
     if (result.accepted) onAccepted(receipt.path);
+    onResult(receipt.path, result.accepted, receipt.context);
     return true;
   }
 
   return {
     bind,
     deliver,
+    prepare,
     acknowledge,
     forget(webContents) {
       if (receiver === webContents) bind(null);

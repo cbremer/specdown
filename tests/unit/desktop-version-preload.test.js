@@ -24,7 +24,7 @@ function exposePreload({
       contextBridge: {
         exposeInMainWorld: (key, value) => exposed.set(key, value),
       },
-      ipcRenderer: {},
+      ipcRenderer: { on: jest.fn() },
     }),
     location: { href },
     process: {
