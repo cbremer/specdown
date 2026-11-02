@@ -30,3 +30,10 @@ Thumbs.db
 # Mac App Store native module (built by scripts/build-mas-native.js)
 desktop/native/mas-bookmarks/build/
 desktop/native/mas-bookmarks/*.node
+
+# Owner-private release audit originals; public counterparts are listed in the publication inventory.
+/docs/project-appstore/2026-11-01-spec-signing-backup-and-recovery.md
+/docs/project-appstore/assets/2026-10-20-header-mocks/both-headers-uploaded-app-store-connect.png
+/docs/project-appstore/assets/2026-10-20-header-mocks/device-preview-header-unassigned.png
+/docs/project-appstore/assets/2026-10-20-header-mocks/halo-uploaded-app-store-connect.png
+/docs/project-appstore/copy-review/SpecDown App Store Copy Review.docx

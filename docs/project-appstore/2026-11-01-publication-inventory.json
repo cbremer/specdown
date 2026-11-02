@@ -1,0 +1,801 @@
+{
+  "schema_version": 1,
+  "base_source_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+  "scope": "One tracked README diff and all 71 root untracked documentation/artwork/proof files; no credential stores or generated build directories",
+  "source_files": [
+    {
+      "source_path": "docs/project-appstore/README.md",
+      "source_sha256": "fc4d0dbf4fd21e6319cd251888266827f6654158bc2b3fd25c2cee40bf8d500b",
+      "bytes": 18763,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/README.md",
+      "publication_sha256": "9299835a84fc2323d7b6349dd20fa5af4bc751070dbf9bda9276e7206a0d0af3",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 19627
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-20-tasks-session-04-store-artwork.md",
+      "source_sha256": "cd7562dfc4327020eea6fc56fe2a393690dc8a14c57f228ccbefe03e4c0753b4",
+      "bytes": 2881,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-10-20-tasks-session-04-store-artwork.md",
+      "publication_sha256": "cd7562dfc4327020eea6fc56fe2a393690dc8a14c57f228ccbefe03e4c0753b4",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 2881
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-20-tasks-session-05-copy-review.md",
+      "source_sha256": "ae8cb3ba8d95e9559df9fc4a0979b78368f3714b074e4619f9bdb0255ae621ca",
+      "bytes": 3461,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-10-20-tasks-session-05-copy-review.md",
+      "publication_sha256": "972ccc0e179f3da05ae4a4c3f917e2a8177c377d609d7b6d795804ba426ffe7a",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 3411
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-20-tasks-session-06-halo-upload.md",
+      "source_sha256": "1ac356c06963e7db50b1eb819069b816521e6a0a2f4a12c243d0d3e5b76535d8",
+      "bytes": 7319,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-10-20-tasks-session-06-halo-upload.md",
+      "publication_sha256": "3957c33677c227d39665e54b0e161b2b6f91eba56860422be16b209f1e055710",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 7244
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-31-tasks-session-21-canonical-local-checkout.md",
+      "source_sha256": "1338652951319f967e589d6e0214953dcff7d41f8c970008093a30e1c6815943",
+      "bytes": 4754,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-10-31-tasks-session-21-canonical-local-checkout.md",
+      "publication_sha256": "ce2ff6aa90ad26abc5bb15053114691d178f8794419c823568f760587b7e099c",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 4702
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-31-tasks-session-22-xcode-runtime-diagnostics.md",
+      "source_sha256": "c380a67ec2cb4078c4af795553ef919afc9fa716b709c900acb908c4cd5fbdf7",
+      "bytes": 3856,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-10-31-tasks-session-22-xcode-runtime-diagnostics.md",
+      "publication_sha256": "c380a67ec2cb4078c4af795553ef919afc9fa716b709c900acb908c4cd5fbdf7",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3856
+    },
+    {
+      "source_path": "docs/project-appstore/2026-10-31-tasks-session-31-reviewed-local-icons.md",
+      "source_sha256": "54a2e68abcbe1315b172038f6a87cf0ba2c553a2eab83b11b8ea1e56952aa113",
+      "bytes": 5894,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-10-31-tasks-session-31-reviewed-local-icons.md",
+      "publication_sha256": "b2366e2e67faff3c49f23d589026cfe58588d8dce40c3328b442ca49950cd6ea",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 5842
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-spec-signing-backup-and-recovery.md",
+      "source_sha256": "7e004b7c9b3ce778644a1b59208c8fe8732e81b7903c1e75eb460bccada707aa",
+      "bytes": 7949,
+      "decision": "private_only_exact_path_ignored",
+      "reason": "Owner-private recovery procedures and backup logistics.",
+      "public_counterpart": "docs/project-appstore/2026-11-01-spec-signing-recovery-public-summary.md"
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-33-apple-channel-setup.md",
+      "source_sha256": "8c51cc78f853dd4294feaca7343cad0fa8fb338cea2ee6e694dd8fecbbddb04a",
+      "bytes": 7187,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-33-apple-channel-setup.md",
+      "publication_sha256": "8c51cc78f853dd4294feaca7343cad0fa8fb338cea2ee6e694dd8fecbbddb04a",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 7187
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-34-dev-phone-run.md",
+      "source_sha256": "4daf94454c27afa7d050a69785db57a8cde55b51939d96da4a1ce5bfe48db55f",
+      "bytes": 14173,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-34-dev-phone-run.md",
+      "publication_sha256": "ed18771ce2dd824278ca7ac57c44914fa4553e2d516dbb965e1ce17e6947ec9c",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 14067
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-35-mac-store-signing-setup.md",
+      "source_sha256": "fa2af6e455a5beec9804641f54953b9388e474171be46b47ba622b6b3df7d5ae",
+      "bytes": 11308,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-35-mac-store-signing-setup.md",
+      "publication_sha256": "d7862c04faeb8a47da3334331141e52ff59275524c3f58cf4bb06f9081726cdb",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 1255
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-36-mac-provisioning.md",
+      "source_sha256": "a61e085f2fe7598dbd2e11a28d89599345e76a6d7085a0360235f74d76d25453",
+      "bytes": 7210,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-36-mac-provisioning.md",
+      "publication_sha256": "2093b2e0fd175eb37ecde3f172143684d0e9d25b9d6a2a66d248787a75133e72",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 1187
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-39-mac-test-launcher.md",
+      "source_sha256": "7cb1dfd8429aebc54ef031b0d2d0901f87639772662bebace72b6db42f684612",
+      "bytes": 3175,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-39-mac-test-launcher.md",
+      "publication_sha256": "7cb1dfd8429aebc54ef031b0d2d0901f87639772662bebace72b6db42f684612",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3175
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-40-mac-testflight-preparation.md",
+      "source_sha256": "a42042f15f76e9211091550fe44e5645da77e46a97796936a105d7c91639ea07",
+      "bytes": 11648,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-40-mac-testflight-preparation.md",
+      "publication_sha256": "eb7993cade87c9b4e760dd4537dd7ea4127d72d7f7811872072910c7d758e9c0",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 11578
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-41-mac-testflight-retained-session.md",
+      "source_sha256": "4377daef1a58a6ebfab5d2c34915fddb309e88aaabade841a796f324282b86d3",
+      "bytes": 5551,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-41-mac-testflight-retained-session.md",
+      "publication_sha256": "4377daef1a58a6ebfab5d2c34915fddb309e88aaabade841a796f324282b86d3",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 5551
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-42-store-assets-readiness.md",
+      "source_sha256": "f61da02d256311d3fd9d89be68369b902c7d180d028c9d7f22b7e301ef27b61a",
+      "bytes": 7048,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-42-store-assets-readiness.md",
+      "publication_sha256": "f61da02d256311d3fd9d89be68369b902c7d180d028c9d7f22b7e301ef27b61a",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 7048
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-43-release-proof-preparation.md",
+      "source_sha256": "9a5e963ddac57163c597fdf17a122e087cce9c53784842af3b5e9cc24d0a6169",
+      "bytes": 14824,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-43-release-proof-preparation.md",
+      "publication_sha256": "ac4a5802ae6332694e29bbaefc84727caca805da888e030b3d164c663dced07a",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 14798
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-48-current-release-proof.md",
+      "source_sha256": "87d4743d08a160e16e8a9b277c39a94edd5f5ad1a113d4f4b2bc1c087f44a05f",
+      "bytes": 10549,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-48-current-release-proof.md",
+      "publication_sha256": "d538435a8b4508b47b9ab44fd376ee334bf4a164622bff9213304735e3821ea2",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 10497
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-49-ai-workflow-copy.md",
+      "source_sha256": "8442fd510d38cdfcd89e754639f86b850a4856b6e8c735a7f28d9b334acf423d",
+      "bytes": 5028,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-49-ai-workflow-copy.md",
+      "publication_sha256": "8442fd510d38cdfcd89e754639f86b850a4856b6e8c735a7f28d9b334acf423d",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 5028
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-50-search-artwork-review.md",
+      "source_sha256": "0c66685119ab3c5ddb95724a73ad2ae89531d63230d40396cf2b36b831b77e1e",
+      "bytes": 1885,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-50-search-artwork-review.md",
+      "publication_sha256": "0c66685119ab3c5ddb95724a73ad2ae89531d63230d40396cf2b36b831b77e1e",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 1885
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-51-selected-release-copy.md",
+      "source_sha256": "ab408ea75ddd2c3d52b93467965744e5febc7cd7d418e1f6c7a3e43edc3da2ee",
+      "bytes": 3447,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-51-selected-release-copy.md",
+      "publication_sha256": "ab408ea75ddd2c3d52b93467965744e5febc7cd7d418e1f6c7a3e43edc3da2ee",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3447
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-52-signed-229-handoff.md",
+      "source_sha256": "b8840e3e482ecaf8060573cd0e88d82483e5855921479e93a10c445054d0f9bb",
+      "bytes": 10794,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-52-signed-229-handoff.md",
+      "publication_sha256": "46340772c10183ba85540d76ff05de2db290dfec56c1330a97b95350a85b4d22",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 10768
+    },
+    {
+      "source_path": "docs/project-appstore/2026-11-01-tasks-session-55-canonical-230-preparation.md",
+      "source_sha256": "418a4c1ffe7470f4354d4ccf8dda4b2b9bbc2d60de3a11dc75b60dd88cf97ec1",
+      "bytes": 7269,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/2026-11-01-tasks-session-55-canonical-230-preparation.md",
+      "publication_sha256": "c92b9a43f9c0953855f4f8e4db261a6fec8aea01b5cf20db3a54041f846c3e05",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 7243
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/01-brand-halo.png",
+      "source_sha256": "232aa63a2d2d69ee48f43b05abc77d8e67c7643ed9925156620cf31b3fbffe29",
+      "bytes": 1499985,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/01-brand-halo.png",
+      "publication_sha256": "232aa63a2d2d69ee48f43b05abc77d8e67c7643ed9925156620cf31b3fbffe29",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 1499985
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/02-reading-companion.png",
+      "source_sha256": "89e517c01f0800741571502f2616ea7f07365ce0977b4f4430e549c1fffd778f",
+      "bytes": 1679149,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/02-reading-companion.png",
+      "publication_sha256": "89e517c01f0800741571502f2616ea7f07365ce0977b4f4430e549c1fffd778f",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 1679149
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/03-brand-halo-refined-source.png",
+      "source_sha256": "f77cba5a145e134cade8f5eebbcfc8025e7a5cabf7efe93c59c48265459fd714",
+      "bytes": 1494991,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/03-brand-halo-refined-source.png",
+      "publication_sha256": "f77cba5a145e134cade8f5eebbcfc8025e7a5cabf7efe93c59c48265459fd714",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 1494991
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/04-brand-halo-safe-area-source.png",
+      "source_sha256": "31afedd6f8910edfc8abc63495e5f8c8e6770a0d563e1a6832908b99e5df40f5",
+      "bytes": 1484442,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/04-brand-halo-safe-area-source.png",
+      "publication_sha256": "31afedd6f8910edfc8abc63495e5f8c8e6770a0d563e1a6832908b99e5df40f5",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 1484442
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/PROMPTS.md",
+      "source_sha256": "c381fd3b32a42dc8d590478840ef5cd48dbab25fcdfdaee462e8f058bd272c2f",
+      "bytes": 6170,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/PROMPTS.md",
+      "publication_sha256": "c381fd3b32a42dc8d590478840ef5cd48dbab25fcdfdaee462e8f058bd272c2f",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 6170
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/README.md",
+      "source_sha256": "9b9845ade551edeaa8649d48609c0bf83d08f14fd8957c94b4809c12b80f424a",
+      "bytes": 6655,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/README.md",
+      "publication_sha256": "472b2812674bb083afb597e99c95c9bdfd3c5966edfb5c49370bf77186a68f59",
+      "reason": "Public counterpart removes owner-local paths/private document links or private operational signing details; original remains preserved locally.",
+      "publication_bytes": 6665
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/both-headers-uploaded-app-store-connect.png",
+      "source_sha256": "9b31ab4f092e1a59bff3594803f4901fd8d6de92b04ce16eb77373b068dbd8f8",
+      "bytes": 138534,
+      "decision": "private_only_exact_path_ignored",
+      "reason": "Raw authenticated portal UI evidence; public product artwork is published separately.",
+      "public_counterpart": "docs/project-appstore/assets/2026-10-20-header-mocks/PRIVATE-PORTAL-EVIDENCE.md"
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/device-preview-header-unassigned.png",
+      "source_sha256": "26904476463c189dc5e985251729a13de505ad00a4fc69ac854259fca5c423b9",
+      "bytes": 77094,
+      "decision": "private_only_exact_path_ignored",
+      "reason": "Raw authenticated portal UI evidence; public product artwork is published separately.",
+      "public_counterpart": "docs/project-appstore/assets/2026-10-20-header-mocks/PRIVATE-PORTAL-EVIDENCE.md"
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/halo-uploaded-app-store-connect.png",
+      "source_sha256": "7e66e41260cf6d5b5e98e74b4089635a2b77a7e6edd67eca05c2ba617bb20518",
+      "bytes": 59201,
+      "decision": "private_only_exact_path_ignored",
+      "reason": "Raw authenticated portal UI evidence; public product artwork is published separately.",
+      "public_counterpart": "docs/project-appstore/assets/2026-10-20-header-mocks/PRIVATE-PORTAL-EVIDENCE.md"
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/specdown-brand-halo-header-3840x1646.png",
+      "source_sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "bytes": 2273904,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/specdown-brand-halo-header-3840x1646.png",
+      "publication_sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 2273904
+    },
+    {
+      "source_path": "docs/project-appstore/assets/2026-10-20-header-mocks/specdown-reading-companion-header-3840x1646.png",
+      "source_sha256": "241049bfd34f84ac447520095a5b43586c1bb558a1293f5325ca05646dafe7ee",
+      "bytes": 3211638,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/assets/2026-10-20-header-mocks/specdown-reading-companion-header-3840x1646.png",
+      "publication_sha256": "241049bfd34f84ac447520095a5b43586c1bb558a1293f5325ca05646dafe7ee",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 3211638
+    },
+    {
+      "source_path": "docs/project-appstore/copy-review/SpecDown App Store Copy Review.docx",
+      "source_sha256": "87a2c9e5f80ed3c20dbc2cfad3f8646a9dea184ed5a4cde3a5d2a6b82b3d737a",
+      "bytes": 49947,
+      "decision": "private_only_exact_path_ignored",
+      "reason": "Original editable working document package; owner-local source paths and package metadata retained privately.",
+      "public_counterpart": "docs/project-appstore/copy-review/2026-10-20-app-store-copy-review-public.md"
+    },
+    {
+      "source_path": "docs/project-appstore/copy-review/proposed-copy.json",
+      "source_sha256": "bd95598902c6765b13fee979bfc49f1a76543eb419ee6f5e310cb0f791ed656b",
+      "bytes": 4350,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/copy-review/proposed-copy.json",
+      "publication_sha256": "bd95598902c6765b13fee979bfc49f1a76543eb419ee6f5e310cb0f791ed656b",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 4350
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/acceptance-checklist.md",
+      "source_sha256": "c849f5ee597ce2ba625725610271140bfa2b729f366f1f49c8a104b58e13e98a",
+      "bytes": 20493,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/acceptance-checklist.md",
+      "publication_sha256": "c849f5ee597ce2ba625725610271140bfa2b729f366f1f49c8a104b58e13e98a",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 20493
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/artwork/PROMPT.md",
+      "source_sha256": "68a594876d1199963c2c4e277b0f04e031bf7adf5ff67d6a78d528f15346d34c",
+      "bytes": 757,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/artwork/PROMPT.md",
+      "publication_sha256": "68a594876d1199963c2c4e277b0f04e031bf7adf5ff67d6a78d528f15346d34c",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 757
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/artwork/halo-search-results-generated.png",
+      "source_sha256": "0e81e8db3a731d5f38453d99e1d65483f3a7537113132f9683c1bc984f219285",
+      "bytes": 1518389,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/artwork/halo-search-results-generated.png",
+      "publication_sha256": "0e81e8db3a731d5f38453d99e1d65483f3a7537113132f9683c1bc984f219285",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 1518389
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/artwork/manifest.json",
+      "source_sha256": "ac31bf3acc80ec49fd037c0230d0db0b6e04bc586b6e613849fde3813a5a370c",
+      "bytes": 3417,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/artwork/manifest.json",
+      "publication_sha256": "ac31bf3acc80ec49fd037c0230d0db0b6e04bc586b6e613849fde3813a5a370c",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3417
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/artwork/specdown-brand-halo-header-3840x1646.png",
+      "source_sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "bytes": 2273904,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/artwork/specdown-brand-halo-header-3840x1646.png",
+      "publication_sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 2273904
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/artwork/specdown-halo-search-results-1920x1280.png",
+      "source_sha256": "145100f59dfcd82464ef3af665f4feb911136aafdb10b0f39554c8182da8af79",
+      "bytes": 2082192,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/artwork/specdown-halo-search-results-1920x1280.png",
+      "publication_sha256": "145100f59dfcd82464ef3af665f4feb911136aafdb10b0f39554c8182da8af79",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 2082192
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/build-status.json",
+      "source_sha256": "cd56d8dc56ebcc18e84da5f76050e99331d37e2545839164b503886a8baed013",
+      "bytes": 29383,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/build-status.json",
+      "publication_sha256": "c91a0f73bf30ba029bb436ced1403e5490721b986f14cc0512b8ad41d98af867",
+      "reason": "Normalize owner-local paths, label public snapshot and rebind public metadata hashes; preserve source/artifact and historical version distinctions.",
+      "publication_bytes": 29399
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/ios-en-US.json",
+      "source_sha256": "cdce9872c17093a1d2e5a12d8fe03183f8b03f9ce4a4d03d6db3a67925b34bb2",
+      "bytes": 4247,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/ios-en-US.json",
+      "publication_sha256": "cdce9872c17093a1d2e5a12d8fe03183f8b03f9ce4a4d03d6db3a67925b34bb2",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 4247
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/ios-review-notes.txt",
+      "source_sha256": "ce251d61a45062905d25b5fd6ce2576434f97d5c9c11a882e5c751d30a546425",
+      "bytes": 1556,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/ios-review-notes.txt",
+      "publication_sha256": "ce251d61a45062905d25b5fd6ce2576434f97d5c9c11a882e5c751d30a546425",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 1556
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/mac-en-US.json",
+      "source_sha256": "9d781571fd305deaecb1e751ef4a0e96a0035da96c7319a62b44ad9f90e8d8c0",
+      "bytes": 3729,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/mac-en-US.json",
+      "publication_sha256": "9d781571fd305deaecb1e751ef4a0e96a0035da96c7319a62b44ad9f90e8d8c0",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3729
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/mac-review-notes.txt",
+      "source_sha256": "c9fb1af8807303b1248b31e856c7e49060c78f9d1b1bccb014af54e14b0f79d5",
+      "bytes": 1499,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/mac-review-notes.txt",
+      "publication_sha256": "c9fb1af8807303b1248b31e856c7e49060c78f9d1b1bccb014af54e14b0f79d5",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 1499
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/proof.md",
+      "source_sha256": "88a14d289fe7976358e7406c55107bc6de68584a2c6ed6ee62ee8239caff337a",
+      "bytes": 12025,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/proof.md",
+      "publication_sha256": "88a14d289fe7976358e7406c55107bc6de68584a2c6ed6ee62ee8239caff337a",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 12025
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/screenshot-captions.json",
+      "source_sha256": "d4e4ef44a875dcf166fa40e061781a44fa0267d65c69106e703346249be5e507",
+      "bytes": 7949,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/screenshot-captions.json",
+      "publication_sha256": "d4e4ef44a875dcf166fa40e061781a44fa0267d65c69106e703346249be5e507",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 7949
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/ios-en-US.json",
+      "source_sha256": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82",
+      "bytes": 4171,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/ios-en-US.json",
+      "publication_sha256": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 4171
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/mac-en-US.json",
+      "source_sha256": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2",
+      "bytes": 3560,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/mac-en-US.json",
+      "publication_sha256": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3560
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/proof.md",
+      "source_sha256": "a657543d8938f7f28147a6555e49797bec9efe357cdc02936f1f6c11f4caad1a",
+      "bytes": 9507,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/proof.md",
+      "publication_sha256": "a657543d8938f7f28147a6555e49797bec9efe357cdc02936f1f6c11f4caad1a",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 9507
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/screenshot-captions.json",
+      "source_sha256": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf",
+      "bytes": 7865,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/screenshot-captions.json",
+      "publication_sha256": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 7865
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/validation.json",
+      "source_sha256": "61a14d96711cfa34e4f5cf8ca9a78d9b1efec1073d86a88a12d2e11e46845ad8",
+      "bytes": 4243,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selected/validation.json",
+      "publication_sha256": "61a14d96711cfa34e4f5cf8ca9a78d9b1efec1073d86a88a12d2e11e46845ad8",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 4243
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/selection.json",
+      "source_sha256": "ef9f056b337eb135f9134fe38106b849eed7b3aef89a54e41c1a8a3bb2677862",
+      "bytes": 2657,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/selection.json",
+      "publication_sha256": "ef9f056b337eb135f9134fe38106b849eed7b3aef89a54e41c1a8a3bb2677862",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 2657
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/validate-copy.py",
+      "source_sha256": "774fd7e4b796d18c50773945cbed144322d896cba76dcdd776ace32191334498",
+      "bytes": 4286,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/validate-copy.py",
+      "publication_sha256": "774fd7e4b796d18c50773945cbed144322d896cba76dcdd776ace32191334498",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 4286
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/copy/validation.json",
+      "source_sha256": "9825f6ff58356fb75e6bc243286b00c7f1783e849eae340ea3b4b91e50c721a4",
+      "bytes": 5860,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/copy/validation.json",
+      "publication_sha256": "9825f6ff58356fb75e6bc243286b00c7f1783e849eae340ea3b4b91e50c721a4",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 5860
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/gallery-manifest-contract.json",
+      "source_sha256": "bbe9d81b6a97a0f9eeb3ab609d82575840cc36584fc87b2ffb94a0d6caf13b66",
+      "bytes": 3578,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/gallery-manifest-contract.json",
+      "publication_sha256": "bbe9d81b6a97a0f9eeb3ab609d82575840cc36584fc87b2ffb94a0d6caf13b66",
+      "reason": "Public release documentation, copy or proof input; exact original bytes retained.",
+      "publication_bytes": 3578
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/index.html",
+      "source_sha256": "3e4a8e636fbf630bcba8b8678e2ef953aa5b292a27395d910e6f6de5dd3ddec4",
+      "bytes": 41812,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/index.html",
+      "publication_sha256": "eaf978e7c3fd2bf6999692711657f989be8ce36ea3673e49acd0c2bfba945137",
+      "reason": "Normalize owner-local paths, label public snapshot and rebind public metadata hashes; preserve source/artifact and historical version distinctions.",
+      "publication_bytes": 41941
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/preparation-status.json",
+      "source_sha256": "ad26c334cb15dd90c45fba5cd854efce5bfb7e1b3d38b23484c57c8edbf2bbdc",
+      "bytes": 39375,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/preparation-status.json",
+      "publication_sha256": "2c6a085b4527611323535448140090d3a557df1ebbd7e519cd48b8cef166bb13",
+      "reason": "Normalize owner-local paths, label public snapshot and rebind public metadata hashes; preserve source/artifact and historical version distinctions.",
+      "publication_bytes": 39338
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/01-system-architecture.jpg",
+      "source_sha256": "8320ee7cb6de3c219ef132ed3612f3ae1e22a2e8d94a032c4b26cae26c90672e",
+      "bytes": 251778,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/01-system-architecture.jpg",
+      "publication_sha256": "8320ee7cb6de3c219ef132ed3612f3ae1e22a2e8d94a032c4b26cae26c90672e",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 251778
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/01-system-architecture.png",
+      "source_sha256": "c0342ec1303534ab30b981e1d06c091464dbd537fc1e5d9e1ebd85cb5c7fc46e",
+      "bytes": 210845,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/01-system-architecture.png",
+      "publication_sha256": "c0342ec1303534ab30b981e1d06c091464dbd537fc1e5d9e1ebd85cb5c7fc46e",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 210845
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/02-sign-in-flow.jpg",
+      "source_sha256": "7574344382776924ab0a11927b52ad5a45549c3bd92ca377a14b3eb273804679",
+      "bytes": 149224,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/02-sign-in-flow.jpg",
+      "publication_sha256": "7574344382776924ab0a11927b52ad5a45549c3bd92ca377a14b3eb273804679",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 149224
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/03-api-reference.jpg",
+      "source_sha256": "644d44f7318c77cb949643c44c738ce6dcfd6f903ea7b6f8e20d7eb3862dd011",
+      "bytes": 277358,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/03-api-reference.jpg",
+      "publication_sha256": "644d44f7318c77cb949643c44c738ce6dcfd6f903ea7b6f8e20d7eb3862dd011",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 277358
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/04-order-lifecycle.jpg",
+      "source_sha256": "56d809794ad5ef2042803340eb37f4c83e33715f5016757b4ee493ddda3790c0",
+      "bytes": 178946,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/04-order-lifecycle.jpg",
+      "publication_sha256": "56d809794ad5ef2042803340eb37f4c83e33715f5016757b4ee493ddda3790c0",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 178946
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/05-dark-architecture.jpg",
+      "source_sha256": "4dcbe1023a57ccdfa178eebd056ace895b48de7f09ee4361699dcbd2e568aabc",
+      "bytes": 244393,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone63/05-dark-architecture.jpg",
+      "publication_sha256": "4dcbe1023a57ccdfa178eebd056ace895b48de7f09ee4361699dcbd2e568aabc",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 244393
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/01-system-architecture.jpg",
+      "source_sha256": "3ef440905e9b14fa4251619f78b16b5165e1637ce0ae15bf81140bfd703a946d",
+      "bytes": 300482,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/01-system-architecture.jpg",
+      "publication_sha256": "3ef440905e9b14fa4251619f78b16b5165e1637ce0ae15bf81140bfd703a946d",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 300482
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/02-sign-in-flow.jpg",
+      "source_sha256": "9e6031cd79f18db9cd0ccaaca5d3050bc015f539dff4d138b10ea36e37de9ad2",
+      "bytes": 175453,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/02-sign-in-flow.jpg",
+      "publication_sha256": "9e6031cd79f18db9cd0ccaaca5d3050bc015f539dff4d138b10ea36e37de9ad2",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 175453
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/03-api-reference.jpg",
+      "source_sha256": "8312fad7f342f5cf8cc11667a6527f6e41836c41d36a434ece7a0cf83297410c",
+      "bytes": 360024,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/03-api-reference.jpg",
+      "publication_sha256": "8312fad7f342f5cf8cc11667a6527f6e41836c41d36a434ece7a0cf83297410c",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 360024
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/04-order-lifecycle.jpg",
+      "source_sha256": "c0889f87e30bef0aa4a67be83cb386f4a7f3da66ad2e9f71d9c97c224f07c726",
+      "bytes": 181269,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/04-order-lifecycle.jpg",
+      "publication_sha256": "c0889f87e30bef0aa4a67be83cb386f4a7f3da66ad2e9f71d9c97c224f07c726",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 181269
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/05-dark-architecture.jpg",
+      "source_sha256": "45114e57078fda007c63c1971ae29315b812c85bc2a2eed1ff320ac12d89c319",
+      "bytes": 292528,
+      "decision": "publish_exact",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/iphone69/05-dark-architecture.jpg",
+      "publication_sha256": "45114e57078fda007c63c1971ae29315b812c85bc2a2eed1ff320ac12d89c319",
+      "reason": "Approved artwork or synthetic native screenshot; exact original bytes and provenance retained.",
+      "publication_bytes": 292528
+    },
+    {
+      "source_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/manifest.json",
+      "source_sha256": "d7987db7528b240d12cfd94d9f64458989a1c766268ec3fb7afbc673b14d4bb2",
+      "bytes": 9906,
+      "decision": "publish_sanitized",
+      "publication_path": "docs/project-appstore/release-proof-2026-11-01/screenshots/manifest.json",
+      "publication_sha256": "5644f27a12ec70340f7d5af6dfdf0ac6288f8a9eb74dab22e9c3f64b8e264b5d",
+      "reason": "Omit local simulator instance IDs; preserve original image hashes/build229/device-model/OS provenance.",
+      "publication_bytes": 9952
+    }
+  ],
+  "status": "candidate_frozen_pending_independent_publication_review",
+  "private_original_policy": "Exact-path ignores preserve the five original private files in the canonical checkout; sanitized tracked counterparts and original hashes are listed explicitly. No original bytes are deleted.",
+  "artifact_source_references": {
+    "historical_229": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+    "current_unsigned_230": "28848a25b837c022918ccc1625b17af0fa9c80e1"
+  },
+  "new_public_counterparts": [
+    "docs/project-appstore/2026-11-01-spec-signing-recovery-public-summary.md",
+    "docs/project-appstore/copy-review/2026-10-20-app-store-copy-review-public.md",
+    "docs/project-appstore/assets/2026-10-20-header-mocks/PRIVATE-PORTAL-EVIDENCE.md"
+  ],
+  "source_prs": [
+    {
+      "number": 345,
+      "url": "https://github.com/cbremer/specdown/pull/345",
+      "commit_short": "b512db3",
+      "change": "Align Mac Store version with iOS",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 346,
+      "url": "https://github.com/cbremer/specdown/pull/346",
+      "commit_short": "eed62c9",
+      "change": "Trusted viewer startup delivery",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 347,
+      "url": "https://github.com/cbremer/specdown/pull/347",
+      "commit_short": "00da12e",
+      "change": "Installer profile and payload permission guards",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 348,
+      "url": "https://github.com/cbremer/specdown/pull/348",
+      "commit_short": "0370329",
+      "change": "Explicit missing startup-file recovery",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 349,
+      "url": "https://github.com/cbremer/specdown/pull/349",
+      "commit_short": "bb59e16",
+      "change": "Aligned build229 source stamp",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 350,
+      "url": "https://github.com/cbremer/specdown/pull/350",
+      "commit_short": "b9e5472",
+      "change": "Remove unsupported diagram share-link action",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 351,
+      "url": "https://github.com/cbremer/specdown/pull/351",
+      "commit_short": "2414bc5",
+      "change": "Close Folder lifecycle",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "Review pending at checkpoint"
+    },
+    {
+      "number": 352,
+      "url": "https://github.com/cbremer/specdown/pull/352",
+      "commit_short": "28848a2",
+      "change": "Aligned build230 source stamp",
+      "state_at_publication": "ready for review; source workflows passed; not merged; required approval remains separate",
+      "copilot_checkpoint": "COMMENTED approval recommended, zero inline findings; not a required GitHub approval"
+    }
+  ],
+  "additional_public_files": [
+    "docs/project-appstore/2026-11-01-tasks-session-56-publication.md",
+    ".gitignore",
+    "docs/project-appstore/2026-11-01-spec-signing-recovery-public-summary.md",
+    "docs/project-appstore/copy-review/2026-10-20-app-store-copy-review-public.md",
+    "docs/project-appstore/assets/2026-10-20-header-mocks/PRIVATE-PORTAL-EVIDENCE.md"
+  ]
+}

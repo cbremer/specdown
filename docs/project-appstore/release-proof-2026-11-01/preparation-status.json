@@ -1,0 +1,738 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-11-02T03:59:13.999067+00:00",
+  "scope": "Reviewed Close Folder and aligned 1.0.1 (230) source are staged in the canonical checkout at 28848a2. Signing-disabled production iOS device and simulator Release products pass independent verification. The unsigned Mac arm64 review package also passes independent static verification; twelve observed unsigned native UI cases also pass. Provisioned sandbox, Intel and production TestFlight acceptance remain unverified. No 230 signing, upload, TestFlight acceptance or App Review is claimed. Exact signed/Owner-only 229 records and screenshot provenance remain historical.",
+  "status": "In preparation",
+  "marketing_version": "1.0.1",
+  "canonical_owner_checkout": {
+    "observed_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+    "branch": "codex/local-ios-1-0-1",
+    "canonical_project": "<repo>/ios/SpecDown.xcodeproj",
+    "unchanged_by_this_documentation_task": true,
+    "promotion_status": "Independently verified guarded promotion; 70 owner/local files and original README rows preserved",
+    "promotion_evidence": {
+      "file": "ios/DerivedData/release-230-20261101/promotion/promotion.json",
+      "sha256": "7a2470823218860215b3b6e65cebef532fc2dcd86b88d9614492423511592628"
+    },
+    "independent_review": {
+      "file": "ios/DerivedData/release-230-20261101/promotion/independent-review.json",
+      "sha256": "79665f7fed7d1c31d8e09c5d2e7acdf8c7d12b0f4b183091c4ee6f0ac2bd803c"
+    }
+  },
+  "source_preparation": {
+    "status": "Reviewed and staged",
+    "observed_head": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+    "observed_version_stamp": "1.0.1 (230)",
+    "required_diagram_link_removal_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+    "close_folder_revision": "2414bc5745efe9a7dd4b765d2196cedfecfabc15",
+    "version_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+    "tests": 1341,
+    "suites": 77,
+    "required_coverage_lint_typecheck_build": "passed",
+    "independent_close_folder_cases": 58,
+    "production_browser_cases": 10,
+    "close_folder_manifest": {
+      "file": "ios/DerivedData/close-folder-20261101/author/candidate-manifest.json",
+      "sha256": "4824ff2cb5d8ad647da9875dce6a5c52aa0b992c105c99c060897e70c5e9196d"
+    },
+    "close_folder_independent_review": {
+      "file": "ios/DerivedData/close-folder-20261101/independent/review.json",
+      "sha256": "b2eb9c027eb3640272cc139a8af0ee4e85b810003999a3a68c18e7994672c4fb"
+    },
+    "browser_evidence": {
+      "file": "ios/DerivedData/close-folder-20261101/parent/browser-final-result.json",
+      "sha256": "f1f06885239fbd5be86736f1a2db3c4cf14e4b24a6307e98b3b8419fb38e4a32"
+    },
+    "version_manifest": {
+      "file": "ios/DerivedData/release-230-20261101/author/candidate-manifest.json",
+      "sha256": "5164705d6b2fd8b808e70d7756adf110115560b0b430f93d56dcf0f7a156b074"
+    },
+    "version_review": {
+      "file": "ios/DerivedData/release-230-20261101/independent/review.json",
+      "sha256": "c9163bc23dcdfdf2e77ffce2811864a29971321939fd6523262c4ec6d73377f8"
+    },
+    "promotion": {
+      "file": "ios/DerivedData/release-230-20261101/promotion/promotion.json",
+      "sha256": "7a2470823218860215b3b6e65cebef532fc2dcd86b88d9614492423511592628"
+    },
+    "promotion_review": {
+      "file": "ios/DerivedData/release-230-20261101/promotion/independent-review.json",
+      "sha256": "79665f7fed7d1c31d8e09c5d2e7acdf8c7d12b0f4b183091c4ee6f0ac2bd803c"
+    }
+  },
+  "final_native_candidates": {
+    "ios": {
+      "status": "in_preparation",
+      "version": "1.0.1",
+      "build": "230",
+      "source_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+      "bundle_id": "com.mosaicpando.specdown",
+      "signed_upload_ready": false,
+      "signed_artifact_status": "Not signed for distribution",
+      "delivery_status": "Not uploaded",
+      "apple_processing": "Not uploaded",
+      "physical_testflight_acceptance": "Pending exact production build 230",
+      "app_review_submitted": false,
+      "public_release": false,
+      "distribution_channel": "production iOS / iPadOS",
+      "unsigned": true,
+      "unsigned_artifact_status": "Verified signing-disabled Release device and simulator products",
+      "summary": "Reviewed build 230 includes the diagram-link removal and the shared viewer used by the Mac Close Folder release. Folder controls remain unavailable in native iOS. Unsigned device/simulator products are independently verified; signing, TestFlight upload and physical acceptance remain pending.",
+      "artifacts": [
+        {
+          "lane": "device",
+          "artifact": "<repo>/ios/DerivedData/release-230-20261101/native/device/Build/Products/Release-iphoneos/Specdown.app",
+          "bundle": "com.mosaicpando.specdown",
+          "version": "1.0.1",
+          "build": "230",
+          "minimum_os": "16.0",
+          "families": [
+            1,
+            2
+          ],
+          "architectures": [
+            "arm64"
+          ],
+          "alternate_icons": [
+            "AppIcon-ceramic",
+            "AppIcon-flat",
+            "AppIcon-glass",
+            "AppIcon-layered",
+            "AppIcon-light",
+            "AppIcon-metallic",
+            "AppIcon-minimal"
+          ],
+          "web_files_exact": 110,
+          "no_distribution_or_development_signing": true,
+          "signature_observation": "<repo>/ios/DerivedData/release-230-20261101/native/device/Build/Products/Release-iphoneos/Specdown.app: code object is not signed at all",
+          "build_warnings": [
+            "Metadata extraction skipped, no AppIntents.framework dependency found"
+          ],
+          "build_log_sha256": "e1bde35c83585be0227306cd49163b67e05f2a5b064baf23202c230e1056f6e9"
+        },
+        {
+          "lane": "simulator",
+          "artifact": "<repo>/ios/DerivedData/release-230-20261101/native/simulator/Build/Products/Release-iphonesimulator/Specdown.app",
+          "bundle": "com.mosaicpando.specdown",
+          "version": "1.0.1",
+          "build": "230",
+          "minimum_os": "16.0",
+          "families": [
+            1,
+            2
+          ],
+          "architectures": [
+            "x86_64",
+            "arm64"
+          ],
+          "alternate_icons": [
+            "AppIcon-ceramic",
+            "AppIcon-flat",
+            "AppIcon-glass",
+            "AppIcon-layered",
+            "AppIcon-light",
+            "AppIcon-metallic",
+            "AppIcon-minimal"
+          ],
+          "web_files_exact": 110,
+          "no_distribution_or_development_signing": true,
+          "signature_observation": "Executable=<repo>/ios/DerivedData/release-230-20261101/native/simulator/Build/Products/Release-iphonesimulator/Specdown.app/Specdown\nIdentifier=Specdown\nFormat=app bundle with Mach-O universal (x86_64 arm64)\nCodeDirectory v=20400 size=3969 flags=0x20002(adhoc,linker-signed) hashes=121+0 location=embedded\nSignature=adhoc\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements=none",
+          "build_warnings": [
+            "Metadata extraction skipped, no AppIntents.framework dependency found"
+          ],
+          "build_log_sha256": "9303b5a13db120e4c0fff2cb0c6a63bf176cdba6bb02c9f2fcd6a9ed36a35998"
+        }
+      ],
+      "verification": {
+        "verification": {
+          "file": "ios/DerivedData/release-230-20261101/native/verification.json",
+          "sha256": "fdf416b4881d98f644e2dc6e9375d5818a37362e823d1b0a33b7ec5d731199bb"
+        },
+        "independent_review": {
+          "file": "ios/DerivedData/release-230-20261101/native/independent/review.json",
+          "sha256": "0149484b29aa74a1f49522c534ee0c04adc0794fcf36c04b9822ea90029d41db"
+        }
+      },
+      "web_files": 110,
+      "limits": [
+        "Device is unsigned. Simulator x86_64 is unsigned; arm64 has only the linker-generated ad-hoc signature, with no owner/team identity or resource seal.",
+        "Neither product is an uploadable signed archive. No install, simulator boot, Run or physical acceptance occurred.",
+        "Both build logs contain one App Intents metadata-extraction-skipped warning and no errors."
+      ]
+    },
+    "mac": {
+      "status": "in_preparation",
+      "version": "1.0.1",
+      "build": "230",
+      "source_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+      "bundle_id": "com.mosaicpando.specdown",
+      "signed_upload_ready": false,
+      "signed_artifact_status": "Not signed for distribution",
+      "delivery_status": "Not uploaded",
+      "apple_processing": "Not uploaded",
+      "physical_testflight_acceptance": "Pending exact production build 230",
+      "app_review_submitted": false,
+      "public_release": false,
+      "distribution_channel": "Mac App Store",
+      "unsigned": true,
+      "unsigned_artifact_status": "Independent static verification passed for arm64 review app",
+      "summary": "Build 230 includes Close Folder and the diagram-link removal. Its unsigned arm64 review app passes static verification and 12 observed native UI cases. Provisioned sandbox, Intel runtime, universal distribution signing and TestFlight acceptance remain pending.",
+      "limits": [
+        "Unsigned arm64 review artifact with 12 scoped native UI observations only; no new owner signature, profile, installer, provisioned sandbox or upload readiness claim.",
+        "Cached arm64 linker ad-hoc metadata is not an owner distribution signature; the cached bookmark addon retains its separately verified universal provenance.",
+        "A new universal distribution package and exact physical TestFlight acceptance remain pending. Earlier signed 229 is historical."
+      ],
+      "artifact": "<repo>/ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/build/mas-dev-arm64/SpecDown.app",
+      "artifact_type": "Unsigned arm64 MAS review app; not an installer or universal distribution artifact",
+      "architectures": [
+        "arm64"
+      ],
+      "web_files": 110,
+      "packaged_source_and_web_files": 127,
+      "packaged_dependency_files": 8555,
+      "asar_leaf_files": 8684,
+      "asar_sha256": "cb2588de29c49fa681bc882afa471839db3c0d9246b7eda31f37d30fff51b693",
+      "bundle_files": 259,
+      "bundle_internal_links": 4,
+      "native_binaries": 10,
+      "arm64_electron_binaries": 9,
+      "cached_universal_bookmark_addon": 1,
+      "minimum_os": "13.0",
+      "electron": "44.10.1",
+      "updater_present": false,
+      "owner_signature": false,
+      "provisioning_profile": false,
+      "runtime_acceptance": "12 scoped unsigned arm64 MAS-runtime UI cases passed; production TestFlight, provisioned sandbox and Intel runtime acceptance pending",
+      "verification": {
+        "artifact_manifest": {
+          "file": "ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/ARTIFACT-MANIFEST.json",
+          "sha256": "a8511087e3a37dee8c5317425873775a46b89bce45b0cb5f35958c5502412f1a"
+        },
+        "package": {
+          "file": "ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/package-verification.json",
+          "sha256": "6b5d58838cb5c06be6241cd21107e1761a59ac15f5454f12e0735f5cd6423775"
+        },
+        "outer": {
+          "file": "ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/outer-verification.json",
+          "sha256": "d710fc2f405e0e50f794384968e41f813c1e0d2fdc5b10befe64978f1f8d8e89"
+        },
+        "independent_review": {
+          "file": "ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/independent/review.json",
+          "sha256": "02df3c0fa87c6b9e7cf2849478bf5c779af8fb85f42370ea3dbcda746683851f"
+        },
+        "final_gate": {
+          "file": "ios/DerivedData/close-folder-20261101/packaging-plan/runs/230-28848a2-attempt01/FINAL-INDEPENDENT-GATE.json",
+          "sha256": "1bab1b06dc73674023a3fd72eeb52852a955a3d7e4a043c4ed8e2be90ebe1ff7"
+        }
+      },
+      "runtime_evidence": {
+        "file": "ios/DerivedData/release-230-20261101/mac-runtime-unsigned/runtime-result.json",
+        "sha256": "3ad6257cb618ac93dba482d0f55afe94e6ee3ccad01917b27d045354c8ed23f9",
+        "case_count": 12,
+        "scope": "Observed unsigned arm64 MAS-runtime UI only; not provisioned sandbox, Intel runtime or Store/TestFlight acceptance"
+      },
+      "runtime_scope": [
+        "Unsigned arm64 MAS-runtime UI smoke; no owner certificate, profile, provisioned sandbox, universal Intel runtime or Store/TestFlight acceptance",
+        "Fresh Electron user-data directory only; bundle identity and OS recents are shared",
+        "Synthetic folder/document fixtures only; no live note stores or unrelated user documents read or migrated",
+        "Native empty-folder/pending-picker race UI and note persistence were not exercised; automated/source/browser coverage is separate",
+        "No signing, upload, App Review or public release"
+      ]
+    },
+    "build_status_manifest": {
+      "file": "build-status.json",
+      "sha256": "c91a0f73bf30ba029bb436ced1403e5490721b986f14cc0512b8ad41d98af867"
+    }
+  },
+  "copy": {
+    "selection": "retained_saved_portal_copy",
+    "selection_manifest": {
+      "file": "copy/selection.json",
+      "sha256": "ef9f056b337eb135f9134fe38106b849eed7b3aef89a54e41c1a8a3bb2677862"
+    },
+    "status": "Existing saved copy selected for this release pass; optional AI workflow refinement deferred; final owner proof remains pending",
+    "optional_later": {
+      "status": "Deferred; not a release blocker",
+      "proof": "copy/proof.md",
+      "ios": {
+        "file": "copy/ios-en-US.json",
+        "sha256": "cdce9872c17093a1d2e5a12d8fe03183f8b03f9ce4a4d03d6db3a67925b34bb2"
+      },
+      "mac": {
+        "file": "copy/mac-en-US.json",
+        "sha256": "9d781571fd305deaecb1e751ef4a0e96a0035da96c7319a62b44ad9f90e8d8c0"
+      },
+      "captions": {
+        "file": "copy/screenshot-captions.json",
+        "sha256": "d4e4ef44a875dcf166fa40e061781a44fa0267d65c69106e703346249be5e507"
+      },
+      "validation": {
+        "file": "copy/validation.json",
+        "sha256": "9825f6ff58356fb75e6bc243286b00c7f1783e849eae340ea3b4b91e50c721a4"
+      }
+    },
+    "ios": {
+      "file": "copy/selected/ios-en-US.json",
+      "sha256": "267d8eb00095b09b70fcdea6577f9333c87351e41f94885885cd4e5833edde82",
+      "portal_url": "https://appstoreconnect.apple.com/apps/6822086808/distribution/ios/version/inflight",
+      "status": "Selected retained saved copy; no portal edit in this selection task",
+      "owner_final_proof": "Pending",
+      "saved_fields_verified": [
+        "promotional_text",
+        "description",
+        "whats_new",
+        "keywords",
+        "app_review_notes"
+      ],
+      "verification_evidence": "ios/DerivedData/store-asset-audit-20261101/ios-draft-copy-verification.json",
+      "verification_evidence_sha256": "b67320d0db32812d4b16e35230977d34729b3cff29fafc04e47a1c72b0f6a695",
+      "verification_scope": "Historical Session43 readback of listed fields. Current draft confirmation remains pending; no fresh subtitle/App Information verification claimed.",
+      "changed_fields_pending_sync": []
+    },
+    "mac": {
+      "file": "copy/selected/mac-en-US.json",
+      "sha256": "755188e8cba36f849339cb09a2bb6e7383b822dab66df3887c5eec520d0cd9c2",
+      "portal_url": "https://appstoreconnect.apple.com/apps/6822086808/distribution/macos/version/inflight",
+      "status": "Selected retained saved copy; no portal edit in this selection task",
+      "owner_final_proof": "Pending",
+      "saved_fields_verified": [
+        "promotional_text",
+        "description",
+        "keywords",
+        "app_review_notes"
+      ],
+      "verification_evidence": "ios/DerivedData/store-asset-audit-20261101/mac-draft-copy-verification.json",
+      "verification_evidence_sha256": "b570bad08952afcf79c60e8888427cc452d0261d7c76c0578b2613b88f5c9756",
+      "verification_scope": "Historical Session43 readback of listed fields. Current draft confirmation remains pending; no fresh subtitle/App Information verification claimed.",
+      "changed_fields_pending_sync": [],
+      "whats_new_status": "Prepared reference only; first Mac version had no What\u2019s New field in observed portal."
+    },
+    "validation": {
+      "file": "copy/selected/validation.json",
+      "sha256": "61a14d96711cfa34e4f5cf8ca9a78d9b1efec1073d86a88a12d2e11e46845ad8"
+    }
+  },
+  "artwork": {
+    "manifest": "artwork/manifest.json",
+    "manifest_sha256": "ac31bf3acc80ec49fd037c0230d0db0b6e04bc586b6e613849fde3813a5a370c",
+    "header": {
+      "asset_id": "fe000019-6a0c-8898-8029-cae241fa2fe2",
+      "status": "Approved",
+      "assignment": "Confirmed: iOS1.0.1 en-US Product Page Header",
+      "owner_crop_proof": "Pending",
+      "file": "artwork/specdown-brand-halo-header-3840x1646.png",
+      "sha256": "d95704918b1076541af1186b0b860a05fd6f2c893ffab1b6cd81c98310c357dd",
+      "evidence": "ios/DerivedData/store-asset-audit-20261101/halo-assignment-confirmed.txt",
+      "evidence_sha256": "52ad76af813e2dc6e7faacea95c599c52ce15f075a13e68b70ea7c2e5c000d80",
+      "reference_preview_review": {
+        "status": "Passed parent visual inspection",
+        "evidence": "ios/DerivedData/store-asset-audit-20261101/halo-header-crop-review.json",
+        "evidence_sha256": "b2c4752e102e35f4d1bdf81a95ae764fcb85efeb1bb54617ea37a20c776a6972",
+        "owner_acceptance": false,
+        "limits": "Apple reference previews only; placeholder icon/inherited screenshots are not final229 evidence."
+      }
+    },
+    "search_results": {
+      "asset_id": "c7c00019-6a0c-8898-8036-5a719f4c0b25",
+      "status": "Waiting for Review",
+      "submitted": true,
+      "assigned": false,
+      "owner_proof": "Chris authorized creative review submission; final placement proof pending",
+      "file": "artwork/specdown-halo-search-results-1920x1280.png",
+      "sha256": "145100f59dfcd82464ef3af665f4feb911136aafdb10b0f39554c8182da8af79",
+      "evidence": "ios/DerivedData/store-asset-audit-20261101/halo-search-review-verification.json",
+      "evidence_sha256": "9ce1e9f5dbc28532348510674043e31b731bfd727010778de37c9df60b1cec13",
+      "approved": false,
+      "submission_id": "4c7f69e9-9e71-4dda-94ed-f01cce88816a",
+      "submission_url": "https://appstoreconnect.apple.com/apps/6822086808/distribution/reviewsubmissions/details/4c7f69e9-9e71-4dda-94ed-f01cce88816a"
+    }
+  },
+  "screenshots": {
+    "manifest": "screenshots/manifest.json",
+    "manifest_sha256": "5644f27a12ec70340f7d5af6dfdf0ac6288f8a9eb74dab22e9c3f64b8e264b5d",
+    "captions": "copy/selected/screenshot-captions.json",
+    "caption_sha256": "efa630a2075b92c429394667e1f502a56cbc8b50c3535b0c6251eded339c3ddf",
+    "status": "In preparation",
+    "sets": {
+      "iphone63": {
+        "planned_orders": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "caption_set": "iphone",
+        "upload_count_verified": null,
+        "owner_proof": "Pending current release proof; retained captures are historical 229",
+        "retained_229_capture_count": 5,
+        "current_230_capture_count": 0
+      },
+      "iphone69": {
+        "planned_orders": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "caption_set": "iphone",
+        "upload_count_verified": null,
+        "owner_proof": "Pending current release proof; retained captures are historical 229",
+        "retained_229_capture_count": 5,
+        "current_230_capture_count": 0
+      },
+      "ipad13": {
+        "planned_orders": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "caption_set": "ipad",
+        "upload_count_verified": null,
+        "owner_proof": "Pending current release proof; retained captures are historical 229",
+        "retained_229_capture_count": 0,
+        "current_230_capture_count": 0
+      },
+      "duo": {
+        "planned_orders": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "caption_set": "iphone_duo",
+        "upload_count_verified": null,
+        "owner_proof": "Pending current release proof; retained captures are historical 229",
+        "retained_229_capture_count": 0,
+        "current_230_capture_count": 0
+      },
+      "mac": {
+        "planned_orders": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "caption_set": "mac",
+        "upload_count_verified": null,
+        "owner_proof": "Pending current release proof; retained captures are historical 229",
+        "capture_status": "Waiting for Chris for native window sizing and capture; no 230 Mac screenshots claimed",
+        "retained_229_capture_count": 0,
+        "current_230_capture_count": 0
+      }
+    },
+    "capture_scope": "All ten retained iPhone captures are build 229 evidence. No build 230 native screenshots are claimed; original manifest, image hashes and exact capture provenance are unchanged."
+  },
+  "gallery": {
+    "file": "index.html",
+    "sha256": "eaf978e7c3fd2bf6999692711657f989be8ce36ea3673e49acd0c2bfba945137",
+    "source_static_review": "Parent live reload passed after a minimal diagnostic/fallback copy correction: no banner, both cards 1.0.1 (230), iOS explicitly excludes folder controls, Mac states unsigned arm64 verification plus 12 scoped UI cases and remaining gates. The earlier fetch failure did not reproduce; no schema failure or root cause was established.",
+    "contract": "gallery-manifest-contract.json",
+    "contract_sha256": "bbe9d81b6a97a0f9eeb3ab609d82575840cc36584fc87b2ffb94a0d6caf13b66"
+  },
+  "release_boundaries": {
+    "app_review_submitted": false,
+    "public_release": "Manual; owner-controlled",
+    "exact_production_testflight_acceptance": "Required before App Review",
+    "separate_beta_app": "Cannot be promoted into production App Store record",
+    "checkboxes": "Planning/proof notes only; do not execute any action."
+  },
+  "release_blockers": {
+    "WK-34": {
+      "title": "Explicit Close Folder lifecycle",
+      "status": "Source reviewed/canonical; unsigned artifacts verified and 12 scoped Mac native UI cases passed. Provisioned sandbox and exact production TestFlight acceptance remain pending.",
+      "sheet_row": 38,
+      "evidence": {
+        "file": "ios/DerivedData/release-proof-20261101/mac-runtime-229/folder-close-audit.md",
+        "sha256": "6225971302ce9688bce3a9f181cc1b1d1f2bb12c96f878c8e028c5c66d0641f1"
+      },
+      "priority_change": "Supersedes the earlier future-backlog classification; retained audit is historical",
+      "source_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+      "feature_revision": "2414bc5745efe9a7dd4b765d2196cedfecfabc15",
+      "source_validation": {
+        "close_folder_revision": "2414bc5745efe9a7dd4b765d2196cedfecfabc15",
+        "version_revision": "28848a25b837c022918ccc1625b17af0fa9c80e1",
+        "tests": 1341,
+        "suites": 77,
+        "required_coverage_lint_typecheck_build": "passed",
+        "independent_close_folder_cases": 58,
+        "production_browser_cases": 10,
+        "close_folder_manifest": {
+          "file": "ios/DerivedData/close-folder-20261101/author/candidate-manifest.json",
+          "sha256": "4824ff2cb5d8ad647da9875dce6a5c52aa0b992c105c99c060897e70c5e9196d"
+        },
+        "close_folder_independent_review": {
+          "file": "ios/DerivedData/close-folder-20261101/independent/review.json",
+          "sha256": "b2eb9c027eb3640272cc139a8af0ee4e85b810003999a3a68c18e7994672c4fb"
+        },
+        "browser_evidence": {
+          "file": "ios/DerivedData/close-folder-20261101/parent/browser-final-result.json",
+          "sha256": "f1f06885239fbd5be86736f1a2db3c4cf14e4b24a6307e98b3b8419fb38e4a32"
+        },
+        "version_manifest": {
+          "file": "ios/DerivedData/release-230-20261101/author/candidate-manifest.json",
+          "sha256": "5164705d6b2fd8b808e70d7756adf110115560b0b430f93d56dcf0f7a156b074"
+        },
+        "version_review": {
+          "file": "ios/DerivedData/release-230-20261101/independent/review.json",
+          "sha256": "c9163bc23dcdfdf2e77ffce2811864a29971321939fd6523262c4ec6d73377f8"
+        },
+        "promotion": {
+          "file": "ios/DerivedData/release-230-20261101/promotion/promotion.json",
+          "sha256": "7a2470823218860215b3b6e65cebef532fc2dcd86b88d9614492423511592628"
+        },
+        "promotion_review": {
+          "file": "ios/DerivedData/release-230-20261101/promotion/independent-review.json",
+          "sha256": "79665f7fed7d1c31d8e09c5d2e7acdf8c7d12b0f4b183091c4ee6f0ac2bd803c"
+        }
+      },
+      "runtime_evidence": {
+        "file": "ios/DerivedData/release-230-20261101/mac-runtime-unsigned/runtime-result.json",
+        "sha256": "3ad6257cb618ac93dba482d0f55afe94e6ee3ccad01917b27d045354c8ed23f9",
+        "case_count": 12,
+        "scope": "Observed unsigned arm64 MAS-runtime UI only; not provisioned sandbox, Intel runtime or Store/TestFlight acceptance"
+      }
+    }
+  },
+  "historical_229": {
+    "canonical_owner_checkout": {
+      "observed_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+      "unchanged_by_this_documentation_task": true,
+      "promotion_status": "Promoted by parent; owner files preserved per independent promotion review",
+      "promotion_evidence": {
+        "file": "ios/DerivedData/release-proof-20261101/promotion/canonical-independent-verification.json",
+        "sha256": "4fef5ab397119b92218779769949de0e05c19acc3dfa91f888e71b2b6cc05763"
+      }
+    },
+    "source_preparation": {
+      "baseline_mac_revision": "eed62c9911d0477386c8dc3fd1a76a6a2db498f1",
+      "guard_original_revision": "cd3981f2457c2f31eeedb128db0d0f72dab0c1df",
+      "guard_integrated_revision": "00da12eca2109f2af02b0ebd45e19670fbb1e89a",
+      "recovery_original_revision": "328b70c12a0910254974f998783b2e8853f86c60",
+      "recovery_integrated_revision": "03703298d28ac56dce2ffe69ff98e8fdf0ca4b0d",
+      "worktree": ".claude/worktrees/specdown-store-release-proof-20261101",
+      "observed_head": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+      "observed_version_stamp": "1.0.1 (229) for iOS/MAS; 0.0.229 shared source",
+      "tracked_working_tree_changes": [],
+      "version_and_union_review": "Passed; 456 tracked non-index files checked against exact feature union, five intended version edits only.",
+      "review_evidence": "ios/DerivedData/release-proof-20261101/integration-version-independent-review.json",
+      "aligned_version_stamp_revision": "bb59e16850c9a6394c332ce907ef1997d625d732",
+      "required_diagram_link_removal_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+      "release_blocker_wk33": {
+        "status": "Source fix present in independently verified delivered iOS and Mac 229 artifacts; iOS Owner-only availability verified and Mac development fullscreen has no Link control; exact production TestFlight acceptance pending",
+        "source": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+        "full_gate": "1292 tests / 74 suites with coverage; lint, typecheck and web build passed",
+        "independent_review": "157 tests / 9 suites;10candidatefiles and110webfiles hash-bound",
+        "evidence": "ios/DerivedData/remove-diagram-link-20261101/candidate-manifest.json",
+        "evidence_sha256": "c8f9462276fe89c7e9c7fdea99ec5e928c00fc4a7d2e2fdb28b89923a767a438",
+        "earlier_archive": "bb59e16 archive predates the removal; historical only.",
+        "final_unsigned_evidence": {
+          "ios": {
+            "file": "ios/DerivedData/release-proof-20261101/ios-device-1.0.1-229/final-b9e5472/manifest.json",
+            "sha256": "f36b5d323b709c36836cd0bbe4da6db6199bfabac72f98a17cd9df0650626747"
+          },
+          "mac": {
+            "file": "ios/DerivedData/release-proof-20261101/mac/final-b9e5472/independent/review.json",
+            "sha256": "2616a777dacf285938b9a2cd07b43006059eaf991b0437f123687b68becfa724"
+          }
+        },
+        "final_signed_evidence": {
+          "ios": {
+            "file": "ios/DerivedData/release-proof-20261101/signing/ios229/runs/production-229-b9e5472-20261101/ipa-independent-verification.json",
+            "sha256": "b0d2b0b82ba5afedc1d9633992d50b1622a0756ecfac34fb0ef4503e238d9094"
+          },
+          "mac": {
+            "file": "ios/DerivedData/release-proof-20261101/signing/mac229/independent-store-review.json",
+            "sha256": "7578721bda78893ac4e9dde8485fd3acc5b3decfbff0a0e68dff1e488d793baf"
+          }
+        }
+      }
+    },
+    "final_native_candidates": {
+      "ios": {
+        "status": "Historical 229 testing candidate; delivered and Owner-only; required WK-34 replacement pending",
+        "artifact": "<repo>/ios/DerivedData/release-proof-20261101/signing/ios229/runs/production-229-b9e5472-20261101/export/Specdown.ipa",
+        "artifact_sha256": "93d7b1e573bc8ad374c38035d0f308012003645c9ac122996d203962c3e87aa2",
+        "apple_processing": "Processed; available to Owner internal group only",
+        "physical_production_testflight_acceptance": "Pending",
+        "artifact_hash_scope": "Whole signed delivery file SHA256; full app payload hashes retained in linked independent verification",
+        "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+        "version": "1.0.1",
+        "build": "229",
+        "unsigned": false,
+        "verification": {
+          "file": "ios/DerivedData/release-proof-20261101/signing/ios229/runs/production-229-b9e5472-20261101/ipa-independent-verification.json",
+          "sha256": "b0d2b0b82ba5afedc1d9633992d50b1622a0756ecfac34fb0ef4503e238d9094"
+        },
+        "executable_sha256": "3fc8c99e7fda624c6cb707bed365041a51631b8dfe12a2394651957060ba5a1f",
+        "earlier_unsigned_evidence": {
+          "status": "Unsigned artifact verified; signed release preparation pending",
+          "artifact": "<repo>/ios/DerivedData/release-proof-20261101/ios-device-1.0.1-229/final-b9e5472/SpecDown-unsigned.xcarchive",
+          "artifact_sha256": null,
+          "apple_processing": "Not uploaded; unsigned artifact",
+          "physical_production_testflight_acceptance": "Pending",
+          "artifact_hash_scope": "See executable/ASAR and complete per-file inventory in verification manifest; no single directory hash claimed",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "version": "1.0.1",
+          "build": "229",
+          "unsigned": true,
+          "verification": {
+            "file": "ios/DerivedData/release-proof-20261101/ios-device-1.0.1-229/final-b9e5472/manifest.json",
+            "sha256": "f36b5d323b709c36836cd0bbe4da6db6199bfabac72f98a17cd9df0650626747"
+          },
+          "executable_sha256": "5b40038a944c7f3562c79144fc7ec766e856cb16b826ae4332e63bde5b6cbe8a"
+        },
+        "artifact_bytes": 31461547,
+        "runtime_acceptance": "Production TestFlight acceptance pending",
+        "archive_verification": {
+          "file": "ios/DerivedData/release-proof-20261101/signing/ios229/runs/production-229-b9e5472-20261101/archive-independent-verification.json",
+          "sha256": "54e52af6d1f34e692c52446102cc557d44cc23159b0afc7ee861eb07349547e7"
+        },
+        "delivery_status": "Delivered",
+        "delivered_at_local": "2026-11-01 18:59 America/Los_Angeles",
+        "delivery_evidence": {
+          "file": "ios/DerivedData/store-asset-audit-20261101/ios229-transporter-delivered.json",
+          "sha256": "3e5aeea0ed3045fa1d953443e0e0de4746d83ee9fdf32adfa1358f720d61b88d"
+        },
+        "testflight_assignment": {
+          "status": "Verified",
+          "group": "Owner",
+          "type": "Internal",
+          "tester_count": 1,
+          "other_groups": 0,
+          "individual_testers": 0,
+          "assignment": "Automatic existing-group assignment observed",
+          "what_to_test": "Saved",
+          "evidence": {
+            "file": "ios/DerivedData/store-asset-audit-20261101/ios229-owner-testflight.txt",
+            "sha256": "69a8adf0e64df566ba743201b009155063ad2b6b6ec395a52ab2653f5cfda03e"
+          },
+          "saved_notes_caveat": "Previously saved notes call 229 a production release candidate; later WK-34 requires a replacement. Apple text was not changed."
+        },
+        "apple_build_id": "5b231c50-ceb7-4883-b1c3-189765832828",
+        "release_candidate_status": "Historical testing candidate; replacement required for WK-34 Close Folder",
+        "replacement_plan": {
+          "required_fix": "WK-34 Close Folder",
+          "proposed_build": "230",
+          "implementation_status": "Pending",
+          "new_artifact_status": "Not built"
+        }
+      },
+      "mac": {
+        "status": "Historical 229 testing candidate; delivered and Owner-only; required WK-34 replacement pending",
+        "artifact": "<repo>/ios/DerivedData/release-proof-20261101/signing/mac229/outputs/store-b9e5472/build/mas-universal/SpecDown-1.0.1-universal.pkg",
+        "artifact_sha256": "f0d6cd989fcee692c484f5d77da72cdb336b6babe5bd3d4945178a68fa0f8aff",
+        "apple_processing": "Processed; Owner-only availability verified by retained readback",
+        "physical_mas_testflight_acceptance": "Pending",
+        "artifact_hash_scope": "Whole signed delivery file SHA256; full app payload hashes retained in linked independent verification",
+        "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+        "version": "1.0.1",
+        "build": "229",
+        "unsigned": false,
+        "verification": {
+          "file": "ios/DerivedData/release-proof-20261101/signing/mac229/FINAL-INDEPENDENT-GATE.json",
+          "sha256": "e8ccbf4af859b6ee0f80149102c930f16e9ef769d5fc9ec1e94e9b99aea87bd2"
+        },
+        "asar_sha256": "4f534369a0bd848e2ca848c7d28a275004b8c965aee6a6b547900bf67edde564",
+        "independent_review": {
+          "file": "ios/DerivedData/release-proof-20261101/signing/mac229/independent-store-review.json",
+          "sha256": "7578721bda78893ac4e9dde8485fd3acc5b3decfbff0a0e68dff1e488d793baf"
+        },
+        "earlier_unsigned_evidence": {
+          "status": "Unsigned artifact verified; signed release preparation pending",
+          "artifact": "<repo>/ios/DerivedData/release-proof-20261101/mac/final-b9e5472/build/mas-universal/SpecDown.app",
+          "artifact_sha256": null,
+          "apple_processing": "Not uploaded; unsigned artifact",
+          "physical_mas_testflight_acceptance": "Pending",
+          "artifact_hash_scope": "See executable/ASAR and complete per-file inventory in verification manifest; no single directory hash claimed",
+          "source_revision": "b9e54727f3e18d02a874c5de768f6e0e47def493",
+          "version": "1.0.1",
+          "build": "229",
+          "unsigned": true,
+          "verification": {
+            "file": "ios/DerivedData/release-proof-20261101/mac/final-b9e5472/manifest.json",
+            "sha256": "c6cee0a6230dcfe7f9e13fa9bf47419bcb784e0ccda42df82c8ab924e67cf686"
+          },
+          "asar_sha256": "4f534369a0bd848e2ca848c7d28a275004b8c965aee6a6b547900bf67edde564",
+          "independent_review": {
+            "file": "ios/DerivedData/release-proof-20261101/mac/final-b9e5472/independent/review.json",
+            "sha256": "2616a777dacf285938b9a2cd07b43006059eaf991b0437f123687b68becfa724"
+          }
+        },
+        "artifact_bytes": 283007361,
+        "runtime_acceptance": "11 scoped development-signed arm64 cases passed; distribution-signed TestFlight acceptance pending",
+        "signed_app": "<repo>/ios/DerivedData/release-proof-20261101/signing/mac229/outputs/store-b9e5472/build/mas-universal/SpecDown.app",
+        "delivery_status": "Delivered",
+        "delivered_at_local": "2026-11-01 19:04 America/Los_Angeles",
+        "delivery_evidence": {
+          "file": "ios/DerivedData/store-asset-audit-20261101/mac229-transporter-delivered.json",
+          "sha256": "5b1be061563545f2c205c546c1a5cdbfaf1dbeae2e1adbe6412d22c7dcda59d3"
+        },
+        "testflight_assignment": {
+          "status": "Verified",
+          "group": "Owner",
+          "type": "Internal",
+          "tester_count": 1,
+          "other_groups": 0,
+          "individual_testers": 0,
+          "what_to_test": "Blank; optional interim-label attempt blocked before execution",
+          "evidence": {
+            "file": "ios/DerivedData/store-asset-audit-20261101/mac229-owner-testflight.txt",
+            "sha256": "0d1c1f7950189e22d6c215909a3cf228833b9f02c168769e6ddd0064a413e469"
+          }
+        },
+        "runtime_evidence": {
+          "file": "ios/DerivedData/release-proof-20261101/mac-runtime-229/runtime-result.json",
+          "sha256": "a12778e01be0c07a52edc884497edc01b7c253ec2422ff241fab1a0022147673"
+        },
+        "runtime_scope": {
+          "lane": "Separate development-signed MAS arm64 app",
+          "passed_observed_scope_cases": 11,
+          "physical_store_testflight": false,
+          "latest_app_state": "Runtime QA and the subsequent screenshot QA session (PID 79910) are closed. Parent verified native Quit followed by host pgrep -x SpecDown returning exit 1 with no output. All four QA simulators remained Shutdown; none was booted this turn.",
+          "limitations": "Successful Locate replacement, multiple/stale callbacks, broader rejection/native paths, numeric resize centering, Intel/minimum-OS and distribution TestFlight runtime remain unexercised; see exact report."
+        },
+        "apple_build_id": "67638394-ae7d-40a7-a160-549087fb95c3",
+        "release_candidate_status": "Historical testing candidate; replacement required for WK-34 Close Folder",
+        "replacement_plan": {
+          "required_fix": "WK-34 Close Folder",
+          "proposed_build": "230",
+          "implementation_status": "Pending",
+          "new_artifact_status": "Not built"
+        },
+        "optional_notes_write": {
+          "action": "Optional Mac 229 What to Test interim-candidate relabeling",
+          "status": "Automatic approval review rejected before execution",
+          "reason": "New release messaging not explicitly approved; retained-copy preference",
+          "portal_changed": false,
+          "retry_planned": false,
+          "blocks_close_folder_fix": false
+        }
+      },
+      "build_status_manifest": {
+        "file": "docs/project-appstore/release-proof-2026-11-01/build-status.json",
+        "sha256": "160c37a8b469b4b0e1d62c575a02e3704e2eb94f3e8d1076b518bdb759f5467d"
+      }
+    },
+    "release_blockers": {
+      "WK-34": {
+        "title": "Explicit Close Folder lifecycle",
+        "status": "Required for this release by subsequent owner instruction",
+        "sheet_row": 38,
+        "evidence": {
+          "file": "ios/DerivedData/release-proof-20261101/mac-runtime-229/folder-close-audit.md",
+          "sha256": "6225971302ce9688bce3a9f181cc1b1d1f2bb12c96f878c8e028c5c66d0641f1"
+        },
+        "implementation_status": "Pending; no source change yet",
+        "proposed_build": "230",
+        "priority_change": "Supersedes the earlier future-backlog classification; retained audit is historical"
+      }
+    }
+  },
+  "publication_note": "Public snapshot with owner-local paths normalized and private operations excluded. Local evidence hashes describe retained verification reports; the reports and signed binaries are not published by this docs/artwork commit."
+}

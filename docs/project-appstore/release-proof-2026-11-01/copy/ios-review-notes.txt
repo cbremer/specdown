@@ -1,0 +1,15 @@
+SpecDown is a viewer for Markdown (.md/.markdown) documents and Mermaid diagrams. No account, sign-in or purchase is required. The viewer and bundled Sample/Diagram Showcase work offline. It reads saved documents from external editors or AI tools; it does not generate text or run an AI model.
+
+Review on iPhone or iPad:
+1. Launch SpecDown and choose Open Diagram Showcase from the start view, or from the sidebar on iPad.
+2. Expand a diagram. Try the zoom controls, pan and Reset, then close fullscreen.
+3. Use Contents, Raw/Preview and Find. Try Find with the keyboard open, then dismiss it.
+4. Open Sample to inspect headings, tables, code and document comments.
+5. Use Open or Open Markdown File to choose a Markdown file from Files/iCloud Drive. Opening a document from another app is also supported.
+6. Open another document and switch tabs. Try light/dark appearance and the App Icon choices.
+
+Remote documents and images loaded by the viewer require HTTPS. Tapped external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.
+
+Annotation display, editing, import and export are disabled on native iPhone/iPad in this release. Existing stored annotation data is left untouched. HTML comments already present in a document are a separate viewing feature.
+
+No ads, analytics or tracking SDK is included. Local documents render on the device; online documents and remote images contact their hosts. The app does not require an AI account.
