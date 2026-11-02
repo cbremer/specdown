@@ -5,6 +5,81 @@
      Use Conventional-Commit subjects (feat:, fix:, docs: …) to get grouped
      sections; otherwise commits are listed as a flat bullet list. -->
 
+## v0.0.231 — 2026-11-02
+
+### Features
+
+- Add Close Folder with scoped workspace lifecycle
+- Add a separate Light app icon choice for iOS
+
+### Bug Fixes
+
+- **desktop:** clean up destroyed windows without native getter access
+- validate Chokidar 6 watcher compatibility
+- record desktop recents only after renderer acceptance
+- **desktop:** preserve accepted tabs when refresh is rejected
+- bound Find highlights while preserving document text
+- preserve accepted document state when an open is rejected
+- keep deferred annotations inactive on native iOS
+- keep diagrams centered and Find usable on Duo
+- keep note actions and render results with their document
+- **security:** update Electron within version 44
+- **annotations:** preserve unreadable stores and recovery backups
+- **security:** validate cached desktop update filenames
+- **ios:** preserve documents across adaptive viewer layouts
+- **security:** enforce document and native file boundaries
+- **ci:** require reviewed immutable release candidates
+
+### Documentation
+
+- prepare approved App Store copy sync packet
+- refine copy proposal from owner feedback
+- record refreshed Store 230 TestFlight handoff
+- clarify desktop platform testing coverage
+- clarify Mac App Store launch availability
+- include Store metadata in the copy proof
+- refresh README and add consistent Store copy proof
+- preserve historical recovery and desktop artifact handoff
+- record centered viewer desktop artifact validation
+- **web:** announce iOS launch and track release follow-ups
+
+### Tests
+
+- validate real Marked rendering and document admission
+
+### Build System
+
+- **ios:** use 1.0.1 for the security update
+- **ios:** prepare 1.1 (228) for owner-signed TestFlight testing
+- update compatible tooling and validate desktop packages
+
+### Chores
+
+- **deps-dev:** bump the dev-dependencies group across 1 directory with 7 updates
+- **deps:** bump chokidar from 5.0.0 to 6.0.0
+- **deps:** bump marked from 18.0.14 to 18.1.2
+
+### Styles
+
+- address release review formatting nits
+
+### Other Changes
+
+- Update browser homepage with approved reading copy
+- Publish reviewed Store release proof and artwork
+- Prepare aligned iOS and Mac Store build 230
+- Remove unsupported diagram share-link action
+- Prepare aligned iOS and Mac Store 1.0.1 build 229
+- Preserve unresolved startup files until accepted or explicitly dismissed
+- Guard Mac Store installer profile and payload permissions
+- Wait for trusted viewer readiness before startup file delivery
+- Align Mac Store version with iOS security update
+- Separate iOS development and beta app identities
+- Remove the extra inset from six iOS alternate icons
+- Clarify support email and GitHub reporting requirements
+- Close obsolete diagram overlays at accepted view replacement
+- Integrate reviewed viewer focus and desktop acceptance fixes
+
 ## v0.0.229 — 2026-11-01
 
 ### Chores
