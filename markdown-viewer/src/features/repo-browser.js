@@ -5,6 +5,12 @@
 // Decoupled from the rest of the app via dependency injection — the caller
 // supplies the URL-error UI hooks and the file-selection handler.
 
+import {
+  captureDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
+import { fetchGitHubRepoFiles, parsePublicRepoUrl } from './repo-api.js';
+
 import { trapFocus } from '../core/focus-trap.js';
 import { platformIsTouchFirst } from '../core/platform.js';
 import { iconSvg } from '../core/icons.js';
@@ -17,64 +23,43 @@ import { escapeHtml } from '../core/utils.js';
  * @property {string} rawUrl
  */
 
-/**
- * Fetch the markdown files for a GitHub repo URL via the Search API.
- * @param {string} repoUrl
- * @returns {Promise<RepoFile[] | null>} files, [] if none, or null when the URL
- *   isn't a recognized repo URL / the fetch failed.
- */
-export async function fetchGitHubRepoFiles(repoUrl) {
-  // Match: https://github.com/<owner>/<repo>
-  const repoPattern = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/;
-  const match = repoUrl.match(repoPattern);
-  if (!match) return null;
-
-  const owner = match[1];
-  const repo = match[2].replace(/\.git$/, '');
-
-  // Use GitHub Search API to find .md files (avoids full tree traversal)
-  const apiUrl = `https://api.github.com/search/code?q=extension:md+repo:${owner}/${repo}&per_page=100`;
-
-  try {
-    const resp = await fetch(apiUrl, {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    if (!data.items || data.items.length === 0) return [];
-
-    return data.items.map((/** @type {any} */ item) => ({
-      path: item.path,
-      url: item.html_url,
-      rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${item.path}`,
-    }));
-  } catch {
-    return null;
-  }
-}
+let repoBrowserRequest = 0;
 
 /**
- * Handle a repo URL: fetch its markdown files and present the browser.
+ * Recognized repository failures stay in the repository flow, never fall
+ * through to fetching the HTML repository page as Markdown.
  * @param {string} url
  * @param {{ clearError: Function, showError: Function, onSelectFile: Function }} hooks
- * @returns {Promise<boolean>} true if handled as a repo URL (caller should stop).
+ * @returns {Promise<boolean>}
  */
 export async function handleRepoUrl(
   url,
   { clearError, showError, onSelectFile }
 ) {
+  const requestId = ++repoBrowserRequest;
+  if (repoBrowserActiveClose) repoBrowserActiveClose();
+  if (!parsePublicRepoUrl(url)) return false;
+  const context = captureDocumentContext();
+  const current = () =>
+    requestId === repoBrowserRequest && isDocumentContextCurrent(context);
   clearError();
-  const files = await fetchGitHubRepoFiles(url);
-  if (files === null) {
-    // Not a repo URL or fetch failed — fall through to normal URL handling
-    return false;
+  try {
+    const files = await fetchGitHubRepoFiles(url);
+    if (!current()) return true;
+    if (!files?.length)
+      showError('No Markdown files found in this repository or folder.');
+    else
+      showRepoBrowser(files, url, (/** @type {string} */ rawUrl) => {
+        if (current()) onSelectFile(rawUrl);
+      });
+  } catch (error) {
+    if (current())
+      showError(
+        error instanceof Error
+          ? error.message
+          : 'Could not list the public repository. Try again later.'
+      );
   }
-  if (files.length === 0) {
-    showError('No markdown files found in this repository.');
-    return true;
-  }
-
-  showRepoBrowser(files, url, onSelectFile);
   return true;
 }
 
@@ -128,7 +113,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
                 ${files
                   .map(
                     (f) => `
-                    <li class="repo-browser-item" data-raw-url="${escapeHtml(f.rawUrl)}">
+                    <li class="repo-browser-item" tabindex="0" role="button" data-raw-url="${escapeHtml(f.rawUrl)}">
                         <span class="repo-file-icon" aria-hidden="true">${iconSvg('file-text')}</span>
                         <span class="repo-file-path">${escapeHtml(f.path)}</span>
                     </li>
@@ -172,6 +157,13 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
   }
 
   panel.querySelectorAll('.repo-browser-item').forEach((item) => {
+    item.addEventListener('keydown', (event) => {
+      const keyEvent = /** @type {KeyboardEvent} */ (event);
+      if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+        event.preventDefault();
+        /** @type {HTMLElement} */ (item).click();
+      }
+    });
     item.addEventListener('click', () => {
       const rawUrl = item.getAttribute('data-raw-url');
       closeModal();
