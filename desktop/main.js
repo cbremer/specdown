@@ -558,7 +558,9 @@ function createWindow() {
   };
   const invalidateStartup = () => {
     loadGeneration += 1;
-    if (mainWindow === appWindow && appWindow.webContents === windowWebContents) {
+    // BrowserWindow.webContents can throw after native window destruction.
+    // Captured window identity still proves ownership without that getter.
+    if (mainWindow === appWindow) {
       resetWorkspaceContext(false);
       workspacePageToken = randomUUID();
     }
