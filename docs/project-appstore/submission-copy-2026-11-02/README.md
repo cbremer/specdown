@@ -72,7 +72,7 @@ python3 docs/project-appstore/submission-copy-2026-11-02/extract-copy.py --check
 
 The extractor first reads the original approved Git revision. Rebase merging
 can replace that commit ID, so a main-only clone may not contain it. If the
-original object is unavailable, the extractor reads the checked-in proposal and
+original object or the Git executable is unavailable, the extractor reads the checked-in proposal and
 four preserved historical baseline files, accepting them only when all match
 their pinned SHA-256 hashes. Changed or missing snapshots fail closed; no
 network lookup or unpinned current-branch substitution occurs. The original

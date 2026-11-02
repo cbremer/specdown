@@ -1,9 +1,11 @@
-# App Store assets (draft)
+# App Store assets
 
 Draft listing copy, screenshots and review material for the iPhone/iPad App Store and the
 Mac App Store. Plan and tracker: [docs/project-appstore](../docs/project-appstore/).
 
-**Status: DRAFT, pre-freeze.** The original listing assets and screenshot set were produced from `main` at
+**Submitted Mac 1.0.1 (230) assets:** [Versioned screenshot packet](release-assets/1.0.1-230/mac/README.md) retains the five approved final images, five raw captures, exact provenance and a reproducible composition recipe. These are separate from the historical draft assets below. [Session 69](../docs/project-appstore/2026-11-02-tasks-session-69-portal-sync-handoff.md) records submission evidence and release status.
+
+**Historical assets: DRAFT, pre-freeze.** The original listing assets and screenshot set were produced from `main` at
 `2b5c835` (v0.0.194) plus the bundle ID change (#266), recaptured 2026-10-12, before any candidate freeze (AS-035). Screenshots
 must be recaptured from the frozen candidate; copy must be rechecked against it. The October 31 next-mobile notes are a separate draft for the upcoming security revision.
 
