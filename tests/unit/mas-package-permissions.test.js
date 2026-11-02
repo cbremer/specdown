@@ -36,7 +36,7 @@ describe('embedded public profile', () => {
   });
   afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 
-  it('changes only the embedded copy to0644, preserving private source bytes and mode', () => {
+  it('changes only the embedded copy to 0644, preserving private source bytes and mode', () => {
     const old = fs.readFileSync(input);
     expect(guard.normalizeEmbeddedProfile(app)).toMatchObject({
       previousMode: 0o600,

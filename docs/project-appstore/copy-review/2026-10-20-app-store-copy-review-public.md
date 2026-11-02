@@ -366,4 +366,3 @@ Creative asset specifications
 https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications
 
 Apple’s technical reference limits keywords to 100 bytes; its search guide says 100 characters. The proposed English ASCII keyword strings meet both. Review Notes also uses bytes. Other counts in this document use characters. Counts should be checked again after editing.
-
