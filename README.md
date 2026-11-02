@@ -80,6 +80,9 @@ Download the latest installer from the **[Releases page](../../releases)**:
 | Windows | `Specdown-Desktop-Setup-<version>.exe` | NSIS installer |
 | Linux | `Specdown-Desktop-<version>.AppImage` | mark executable, then run |
 
+**Testing coverage:** Windows and Linux builds have received less testing than
+macOS builds. Please [report platform-specific issues on GitHub](https://github.com/cbremer/specdown/issues).
+
 On macOS, open the DMG, drag **Specdown Desktop** to Applications, and launch.
 The direct-download macOS release uses Developer ID signing and Apple notarization.
 

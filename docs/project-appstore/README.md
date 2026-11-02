@@ -86,6 +86,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 60: README and copy proof](2026-11-01-tasks-session-60-readme-copy-proof.md) | Reading-first README with accurate platform scope and a consistent side-by-side copy proposal; existing Store copy and frozen build 230 artifacts remain unchanged. |
 | Nov 1, 2026 | Tasks | [Session 61: Store metadata proof](2026-11-01-tasks-session-61-store-metadata-proof.md) | Extend the clean copy proof with search fields, dated submission settings, private-contact placeholders and side-by-side reviewer/TestFlight notes; no Apple fields or build numbers changed. |
 | Nov 1, 2026 | Tasks | [Session 62: Mac Store launch copy](2026-11-01-tasks-session-62-mac-store-launch-copy.md) | Name Mac App Store explicitly in the proposed listing, website and support downloads; retain the separate direct desktop option and gate public wording on native Mac launch. |
+| Nov 1, 2026 | Tasks | [Session 63: platform testing note](2026-11-01-tasks-session-63-platform-testing-note.md) | Clarify in the download README that Windows and Linux builds receive less testing than macOS, with a link for platform-specific issue reports. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
