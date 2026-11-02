@@ -93,6 +93,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 1, 2026 | Tasks | [Session 65: copy proof feedback](2026-11-01-tasks-session-65-copy-feedback.md) | Refine the clean proposal with Files providers, PWA installation, desktop Live reload and AI/SI search phrases; simplify release notes and separate icon parity as backlog. |
 | Nov 2, 2026 | Tasks | [Session 66: approved homepage copy](2026-11-02-tasks-session-66-homepage-copy.md) | Apply approved reading benefits, desktop Live reload and platform guidance to the browser homepage; preserve native start views and mark Mac Store availability as coming. |
 | Nov 2, 2026 | Tasks | [Session 67: approved Apple copy packet](2026-11-02-tasks-session-67-store-copy-sync.md) | Extract owner-approved listing, search, reviewer and TestFlight fields for production 230; preserve historical selection and distinguish approved copy from pending exact-build acceptance. |
+| Nov 2, 2026 | Tasks | [Session 68: approved support and privacy copy](2026-11-02-tasks-session-68-support-privacy-copy.md) | Synchronize public help, Files/PWA/Live guidance and specific privacy disclosures; preserve page design and links, with Mac Store availability still coming. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
