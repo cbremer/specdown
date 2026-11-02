@@ -266,4 +266,201 @@ describe('workflow account boundaries', () => {
     expect(source).not.toMatch(/run: [^\n]*\$\{\{ inputs\.release-tag/);
     expect(source).toContain('verify-release-environment.js desktop-release');
   });
+
+  it('makes owner approval explicit while preserving publication gates', () => {
+    const config = require('js-yaml').load(workflow('desktop.yml'));
+    const inputs = config.on.workflow_dispatch.inputs;
+    expect(inputs['validate-only'].default).toBe(true);
+    expect(inputs['release-approval-mode']).toMatchObject({
+      type: 'choice',
+      default: 'independent',
+      options: ['independent', 'repository-owner'],
+    });
+    expect(config.permissions).toEqual({ contents: 'read' });
+    const { provenance, build, publish } = config.jobs;
+    expect(provenance.if).toBe("github.ref == 'refs/heads/main'");
+    expect(provenance.permissions).toEqual({
+      contents: 'read',
+      actions: 'read',
+    });
+    const gate = provenance.steps.find((step) =>
+      step.run?.includes('verify-release-environment.js')
+    );
+    expect(gate.if).toBe('${{ !inputs.validate-only }}');
+    expect(gate.env.RELEASE_APPROVAL_MODE).toBe(
+      "${{ inputs.release-approval-mode || 'independent' }}"
+    );
+    expect(gate.run).toContain('"$RELEASE_APPROVAL_MODE"');
+    expect(gate.run).not.toContain('${{');
+    expect(build.needs).toBe('provenance');
+    expect(build.environment).toContain("'desktop-release'");
+    expect(publish.needs).toEqual(['provenance', 'build']);
+    expect(publish.environment).toBe('desktop-release');
+    expect(publish.if).toBe('${{ !inputs.validate-only }}');
+    expect(workflow('desktop.yml')).not.toMatch(
+      /pending_deployments|review-pending-deployments|ADMIN_PAT/
+    );
+  });
+});
+
+describe('explicit repository-owner release approval', () => {
+  let savedEnvironment, savedFetch, environment, metadata, policy;
+  const owner = () => ({ type: 'User', login: 'cbremer', id: 4009517 });
+  const prefix = 'https://api.github.com/repos/cbremer/specdown';
+  beforeEach(() => {
+    savedEnvironment = { ...process.env };
+    savedFetch = global.fetch;
+    process.env.GITHUB_REPOSITORY = 'cbremer/specdown';
+    process.env.GITHUB_API_URL = 'https://api.github.com';
+    process.env.GH_TOKEN = 'test-only-token';
+    environment = {
+      protection_rules: [
+        {
+          type: 'required_reviewers',
+          prevent_self_review: false,
+          reviewers: [{ type: 'User', reviewer: owner() }],
+        },
+      ],
+      can_admins_bypass: false,
+      deployment_branch_policy: { custom_branch_policies: true },
+    };
+    metadata = { full_name: 'cbremer/specdown', owner: owner() };
+    policy = {
+      total_count: 1,
+      branch_policies: [{ name: 'main', type: 'branch' }],
+    };
+    global.fetch = jest.fn(async (url) => {
+      const values = {
+        [prefix]: metadata,
+        [`${prefix}/environments/desktop-release`]: environment,
+        [`${prefix}/environments/desktop-release/deployment-branch-policies`]:
+          policy,
+      };
+      if (!Object.hasOwn(values, url)) throw new Error('Unexpected API route');
+      return { ok: true, json: async () => values[url] };
+    });
+  });
+  afterEach(() => {
+    process.env = savedEnvironment;
+    global.fetch = savedFetch;
+  });
+  const verify = () =>
+    verifyReleaseEnvironment('desktop-release', 'repository-owner');
+
+  it('accepts exactly the live user-repository owner with an explicit mode', async () => {
+    await expect(verify()).resolves.toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(global.fetch.mock.calls.every((call) => !call[1].method)).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith(prefix, expect.any(Object));
+  });
+
+  it('does not infer owner mode when the default independent rule fails', async () => {
+    await expect(verifyReleaseEnvironment('desktop-release')).rejects.toThrow(
+      'prevent self-review'
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['owner', 'Repository-owner', '', 'repository-owner ', null, false])(
+    'rejects invalid mode %j before any request',
+    async (mode) => {
+      await expect(
+        verifyReleaseEnvironment('desktop-release', mode)
+      ).rejects.toThrow('approval mode');
+      expect(global.fetch).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ['organization owner', () => (metadata.owner.type = 'Organization')],
+    ['bot owner', () => (metadata.owner.type = 'Bot')],
+    ['absent owner', () => delete metadata.owner],
+    ['missing owner ID', () => delete metadata.owner.id],
+    ['string owner ID', () => (metadata.owner.id = '4009517')],
+    ['fractional owner ID', () => (metadata.owner.id = 4.5)],
+    ['invalid owner ID', () => (metadata.owner.id = 0)],
+    ['wrong owner login', () => (metadata.owner.login = 'someone-else')],
+    ['missing repository name', () => delete metadata.full_name],
+    ['wrong repository', () => (metadata.full_name = 'cbremer/another-repo')],
+    [
+      'wrong reviewer ID',
+      () => (environment.protection_rules[0].reviewers[0].reviewer.id = 9),
+    ],
+    [
+      'wrong reviewer login',
+      () =>
+        (environment.protection_rules[0].reviewers[0].reviewer.login = 'other'),
+    ],
+    [
+      'team reviewer',
+      () => (environment.protection_rules[0].reviewers[0].type = 'Team'),
+    ],
+    [
+      'reviewer bot',
+      () =>
+        (environment.protection_rules[0].reviewers[0].reviewer.type = 'Bot'),
+    ],
+    [
+      'absent reviewer metadata',
+      () => delete environment.protection_rules[0].reviewers[0].reviewer,
+    ],
+    [
+      'additional reviewer',
+      () =>
+        environment.protection_rules[0].reviewers.push({
+          type: 'User',
+          reviewer: { ...owner(), id: 9, login: 'other' },
+        }),
+    ],
+    ['empty reviewers', () => (environment.protection_rules[0].reviewers = [])],
+    ['no approval rule', () => (environment.protection_rules = [])],
+    [
+      'duplicate approval rules',
+      () => environment.protection_rules.push(environment.protection_rules[0]),
+    ],
+    [
+      'self-review still prohibited',
+      () => (environment.protection_rules[0].prevent_self_review = true),
+    ],
+    [
+      'self-review flag absent',
+      () => delete environment.protection_rules[0].prevent_self_review,
+    ],
+    ['administrator bypass', () => (environment.can_admins_bypass = true)],
+    ['absent bypass flag', () => delete environment.can_admins_bypass],
+    [
+      'no branch restriction',
+      () => delete environment.deployment_branch_policy,
+    ],
+    [
+      'nonboolean branch restriction',
+      () =>
+        (environment.deployment_branch_policy.custom_branch_policies = 'true'),
+    ],
+    ['extra branch', () => (policy.total_count = 2)],
+    [
+      'inconsistent branch inventory',
+      () => policy.branch_policies.push({ name: '*', type: 'branch' }),
+    ],
+    ['missing branch inventory', () => delete policy.branch_policies],
+    ['tag policy', () => (policy.branch_policies[0].type = 'tag')],
+    ['wildcard branch', () => (policy.branch_policies[0].name = '*')],
+  ])('fails closed for %s', async (_name, change) => {
+    change();
+    await expect(verify()).rejects.toThrow();
+  });
+
+  it.each([
+    prefix,
+    `${prefix}/environments/desktop-release`,
+    `${prefix}/environments/desktop-release/deployment-branch-policies`,
+  ])('rejects an inaccessible API result at %s', async (denied) => {
+    const original = global.fetch.getMockImplementation();
+    global.fetch.mockImplementation((url, options) =>
+      url === denied
+        ? Promise.resolve({ ok: false, status: 403 })
+        : original(url, options)
+    );
+    await expect(verify()).rejects.toThrow('403');
+  });
 });

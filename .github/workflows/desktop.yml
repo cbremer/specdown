@@ -2,7 +2,7 @@ name: Build Desktop App
 
 # Dispatch the reviewed workflow on main and choose an immutable release tag.
 # Preview is unsigned and artifact-only. Publication requires a protected
-# desktop-release environment with independent approval (see release docs).
+# desktop-release environment with explicit independent or owner approval.
 on:
   workflow_dispatch:
     inputs:
@@ -14,6 +14,13 @@ on:
         description: Build unsigned preview artifacts without signing or publishing
         type: boolean
         default: true
+      release-approval-mode:
+        description: Approval policy (repository-owner requires the owner to approve in GitHub)
+        type: choice
+        default: independent
+        options:
+          - independent
+          - repository-owner
 
 permissions:
   contents: read
@@ -26,6 +33,9 @@ jobs:
   provenance:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       sha: ${{ steps.release.outputs.sha }}
@@ -43,11 +53,12 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.release-tag }}
         run: node scripts/release-policy.js resolve
-      - name: Require independently protected release environment
+      - name: Verify the explicitly selected release approval policy
         if: ${{ !inputs.validate-only }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/verify-release-environment.js desktop-release
+          RELEASE_APPROVAL_MODE: ${{ inputs.release-approval-mode || 'independent' }}
+        run: node scripts/verify-release-environment.js desktop-release "$RELEASE_APPROVAL_MODE"
 
   build:
     needs: provenance
