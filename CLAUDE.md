@@ -149,8 +149,14 @@ After that PR is merged, the workflow creates an immutable tag and a draft relea
 
 Desktop builds are explicitly dispatched from `main` with an exact existing tag.
 The default is an unsigned, artifact-only preview. Signing and publication require
-a verified `desktop-release` environment with independent approval, no self-review
-or administrator bypass, and a main-only deployment rule. All platform artifacts
+a verified `desktop-release` environment and a main-only deployment rule.
+The default `independent` approval mode prohibits self-review. The explicit
+`repository-owner` mode permits a solo maintainer to approve their own dispatch,
+but requires the sole reviewer to match the live user-owned repository's owner
+by numeric ID and login. Both modes prohibit administrator bypass. In owner mode,
+the human owner must approve the pending deployment in GitHub; an agent must
+never approve its own release run or use the approval API on the owner's behalf.
+Contributor PR protection is separate and remains unchanged. All platform artifacts
 must succeed before publishing; unsigned macOS artifacts cannot enter the release
 feed. Repository settings and signing-secret scope must be configured separately.
 
