@@ -1,0 +1,1 @@
+Read the specs, plans and diagrams your AI workflow produces. See formatted Markdown, highlighted code and interactive Mermaid diagrams right in the document.

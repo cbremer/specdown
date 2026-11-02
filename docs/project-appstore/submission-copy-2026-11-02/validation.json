@@ -1,0 +1,127 @@
+{
+  "status": "pass",
+  "scope": "Exact approved-source extraction and local field limits; no live portal readback or submission result.",
+  "platforms": {
+    "ios": {
+      "name": {
+        "characters": 8,
+        "utf8_bytes": 8,
+        "character_limit": 30
+      },
+      "subtitle": {
+        "characters": 25,
+        "utf8_bytes": 25,
+        "character_limit": 30
+      },
+      "promotional_text": {
+        "characters": 158,
+        "utf8_bytes": 158,
+        "character_limit": 170
+      },
+      "description": {
+        "characters": 1473,
+        "utf8_bytes": 1501,
+        "character_limit": 4000
+      },
+      "keywords": {
+        "characters": 98,
+        "utf8_bytes": 98,
+        "byte_limit": 100
+      },
+      "whats_new": {
+        "characters": 492,
+        "utf8_bytes": 508,
+        "character_limit": 4000
+      },
+      "support_url": {
+        "characters": 45,
+        "utf8_bytes": 45
+      },
+      "marketing_url": {
+        "characters": 33,
+        "utf8_bytes": 33
+      },
+      "privacy_policy_url": {
+        "characters": 45,
+        "utf8_bytes": 45
+      },
+      "copyright": {
+        "characters": 13,
+        "utf8_bytes": 13
+      },
+      "app_review_notes": {
+        "characters": 1647,
+        "utf8_bytes": 1647,
+        "byte_limit": 4000
+      },
+      "testflight_description": {
+        "characters": 376,
+        "utf8_bytes": 376,
+        "local_conservative_byte_budget": 4000
+      },
+      "what_to_test": {
+        "characters": 875,
+        "utf8_bytes": 875,
+        "local_conservative_byte_budget": 4000
+      }
+    },
+    "mac": {
+      "name": {
+        "characters": 8,
+        "utf8_bytes": 8,
+        "character_limit": 30
+      },
+      "subtitle": {
+        "characters": 25,
+        "utf8_bytes": 25,
+        "character_limit": 30
+      },
+      "promotional_text": {
+        "characters": 165,
+        "utf8_bytes": 165,
+        "character_limit": 170
+      },
+      "description": {
+        "characters": 1718,
+        "utf8_bytes": 1748,
+        "character_limit": 4000
+      },
+      "keywords": {
+        "characters": 93,
+        "utf8_bytes": 93,
+        "byte_limit": 100
+      },
+      "support_url": {
+        "characters": 45,
+        "utf8_bytes": 45
+      },
+      "marketing_url": {
+        "characters": 33,
+        "utf8_bytes": 33
+      },
+      "privacy_policy_url": {
+        "characters": 45,
+        "utf8_bytes": 45
+      },
+      "copyright": {
+        "characters": 13,
+        "utf8_bytes": 13
+      },
+      "app_review_notes": {
+        "characters": 1975,
+        "utf8_bytes": 1975,
+        "byte_limit": 4000
+      },
+      "testflight_description": {
+        "characters": 376,
+        "utf8_bytes": 376,
+        "local_conservative_byte_budget": 4000
+      },
+      "what_to_test": {
+        "characters": 1248,
+        "utf8_bytes": 1248,
+        "local_conservative_byte_budget": 4000
+      }
+    }
+  }
+}

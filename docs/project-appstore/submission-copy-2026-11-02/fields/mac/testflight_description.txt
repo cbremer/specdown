@@ -1,0 +1,1 @@
+SpecDown is a dedicated reader for Markdown specs, plans, READMEs and Mermaid diagrams saved from editors or AI tools. Read formatted documents, explore diagrams, compare source and preview, and move between open documents. No account is required. The bundled examples work offline. On desktop, open local Markdown files refresh when changes are saved while Live reload is on.

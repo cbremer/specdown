@@ -1,0 +1,1 @@
+ai workflows,si workflows,markdown,preview,readme,flowchart,specs,docs,code,split,live reload

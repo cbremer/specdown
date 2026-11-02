@@ -1,0 +1,6 @@
+1. Open the bundled Sample and Diagram Showcase, then open your own Markdown through Files, including an enabled cloud provider such as iCloud Drive, OneDrive or Dropbox, and from another app.
+2. Expand a diagram. Check centered zoom, pan and Reset in portrait and landscape. Confirm the Link button is absent.
+3. Try Contents, Raw/Preview, Split and multiple tabs. Use Find, dismiss its keyboard and open a diagram fullscreen. Check that focus and the visible document remain correct.
+4. Switch between Light and the other app icons, then return to Original. Check the Home Screen appearance and light/dark themes.
+5. Try an oversized document and an HTTP document URL. Rejection should leave the current document intact.
+6. Quit and reopen the app. On iPad, repeat document, sidebar and diagram checks. Report the device, OS version, build number and steps for any problem.
