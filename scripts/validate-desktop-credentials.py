@@ -11,7 +11,7 @@ import argparse
 import base64
 import hashlib
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import platform
 import re
 import secrets
@@ -28,6 +28,11 @@ SECRET_NAMES = (
 )
 EXPECTED_TEAM = "582YQWPT9G"
 EXPECTED_CERT_SHA256 = "3E9546741A6FF820AE629E684F70433E20CEB6BDD561812A9F3BE7EBC506A82B"
+# codesign requires this public SHA-1 lookup selector; SHA-256 remains the trust
+# pin before and after signing. Verified from the same retained public leaf.
+EXPECTED_CODESIGN_SELECTOR = "348BDE654F13CAACABB81B4F68AC2D785251400F"
+INTERMEDIATE_SHA256 = "F16CD3C54C7F83CEA4BF1A3E6A0819C8AAA8E4A1528FD144715F350643D2DF3A"
+INTERMEDIATE_FILE = Path(__file__).with_name("certificates") / "DeveloperIDG2CA.cer"
 MAX_P12_BYTES = 49152
 MAX_OUTPUT_BYTES = 131072
 
@@ -103,8 +108,11 @@ class Commands:
         self.env = {key: env[key] for key in ("HOME", "TMPDIR", "DEVELOPER_DIR") if key in env}
         self.env["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
 
-    def __call__(self, stage, args, capture=False, timeout=60):
+    def __call__(self, stage, args, capture=False, timeout=60, codesign_diagnostics=False):
+        if capture and codesign_diagnostics:
+            raise ValidationError("Unsupported simultaneous metadata and signing diagnostic capture")
         process = None
+        stream = None
         reader = None
         output = []
         read_errors = []
@@ -122,12 +130,14 @@ class Commands:
             process = subprocess.Popen(
                 args, stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, env=self.env, start_new_session=True,
+                stderr=subprocess.PIPE if codesign_diagnostics else subprocess.DEVNULL,
+                env=self.env, start_new_session=True,
             )
-            if capture:
+            stream = process.stderr if codesign_diagnostics else process.stdout
+            if capture or codesign_diagnostics:
                 def read_bounded():
                     try:
-                        output.append(process.stdout.read(MAX_OUTPUT_BYTES + 1))
+                        output.append(stream.read(MAX_OUTPUT_BYTES + 1))
                         if len(output[0]) > MAX_OUTPUT_BYTES:
                             stop_group()
                     except Exception:
@@ -142,6 +152,8 @@ class Commands:
                 if reader.is_alive() or read_errors or not output or len(output[0]) > MAX_OUTPUT_BYTES:
                     raise ValidationError(f"{stage} did not return bounded metadata")
             if code != 0:
+                if codesign_diagnostics:
+                    raise ValidationError(f"{stage} failed: {codesign_failure_category(code, output[0])}; details suppressed")
                 raise ValidationError(f"{stage} failed; credential details were suppressed")
             return output[0] if capture else b""
         except (OSError, subprocess.SubprocessError):
@@ -173,9 +185,9 @@ class Commands:
                         cleanup_failed = True
                 # BufferedReader.close can wait on a read lock. Never call it
                 # until the reader has settled, even on an exceptional path.
-                if process.stdout and reader_settled:
+                if stream and reader_settled:
                     try:
-                        process.stdout.close()
+                        stream.close()
                     except Exception:
                         cleanup_failed = True
                 if cleanup_failed:
@@ -183,25 +195,77 @@ class Commands:
 
 
 def keychain_state(command):
-    # Metadata queries only; never set a search list, default, or trust setting.
+    # Metadata queries only. The hosted probe restores the original search list.
     return (
         command("Keychain search-list snapshot", ["/usr/bin/security", "list-keychains", "-d", "user"], True),
         command("Default-keychain snapshot", ["/usr/bin/security", "default-keychain", "-d", "user"], True),
     )
 
 
-def expected_leaf(pem):
-    blocks = re.findall(rb"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----", pem, re.S)
-    if not 1 <= len(blocks) <= 8:
-        raise ValidationError("Imported certificate inventory is outside the supported bounds")
-    matches = []
+def codesign_failure_category(code, diagnostic):
+    """Map bounded private diagnostics to fixed labels; never return their text."""
+    message = diagnostic.lower()
+    if code == 2:
+        return "argument-configuration"
+    if b"unable to build chain" in message or b"cssmerr_tp_not_trusted" in message:
+        return "certificate-chain"
+    if b"user interaction is not allowed" in message or b"errsecinteractionnotallowed" in message:
+        return "keychain-interaction"
+    if b"codesign_allocate" in message:
+        return "allocation-tool"
+    if b"errsecinternalcomponent" in message:
+        return "signing-service"
+    return "unclassified-signing-failure"
+
+
+def search_list_paths(raw):
+    if len(raw) > 32768:
+        raise ValidationError("The existing keychain search list exceeds supported bounds")
     try:
-        for block in blocks:
-            der = base64.b64decode(re.sub(rb"\s", b"", block), validate=True)
-            if hashlib.sha256(der).hexdigest().upper() == EXPECTED_CERT_SHA256:
-                matches.append(der)
+        lines = [line.strip() for line in raw.decode("utf-8").splitlines() if line.strip()]
+        if len(lines) > 32:
+            raise ValueError()
+        if any(not line.startswith('"') or not line.endswith('"') for line in lines):
+            raise ValueError()
+        # security emits literal paths wrapped in quotes, not JSON/shell escapes.
+        paths = [line[1:-1] for line in lines]
+        if any(not 1 <= len(value) <= 4096 or '"' in value
+               or any(ord(c) < 32 or ord(c) == 127 for c in value)
+               or value.startswith("//")
+               or not PurePosixPath(value).is_absolute()
+               or str(PurePosixPath(value)) != value
+               or ".." in value.split("/") for value in paths):
+            raise ValueError()
+        if len(paths) != len(set(paths)):
+            raise ValueError()
+    except (ValueError, TypeError, UnicodeError):
+        raise ValidationError("The existing keychain search list is not supported bounded path metadata") from None
+    return paths
+
+
+def public_intermediate():
+    if INTERMEDIATE_FILE.is_symlink() or not INTERMEDIATE_FILE.is_file() or INTERMEDIATE_FILE.stat().st_size > 8192:
+        raise ValidationError("The pinned public intermediate certificate is unavailable")
+    certificate = INTERMEDIATE_FILE.read_bytes()
+    if hashlib.sha256(certificate).hexdigest().upper() != INTERMEDIATE_SHA256:
+        raise ValidationError("The public intermediate certificate does not match its reviewed fingerprint")
+    return certificate
+
+
+def public_certificates(pem):
+    pattern = rb"-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----"
+    blocks = re.findall(pattern, pem, re.S)
+    if not 1 <= len(blocks) <= 8 or re.sub(pattern, b"", pem, flags=re.S).strip():
+        raise ValidationError("Imported certificate inventory is outside the supported bounds")
+    try:
+        return [base64.b64decode(re.sub(rb"\s", b"", block), validate=True) for block in blocks]
     except ValueError:
         raise ValidationError("Imported certificate metadata is invalid") from None
+
+
+def expected_leaf(pem):
+    matches = [der for der in public_certificates(pem)
+               if hashlib.sha256(der).hexdigest().upper() == EXPECTED_CERT_SHA256]
     if len(matches) != 1:
         raise ValidationError("The imported certificate does not match the retained Developer ID identity")
     return matches[0]
@@ -210,12 +274,15 @@ def expected_leaf(pem):
 def validate(env, command=None):
     runner_temp = hosted_context(env)
     values, p12, check_notarization = read_inputs(env)
+    intermediate = public_intermediate()
     command = command or Commands(env)
     baseline = keychain_state(command)
+    original_paths = search_list_paths(baseline[0])
     work = Path(tempfile.mkdtemp(prefix="specdown-credential-check-", dir=runner_temp))
     keychain = work / "validation.keychain-db"
     keychain_password = secrets.token_urlsafe(32)  # Temporary container password; no new signing key.
     result = None
+    restore_search_list = False
     try:
         cert_file = work / "existing.p12"
         cert_file.write_bytes(p12)
@@ -225,11 +292,26 @@ def validate(env, command=None):
         command("Temporary keychain timeout", ["/usr/bin/security", "set-keychain-settings", "-lut", "600", str(keychain)])
         command("Existing identity import", ["/usr/bin/security", "import", str(cert_file), "-k", str(keychain), "-P", values["MAC_CERT_PASSWORD"], "-T", "/usr/bin/codesign"])
         command("Temporary signing ACL", ["/usr/bin/security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", keychain_password, str(keychain)])
-        leaf = expected_leaf(command("Public certificate inventory", ["/usr/bin/security", "find-certificate", "-a", "-p", str(keychain)], True))
+        inventory = command("Public certificate inventory", ["/usr/bin/security", "find-certificate", "-a", "-p", str(keychain)], True)
+        leaf = expected_leaf(inventory)
+        intermediates = [der for der in public_certificates(inventory)
+                         if hashlib.sha256(der).hexdigest().upper() == INTERMEDIATE_SHA256]
+        if len(intermediates) > 1:
+            raise ValidationError("The temporary keychain contains duplicate public intermediates")
+        if not intermediates:
+            public_file = work / "public-intermediate.cer"
+            public_file.write_bytes(intermediate)
+            command("Pinned public intermediate import", ["/usr/bin/security", "import", str(public_file), "-k", str(keychain), "-t", "cert"])
+            chain_inventory = command("Public chain inventory", ["/usr/bin/security", "find-certificate", "-a", "-p", str(keychain)], True)
+            if expected_leaf(chain_inventory) != leaf or sum(der == intermediate for der in public_certificates(chain_inventory)) != 1:
+                raise ValidationError("The temporary public certificate chain could not be verified")
+        # Mark before mutation: a failed command may still have changed state.
+        restore_search_list = True
+        command("Temporary signing search list", ["/usr/bin/security", "list-keychains", "-d", "user", "-s", str(keychain), *original_paths])
         leaf_file = work / "public-leaf.der"
         leaf_file.write_bytes(leaf)
         command("Certificate validity", ["/usr/bin/openssl", "x509", "-inform", "DER", "-in", str(leaf_file), "-noout", "-checkend", "0"])
-        identity = hashlib.sha1(leaf).hexdigest().upper()  # codesign's public-certificate selector.
+        identity = EXPECTED_CODESIGN_SELECTOR
         identities = command("Private-key identity lookup", ["/usr/bin/security", "find-identity", "-v", "-p", "codesigning", str(keychain)], True)
         if not re.search(rb"\b" + identity.encode() + rb'\s+"Developer ID Application: [^"\r\n]+ \(' + EXPECTED_TEAM.encode() + rb'\)"', identities):
             raise ValidationError("The expected Developer ID certificate has no usable matching private key")
@@ -237,7 +319,7 @@ def validate(env, command=None):
         binary = work / "credential-probe"
         source.write_text("int main(void) { return 0; }\n")
         command("Disposable signing probe compilation", ["/usr/bin/xcrun", "clang", str(source), "-o", str(binary)])
-        command("Existing-key signing probe", ["/usr/bin/codesign", "--force", "--sign", identity, "--keychain", str(keychain), "--timestamp=none", "--options", "runtime", str(binary)])
+        command("Existing-key signing probe", ["/usr/bin/codesign", "--force", "--sign", identity, "--keychain", str(keychain), "--timestamp=none", "--options", "runtime", str(binary)], codesign_diagnostics=True)
         command("Signing probe verification", ["/usr/bin/codesign", "--verify", "--strict", str(binary)])
         prefix = work / "probe-cert-"
         command("Signing probe certificate extraction", ["/usr/bin/codesign", "--display", "--extract-certificates=" + str(prefix), str(binary)])
@@ -254,6 +336,11 @@ def validate(env, command=None):
             result += "; one read-only notarization authentication check passed"
     finally:
         cleanup_failed = False
+        if restore_search_list:
+            try:
+                command("Original search-list restoration", ["/usr/bin/security", "list-keychains", "-d", "user", "-s", *original_paths])
+            except Exception:
+                cleanup_failed = True
         try:
             if keychain.exists():
                 command("Temporary keychain deletion", ["/usr/bin/security", "delete-keychain", str(keychain)])
