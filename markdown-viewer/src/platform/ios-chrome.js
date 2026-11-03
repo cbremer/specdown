@@ -8,6 +8,7 @@
 // so the module is self-contained.
 
 import DOMPurify from 'dompurify';
+import { syncIOSDocumentView, requestIOSImageFolder, reloadIOSDocumentImages } from './ios-documents.js';
 import { state } from '../core/state.js';
 import { trapFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
@@ -31,6 +32,17 @@ export function setupIOSNativeUI() {
   }
   document.body.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
   document.documentElement.classList.toggle('ios-pad', isIOSNative && state.iosLayoutMode === 'pad');
+  const recent = el('open-recent-button');
+  if (isIOSNative && recent && !el('ios-image-folder-button')) {
+    const images = document.createElement('button');
+    images.id = 'ios-image-folder-button';
+    images.setAttribute('role', 'menuitem');
+    images.className = recent.className;
+    images.textContent = 'Allow Local Images…';
+    images.addEventListener('click', requestIOSImageFolder);
+    recent.after(images);
+  }
+  window.specdownReloadImages = reloadIOSDocumentImages;
   syncIOSChrome();
 }
 
@@ -466,6 +478,7 @@ export async function buildPrintableDocument() {
 
 export function syncIOSChrome() {
   if (!isIOSNative) return;
+  syncIOSDocumentView();
 
   const hasContent = hasLoadedContent();
   const showActionBar = (hasContent || state.tabs.length > 0) && state.iosLayoutMode !== 'pad';
@@ -511,11 +524,9 @@ export function syncIOSChrome() {
 }
 
 /**
- * iOS 1.0: hide features that aren't touch-ready yet (planned for 1.1):
- * annotations (creating a note needs double-click) and recent files (the
- * iOS shell can't reopen picked files without security-scoped bookmarks).
- * Annotation controls are removed (all callers null-check them); Open Recent
- * stays in the DOM because the header ⋮ menu wiring keys off it.
+ * Native touch annotation editing remains deferred. Recent Files is routed to
+ * the native bookmark service; renderer localStorage paths grant no access.
+ * Annotation controls are removed (all callers null-check them).
  */
 export function hideIOSDeferredFeatures() {
   if (!isIOSNative) return;
@@ -523,7 +534,13 @@ export function hideIOSDeferredFeatures() {
     document.getElementById(id)?.remove();
   }
   const iosRecentItem = document.getElementById('open-recent-button');
-  if (iosRecentItem) iosRecentItem.hidden = true;
+  if (iosRecentItem) {
+    iosRecentItem.hidden = false;
+    iosRecentItem.addEventListener('click', (event) => {
+      event.stopImmediatePropagation();
+      iosHandler()?.postMessage({ action: 'showRecentFiles' });
+    }, true);
+  }
 
   // Touch wording on the start screen (no drag-and-drop or clicking on iOS).
   const iosDropTitle = document.querySelector('.drop-zone-content h2');

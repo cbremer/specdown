@@ -12,7 +12,7 @@
       img-src allow HTTPS for remote Markdown/images and retain self for local
       previews. Cleartext redirects are blocked before a request is sent.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown: specdown-resource:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <meta name="description" content="Read Markdown specs, plans and Mermaid diagrams from your AI workflow. Desktop Live reload follows saved changes to open files.">

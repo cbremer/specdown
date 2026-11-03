@@ -12,6 +12,7 @@
  * fetch), surfaced by the File info sheet. Desktop file tabs read their metadata
  * live from disk instead, so they don't populate this.
  * @typedef {object} TabSourceMeta
+ * @property {{ id: string }} [nativeDocument] Native file authority identifier, never a path grant.
  * @property {string} [bookmarkId] Identity of a recalled saved copy.
  * @property {string} [url] Source URL when the document was fetched from one.
  * @property {number} [size] Byte size (from a browser File).

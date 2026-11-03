@@ -143,7 +143,9 @@ declare global {
       };
     };
     /** Synchronously returns whether a native document passed preflight and opened. */
-    loadFileContent?: (content: string, filename: string) => boolean;
+    specdownReloadImages?: (token: string) => void;
+    specdownLoadNativeDocument?: (content: string, filename: string, nativeDocument: {id: string, expectedToken?: string, deliveryID?: string}) => {accepted: boolean, token: string, openIDs: string[]};
+    loadFileContent?: (content: string, filename: string, nativeDocument?: {id: string, expectedToken?: string, deliveryID?: string}) => boolean;
     /** Set by the app; called by the iOS shell to switch theme. */
     setTheme?: (theme: string) => void;
     /** Set by the app; called by the iOS shell on layout-class changes. */
