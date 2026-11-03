@@ -31,7 +31,7 @@ describe('separate Store test channels', () => {
       expect(config.extraMetadata.productName).toBe(name);
       expect(config.extraMetadata.name).toBe(`specdown-store-${suffix}`);
       expect(config.extraMetadata.specdownChannel).toBe(channel);
-      expect(config.extraMetadata.version).toBe('1.0.1');
+      expect(config.extraMetadata.version).toBe('1.0.2');
       expect(config.buildVersion).toBe('230');
       expect(config.publish).toBeNull();
       expect(config.files).toContain('!node_modules/electron-updater{,/**}');
@@ -89,7 +89,7 @@ describe('separate Store test channels', () => {
     expect(JSON.stringify(direct)).toBe(directBefore);
     expect(production.appId).toBe('com.mosaicpando.specdown');
     expect(production.productName).toBe('SpecDown');
-    expect(production.extraMetadata).toEqual({ version: '1.0.1' });
+    expect(production.extraMetadata).toEqual({ version: '1.0.2' });
     expect(production.afterSign).toBe(permissions.afterSign);
     expect(direct.appId).toBe('com.specdown.desktop');
     expect(direct.productName).toBe('Specdown Desktop');

@@ -270,6 +270,9 @@ describe('Bookmarks', () => {
     });
     input.dispatchEvent(new Event('change'));
     await new Promise((resolve) => setTimeout(resolve, 20));
+    [...document.querySelectorAll('.bookmarks-overlay button')]
+      .find((b) => b.textContent === 'New revision of same document')
+      .click();
     expect(getBookmarks()[0].content).toBe('# New');
     expect(tab.sourceMeta.bookmarkId).toBeUndefined();
     await recallBookmark(entry.id);
@@ -381,4 +384,28 @@ describe('Bookmarks', () => {
     document.getElementById('ios-bookmark-button').click();
     expect(getBookmarks()).toHaveLength(1);
   });
+});
+
+test('I07: replacing a saved copy requires explicit revision/new-document choice and retains captured old-tab identity', async () => {
+  loadHTML(document);
+  loadApp(document);
+  createTab('notes.md', '# Old');
+  await renderAnnotations('notes.md');
+  const tab = state.tabs[0];
+  const captured = annotationSourceForTab(tab);
+  bookmarkCurrentFile();
+  const entry = getBookmarks()[0];
+  bookmarkLocateFile(entry);
+  const input = document.querySelector('.bookmarks-overlay input[type=file]');
+  Object.defineProperty(input, 'files', {
+    value: [new File(['# Different'], 'notes.md')],
+  });
+  input.dispatchEvent(new Event('change'));
+  await new Promise((r) => setTimeout(r, 20));
+  expect(getBookmarks()[0].content).toBe('# Old');
+  [...document.querySelectorAll('.bookmarks-overlay button')]
+    .find((b) => b.textContent === 'Different document')
+    .click();
+  expect(getBookmarks()[0].annotationCopyId).not.toBe(entry.id);
+  expect(annotationSourceForTab(tab)).toBe(captured);
 });

@@ -158,3 +158,55 @@ This avoids `.pbxproj` merge conflicts. After project configuration changes,
 preserve local owner-managed settings, regenerate in a reviewable location, and
 verify the selected scheme and resolved identity before replacing the working
 project. Do not overwrite local signing settings as an incidental source update.
+
+## Recent documents
+
+Recent Files is available from the native sidebar and the viewer menu on iPhone
+and iPad. Only successfully accepted Files documents are recorded. Each record
+retains its provider bookmark and location hint; matching filenames stay separate.
+The previous filename-only list is retained but does not grant access. An
+unavailable recent offers Retry or Locate without replacing the current document.
+For an offline provider, download the file in Files before retrying. Provider move,
+revocation and offline behavior still need acceptance on physical devices.
+
+## Relative images
+
+For a Files document, choose **Allow Local Images…** from the viewer menu and
+select the folder containing that document. This explicitly grants that view
+folder access; reopening or changing views requires selecting it again. Images
+use a separate scheme from application assets. Only single-frame PNG, JPEG,
+GIF and WebP images are allowed, with a maximum of 8 MiB / 16 million pixels per
+image, 8192 pixels per edge, and 64 reads / 32 MiB / 32 million pixels per view.
+Paths with traversal, encoded escapes or symlinks are refused. SVG image files
+and animated images are intentionally excluded. Offline files must be downloaded
+in Files first; folder-provider behavior needs physical-device acceptance.
+
+## Diagram files
+
+Open a diagram fullscreen, then tap **SVG** or **PNG**. iPhone and iPad show a
+native Export Diagram sheet with **Save to Files…** and **Share…**. These send
+actual files; they do not create hosted links. PNG export is limited to 8 MiB,
+8192 pixels per edge and 16 million pixels; SVG is limited to 2 MiB and excludes
+active/external content. Finish or cancel one export before starting another.
+Changing documents invalidates a pending export. Temporary files are removed on
+completion, cancellation, invalidation, and on the next launch after a crash.
+
+Provider reads run off the UI thread with four outstanding operations maximum,
+two queued renderer deliveries and a 15-second result deadline. A provider can
+continue its system operation after that deadline; late results cannot replace
+the document. Download offline files in Files before retrying.
+
+Synthetic hosted WKWebView tests can be run without signing:
+
+```sh
+xcodegen generate --spec ios/project.yml --project ios
+xcodebuild -project ios/SpecDown.xcodeproj -scheme 'SpecDown Synthetic Tests' \
+  -destination 'platform=iOS Simulator,id=YOUR_DISPOSABLE_SIMULATOR_UUID' \
+  -derivedDataPath /tmp/specdown-synthetic-tests \
+  MARKETING_VERSION=1.0.2 CODE_SIGNING_ALLOWED=NO test
+```
+
+Use a newly created disposable simulator only. The tests use synthetic defaults,
+files and images, and do not inspect or migrate existing notes. This is unsigned
+simulator evidence; third-party providers, physical devices and signed builds
+remain separate acceptance surfaces.

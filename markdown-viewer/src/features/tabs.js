@@ -16,7 +16,8 @@ import {
   invalidateDocumentContext,
   isDocumentContextCurrent,
 } from '../core/document-context.js';
-import { isDesktop } from '../core/platform.js';
+import { annotationSourceForTab } from '../core/annotation-source.js';
+import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { closeSearch } from './search.js';
 import { toggleToc } from './toc.js';
@@ -196,6 +197,7 @@ export function createTab(filename, content, filePath, sourceMeta) {
     hasUnseenChanges: false,
     sourceMeta: sourceMeta || null,
   };
+  if (!isIOSNative) annotationSourceForTab(tab);
   state.tabs.push(tab);
   state.activeTabId = id;
 

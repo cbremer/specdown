@@ -22,6 +22,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 
 **Next-work handoffs:** [Platform testing runbook](../project-desktop/2026-11-02-spec-platform-testing-runbook.md) and [six-feature 1.0.2 implementation brief](2026-11-02-spec-1-0-2-agent-handoff.md). Both are saved instructions for a separately assigned task; neither starts tests, feature implementation or another release. [Session 79](2026-11-02-tasks-session-79-platform-testing-runbook.md) separates completed release controls from remaining security/credential maintenance.
 
+**Active development wave:** [Session 81](2026-11-02-tasks-session-81-development-wave-102.md) tracks the six-workstream Store 1.0.2 candidate in isolated worktrees, draft PRs and synthetic test evidence. [Proposed release notes and owner checklist](2026-11-02-spec-1-0-2-candidate-review.md) cover review before any later Dev/Beta or Store preparation. Historical 230 products and the canonical phone checkout remain unchanged.
+
 ## Timeline
 
 | Date         | Type      | Document                                                                              | Summary                                                                                                    |
@@ -112,6 +114,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 78: Dev/Beta signing handoff](2026-11-02-tasks-session-78-test-channels-signing-handoff.md) | Record signed Dev/Beta 230, separate Dev installations, Mac runtime checks and both Owner-only TestFlight deliveries; new Owner acceptance remains pending. |
 | Nov 2, 2026 | Tasks | [Session 79: testing and next-release handoffs](2026-11-02-tasks-session-79-platform-testing-runbook.md) | Save a host-safe platform testing runbook and six-feature 1.0.2 implementation brief; reconcile current pointers and separate completed controls from pending maintenance. |
 | Nov 2, 2026 | Tasks | [Session 80: remaining build-tool advisories](2026-11-02-tasks-session-80-toolchain-advisory-recheck.md) | Recheck the two open development-tool advisories against live upstream releases, preserve precise compatibility blockers and keep WK-19 open without changing release dependencies. |
+
+| Nov 2, 2026 | Tasks | [Session 81: 1.0.2 development wave](2026-11-02-tasks-session-81-development-wave-102.md) | Six workstreams implemented in draft PRs; combined tests and simulator replay passed, physical/provider acceptance remains separate. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

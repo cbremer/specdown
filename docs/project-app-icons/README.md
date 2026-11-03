@@ -1,11 +1,12 @@
 # App icon switching
 
-Bundled icon choices for the native SpecDown shells. The original remains the default.
+Bundled icon choices for the native SpecDown shells. Production desktop keeps Original as its bundled default; iOS channels keep their existing primary artwork.
 
 | Date       | Document                                                        | Summary                                                                 |
 | ---------- | --------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | 2026-09-10 | [Session 01](2026-09-10-tasks-session-01-native-icon-picker.md) | Native icon selection, bundled assets, persistence, and validation      |
 | 2026-09-13 | [Session 02](2026-09-13-tasks-session-02-normalize-icons.md)    | Centered artwork, cleaned alpha edges, reproducible desktop/iOS exports |
+
 
 ## Try it
 
@@ -13,20 +14,22 @@ Bundled icon choices for the native SpecDown shells. The original remains the de
 - Windows/Linux: **Appearance → Window Icon**. Changes the running window icon; installed shortcuts retain the shipped icon.
 - iPhone: **App Icon** on the welcome screen or **More → App Icon** while viewing a file.
 - iPad: **Appearance → App Icon** in the sidebar (compact layouts also have the iPhone entry points).
-- Choose **Original** to reset. iOS persists its selection through `UIApplication`; desktop stores `appIcon` in its existing state file.
+- Desktop: choose **Original** to reset. iOS: choose the artwork named in the picker footer to reset (production Original, Dev Flat, Beta Light). iOS persists its selection through `UIApplication`; desktop stores `appIcon` in its existing state file. Existing selections are retained.
 
-The desktop uses bundled PNGs in `desktop/icons`, already covered by electron-builder's `desktop/**/*` packaging glob. iOS uses six alternate AppIcon catalogs declared in `ios/project.yml`; Xcode generates both phone and iPad alternate-icon metadata. Icons must be bundled at build time on iOS. No downloads, arbitrary file paths, or document-controlled icon changes are supported.
+The desktop uses bundled PNGs in `desktop/icons`, already covered by electron-builder's `desktop/**/*` packaging glob. iOS offers the same eight artworks using the primary and alternate AppIcon catalogs declared in `ios/project.yml`; Xcode generates both phone and iPad alternate-icon metadata. Icons must be bundled at build time on iOS. No downloads, arbitrary file paths, or document-controlled icon changes are supported.
 
 ## Artwork
 
-The six concepts use versioned 1254-pixel masters in `build/app-icon-sources`.
-Desktop uses transparent PNG exports; iOS uses opaque navy-backed exports.
-All alternatives match Original's 824-pixel maximum visible dimension on a
-1024-pixel canvas, centered without stretching. The exporter removes extraction
-fringes and stray low-opacity pixels. See the source folder's README for rebuild
-instructions and provenance, and [size review](2026-09-13-icon-size-review.html)
-for light/dark previews. The old `output/specdown-icons` exploration kit is not
-the source of truth for the normalized assets.
+Original, Flat, Glass, Ceramic, Metallic, Layered, Minimal and Light are available
+on desktop and iOS. Approved masters live in `build/app-icon-sources`.
+Desktop alternatives use transparent 1024px PNGs with a centered 824px footprint.
+Light receives a rounded desktop tile from the full approved opaque master;
+legacy exports preserve their existing silhouettes and materials.
+
+iOS supplies its own system mask: legacy choices fill the frame using an
+aspect-preserving crop of the opaque tile; Light fills it from its entire approved
+opaque master. Desktop padding is never reused for iOS. See the source folder's
+README for reproduction commands, provenance and verification.
 
 ## Build
 

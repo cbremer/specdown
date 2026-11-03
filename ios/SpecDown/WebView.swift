@@ -55,6 +55,7 @@ struct WebView: UIViewRepresentable {
         // from file:// (null-origin CORS rule for modules), which left the app
         // unstyled with no JS. A custom scheme gives the page a real, same-origin
         // context where the Vite module bundle loads normally.
+        config.setURLSchemeHandler(DocumentResourceSchemeHandler(resources: bridge.documentResources), forURLScheme: "specdown-resource")
         let schemeHandler = BundleSchemeHandler()
         config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
 

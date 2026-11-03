@@ -19,3 +19,26 @@ swiftc -warnings-as-errors \
   "$repo_dir/tests/native/AppIconCatalogTests.swift" \
   -o "$test_dir/app-icon-catalog-tests"
 "$test_dir/app-icon-catalog-tests"
+
+swiftc -warnings-as-errors \
+  -module-cache-path "$test_dir/module-cache" \
+  "$repo_dir/ios/SpecDown/RecentDocuments.swift" \
+  "$repo_dir/ios/SpecDown/DocumentDeliveryQueue.swift" \
+  "$repo_dir/ios/SpecDown/DocumentLoadAcceptance.swift" \
+  "$repo_dir/tests/native/RecentDocumentsTests.swift" \
+  -o "$test_dir/recent-documents-tests"
+"$test_dir/recent-documents-tests"
+
+swiftc -warnings-as-errors \
+  -module-cache-path "$test_dir/module-cache" \
+  "$repo_dir/ios/SpecDown/DocumentResources.swift" \
+  "$repo_dir/tests/native/DocumentResourcesTests.swift" \
+  -o "$test_dir/document-resources-tests"
+"$test_dir/document-resources-tests"
+
+swiftc -warnings-as-errors \
+  -module-cache-path "$test_dir/module-cache" \
+  "$repo_dir/ios/SpecDown/DiagramExportFiles.swift" \
+  "$repo_dir/tests/native/DiagramExportTests.swift" \
+  -o "$test_dir/diagram-export-tests"
+"$test_dir/diagram-export-tests"
