@@ -63,31 +63,43 @@ describe('Visual themes', () => {
     ).toBe(visualThemeCatalog.length);
   });
 
-  it('defaults to Default on desktop so the compact drop card stays', () => {
-    window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
-    loadApp(document);
+  it.each(['direct', 'mas'])(
+    'starts %s desktop with the Starfield canvas and selected picker',
+    (distribution) => {
+      window.specdown = {
+        isDesktop: true,
+        distribution,
+        requestFileOpen: jest.fn(),
+      };
+      loadApp(document);
 
-    expect(state.visualTheme).toBe('default');
-    expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
-      'default'
-    );
-    expect(document.getElementById('starfield-canvas')).toBeNull();
-    expect(
-      document.getElementById('drop-zone').classList.contains('web-showcase')
-    ).toBe(false);
-  });
+      expect(state.visualTheme).toBe('starfield');
+      expect(document.documentElement.getAttribute('data-visual-theme')).toBe(
+        'starfield'
+      );
+      expect(document.getElementById('starfield-canvas')).not.toBeNull();
+      expect(
+        document
+          .getElementById('visual-theme-toggle')
+          .getAttribute('aria-label')
+      ).toBe('Theme: Starfield');
+      expect(
+        document.getElementById('drop-zone').classList.contains('web-showcase')
+      ).toBe(false);
+    }
+  );
 
-  it('defaults to Default on iOS and labels the sheet with the current theme', () => {
+  it('starts iOS with the Starfield canvas and labels the sheet with the current theme', () => {
     window.iosNative = true;
     window.webkit = {
       messageHandlers: { specdown: { postMessage: jest.fn() } },
     };
     loadApp(document);
 
-    expect(state.visualTheme).toBe('default');
-    expect(document.getElementById('starfield-canvas')).toBeNull();
+    expect(state.visualTheme).toBe('starfield');
+    expect(document.getElementById('starfield-canvas')).not.toBeNull();
     expect(document.getElementById('ios-visual-theme-button').textContent).toBe(
-      'Theme: Default'
+      'Theme: Starfield'
     );
   });
 
@@ -112,14 +124,54 @@ describe('Visual themes', () => {
     expect(document.getElementById('starfield-canvas')).not.toBeNull();
   });
 
-  it('honors a stored Default preference on the web surface', () => {
+  it.each(['web', 'direct', 'mas', 'ios'])(
+    'keeps a stored default ID as Basic on %s',
+    (surface) => {
+      if (surface === 'direct' || surface === 'mas')
+        window.specdown = {
+          isDesktop: true,
+          distribution: surface,
+          requestFileOpen: jest.fn(),
+        };
+      if (surface === 'ios') {
+        window.iosNative = true;
+        window.webkit = {
+          messageHandlers: { specdown: { postMessage: jest.fn() } },
+        };
+      }
+      localStorage.getItem.mockImplementation((key) =>
+        key === 'visualTheme' ? 'default' : null
+      );
+      loadApp(document);
+
+      expect(state.visualTheme).toBe('default');
+      expect(document.getElementById('starfield-canvas')).toBeNull();
+      expect(
+        document
+          .getElementById('visual-theme-toggle')
+          .getAttribute('aria-label')
+      ).toBe('Theme: Basic');
+      expect(
+        document.querySelector(
+          '#visual-theme-menu [data-visual-theme="default"]'
+        ).textContent
+      ).toBe('Basic');
+      if (surface === 'ios')
+        expect(
+          document.getElementById('ios-visual-theme-button').textContent
+        ).toBe('Theme: Basic');
+    }
+  );
+
+  it('keeps an explicit legacy opt-out as Basic', () => {
     localStorage.getItem.mockImplementation((key) =>
-      key === 'visualTheme' ? 'default' : null
+      key === 'starfield' ? '0' : null
     );
     loadApp(document);
-
-    expect(state.visualTheme).toBe('default');
     expect(document.getElementById('starfield-canvas')).toBeNull();
+    expect(
+      document.getElementById('visual-theme-toggle').getAttribute('aria-label')
+    ).toBe('Theme: Basic');
   });
 
   it('migrates the legacy starfield=1 flag', () => {
@@ -141,7 +193,8 @@ describe('Visual themes', () => {
     expect(visualThemeLabel('starfield')).toBe('Starfield');
     expect(visualThemeLabel('aurora')).toBe('Aurora');
     expect(visualThemeLabel('blueprint')).toBe('Blueprint');
-    expect(visualThemeLabel('not-a-theme')).toBe('Default');
+    expect(visualThemeLabel('default')).toBe('Basic');
+    expect(visualThemeLabel('not-a-theme')).toBe('Basic');
   });
 
   it('notifies the desktop shell of the theme catalog', () => {
@@ -156,7 +209,7 @@ describe('Visual themes', () => {
     expect(window.specdown.notifyVisualThemeCatalog).toHaveBeenCalledWith(
       visualThemeCatalog
     );
-    expect(window.specdown.notifyVisualTheme).toHaveBeenCalledWith('default');
+    expect(window.specdown.notifyVisualTheme).toHaveBeenCalledWith('starfield');
   });
 
   it('setVisualTheme applies a named look and ignores unknown ids', () => {
@@ -171,6 +224,9 @@ describe('Visual themes', () => {
 
   it('applies Aurora and Blueprint without mounting the starfield canvas', () => {
     window.specdown = { isDesktop: true, requestFileOpen: jest.fn() };
+    localStorage.getItem.mockImplementation((key) =>
+      key === 'visualTheme' ? 'aurora' : null
+    );
     loadApp(document);
     setVisualTheme('aurora');
     expect(state.visualTheme).toBe('aurora');
@@ -202,6 +258,7 @@ describe('Visual themes', () => {
       messageHandlers: { specdown: { postMessage: jest.fn() } },
     };
     loadApp(document);
+    setVisualTheme('default');
     expect(state.visualTheme).toBe('default');
     for (let i = 1; i < visualThemeCatalog.length; i++) {
       cycleVisualTheme();

@@ -82,6 +82,8 @@ Linux), and as an **iOS / iPadOS** app.
   installed shortcuts keep their shipped artwork. Channel defaults remain distinct.
 - **Keyboard shortcut sheet** (`?`)
 - Auto / light / dark theme that follows your OS, plus reduced-motion support
+- Starfield is the initial visual theme on every platform. Choose Basic, Aurora
+  or Blueprint instead; your selection is remembered.
 - Accessible: skip link, ARIA roles, keyboard navigation
 
 ---

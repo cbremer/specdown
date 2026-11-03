@@ -319,7 +319,7 @@ describe('desktop/main.js', () => {
       expect(template.find(m => m.label === 'Window')).toBeDefined();
     });
 
-    it('includes an Appearance > Theme submenu with Default and Starfield', () => {
+    it('starts the Appearance > Theme menu with Starfield selected and a Basic choice', () => {
       buildMenu();
       const template = Menu.buildFromTemplate.mock.calls[0][0];
       const appearance = template.find(m => m.label === 'Appearance');
@@ -329,6 +329,8 @@ describe('desktop/main.js', () => {
       const ids = themeMenu.submenu.map(item => item.id);
       expect(ids).toContain('visual-theme-default');
       expect(ids).toContain('visual-theme-starfield');
+      expect(themeMenu.submenu.find(item => item.id === 'visual-theme-default').label).toBe('Basic');
+      expect(themeMenu.submenu.find(item => item.id === 'visual-theme-starfield').checked).toBe(true);
       expect(themeMenu.submenu.every(item => item.type === 'radio')).toBe(true);
     });
 
