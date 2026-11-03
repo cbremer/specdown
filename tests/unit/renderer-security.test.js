@@ -305,6 +305,9 @@ describe('document resource limits', () => {
         return [name, sources];
       })
     );
+    expect(directives.get('img-src')).toContain('specdown-resource:');
+    for (const name of ['script-src', 'connect-src', 'font-src', 'default-src'])
+      expect(directives.get(name)).not.toContain('specdown-resource:');
     for (const directive of ['img-src', 'connect-src']) {
       expect(directives.get(directive)).toContain('https:');
       expect(directives.get(directive)).toContain("'self'");

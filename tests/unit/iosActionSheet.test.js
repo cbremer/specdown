@@ -53,7 +53,7 @@ describe('iOS 1.0 hides features planned for 1.1', () => {
     delete window.webkit;
   });
 
-  it('removes annotation controls and hides Open Recent, keeping About reachable', () => {
+  it('keeps annotations disabled and routes Recent Files to native bookmarks', () => {
     for (const id of [
       'annotation-toggle',
       'annotation-list-toggle',
@@ -61,10 +61,12 @@ describe('iOS 1.0 hides features planned for 1.1', () => {
     ]) {
       expect(document.getElementById(id)).toBeNull();
     }
-    expect(document.getElementById('open-recent-button').hidden).toBe(true);
+    expect(document.getElementById('open-recent-button').hidden).toBe(false);
+    document.getElementById('open-recent-button').click();
+    expect(window.webkit.messageHandlers.specdown.postMessage).toHaveBeenCalledWith({action: 'showRecentFiles'});
 
     document.getElementById('header-more-toggle').click();
-    expect(document.activeElement.id).toBe('about-button');
+    expect(document.activeElement.id).toBe('open-recent-button');
   });
 });
 

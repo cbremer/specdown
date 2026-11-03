@@ -1,4 +1,6 @@
 // @ts-check
+import { cancelDiagramRasterExport } from './features/diagram-export.js';
+import { getIOSDocumentView, beginIOSNativeDocumentDelivery } from './platform/ios-documents.js';
 // SpecDown — shared viewer entry point.
 //
 // Phase 1 (modernization roadmap): the viewer is an ES-module graph bundled by
@@ -192,6 +194,7 @@ function init() {
             const focused = document.activeElement;
             const presentation = document.querySelector('body > .presentation-overlay');
             const ownedFocus = fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
+            cancelDiagramRasterExport();
             closeFullscreen({ restoreFocus: false });
             exitPresentation({ restoreFocus: false });
             // Fullscreen remains in the DOM while hidden. Release only its
@@ -278,8 +281,20 @@ function openRecentEntry(entry) {
 }
 
 // iOS API: called by Swift shell to load a file (Session 2+)
-window.loadFileContent = function(content, filename) {
-    return createTab(filename, content);
+window.loadFileContent = function(content, filename, nativeDocument) {
+    if (nativeDocument?.expectedToken && (getIOSDocumentView()?.token || '0-0') !== nativeDocument.expectedToken) return false;
+    const finishDelivery = beginIOSNativeDocumentDelivery(nativeDocument?.deliveryID);
+    try {
+        return createTab(filename, content, null, nativeDocument ? { nativeDocument: {id: nativeDocument.id} } : null);
+    } finally { finishDelivery(); }
+};
+
+// Native request/response also reports the accepted token. This keeps a later
+// serialized native dispatch current without binding it to the view at read start.
+window.specdownLoadNativeDocument = function(content, filename, nativeDocument) {
+    const accepted = window.loadFileContent?.(content, filename, nativeDocument) === true;
+    const openIDs = state.tabs.flatMap((tab) => { const id = tab.sourceMeta?.nativeDocument?.id; return id ? [id] : []; });
+    return { accepted, token: getIOSDocumentView()?.token || '0-0', openIDs };
 };
 
 // iOS API: called by the Swift shell when a picked/shared file can't be read

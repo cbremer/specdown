@@ -137,9 +137,32 @@ targets:
               public.mime-type:
                 - text/markdown
 
+  SpecDownTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SpecDownTests
+    dependencies:
+      - target: SpecDown
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.synthetic-tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Specdown.app/Specdown"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 # Always select the identity explicitly for Run and Archive. The production
 # scheme remains named SpecDown for existing CI and the real release candidate.
 schemes:
+  SpecDown Synthetic Tests:
+    build:
+      targets:
+        SpecDown: all
+        SpecDownTests: [test]
+    test:
+      config: Dev Debug
+      targets:
+        - SpecDownTests
   SpecDown Dev:
     build:
       targets:

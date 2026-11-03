@@ -257,12 +257,36 @@ def verify_project(path, version=None, build=None):
     objects = project["objects"]
     root = objects[project["rootObject"]]
     equal(root.get("isa"), "PBXProject", "Project root")
-    targets = [(ref, objects[ref]) for ref in root["targets"]
-               if objects[ref].get("isa") == "PBXNativeTarget"]
-    require(len(targets) == 1 and targets[0][1].get("name") == "SpecDown",
-            "Expected one native SpecDown target")
-    target_id, target = targets[0]
+    refs = root["targets"]
+    require(len(refs) == len(set(refs)), "Duplicate project target reference")
+    targets = [(ref, objects[ref]) for ref in refs]
+    require(all(target.get("isa") == "PBXNativeTarget"
+                and target.get("name") in {"SpecDown", "SpecDownTests"}
+                for _, target in targets), "Unknown project target")
+    applications = [(ref, target) for ref, target in targets if target.get("name") == "SpecDown"]
+    tests = [(ref, target) for ref, target in targets if target.get("name") == "SpecDownTests"]
+    require(len(applications) == 1 and len(tests) <= 1,
+            "Expected one native SpecDown application target and at most its known unit-test bundle")
+    target_id, target = applications[0]
     equal(target.get("productType"), "com.apple.product-type.application", "Target type")
+    equal(target.get("dependencies", []), [], "SpecDown application dependencies")
+    if tests:
+        _, test_target = tests[0]
+        equal(test_target.get("productType"), "com.apple.product-type.bundle.unit-test",
+              "SpecDownTests must remain a unit-test bundle")
+        dependencies = test_target.get("dependencies", [])
+        require(len(dependencies) == 1, "SpecDownTests requires one application host dependency")
+        dependency = objects[dependencies[0]]
+        require(dependency.get("isa") == "PBXTargetDependency"
+                and dependency.get("target") == target_id, "SpecDownTests host dependency must be SpecDown")
+        for config, values in configurations(objects, test_target).items():
+            require(not any("[" in key or key.startswith("INFOPLIST_KEY_") for key in values),
+                    "Conditional or Info.plist test settings require separate validation")
+            equal(values.get("PRODUCT_BUNDLE_IDENTIFIER"), "com.mosaicpando.specdown.synthetic-tests",
+                  config + " test bundle ID")
+            equal(values.get("TEST_HOST"), "$(BUILT_PRODUCTS_DIR)/Specdown.app/Specdown", config + " test host")
+            equal(values.get("BUNDLE_LOADER"), "$(TEST_HOST)", config + " test bundle loader")
+            equal(values.get("GENERATE_INFOPLIST_FILE"), "YES", config + " test generated plist")
     project_configs, target_configs = configurations(objects, root), configurations(objects, target)
     rows = []
     for channel, (bundle_id, name, primary, prefix) in CHANNELS.items():
