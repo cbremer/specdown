@@ -4,7 +4,7 @@ Date: 2026-10-31. Task: WK-28. Base:
 `fe3243a4ea132612bc3069b44a5eb8d291ab9009` (draft #340).
 Branch: `codex/ios-light-icon`.
 Worktree:
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-ios-light-icon-20261031`.
+`<repo>/.claude/worktrees/specdown-ios-light-icon-20261031`.
 
 ## Approved design and scope
 
@@ -68,7 +68,7 @@ warning; there is no AppIntents dependency. The canonical owner project is not
 regenerated, and compiled catalog evidence does not establish runtime switching.
 
 Evidence and preservation manifests live under
-`/Users/chrisbremer/code/specdown/ios/DerivedData/ios-light-icon-20261031/`.
+`<repo>/ios/DerivedData/ios-light-icon-20261031/`.
 They include `existing-icons-before.json`, `native-icon-evidence.json`, the raw
 `assetutil.json`, generation approval/prompt, and complete build/test logs. Scratch
 exports, test temporary directories and the Swift module cache are contained in

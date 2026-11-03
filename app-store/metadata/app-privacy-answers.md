@@ -1,5 +1,7 @@
 # App Store Connect questionnaires — proposed answers (owner must confirm; AS-040)
 
+> Historical questionnaire proposal. Revalidate against the exact candidate and current MAS access/update rules; the September checklist below is not a new declaration or account-action instruction. See [the MAS contract](../../docs/project-appstore/mas-interface.md).
+
 Evidence: code audit 2026-09-29 of `markdown-viewer/src`, `desktop/main.js`,
 `ios/SpecDown` at main `b9ea264`. Recheck against the frozen candidate.
 

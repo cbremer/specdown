@@ -51,7 +51,7 @@ file -- "$artifact"
 
 Compare the result to the independently retained build/release manifest when one exists. Save both the expected digest's source and the calculated digest. Do not treat two hashes calculated from the same download as independent verification. The current direct Windows/Linux release lane is unsigned; record that fact instead of claiming Authenticode/notarization. Linux has no equivalent of a macOS notarization check in this lane.
 
-For source mode, record `git remote -v`, `git branch --show-current`, `git rev-parse HEAD`, `git status --short`, Node/npm versions and the lockfile hash in the separate checkout. Inspect remotes before logging them so an embedded credential is not exposed. Preserve a dirty checkout; use a new approved worktree/checkout rather than resetting it. On Chris's Mac, worktrees belong under `/Users/chrisbremer/code/specdown/.claude/worktrees/`, while the canonical Xcode checkout remains preserved.
+For source mode, record `git remote -v`, `git branch --show-current`, `git rev-parse HEAD`, `git status --short`, Node/npm versions and the lockfile hash in the separate checkout. Inspect remotes before logging them so an embedded credential is not exposed. Preserve a dirty checkout; use a new approved worktree/checkout rather than resetting it. On Chris's Mac, worktrees belong under `<repo>/.claude/worktrees/`, while the canonical Xcode checkout remains preserved.
 
 ## Prepare synthetic fixtures
 

@@ -73,7 +73,7 @@ Markdown file (or open one from a public HTTPS URL), and go. Use your browser's
 your browser has saved; online documents and remote images still need a connection.
 
 ### Desktop downloads (macOS / Windows / Linux)
-Download the latest installer from the **[Releases page](../../releases)**:
+Download the latest installer from the **[Releases page](https://github.com/cbremer/specdown/releases)**:
 
 | Platform | Artifact | Notes |
 |---|---|---|
@@ -153,9 +153,9 @@ output from `markdown-viewer/dist/`, so there's one codebase to work on.
 **Requirements:** Node.js **22.22.0+** (see `engines` in `package.json`).
 
 ```bash
-npm install            # install dependencies
+npm ci                 # install the committed dependency graph (runs postinstall)
 
-npm run dev            # Vite dev server — http://localhost:5179/
+npm run dev -- --host 127.0.0.1 # local-only Vite server — port 5179
 npm run build          # production build → markdown-viewer/dist/
 npm run preview        # serve the production build locally
 
@@ -163,13 +163,13 @@ npm run desktop        # build the web app, then launch Electron
 npm run desktop:build  # build the web app + a desktop installer (in dist/)
 ```
 
-### Quality gates (all run in CI on every PR)
+### Quality checks
 ```bash
 npm test               # Jest unit + integration suite
 npm run lint           # ESLint (flat config) — must be clean
 npm run typecheck      # tsc --noEmit (checkJs over JSDoc) — must be clean
 npm run test:watchers  # real synthetic-file watcher checks for desktop validation
-npm run format         # Prettier (write)
+npm run format:check   # Prettier check; format only files you change
 ```
 
 ### Architecture
@@ -182,6 +182,21 @@ npm run format         # Prettier (write)
 - **`ios/`** — the iOS/iPadOS Swift + WKWebView shell (an XcodeGen project).
 - **`tests/`** — Jest suite (unit + integration).
 - **`scripts/`** — version sync, static copy, changelog generation.
+
+### Local development and privacy
+
+Use the loopback-only development command above; the default Vite configuration
+listens on all network interfaces. Serve the viewer through Vite or its built
+directory rather than serving the repository root, which may contain ignored
+private files. Review repository scripts before installing dependencies or
+running commands from an unfamiliar checkout.
+
+Local files are read on your device. Opening online documents or remote images
+contacts their hosts; web and direct-download editions also check GitHub for
+releases. Browser/app data, exported notes and diagnostics can contain document
+text, URLs or local paths. Review them before sharing. See the
+[privacy policy source](markdown-viewer/public/privacy.html),
+[security guidance](SECURITY.md) and [documentation audit](docs/project-security/README.md).
 
 ### Releasing
 Merges to `main` run the web quality gates and deploy the verified build to

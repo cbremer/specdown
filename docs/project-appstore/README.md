@@ -1,5 +1,7 @@
 # Project: App Store release preparation
 
+> The status paragraphs below are dated release records. Recheck the current checkout and provider state before acting; recorded approvals and kickoff prompts do not authorize new signing, account or publication actions. See the [documentation privacy audit](../project-security/README.md).
+
 End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versions, with traceable builds, native QA, screenshots, complete draft listings and an explicit later submission boundary.
 
 **Status as of 2026-11-02:** The latest retained Apple checkpoint has production iOS and Mac **1.0.1 (230)** **Waiting for Review**, with manual release selected; no production Store approval or public release is claimed. [Session 74](2026-11-02-tasks-session-74-release-checkpoint.md) records the **9:18 AM PST** same-build iOS resubmission with approved Search Results artwork and all five Duo screenshots retained in order; the original Mac submission remains unchanged. [Session 70](2026-11-02-tasks-session-70-duo-release-artwork.md) preserves the earlier **8:32 AM PST** Duo-only resubmission, exact screenshot archive and narrow upload recovery. [Session 69](2026-11-02-tasks-session-69-portal-sync-handoff.md) retains the original submissions, approved copy readback and owner-reported production 230 acceptance. Existing approved iPhone/iPad images remain. [Session 64](2026-11-01-tasks-session-64-release-230-refresh.md) retains the signed production-artifact evidence; older session checkpoints remain historical.

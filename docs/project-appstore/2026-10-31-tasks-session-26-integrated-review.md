@@ -1,7 +1,7 @@
 # Session 26 — Integrated viewer review baseline
 
 Date: 2026-10-31. Branch: `codex/integrated-viewer-review`. Source worktree:
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-integrated-review-20261031`.
+`<repo>/.claude/worktrees/specdown-integrated-review-20261031`.
 
 ## Provenance and scope
 
@@ -43,7 +43,7 @@ Validation passes:
   shared viewer build, not refreshed native packages or runtime acceptance.
 
 The complete evidence directory is
-`/Users/chrisbremer/code/specdown/ios/DerivedData/integrated-review-20261031/`.
+`<repo>/ios/DerivedData/integrated-review-20261031/`.
 It retains the applied `reviewed-focus.patch`, a machine-readable per-file origin
 and hash report (`source-provenance.json`), `validation.json`, full command logs
 and generated-output hashes (`web-build-manifest.json`). The source report's
@@ -65,7 +65,7 @@ the bundled showcase opened in fullscreen remains over Raw after the palette's
 Toggle raw / preview command; presentation likewise remains on slide 1 of 10
 over Raw. Each overlay retains focus. These are expected baseline failures,
 not passing teardown checks. Evidence is retained in
-`/Users/chrisbremer/code/specdown/ios/DerivedData/accepted-overlay-lifecycle-20261031/browser-baseline.json`
+`<repo>/ios/DerivedData/accepted-overlay-lifecycle-20261031/browser-baseline.json`
 and the matching `.jpg`.
 
 ## Preserved boundaries and remaining work

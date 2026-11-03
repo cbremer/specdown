@@ -3,7 +3,7 @@
 Date: 2026-10-31. Base: `1392e517f888feb91300e58a072b3334d45b1477`
 (integrated review, draft #338). Branch: `codex/accepted-view-overlay-lifecycle`.
 Source worktree:
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-accepted-overlay-20261031`.
+`<repo>/.claude/worktrees/specdown-accepted-overlay-20261031`.
 
 ## Acceptance boundary and correction
 
@@ -81,7 +81,7 @@ unchanged. This is why the fix also touches the minimap/fullscreen modules.
   B's content. These are production-browser checks, not a native phone run.
 
 Complete logs, source/build hashes and reviewer evidence live under
-`/Users/chrisbremer/code/specdown/ios/DerivedData/accepted-overlay-lifecycle-20261031/`.
+`<repo>/ios/DerivedData/accepted-overlay-lifecycle-20261031/`.
 The initial author fixture failure is retained separately and is not counted
 as a product-negative result. Existing harness listener warnings, negative
 Git-revision stderr and Vite's large-chunk warning remain visible in logs.

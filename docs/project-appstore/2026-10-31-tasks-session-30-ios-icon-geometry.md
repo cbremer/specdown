@@ -4,7 +4,7 @@ Date: 2026-10-31. Task: WK-27. Base:
 `c7c1242569609aa55144a3f40eddec7d9e6adfa4` (draft #341).
 Branch: `codex/ios-icon-geometry`.
 Worktree:
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-ios-icon-geometry-20261031`.
+`<repo>/.claude/worktrees/specdown-ios-icon-geometry-20261031`.
 
 ## Scope and approved geometry
 
@@ -80,7 +80,7 @@ installation/launch. The log retains the non-blocking AppIntents metadata
 warning. Native catalog compilation is separate from physical icon switching.
 
 Evidence is under
-`/Users/chrisbremer/code/specdown/ios/DerivedData/ios-icon-geometry-20261031/`,
+`<repo>/ios/DerivedData/ios-icon-geometry-20261031/`,
 including `masters-and-current-ios.png`, `proposed-geometry.json`,
 `exported-geometry-grid.png`, `export-comparison.json`, `negative-control.json`
 and per-variant negative logs. `preservation-and-reproduction.json` and

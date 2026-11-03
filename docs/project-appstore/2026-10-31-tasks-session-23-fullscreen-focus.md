@@ -3,7 +3,7 @@
 Date: 2026-10-31. Base: `e7b842bfee5e360b9e9aaea8285c79c28f6fccbc`
 (`codex/ios-testflight-1-0-1`, draft #332). Review branch:
 `codex/fullscreen-focus-ownership`. Working source remains under
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-fullscreen-focus-20261031`.
+`<repo>/.claude/worktrees/specdown-fullscreen-focus-20261031`.
 
 ## Problem and correction
 
@@ -47,7 +47,7 @@ signing settings, version/build numbering and release workflows are unchanged.
   check is browser evidence, not a physical iOS keyboard or Duo acceptance test.
 
 Local logs and browser screenshot:
-`/Users/chrisbremer/code/specdown/ios/DerivedData/fullscreen-focus-20261031/`.
+`<repo>/ios/DerivedData/fullscreen-focus-20261031/`.
 The full test log retains existing test-harness listener warnings and expected
 negative Git-revision stderr; the suite exits successfully. No logs were hidden.
 

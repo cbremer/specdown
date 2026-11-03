@@ -63,7 +63,7 @@ as its reference. Approval applies to this additional choice; Original and all
 six existing alternate masters and exports remain unchanged.
 
 Approved source:
-`/Users/chrisbremer/.codex/generated_images/01a190ef-3d3b-7990-a26f-1e5764cfbaaf/exec-fb389325-cc4c-4d71-bdb1-33a3fdfa81bd.png`.
+[`light.png`](light.png) (the repository copy of the approved generated master).
 SHA256: `61d214a1870bc8f11f737c79d7fb092a81c028655600e85f38d7603273b66e76`.
 The exact prompt and reference are retained in
 [`light-generation-prompt.txt`](light-generation-prompt.txt). The referenced

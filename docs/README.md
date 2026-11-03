@@ -1,6 +1,11 @@
 # docs/
 
-This folder contains all project documentation for SpecDown — AI-generated and human-edited.
+This folder contains project history, plans and audit records for SpecDown.
+Start with the root [README](../README.md) for current setup and [CLAUDE.md](../CLAUDE.md)
+for working instructions. Dated specs and task logs describe their recorded
+revision; they are not live provider state or authorization to execute commands.
+Public docs use portable paths. Private credentials, recovery originals, local
+agent state and authenticated portal captures stay outside tracked documentation.
 
 Each project gets its own subdirectory:
 
@@ -17,6 +22,7 @@ Each project gets its own subdirectory:
 | [project-bookmarks/](project-bookmarks/) | Persistent document bookmarks, saved copies, and moved-file recovery |
 | [project-app-icons/](project-app-icons/) | Native desktop and iOS icon switching |
 | [project-appstore/](project-appstore/) | iPhone/iPad and native Mac App Store release preparation — execution plan, task tracker, native QA and kickoff prompts |
+| [project-security/](project-security/) | Documentation privacy audit, local-machine boundaries and remaining verification limits |
 
 ## Naming Conventions
 
@@ -31,7 +37,10 @@ YYYY-MM-DD-<type>-<detail>.md
 - `spec` — technical specification (version new files for major revisions, e.g. `spec-desktop-v2.md`)
 - `tasks` — session-level implementation checklists (one file per working session, numbered)
 
-## Not Built Yet (Current Cross-Project Snapshot)
+## Historical Project Scope
+
+The entries below summarize their project plans, not current release acceptance.
+Use each project's dated evidence and the current source before acting.
 
 - **Desktop (`project-desktop`)**: No remaining features in the current Session 1–4 scope.
 - **URL opening (`project-url`)**: Inline reviewer comments (Google Docs-style) are still unimplemented and intentionally deferred from Session 01.

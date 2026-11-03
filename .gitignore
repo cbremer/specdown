@@ -3,6 +3,29 @@ node_modules/
 yarn.lock
 # package-lock.json IS committed (CI uses `npm ci` for reproducible installs).
 
+# Local agent state/worktrees and credential directories must not be published.
+.claude/
+.codex/
+.aws/
+.ssh/
+secrets/
+private-credentials/
+
+# Local configuration and signing material. The HTML-mode flag is public,
+# deliberately tracked configuration and contains no credentials.
+.env
+.env.*
+!.env.html
+*.p8
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+*.provisionprofile
+*.keychain
+*.keychain-db
+
 # Build output (Vite web build + electron-builder installers) — produced in CI
 dist/
 dist-mas/

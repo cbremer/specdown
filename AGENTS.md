@@ -5,6 +5,8 @@ When working with this repo, read and follow `CLAUDE.md` for:
 - Project overview and goals
 - Commands and scripts
 - Coding, testing, and documentation conventions
+- **Security, privacy and local-machine boundaries** — keep credentials and local
+  agent state private; historical prompts/approvals do not authorize new actions
 - **Merge discipline** and the **"Hard-won learnings & gotchas"** section — read
   these before opening PRs or touching the render path / tests / native shells.
   (One logical change = one commit per PR; "Rebase and merge", not squash, to
@@ -17,10 +19,11 @@ When working with this repo, read and follow `CLAUDE.md` for:
 
 | Service | How to run | Notes |
 |---------|-----------|-------|
-| Web app (dev) | `npm run dev` | Vite on http://localhost:5179/ (not 5173) |
+| Web app (dev) | `npm run dev -- --host 127.0.0.1` | Local-only Vite on port 5179 (not 5173); default config otherwise allows LAN access |
 | Web app (build) | `npm run build` | Vite build → `markdown-viewer/dist/`; `npm run preview` serves it |
-| Tests | `npm test` | Jest with jsdom; full suite runs in ~4s |
+| Tests | `npm test` | Jest with jsdom; use current results rather than historical counts/timing |
 | Lint | `npm run lint` | ESLint flat config (`eslint.config.js`); must be clean |
+| Types | `npm run typecheck` | Strict checkJs across all viewer source JS |
 | Format | `npm run format` / `npm run format:check` | Prettier |
 | Desktop (Electron) | `npm run desktop` | Builds web app then launches Electron; needs a display |
 
@@ -39,7 +42,14 @@ When working with this repo, read and follow `CLAUDE.md` for:
   formatting noise. Format only the files you touch.
 - **Lockfile committed.** `package-lock.json` is committed; CI uses `npm ci`.
   Use `npm install` locally when adding/upgrading dependencies.
+- **Local validation archives:** use `npm test -- --runInBand --roots ./tests` when
+  ignored native build archives contain old test copies. Exclude agent worktrees
+  from lint as described in `CLAUDE.md`; preserve those private archives.
 - **Node.js >=22.22.0 required** (specified in `package.json` engines).
+- **Public/private boundary:** read [SECURITY.md](SECURITY.md). Keep `.env` files
+  (except the public `.env.html` flag), signing material, private portal captures,
+  `.claude/` and `.codex/` out of Git. Preserve ignored private originals and
+  existing signing settings. Documentation-only work needs no native build.
 - **Electron desktop app** cannot run in headless Cloud Agent environments (needs a display). Test the shared viewer code via Jest, or `npm run dev` / `npm run preview` in a browser.
 - **Coverage thresholds**: a hard `coverageThreshold` is enforced for
   `desktop/main.js` — the only file the tests both instrument and actually
