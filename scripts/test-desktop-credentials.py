@@ -23,11 +23,18 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 PUBLIC_FIXTURE = b"0synthetic public certificate; not a real certificate or private key"
 FIXTURE_FINGERPRINT = hashlib.sha256(PUBLIC_FIXTURE).hexdigest().upper()
+FIXTURE_CODESIGN_SELECTOR = "1" * 40  # Synthetic lookup identifier; not a trust hash.
+BASELINE_PATHS = ["/Users/runner/Library/Keychains/login.keychain-db", "/Library/Keychains/System.keychain"]
+
+
+def search_snapshot(paths):
+    return b"".join(('    "' + path + '"\n').encode() for path in paths)
 
 
 class FakeCommands:
     def __init__(self, fail=None, wrong_leaf=False, wrong_identity=False,
-                 wrong_signed_leaf=False, changed_state=False):
+                 wrong_signed_leaf=False, changed_state=False, original_paths=None,
+                 intermediate_count=0, wrong_intermediate_import=False):
         self.calls = []
         self.fail = fail
         self.wrong_leaf = wrong_leaf
@@ -35,23 +42,36 @@ class FakeCommands:
         self.wrong_signed_leaf = wrong_signed_leaf
         self.changed_state = changed_state
         self.snapshot_count = 0
+        self.paths = BASELINE_PATHS.copy() if original_paths is None else original_paths.copy()
+        self.intermediate_count = intermediate_count
+        self.wrong_intermediate_import = wrong_intermediate_import
+        self.diagnostics = []
 
-    def __call__(self, stage, args, capture=False, timeout=60):
+    def __call__(self, stage, args, capture=False, timeout=60, codesign_diagnostics=False):
         self.calls.append((stage, args, capture, timeout))
-        if stage == self.fail:
+        if codesign_diagnostics:
+            self.diagnostics.append(stage)
+        if stage == self.fail and stage != "Temporary signing search list":
             raise MODULE.ValidationError(stage + " failed; credential details were suppressed")
         if stage == "Keychain search-list snapshot":
             self.snapshot_count += 1
-            return b"changed" if self.changed_state and self.snapshot_count > 1 else b"unchanged-search-list"
+            return b"changed" if self.changed_state and self.snapshot_count > 1 else search_snapshot(self.paths)
         if stage == "Default-keychain snapshot":
             return b"unchanged-default"
         if stage == "Temporary keychain creation":
             Path(args[-1]).write_bytes(b"synthetic keychain marker; no keys")
-        if stage == "Public certificate inventory":
+        if stage in ("Public certificate inventory", "Public chain inventory"):
             leaf = b"wrong public fixture" if self.wrong_leaf else PUBLIC_FIXTURE
-            return b"-----BEGIN CERTIFICATE-----\n" + base64.b64encode(leaf) + b"\n-----END CERTIFICATE-----\n"
+            certificates = [leaf] + [MODULE.INTERMEDIATE_FILE.read_bytes()] * self.intermediate_count
+            return b"".join(b"-----BEGIN CERTIFICATE-----\n" + base64.b64encode(cert) + b"\n-----END CERTIFICATE-----\n" for cert in certificates)
+        if stage == "Pinned public intermediate import" and not self.wrong_intermediate_import:
+            self.intermediate_count = 1
+        if stage in ("Temporary signing search list", "Original search-list restoration"):
+            self.paths = args[5:]
+            if stage == self.fail:
+                raise MODULE.ValidationError("Synthetic partial search-list mutation failed")
         if stage == "Private-key identity lookup":
-            digest = "0" * 40 if self.wrong_identity else hashlib.sha1(PUBLIC_FIXTURE).hexdigest().upper()
+            digest = "0" * 40 if self.wrong_identity else FIXTURE_CODESIGN_SELECTOR
             return f'  1) {digest} "Developer ID Application: Fixture ({MODULE.EXPECTED_TEAM})"\n1 valid identities found\n'.encode()
         if stage == "Signing probe certificate extraction":
             prefix = next(arg.split("=", 1)[1] for arg in args if arg.startswith("--extract-certificates="))
@@ -76,12 +96,15 @@ class CredentialTests(unittest.TestCase):
         }
         self.platform = patch.object(MODULE.platform, "system", return_value="Darwin")
         self.fingerprint = patch.object(MODULE, "EXPECTED_CERT_SHA256", FIXTURE_FINGERPRINT)
+        self.selector = patch.object(MODULE, "EXPECTED_CODESIGN_SELECTOR", FIXTURE_CODESIGN_SELECTOR)
         self.platform.start()
         self.fingerprint.start()
+        self.selector.start()
 
     def tearDown(self):
         self.platform.stop()
         self.fingerprint.stop()
+        self.selector.stop()
         self.temp.cleanup()
 
     def assert_clean(self):
@@ -98,12 +121,20 @@ class CredentialTests(unittest.TestCase):
         self.assertIn("--timestamp=none", signing)
         self.assertIn("--keychain", signing)
         self.assertNotIn("--deep", signing)
+        self.assertEqual(signing[signing.index("--sign") + 1], FIXTURE_CODESIGN_SELECTOR)
+        self.assertEqual(command.diagnostics, ["Existing-key signing probe"])
         for _, args, _, _ in command.calls:
             self.assertNotIn("-A", args)
             self.assertNotIn("submit", args)
             self.assertFalse(args[0].endswith("credential-probe"))
-            if args[1] in ("list-keychains", "default-keychain"):
+            if args[1] == "default-keychain":
                 self.assertNotIn("-s", args)
+        mutations = [call for call in command.calls if "-s" in call[1] and "list-keychains" in call[1]]
+        self.assertEqual([call[0] for call in mutations], ["Temporary signing search list", "Original search-list restoration"])
+        self.assertEqual(mutations[0][1][6:], BASELINE_PATHS)
+        self.assertEqual(mutations[1][1][5:], BASELINE_PATHS)
+        self.assertLess(stages.index("Original search-list restoration"), stages.index("Temporary keychain deletion"))
+        self.assertEqual(command.paths, BASELINE_PATHS)
         self.assert_clean()
 
     def test_notarization_is_one_explicit_read_only_attempt(self):
@@ -121,10 +152,129 @@ class CredentialTests(unittest.TestCase):
         self.assertIn("one read-only", result)
         self.assert_clean()
 
+    def test_search_list_parser_preserves_literal_paths_order_and_empty_list(self):
+        paths = ["/Users/runner/Folder With Spaces/login.keychain-db", r"/Users/runner/literal\backslash.keychain"]
+        self.assertEqual(MODULE.search_list_paths(search_snapshot(paths)), paths)
+        self.assertEqual(MODULE.search_list_paths(b""), [])
+        invalid = [b"relative.keychain", b'"relative.keychain"', b'"/tmp/a" "/tmp/b"',
+                   b'"//host/keychain"', b'"///normalization"',
+                   b'"/tmp/a\x00b"', b'"/tmp/a\tb"', b'"/tmp/a"b"', b'"/tmp/../other"',
+                   b'"/tmp//other"', b'"/tmp/a"\n"/tmp/a"', b'"/tmp/\xff"', b"x" * 32769,
+                   search_snapshot([f"/tmp/{i}" for i in range(33)]), search_snapshot(["/" + "x" * 4096])]
+        for raw in invalid:
+            with self.subTest(size=len(raw)):
+                with self.assertRaises(MODULE.ValidationError):
+                    MODULE.search_list_paths(raw)
+
+    def test_empty_search_list_and_partial_mutation_restore_before_deletion(self):
+        for fail in (None, "Temporary signing search list"):
+            command = FakeCommands(original_paths=[], fail=fail)
+            if fail:
+                with self.assertRaises(MODULE.ValidationError):
+                    MODULE.validate(self.env, command)
+            else:
+                MODULE.validate(self.env, command)
+            stages = [call[0] for call in command.calls]
+            self.assertLess(stages.index("Original search-list restoration"), stages.index("Temporary keychain deletion"))
+            self.assertEqual(command.paths, [])
+            restore = next(call[1] for call in command.calls if call[0] == "Original search-list restoration")
+            self.assertEqual(restore, ["/usr/bin/security", "list-keychains", "-d", "user", "-s"])
+            self.assert_clean()
+
+    def test_bad_baseline_fails_before_any_keychain_mutation(self):
+        command = FakeCommands(original_paths=["relative-path"])
+        with self.assertRaises(MODULE.ValidationError):
+            MODULE.validate(self.env, command)
+        self.assertEqual([call[0] for call in command.calls], ["Keychain search-list snapshot", "Default-keychain snapshot"])
+        self.assert_clean()
+
+    def test_public_intermediate_is_pinned_reused_or_imported_without_trust(self):
+        certificate = MODULE.public_intermediate()
+        self.assertEqual(hashlib.sha256(certificate).hexdigest().upper(), MODULE.INTERMEDIATE_SHA256)
+        for count in (0, 1):
+            command = FakeCommands(intermediate_count=count)
+            MODULE.validate(self.env, command)
+            imports = [call[1] for call in command.calls if call[0] == "Pinned public intermediate import"]
+            self.assertEqual(len(imports), 1 - count)
+            if imports:
+                self.assertEqual(imports[0][-2:], ["-t", "cert"])
+                self.assertIn("-k", imports[0])
+            for call in command.calls:
+                self.assertNotIn("add-trusted-cert", call[1])
+                self.assertNotIn("trust-settings-import", call[1])
+            self.assert_clean()
+        for command in (FakeCommands(intermediate_count=2), FakeCommands(wrong_intermediate_import=True)):
+            with self.assertRaises(MODULE.ValidationError):
+                MODULE.validate(self.env, command)
+            self.assertNotIn("Temporary signing search list", [call[0] for call in command.calls])
+            self.assert_clean()
+
+    def test_wrong_public_asset_stops_before_credentials_are_imported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            wrong = Path(directory) / "wrong.cer"
+            for contents in (b"", b"untrusted public bytes", b"x" * 8193):
+                wrong.write_bytes(contents)
+                command = FakeCommands()
+                with patch.object(MODULE, "INTERMEDIATE_FILE", wrong):
+                    with self.assertRaises(MODULE.ValidationError):
+                        MODULE.validate(self.env, command)
+                self.assertEqual(command.calls, [])
+                self.assert_clean()
+
+    def test_codesign_categories_are_fixed_and_do_not_return_diagnostic_text(self):
+        cases = [(2, b"sensitive", "argument-configuration"),
+                 (1, b"Warning: unable to build chain to self-signed root for signer sensitive", "certificate-chain"),
+                 (1, b"User interaction is not allowed sensitive", "keychain-interaction"),
+                 (1, b"codesign_allocate: sensitive", "allocation-tool"),
+                 (1, b"errSecInternalComponent sensitive", "signing-service"),
+                 (1, b"sensitive unknown error", "unclassified-signing-failure")]
+        for code, message, category in cases:
+            self.assertEqual(MODULE.codesign_failure_category(code, message), category)
+
+    def test_diagnostic_stream_is_closed_on_failure_timeout_overflow_and_success(self):
+        for kind in ("failure", "timeout", "overflow", "success"):
+            with self.subTest(kind=kind):
+                payload = b"sensitive errSecInternalComponent" if kind != "overflow" else b"x" * (MODULE.MAX_OUTPUT_BYTES + 1)
+                process = Mock(stdout=None, stderr=io.BytesIO(payload))
+                process.wait.side_effect = [subprocess.TimeoutExpired(["tool", "sensitive"], 60) if kind == "timeout" else (1 if kind == "failure" else 0), 0]
+                with patch.object(MODULE.subprocess, "Popen", return_value=process), \
+                        patch.object(MODULE, "os", SimpleNamespace(killpg=Mock())), \
+                        patch.object(MODULE, "signal", SimpleNamespace(SIGKILL=9)):
+                    if kind == "success":
+                        self.assertEqual(MODULE.Commands({})("Synthetic signing", ["tool"], codesign_diagnostics=True), b"")
+                    else:
+                        with self.assertRaises(MODULE.ValidationError) as error:
+                            MODULE.Commands({})("Synthetic signing", ["tool"], codesign_diagnostics=True)
+                        self.assertNotIn("sensitive", str(error.exception))
+                self.assertTrue(process.stderr.closed)
+
+    @unittest.skipUnless(os.name == "posix", "Diagnostic process-group execution is a hosted macOS/POSIX contract")
+    def test_real_diagnostic_timeout_and_output_cap_are_bounded_and_close_stderr(self):
+        real_popen = MODULE.subprocess.Popen
+        for source in ("import sys,time; sys.stderr.write('sensitive'); sys.stderr.flush(); time.sleep(30)",
+                       "import sys,time; sys.stderr.write('x'*300000); sys.stderr.flush(); time.sleep(30)"):
+            processes = []
+
+            def start(*args, **kwargs):
+                process = real_popen(*args, **kwargs)
+                processes.append(process)
+                return process
+
+            start_time = time.monotonic()
+            with patch.object(MODULE.subprocess, "Popen", side_effect=start):
+                with self.assertRaises(MODULE.ValidationError) as error:
+                    MODULE.Commands({})("Synthetic signing", [sys.executable, "-c", source], timeout=0.25, codesign_diagnostics=True)
+            self.assertNotIn("sensitive", str(error.exception))
+            self.assertLess(time.monotonic() - start_time, 4)
+            self.assertEqual(len(processes), 1)
+            self.assertIsNotNone(processes[0].poll())
+            self.assertTrue(processes[0].stderr.closed)
+
     def test_all_operational_failures_clean_up(self):
         stages = ["Temporary keychain creation", "Temporary keychain unlock",
                   "Temporary keychain timeout", "Existing identity import",
                   "Temporary signing ACL", "Public certificate inventory",
+                  "Pinned public intermediate import", "Public chain inventory", "Temporary signing search list",
                   "Certificate validity", "Private-key identity lookup",
                   "Disposable signing probe compilation", "Existing-key signing probe",
                   "Signing probe verification", "Signing probe certificate extraction",
@@ -141,12 +291,19 @@ class CredentialTests(unittest.TestCase):
     def test_fingerprint_private_key_and_signed_certificate_are_separate_gates(self):
         for flag in ("wrong_leaf", "wrong_identity", "wrong_signed_leaf"):
             with self.subTest(flag=flag):
+                command = FakeCommands(**{flag: True})
                 with self.assertRaises(MODULE.ValidationError):
-                    MODULE.validate(self.env, FakeCommands(**{flag: True}))
+                    MODULE.validate(self.env, command)
+                stages = [call[0] for call in command.calls]
+                if flag in ("wrong_leaf", "wrong_identity"):
+                    self.assertNotIn("Existing-key signing probe", stages)
+                else:
+                    self.assertIn("Signing probe certificate extraction", stages)
                 self.assert_clean()
 
     def test_cleanup_failure_and_changed_keychain_configuration_fail_closed(self):
-        for command in (FakeCommands(fail="Temporary keychain deletion"), FakeCommands(changed_state=True)):
+        for command in (FakeCommands(fail="Temporary keychain deletion"), FakeCommands(changed_state=True),
+                        FakeCommands(fail="Original search-list restoration")):
             with self.assertRaisesRegex(MODULE.ValidationError, "cleanup could not be verified"):
                 MODULE.validate(self.env, command)
             self.assert_clean()
