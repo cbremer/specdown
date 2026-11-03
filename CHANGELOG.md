@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.233 — 2026-11-03
+
+### Features
+
+- isolate Mac Store development and beta channels
+
+### Documentation
+
+- audit privacy and harden repository guidance
+- add platform testing and 1.0.2 implementation handoffs
+- retain approved Duo artwork and iOS resubmission
+- record current tooling advisory blockers
+- record Dev and Beta 230 delivery and acceptance handoff
+- record artwork and published desktop release
+
 ## v0.0.232 — 2026-11-02
 
 ### Tests
