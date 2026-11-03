@@ -8,6 +8,7 @@ const APP_ICONS = [
   'metallic',
   'layered',
   'minimal',
+  'light',
 ];
 
 // Native menus own this feature: document JavaScript cannot change an OS icon.

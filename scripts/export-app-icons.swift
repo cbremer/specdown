@@ -1,14 +1,15 @@
-// macOS: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only]
+// macOS: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only | --desktop-light-only]
 // Derive every alternate asset from its full-resolution source, never a prior export.
 import AppKit
 
 let arguments = Array(CommandLine.arguments.dropFirst())
+let desktopLightOnly = arguments.contains("--desktop-light-only")
 let lightOnly = arguments.contains("--ios-light-only")
 let legacyIOSOnly = arguments.contains("--ios-legacy-only")
-precondition(!(lightOnly && legacyIOSOnly), "Choose only one iOS export scope")
-let rootArguments = arguments.filter { $0 != "--ios-light-only" && $0 != "--ios-legacy-only" }
+precondition([lightOnly, legacyIOSOnly, desktopLightOnly].filter { $0 }.count <= 1, "Choose only one export scope")
+let rootArguments = arguments.filter { $0 != "--ios-light-only" && $0 != "--ios-legacy-only" && $0 != "--desktop-light-only" }
 precondition(rootArguments.count <= 1 && !rootArguments.contains(where: { $0.hasPrefix("--") }),
-             "Usage: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only]")
+             "Usage: swift scripts/export-app-icons.swift [repository root] [--ios-light-only | --ios-legacy-only | --desktop-light-only]")
 let root = URL(fileURLWithPath: rootArguments.first ?? FileManager.default.currentDirectoryPath)
 let space = CGColorSpace(name: CGColorSpace.sRGB)!
 let variants = ["flat", "glass", "ceramic", "metallic", "layered", "minimal"]
@@ -47,7 +48,7 @@ func save(_ image: CGImage, _ relativePath: String, opaque: Bool = false) throws
     try tagged.representation(using: .png, properties: [:])!.write(to: root.appendingPathComponent(relativePath))
 }
 
-for variant in lightOnly ? [] : variants {
+for variant in (lightOnly || desktopLightOnly) ? [] : variants {
     let source = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/\(variant).png")))!.cgImage!
     let width = source.width, height = source.height
     let working = context(width, height)
@@ -118,12 +119,24 @@ for variant in lightOnly ? [] : variants {
     print("\(variant): source \(width)×\(height), visible \(visible), scale \(scale)")
 }
 
-// Light is an opaque, full-bleed iOS master. Do not apply desktop extraction,
-// 824px placement, rounded masking, or dark compositing to this separate choice.
+// Light uses its approved opaque master through separate platform geometry paths.
 if !legacyIOSOnly {
     let lightSource = NSBitmapImageRep(data: try Data(contentsOf: root.appendingPathComponent("build/app-icon-sources/light.png")))!
     precondition(lightSource.pixelsWide == lightSource.pixelsHigh && !lightSource.hasAlpha,
                  "Light requires a square opaque master")
+    if !lightOnly {
+        // macOS does not supply an iOS icon mask. Preserve the full master inside
+        // a rounded tile matching the existing centered 824px desktop footprint.
+        let desktop = context(1024, 1024)
+        desktop.interpolationQuality = .high
+        let tile = CGRect(x: 100, y: 100, width: 824, height: 824)
+        desktop.addPath(CGPath(roundedRect: tile, cornerWidth: 184, cornerHeight: 184, transform: nil))
+        desktop.clip()
+        desktop.draw(lightSource.cgImage!, in: tile)
+        try save(desktop.makeImage()!, "desktop/icons/light.png")
+        print("light desktop: full master, centered 824px rounded tile, transparent sRGB")
+    }
+    if desktopLightOnly { exit(0) }
     let light = context(1024, 1024)
     light.interpolationQuality = .high
     light.draw(lightSource.cgImage!, in: CGRect(x: 0, y: 0, width: 1024, height: 1024))
