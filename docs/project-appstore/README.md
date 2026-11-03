@@ -24,6 +24,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 
 **Next-work handoffs:** [Platform testing runbook](../project-desktop/2026-11-02-spec-platform-testing-runbook.md) and [six-feature 1.0.2 implementation brief](2026-11-02-spec-1-0-2-agent-handoff.md). Both are saved instructions for a separately assigned task; neither starts tests, feature implementation or another release. [Session 79](2026-11-02-tasks-session-79-platform-testing-runbook.md) separates completed release controls from remaining security/credential maintenance.
 
+**Credential cleanup, November 3:** [Session 83](2026-11-03-tasks-session-83-credential-cleanup-complete.md) records completed protected validation and scope-only verification at `2679334`; WK-47 is Done. The five existing signing/notarization secrets are confined to `desktop-release`, all repository secret entries are removed, and the main-only personal owner approval gate remains in place. Neither verification run built or released an app. Identifying/revoking the underlying legacy token (WK-49) and independently verifying off-Mac backups (WK-46) remain separate owner tasks.
+
 ## Timeline
 
 | Date         | Type      | Document                                                                              | Summary                                                                                                    |
@@ -116,6 +118,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 80: remaining build-tool advisories](2026-11-02-tasks-session-80-toolchain-advisory-recheck.md) | Recheck the two open development-tool advisories against live upstream releases, preserve precise compatibility blockers and keep WK-19 open without changing release dependencies. |
 | Nov 2, 2026 | Tasks | [Session 81: release credential scope](2026-11-02-tasks-session-81-credential-scope-cleanup.md) | Prepare a protected no-publication credential check and existing-secret migration with personal owner approval retained; distinguish completed tag-rule readback from pending credential validation and token retirement. |
 | Nov 3, 2026 | Tasks | [Session 82: isolated credential probe chain](2026-11-03-tasks-session-82-credential-probe-keychain-chain.md) | Repair temporary keychain search-list/chain visibility, preserve exact restoration and add fixed redacted signing diagnostics after the first protected probe failed; real validation remains separate. |
+| Nov 3, 2026 | Tasks | [Session 83: credential cleanup complete](2026-11-03-tasks-session-83-credential-cleanup-complete.md) | Record successful protected identity/authentication validation, removal of repository duplicates and passing scope-only verification; preserve personal approval and separate issuer-token/backup follow-ups. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
