@@ -13,6 +13,18 @@ before the corresponding behavior is accepted.
 - Choose the approved Light icon on desktop alongside the existing artwork choices.
 - Browse public GitHub repositories and branches without signing in, with clearer unavailable/rate-limit messages.
 - Keep annotations separate for different documents, and preserve, back up, preview, explicitly reconnect and undo recovered notes safely.
+- Start with Starfield across web, desktop, Mac Store and iOS; choose Basic or another theme whenever you prefer.
+
+## App Store feature description
+
+The [draft iOS and Mac descriptions](submission-copy-1.0.2-draft/README.md) now
+include the existing diagram presentation feature:
+
+> Focus on just the diagrams in Presentation mode, moving through them one at a time with zoom and pan.
+
+Both drafts also describe the initial Starfield theme and the Basic, Aurora and
+Blueprint choices. Saved theme selections remain respected. These drafts have
+not been applied to App Store Connect.
 
 Native iOS annotation editing remains disabled. No hosted diagram-link sharing is
 introduced. Running Dock/window icon changes do not replace Finder or installed

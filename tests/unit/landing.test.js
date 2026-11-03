@@ -186,8 +186,8 @@ describe('Landing gating on native shells', () => {
     ).toBe(false);
     expect(document.getElementById('landing-hero').hidden).toBe(true);
     expect(document.getElementById('web-sample-section').hidden).toBe(true);
-    expect(document.getElementById('starfield-canvas')).toBeNull();
-    expect(document.getElementById('starfield-cursor-core')).toBeNull();
+    expect(document.getElementById('starfield-canvas')).not.toBeNull();
+    expect(document.getElementById('starfield-cursor-core')).not.toBeNull();
   });
 
   it('keeps showcase chrome outside the dashed card so native empty state stays compact', () => {

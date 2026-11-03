@@ -22,7 +22,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 
 **Next-work handoffs:** [Platform testing runbook](../project-desktop/2026-11-02-spec-platform-testing-runbook.md) and [six-feature 1.0.2 implementation brief](2026-11-02-spec-1-0-2-agent-handoff.md). Both are saved instructions for a separately assigned task; neither starts tests, feature implementation or another release. [Session 79](2026-11-02-tasks-session-79-platform-testing-runbook.md) separates completed release controls from remaining security/credential maintenance.
 
-**Active development wave:** [Session 81](2026-11-02-tasks-session-81-development-wave-102.md) tracks the six-workstream Store 1.0.2 candidate in isolated worktrees, draft PRs and synthetic test evidence. [Proposed release notes and owner checklist](2026-11-02-spec-1-0-2-candidate-review.md) cover review before any later Dev/Beta or Store preparation. Historical 230 products and the canonical phone checkout remain unchanged.
+**Active development wave:** [Session 81](2026-11-02-tasks-session-81-development-wave-102.md) tracks the six-workstream Store 1.0.2 candidate in isolated worktrees, draft PRs and synthetic test evidence. [Session 82](2026-11-02-tasks-session-82-local-dev-231.md) records local Dev **1.0.2 (231)** installed on iPhone Z and this Mac for owner testing. [Proposed release notes and owner checklist](2026-11-02-spec-1-0-2-candidate-review.md) cover acceptance before later Beta or Store preparation. Historical 230 products and the canonical phone checkout remain unchanged.
 
 ## Timeline
 
@@ -116,6 +116,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 80: remaining build-tool advisories](2026-11-02-tasks-session-80-toolchain-advisory-recheck.md) | Recheck the two open development-tool advisories against live upstream releases, preserve precise compatibility blockers and keep WK-19 open without changing release dependencies. |
 
 | Nov 2, 2026 | Tasks | [Session 81: 1.0.2 development wave](2026-11-02-tasks-session-81-development-wave-102.md) | Six workstreams implemented in draft PRs; combined tests and simulator replay passed, physical/provider acceptance remains separate. |
+| Nov 2, 2026 | Tasks | [Session 82: local Dev 231](2026-11-02-tasks-session-82-local-dev-231.md) | Separate signed 1.0.2 (231) Dev apps installed and launched on iPhone Z and this Mac for owner testing; production and canonical checkout preserved. |
+| Nov 2, 2026 | Tasks | [Session 83: theme and presentation copy](2026-11-02-tasks-session-83-theme-and-presentation-copy.md) | Starfield startup across all surfaces, Basic theme label, and draft iOS/Mac descriptions explaining diagram presentation mode. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

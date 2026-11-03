@@ -71,9 +71,8 @@ export const state = {
   themePreference: /** @type {'light' | 'dark' | 'auto'} */ (
     localStorage.getItem('theme') || 'auto'
   ),
-  // Resolved in setupVisualTheme(): 'starfield' on the web showcase, 'default'
-  // on desktop/iOS until the user picks a look. Persisted as visualTheme.
-  visualTheme: 'default',
+  // Starfield on every surface until setupVisualTheme() resolves a saved choice.
+  visualTheme: 'starfield',
   currentRawMarkdown: '',
   currentViewMode: 'preview', // 'preview' or 'raw'
 

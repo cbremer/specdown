@@ -1500,11 +1500,11 @@ onTrustedIpc('restart-to-update', () => {
 // The renderer catalog (markdown-viewer/src/core/visual-theme-catalog.js) is
 // the source of truth and replaces this list over `visual-theme-catalog`.
 const DEFAULT_VISUAL_THEME_CATALOG = [
-  { id: 'default', label: 'Default' },
+  { id: 'default', label: 'Basic' },
   { id: 'starfield', label: 'Starfield' },
 ];
 let visualThemeCatalogItems = DEFAULT_VISUAL_THEME_CATALOG.slice();
-let currentVisualThemeId = 'default';
+let currentVisualThemeId = 'starfield';
 
 function normalizeVisualThemeCatalog(raw) {
   if (!Array.isArray(raw)) return null;
