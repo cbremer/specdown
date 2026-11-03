@@ -12,7 +12,10 @@ import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 import { recordRecentFile, renderRecentFiles } from './recent-files.js';
-import { bridgeGetPathForFile } from '../platform/bridge.js';
+import {
+  bridgeGetPathForFile,
+  bridgeRequestOpenPath,
+} from '../platform/bridge.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -74,6 +77,11 @@ export function handleFile(file) {
   // returns '' off the desktop shell or when a path can't be resolved, so this
   // is null on the web surface, exactly as before.
   const filePath = bridgeGetPathForFile(file) || null;
+  // Successful native content read and its identity travel together.
+  if (filePath) {
+    bridgeRequestOpenPath(filePath);
+    return;
+  }
 
   // Read file and open in a new tab
   const reader = new FileReader();

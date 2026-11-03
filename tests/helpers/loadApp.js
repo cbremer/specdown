@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { installAnnotationAuthority } = require('./annotationAuthority');
 
 // Load mocks
 require('../mocks/marked');
@@ -81,6 +82,9 @@ function loadApp(document) {
   const chunks = [];
   inlineModule(entryPath, new Set(), chunks);
   (0, eval)(chunks.join('\n'));
+  // UI tests use disposable reducer-backed state; the runtime probe exercises
+  // the actual IndexedDB adapter in separate browser/Electron profiles.
+  if (!global.isIOSNative) installAnnotationAuthority();
 }
 
 /**

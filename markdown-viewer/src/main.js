@@ -293,6 +293,13 @@ window.specdownShowError = function(/** @type {string} */ message) {
 // Event Listeners
 // ===========================
 function setupEventListeners() {
+    window.addEventListener('storage', event => {
+        if(!isIOSNative && event.key==='specdown-annotations') showToast('An older window changed legacy notes. Open Unassigned notes and recovery to preserve another snapshot. New collections were not overwritten.',{type:'warning'});
+    });
+    window.addEventListener('specdown-annotations-changed', () => {
+        const tab=state.tabs.find(t=>t.id===state.activeTabId);
+        if(tab && !isIOSNative && state.currentViewMode==='preview') void renderAnnotations(tab.filename,captureDocumentContext());
+    });
     // Browse button - stopPropagation prevents the dropZone click handler
     // from calling fileInput.click() a second time (button is inside drop-zone-content)
     browseButton.addEventListener('click', (e) => {
@@ -523,7 +530,8 @@ async function renderMarkdown(content, filename, prepared) {
         clearSearchHighlights();
 
         // Render annotations for this document (re-arms handlers if active)
-        renderAnnotations(filename, context);
+        await renderAnnotations(filename, context);
+        if (!isDocumentContextCurrent(context)) return false;
 
         // Scroll to top
         markdownContent.scrollTop = 0;

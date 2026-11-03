@@ -10,6 +10,11 @@ export {};
 
 /** Payload delivered by the desktop shell when a file is opened or changes. */
 interface SpecdownFileData {
+  annotationSource?: {
+    authorityId: string;
+    sourceToken: string;
+    requiresReconnect?: boolean;
+  } | null;
   filename: string;
   content: string;
   filePath: string;
@@ -67,7 +72,9 @@ interface SpecdownDesktopBridge {
   platform?: string;
   /** 'mas' for the Mac App Store build, 'direct' for the DMG/ZIP download. */
   distribution?: 'mas' | 'direct';
-  readBookmarkedFile?: (filePath: string) => Promise<SpecdownFileOpenData | null>;
+  readBookmarkedFile?: (
+    filePath: string
+  ) => Promise<SpecdownFileOpenData | null>;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
   requestOpenFolder?: () => void;

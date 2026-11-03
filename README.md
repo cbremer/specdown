@@ -28,8 +28,12 @@ Linux), and as an **iOS / iPadOS** app.
   paginated layout (diagrams re-rendered light for paper); the desktop app also
   has **File > Export as PDF…** (`Cmd/Ctrl + Shift + E`) for one-step PDF files
 - **Notes (web and desktop)** — double-click a document block to attach a note;
-  export and import notes as JSON. Imports are limited to 2 MiB. Notes are saved
-  in local app or browser storage; native iOS does not expose annotation tools
+  notes use local transactional storage and separate document identity. In the
+  command palette, **Unassigned notes and recovery** captures legacy notes, previews
+  selected copies, reconnects collections and undoes operations while preserving
+  newer edits. Save/reselect a private `.sdr` backup to verify it; portable exchange
+  is explicitly lossy. Browser selections require explicit reconnect when reopened.
+  Recovery has bounded capacity; native iOS annotation tools remain disabled
 
 ### Interactive Mermaid diagrams
 - Per-diagram **zoom, pan, reset, and fullscreen** controls
@@ -43,7 +47,7 @@ Linux), and as an **iOS / iPadOS** app.
   use **Files**, **iCloud Drive** or a compatible app on iPhone and iPad
 - **Open from URL** using a public HTTPS link to a Markdown file. Links requiring
   sign-in or blocked by the host may not open; download the file and open it locally
-- **Bookmarks** — save frequently used files with **Bookmark** (`Cmd/Ctrl + D`), then recall them from the header’s **Bookmarks** list. Search, rename, remove, or **Locate file** when a desktop file moves. Desktop files and URLs reopen their current source; browser/iOS files without a reusable path retain a clearly labeled **saved copy**, with **Replace copy** to update it. Bookmarks stay separate from recents and are stored on this device (clearing app/browser data removes them).
+- **Bookmarks** — save frequently used files with **Bookmark** (`Cmd/Ctrl + D`), then recall them from the header’s **Bookmarks** list. Search, rename, remove, or **Locate file** when a desktop file moves. Desktop files and URLs reopen their current source; browser/iOS files without a reusable path retain a clearly labeled **saved copy**, with **Replace copy** to choose a new revision or a different document explicitly. Bookmarks stay separate from recents and are stored on this device (clearing app/browser data removes them).
 - **Recent files (web and desktop)** for reopening documents; **session restore**
   reopens your last document on the web
 - **Workspace (folder) mode (desktop and supported browsers)** — use **Open Folder**

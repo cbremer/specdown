@@ -18,6 +18,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { randomUUID, createHash } = require('crypto');
 
 const MAS_GRANTS_KEY = 'masGrants';
 const MAS_GRANTS_VERSION = 1;
@@ -41,7 +42,8 @@ function readMasGrants(raw) {
     return { entries: {}, writable: false };
   }
   const entries = {};
-  const source = raw.entries && typeof raw.entries === 'object' ? raw.entries : {};
+  const source =
+    raw.entries && typeof raw.entries === 'object' ? raw.entries : {};
   for (const [key, entry] of Object.entries(source)) {
     if (
       path.isAbsolute(key) &&
@@ -51,7 +53,32 @@ function readMasGrants(raw) {
       entry.bookmark.length > 0 &&
       Number.isFinite(entry.savedAt)
     ) {
-      entries[key] = { kind: entry.kind, bookmark: entry.bookmark, savedAt: entry.savedAt };
+      entries[key] = {
+        kind: entry.kind,
+        bookmark: entry.bookmark,
+        savedAt: entry.savedAt,
+      };
+      if (
+        typeof entry.annotationGrantKey === 'string' &&
+        entry.annotationGrantKey.length <= 128
+      )
+        entries[key].annotationGrantKey = entry.annotationGrantKey;
+      if (entry.annotationNeedsResolution === true) {
+        entries[key].annotationNeedsResolution = true;
+        const previous = entry.annotationPrevious;
+        if (
+          previous === null ||
+          (previous &&
+            typeof previous.bookmark === 'string' &&
+            previous.bookmark.length <= 1024 * 1024 &&
+            typeof previous.key === 'string' &&
+            previous.key.length <= 128 &&
+            typeof previous.path === 'string' &&
+            path.isAbsolute(previous.path))
+        )
+          entries[key].annotationPrevious = previous;
+        else entries[key].annotationIdentityInvalid = true;
+      }
       // Alias left behind when the granted item moved (see acquire).
       if (typeof entry.movedTo === 'string' && path.isAbsolute(entry.movedTo)) {
         entries[key].movedTo = entry.movedTo;
@@ -66,7 +93,11 @@ function loadMasNative(log) {
   try {
     return require('./native/mas-bookmarks/masbookmarks.node');
   } catch (err) {
-    if (log) log('MAS bookmark module unavailable; Finder/drop opens will not persist', err);
+    if (log)
+      log(
+        'MAS bookmark module unavailable; Finder/drop opens will not persist',
+        err
+      );
     return null;
   }
 }
@@ -106,29 +137,154 @@ function createMasAccess(deps) {
   // dropped and the file would need "Locate…" after the next relaunch.
   /** @type {Record<string, { kind: 'file'|'folder', bookmark: string, savedAt: number }> | null} */
   let masUnsavedGrants = null;
+  const masUnacknowledgedKeys = new Set();
+  const masHeldProofs = new WeakMap();
+  const masActiveProofs = new Set();
 
   function loadGrants() {
     const store = getStore();
-    const loaded = readMasGrants(store ? store.get(MAS_GRANTS_KEY, undefined) : undefined);
-    if (masUnsavedGrants) loaded.entries = { ...loaded.entries, ...masUnsavedGrants };
+    const loaded = readMasGrants(
+      store ? store.get(MAS_GRANTS_KEY, undefined) : undefined
+    );
+    if (masUnsavedGrants)
+      loaded.entries = { ...loaded.entries, ...masUnsavedGrants };
     return loaded;
   }
 
   function saveGrants(entries) {
     const store = getStore();
-    if (!store) {
+    if (
+      !store ||
+      !readMasGrants(store.get(MAS_GRANTS_KEY, undefined)).writable
+    ) {
       masUnsavedGrants = { ...entries };
-      return;
+      return false;
     }
-    if (!loadGrants().writable) {
-      logInfo('MAS grant store has an unknown version; keeping grants for this session only.');
-      return;
-    }
-    const keys = Object.keys(entries).sort((a, b) => entries[b].savedAt - entries[a].savedAt);
+    const keys = Object.keys(entries).sort(
+      (a, b) => entries[b].savedAt - entries[a].savedAt
+    );
     const capped = {};
     for (const key of keys.slice(0, MAS_GRANTS_MAX)) capped[key] = entries[key];
-    store.set(MAS_GRANTS_KEY, { version: MAS_GRANTS_VERSION, entries: capped });
+    try {
+      if (
+        store.set(MAS_GRANTS_KEY, {
+          version: MAS_GRANTS_VERSION,
+          entries: capped,
+        }) !== true
+      ) {
+        masUnsavedGrants = { ...entries };
+        return false;
+      }
+    } catch (error) {
+      masUnsavedGrants = { ...entries };
+      logError(
+        'Could not persist native access; new note identities remain ephemeral.',
+        error
+      );
+      return false;
+    }
     masUnsavedGrants = null;
+    for (const entry of Object.values(capped))
+      if (entry.annotationGrantKey)
+        masUnacknowledgedKeys.delete(entry.annotationGrantKey);
+    return true;
+  }
+  const continuityKey = (entry) =>
+    entry.annotationGrantKey ||
+    'legacy-' + createHash('sha256').update(entry.bookmark).digest('hex');
+  function afterReadContinuity(grant, acceptedPath) {
+    if (grant.entry.kind !== 'file') return {};
+    if (!native || grant.entry.annotationIdentityInvalid)
+      return { ephemeral: true };
+    let entry = grant.entry,
+      key = continuityKey(entry),
+      priorDurable = false;
+    if (entry.annotationNeedsResolution) {
+      const previous = entry.annotationPrevious;
+      if (previous) {
+        const prior = start(previous.path, {
+          kind: 'file',
+          bookmark: previous.bookmark,
+        });
+        try {
+          if (prior?.path === acceptedPath) {
+            key = previous.key;
+            priorDurable = previous.durable === true;
+          }
+        } finally {
+          prior?.stop();
+        }
+      }
+      const nextEntry = { ...entry, annotationGrantKey: key };
+      delete nextEntry.annotationNeedsResolution;
+      delete nextEntry.annotationPrevious;
+      delete nextEntry.annotationIdentityInvalid;
+      const entries = loadGrants().entries;
+      entries[grant.key] = nextEntry;
+      const persisted = saveGrants(entries);
+      grant.entry = nextEntry;
+      if (!persisted && !priorDurable) masUnacknowledgedKeys.add(key);
+      if (priorDurable) masUnacknowledgedKeys.delete(key);
+    }
+    return masUnacknowledgedKeys.has(key)
+      ? { ephemeral: true }
+      : { sourceKind: 'file-bookmark', grantKey: key };
+  }
+  function resolveHeld(held) {
+    const proof = masHeldProofs.get(held);
+    if (!proof?.active) return { reason: 'revoked' };
+    if (proof.sessionOnly) {
+      if (!hasSessionGrant(proof.target)) return { reason: 'revoked' };
+      return {
+        path: proof.target,
+        release: () => {},
+        continuity: { ephemeral: true },
+      };
+    }
+    const access = start(proof.grant.key, proof.grant.entry);
+    if (!access) return { reason: 'revoked' };
+    const resolved = path.join(access.path, proof.relative);
+    if (native && (access.stale || access.path !== proof.grant.key)) {
+      try {
+        const oldKey = proof.grant.key,
+          key = continuityKey(proof.grant.entry),
+          bookmark = native.createBookmark(access.path);
+        const fresh = {
+          ...proof.grant.entry,
+          bookmark,
+          ...(proof.grant.entry.kind === 'file'
+            ? { annotationGrantKey: key }
+            : {}),
+        };
+        const entries = loadGrants().entries,
+          next = { ...entries };
+        const same = (entry) => !entry || continuityKey(entry) === key;
+        if (same(entries[access.path])) next[access.path] = fresh;
+        if (oldKey !== access.path && same(entries[oldKey]))
+          next[oldKey] = { ...fresh, movedTo: access.path };
+        saveGrants(next);
+        proof.grant = { key: access.path, entry: fresh };
+      } catch (error) {
+        logError(
+          'Could not refresh held bookmark; retaining the existing scoped proof.',
+          error
+        );
+      }
+    }
+    return {
+      path: resolved,
+      release: () => {
+        if (proof.active && resolved !== held.path) {
+          const previous = proof.stop;
+          proof.stop = access.stop;
+          held.path = resolved;
+          previous();
+        } else access.stop();
+      },
+      continuity: {
+        afterRead: (accepted) => afterReadContinuity(proof.grant, accepted),
+      },
+    };
   }
 
   /** Exact grant for target, else the closest granted ancestor folder. */
@@ -142,11 +298,15 @@ function createMasAccess(deps) {
     return best;
   }
 
-  function hasSessionGrant(target) {
+  function findSessionGrant(target) {
     for (const [key, kind] of sessionGrants) {
-      if (key === target || (kind === 'folder' && masIsInside(key, target))) return true;
+      if (key === target || (kind === 'folder' && masIsInside(key, target)))
+        return { key, entry: { kind } };
     }
-    return false;
+    return null;
+  }
+  function hasSessionGrant(target) {
+    return !!findSessionGrant(target);
   }
 
   /** Start access for one grant entry. Returns { path, stale, stop } or null. */
@@ -173,7 +333,8 @@ function createMasAccess(deps) {
     }
     // Fallback (no native module): Electron's API. It returns a stop function
     // even for a stale bookmark that granted nothing, so verify access.
-    if (typeof electronApp.startAccessingSecurityScopedResource !== 'function') return null;
+    if (typeof electronApp.startAccessingSecurityScopedResource !== 'function')
+      return null;
     let stop;
     try {
       stop = electronApp.startAccessingSecurityScopedResource(entry.bookmark);
@@ -219,25 +380,71 @@ function createMasAccess(deps) {
         // as an alias (movedTo) with the fresh bookmark: other tabs, recents
         // and session entries still name files under the OLD path, and every
         // one of them must keep resolving — not just the first one opened.
-        const needsRefresh = access.stale || (moved && grant.entry.movedTo !== access.path);
+        const annotationGrantKey =
+          grant.entry.annotationGrantKey ||
+          'legacy-' +
+            createHash('sha256').update(grant.entry.bookmark).digest('hex');
+        const needsRefresh =
+          access.stale || (moved && grant.entry.movedTo !== access.path);
         if (needsRefresh && native) {
           try {
             const bookmark = native.createBookmark(access.path);
             const savedAt = now();
             const next = { ...entries };
-            next[access.path] = { kind: grant.entry.kind, bookmark, savedAt };
+            next[access.path] = {
+              kind: grant.entry.kind,
+              bookmark,
+              savedAt,
+              ...(grant.entry.kind === 'file' ? { annotationGrantKey } : {}),
+            };
             if (moved) {
-              next[grant.key] = { kind: grant.entry.kind, bookmark, savedAt, movedTo: access.path };
+              next[grant.key] = {
+                kind: grant.entry.kind,
+                bookmark,
+                savedAt,
+                movedTo: access.path,
+                ...(grant.entry.kind === 'file' ? { annotationGrantKey } : {}),
+              };
             }
             saveGrants(next);
           } catch (err) {
             logError(`Could not refresh saved access for ${access.path}`, err);
           }
         }
-        return { path: resolved, release: access.stop };
+        const held = {
+          path: resolved,
+          release: access.stop,
+          continuity: {
+            afterRead: (accepted) => afterReadContinuity(grant, accepted),
+          },
+        };
+        masHeldProofs.set(held, {
+          active: false,
+          grant: { key: grant.key, entry: { ...grant.entry } },
+          target,
+          relative: path.relative(grant.key, target),
+          stop: access.stop,
+        });
+        return held;
       }
     }
-    if (hasSessionGrant(target)) return { path: target, release: () => {} };
+    const sessionGrant = findSessionGrant(target);
+    if (sessionGrant) {
+      const stop = () => {};
+      const held = {
+        path: target,
+        release: stop,
+        continuity: { ephemeral: true },
+      };
+      masHeldProofs.set(held, {
+        active: false,
+        sessionOnly: true,
+        target,
+        grant: sessionGrant,
+        stop,
+      });
+      return held;
+    }
     return { reason: grant ? 'revoked' : 'no-grant' };
   }
 
@@ -257,7 +464,10 @@ function createMasAccess(deps) {
       if (typeof target !== 'string' || !path.isAbsolute(target)) return false;
       const grantKind = kind === 'folder' ? 'folder' : 'file';
       sessionGrants.set(target, grantKind);
-      let bookmark = typeof dialogBookmark === 'string' && dialogBookmark ? dialogBookmark : '';
+      let bookmark =
+        typeof dialogBookmark === 'string' && dialogBookmark
+          ? dialogBookmark
+          : '';
       if (!bookmark && native) {
         try {
           bookmark = native.createBookmark(target);
@@ -267,9 +477,33 @@ function createMasAccess(deps) {
       }
       if (!bookmark) return false;
       const { entries } = loadGrants();
-      entries[target] = { kind: grantKind, bookmark, savedAt: now() };
-      saveGrants(entries);
-      return true;
+      const previous = entries[target];
+      const key = randomUUID();
+      const previousEvidence =
+        previous?.kind === 'file'
+          ? previous.annotationNeedsResolution
+            ? previous.annotationPrevious
+            : {
+                bookmark: previous.bookmark,
+                key: continuityKey(previous),
+                path: target,
+                durable: !masUnacknowledgedKeys.has(continuityKey(previous)),
+              }
+          : null;
+      entries[target] = {
+        kind: grantKind,
+        bookmark,
+        savedAt: now(),
+        ...(grantKind === 'file'
+          ? {
+              annotationGrantKey: key,
+              annotationNeedsResolution: true,
+              annotationPrevious: previousEvidence,
+            }
+          : {}),
+      };
+      if (grantKind === 'file') masUnacknowledgedKeys.add(key);
+      return saveGrants(entries);
     },
 
     /**
@@ -279,11 +513,16 @@ function createMasAccess(deps) {
      * @param {(resolvedPath: string) => T} fn
      * @returns {{ ok: true, path: string, value: T } | { ok: false, reason: string, path: string }}
      */
-    withAccess(target, fn) {
-      const held = acquire(target);
-      if (!('release' in held)) return { ok: false, reason: held.reason, path: target };
+    withAccess(target, fn, proof) {
+      const held = proof ? resolveHeld(proof) : acquire(target);
+      if (!('release' in held))
+        return { ok: false, reason: held.reason, path: target };
       try {
-        return { ok: true, path: held.path, value: fn(held.path) };
+        return {
+          ok: true,
+          path: held.path,
+          value: fn(held.path, held.continuity),
+        };
       } finally {
         held.release();
       }
@@ -292,9 +531,14 @@ function createMasAccess(deps) {
     /** Async variant: access stays open until fn's promise settles. */
     async withAccessAsync(target, fn) {
       const held = acquire(target);
-      if (!('release' in held)) return { ok: false, reason: held.reason, path: target };
+      if (!('release' in held))
+        return { ok: false, reason: held.reason, path: target };
       try {
-        return { ok: true, path: held.path, value: await fn(held.path) };
+        return {
+          ok: true,
+          path: held.path,
+          value: await fn(held.path, held.continuity),
+        };
       } finally {
         held.release();
       }
@@ -306,11 +550,34 @@ function createMasAccess(deps) {
      */
     hold(target) {
       const held = acquire(target);
-      return 'release' in held ? held : null;
+      if (!('release' in held)) return null;
+      const proof = masHeldProofs.get(held);
+      if (!proof) return held;
+      proof.active = true;
+      masActiveProofs.add(proof);
+      held.release = () => {
+        if (!proof.active) return;
+        proof.active = false;
+        masActiveProofs.delete(proof);
+        proof.stop();
+      };
+      return held;
     },
 
     /** Drop a persisted grant (e.g. the custom theme was cleared). */
     forget(target) {
+      for (const proof of masActiveProofs) {
+        if (
+          proof.target === target ||
+          proof.grant.key === target ||
+          (proof.grant.entry.kind === 'folder' &&
+            masIsInside(target, proof.target))
+        ) {
+          proof.active = false;
+          masActiveProofs.delete(proof);
+          proof.stop();
+        }
+      }
       const { entries } = loadGrants();
       // Moves leave aliases behind. Revoke the entire connected component,
       // including earlier moves whose bookmark bytes have since been refreshed.
@@ -320,10 +587,23 @@ function createMasAccess(deps) {
       while (changed) {
         changed = false;
         for (const [key, entry] of Object.entries(entries)) {
-          if (keys.has(key) || keys.has(entry.movedTo) || bookmarks.has(entry.bookmark)) {
-            if (!keys.has(key)) { keys.add(key); changed = true; }
-            if (entry.movedTo && !keys.has(entry.movedTo)) { keys.add(entry.movedTo); changed = true; }
-            if (!bookmarks.has(entry.bookmark)) { bookmarks.add(entry.bookmark); changed = true; }
+          if (
+            keys.has(key) ||
+            keys.has(entry.movedTo) ||
+            bookmarks.has(entry.bookmark)
+          ) {
+            if (!keys.has(key)) {
+              keys.add(key);
+              changed = true;
+            }
+            if (entry.movedTo && !keys.has(entry.movedTo)) {
+              keys.add(entry.movedTo);
+              changed = true;
+            }
+            if (!bookmarks.has(entry.bookmark)) {
+              bookmarks.add(entry.bookmark);
+              changed = true;
+            }
           }
         }
       }
@@ -343,7 +623,9 @@ function createMasAccess(deps) {
 
     /** Whether target is covered by a persisted or session grant. */
     hasGrant(target) {
-      return !!findGrant(loadGrants().entries, target) || hasSessionGrant(target);
+      return (
+        !!findGrant(loadGrants().entries, target) || hasSessionGrant(target)
+      );
     },
   };
 }

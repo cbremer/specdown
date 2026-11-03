@@ -198,7 +198,7 @@ export function setupDesktopIPC() {
     }
     let accepted = false;
     try {
-      accepted = createTab(fileData.filename, fileData.content, fileData.filePath) === true;
+      accepted = createTab(fileData.filename, fileData.content, fileData.filePath, fileData.annotationSource ? {annotationSource:fileData.annotationSource} : null) === true;
     } finally {
       // This is synchronous tab admission, before async diagram completion.
       // Report before unrelated renderer recent-list UI/persistence can fail.
@@ -228,7 +228,7 @@ export function setupDesktopIPC() {
   // same file was open twice and the active copy wasn't the first: the handler
   // took the background branch and never refreshed the view.
   bridgeOnFileChanged(async function (fileData) {
-    const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath);
+    const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath && (!t.sourceMeta?.annotationSource || (t.sourceMeta.annotationSource.authorityId === fileData.annotationSource?.authorityId && t.sourceMeta.annotationSource.sourceToken === fileData.annotationSource?.sourceToken)));
     if (matchingTabs.length === 0) return;
 
     // A rejected refresh must preserve every accepted copy, including hidden

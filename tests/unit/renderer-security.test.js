@@ -137,25 +137,17 @@ describe('untrusted document boundaries', () => {
     expect(root.querySelector('[data-annot-idx]')).toBeNull();
   });
 
-  it('rejects oversized annotation imports atomically and deduplicates accepted notes', () => {
-    const notes = Array.from({ length: 501 }, (_, i) => ({
+  it('archives oversized legacy collections without activating or deduplicating occurrences', async () => {
+    const notes = Array.from({ length: 503 }, (_, i) => ({
       text: 'note ' + i,
       legacyIdx: i,
     }));
-    const before = localStorage.getItem('specdown-annotations');
-    expect(
-      importAnnotations(
-        JSON.stringify({ version: 2, files: { 'a.md': notes } })
-      )
-    ).toBe(false);
-    expect(localStorage.getItem('specdown-annotations')).toBe(before);
-    const accepted = JSON.stringify({
-      version: 2,
-      files: { 'a.md': notes.slice(0, 500) },
-    });
-    expect(importAnnotations(accepted)).toBe(true);
-    expect(importAnnotations(accepted)).toBe(true);
-    expect(annFileNotes('a.md')).toHaveLength(500);
+    const raw = JSON.stringify({ version: 2, files: { 'a.md': notes } });
+    expect(await importAnnotations(raw)).toBe(true);
+    expect(annRoot.archives[0].occurrences).toHaveLength(503);
+    expect(annRoot.documents).toHaveLength(0);
+    expect(await importAnnotations(raw)).toBe(true);
+    expect(annRoot.archives).toHaveLength(1);
   });
 
   it('bounds creator comment scanning for unfinished or long comment bodies', () => {
@@ -165,59 +157,27 @@ describe('untrusted document boundaries', () => {
     expect(performance.now() - start).toBeLessThan(500);
   });
 
-  it('preserves older annotations beyond the display cap during migration and edits', () => {
-    const oldNotes = Array.from({ length: 503 }, (_, i) => ({
-      id: 'old-' + i,
-      text: 'note ' + i,
-      legacyIdx: i,
-      anchor: null,
-    }));
-    localStorage.setItem(
-      'specdown-annotations',
-      JSON.stringify({ version: 2, files: { 'large.md': oldNotes } })
-    );
-    document.getElementById('markdown-content').innerHTML = oldNotes
-      .map((_, i) => '<p>paragraph ' + i + '</p>')
-      .join('');
-    renderAnnotations('large.md');
-    expect(document.querySelectorAll('.annotation-badge')).toHaveLength(500);
-    expect(annFileNotes('large.md')).toHaveLength(503);
-    commitAnnotation({ id: 'old-502' }, 'edited final note');
-    const persisted = JSON.parse(localStorage.getItem('specdown-annotations'))
-      .files['large.md'];
-    expect(persisted).toHaveLength(503);
-    expect(persisted[502].text).toBe('edited final note');
-    expect(persisted[501].text).toBe('note 501');
+  it('keeps unsaved editor text when a transactional note exceeds its length limit', async () => {
+    createTab('editor.md', '<p>document paragraph</p>');
+    await renderAnnotations('editor.md');
+    const root = document.getElementById('markdown-content');
+    openAnnotationEditor({ element: root.querySelector('p') });
+    const editor = ensureEditor();
+    const text = 'x'.repeat(16385);
+    editor.querySelector('textarea').value = text;
+    editor.querySelector('.annotation-editor-save').click();
+    await Promise.resolve();
+    expect(editor.style.display).toBe('flex');
+    expect(editor.querySelector('textarea').value).toBe(text);
+    expect(annFileNotes(annotationKey)).toHaveLength(0);
   });
-
-  it.each(['length', 'quota'])(
-    'keeps unsaved editor text when a note fails its %s limit',
-    (failure) => {
-      const root = document.getElementById('markdown-content');
-      root.innerHTML = '<p>document paragraph</p>';
-      renderAnnotations('editor.md');
-      openAnnotationEditor({ element: root.querySelector('p') });
-      const editor = ensureEditor();
-      const text =
-        failure === 'length' ? 'x'.repeat(16385) : 'important unsaved note';
-      editor.querySelector('textarea').value = text;
-      if (failure === 'quota')
-        Storage.prototype.setItem.mockImplementationOnce(() => {
-          throw new Error('quota');
-        });
-      editor.querySelector('.annotation-editor-save').click();
-      expect(editor.style.display).toBe('flex');
-      expect(editor.querySelector('textarea').value).toBe(text);
-      expect(annFileNotes('editor.md')).toHaveLength(0);
-    }
-  );
 
   it('finishes document initialization when the diagram count exceeds its rendering budget', async () => {
     await renderMarkdown('# Old heading', 'old.md');
     const markdown =
       '# New heading\n' + '```mermaid\ngraph TD; A-->B\n```\n'.repeat(101);
     await renderMarkdown(markdown, 'new.md');
-    expect(annotationKey).toBe('new.md');
+    expect(document.getElementById('file-name').textContent).toBe('new.md');
     expect(state.tocEntries.map((entry) => entry.text)).toEqual([
       'New heading',
     ]);
