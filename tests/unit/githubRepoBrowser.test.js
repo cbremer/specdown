@@ -1,3 +1,6 @@
+const { TextEncoder, TextDecoder } = require('node:util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 /**
  * Unit tests for the GitHub repository file browser
  */
@@ -11,6 +14,7 @@ require('../mocks/highlightjs');
 describe('GitHub Repo Browser', () => {
   beforeEach(() => {
     localStorage.clear();
+    HTMLCanvasElement.prototype.getContext = jest.fn(() => null);
     loadHTML(document);
     loadApp(document);
 
@@ -27,114 +31,371 @@ describe('GitHub Repo Browser', () => {
   // ===========================
   // fetchGitHubRepoFiles
   // ===========================
-  describe('fetchGitHubRepoFiles', () => {
-    it('returns null for a non-GitHub URL', async () => {
-      const result = await fetchGitHubRepoFiles('https://example.com/foo/bar');
-      expect(result).toBeNull();
-    });
-
-    it('returns null for a GitHub URL that is not a bare repo (e.g. a file path)', async () => {
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo/blob/main/README.md'
-      );
-      expect(result).toBeNull();
-    });
-
-    it('returns null when the fetch response is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false });
-
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo'
-      );
-      expect(result).toBeNull();
-    });
-
-    it('returns null when fetch throws an error', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
-
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo'
-      );
-      expect(result).toBeNull();
-    });
-
-    it('returns an empty array when the API returns no items', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ items: [] }),
-      });
-
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo'
-      );
-      expect(result).toEqual([]);
-    });
-
-    it('returns file objects with path, url, and rawUrl', async () => {
-      const items = [
-        {
-          path: 'README.md',
-          html_url: 'https://github.com/owner/repo/blob/main/README.md',
-        },
-        {
-          path: 'docs/guide.md',
-          html_url: 'https://github.com/owner/repo/blob/main/docs/guide.md',
-        },
-      ];
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ items }),
-      });
-
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo'
-      );
-
-      expect(result).toHaveLength(2);
-      expect(result[0].path).toBe('README.md');
-      expect(result[0].rawUrl).toBe(
-        'https://raw.githubusercontent.com/owner/repo/HEAD/README.md'
-      );
-      expect(result[1].path).toBe('docs/guide.md');
-      expect(result[1].rawUrl).toBe(
-        'https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md'
-      );
-    });
-
-    it('strips a trailing .git from the repo name', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          items: [
-            {
-              path: 'README.md',
-              html_url: 'https://github.com/owner/repo/blob/main/README.md',
-            },
-          ],
+  const sha = 'a'.repeat(40);
+  const treeSha = 'b'.repeat(40);
+  function apiResponse(data, status = 200) {
+    const bytes = new TextEncoder().encode(JSON.stringify(data));
+    let read = false;
+    return {
+      ok: status === 200,
+      status,
+      headers: new Headers(),
+      body: {
+        cancel: jest.fn().mockResolvedValue(undefined),
+        getReader: () => ({
+          read: async () =>
+            read
+              ? { done: true }
+              : ((read = true), { done: false, value: bytes }),
+          cancel: jest.fn().mockResolvedValue(undefined),
+          releaseLock: jest.fn(),
         }),
-      });
+      },
+    };
+  }
+  function publicRepo(
+    tree = [{ path: 'README.md', type: 'blob', mode: '100644' }]
+  ) {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(apiResponse({ default_branch: 'trunk' }))
+      .mockResolvedValueOnce(
+        apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+      )
+      .mockResolvedValueOnce(apiResponse({ tree, truncated: false }));
+  }
 
+  describe('fetchGitHubRepoFiles', () => {
+    it.each([
+      'https://example.com/foo/bar',
+      'https://github.com/owner/repo/blob/main/README.md',
+      'http://github.com/owner/repo',
+      'https://user:pass@github.com/owner/repo',
+      'https://github.com/owner/repo?token=secret',
+      'https://github.com/owner%2frepo/other',
+    ])('does not recognize unsafe or nonrepository input %s', async (url) => {
+      global.fetch = jest.fn();
+      expect(await fetchGitHubRepoFiles(url)).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('lists public markdown without authenticated code search and pins raw URLs to the selected commit', async () => {
+      publicRepo([
+        { path: 'README.md', type: 'blob', mode: '100644' },
+        { path: 'docs/a #?%.markdown', type: 'blob', mode: '100644' },
+        { path: 'skip.md', type: 'blob', mode: '120000' },
+        { path: 'index.js', type: 'blob', mode: '100644' },
+      ]);
       const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo.git'
+        'https://github.com/owner/repo.git/'
       );
-
-      // The rawUrl should reference 'repo' without '.git'
-      expect(result).not.toBeNull();
+      expect(result.map((f) => f.path)).toEqual([
+        'docs/a #?%.markdown',
+        'README.md',
+      ]);
       expect(result[0].rawUrl).toBe(
-        'https://raw.githubusercontent.com/owner/repo/HEAD/README.md'
+        `https://raw.githubusercontent.com/owner/repo/${sha}/docs/a%20%23%3F%25.markdown`
+      );
+      expect(global.fetch.mock.calls.map((c) => c[0])).toEqual([
+        'https://api.github.com/repos/owner/repo',
+        'https://api.github.com/repos/owner/repo/commits/trunk',
+        `https://api.github.com/repos/owner/repo/git/trees/${treeSha}?recursive=1`,
+      ]);
+      for (const [, options] of global.fetch.mock.calls) {
+        expect(options.credentials).toBe('omit');
+        expect(options.redirect).toBe('error');
+      }
+    });
+
+    it('resolves a slash-containing branch without rewriting the raw snapshot', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(
+          apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+        )
+        .mockResolvedValueOnce(
+          apiResponse({
+            tree: [
+              { path: 'docs/guide.md', type: 'blob', mode: '100644' },
+              { path: 'other.md', type: 'blob', mode: '100644' },
+            ],
+            truncated: false,
+          })
+        );
+      const files = await fetchGitHubRepoFiles(
+        'https://github.com/o/r/tree/feature%2Fdocs/docs'
+      );
+      expect(global.fetch.mock.calls[0][0]).toBe(
+        'https://api.github.com/repos/o/r/commits/feature%2Fdocs%2Fdocs'
+      );
+      // The longest ref exists in this fixture; no subtree remains.
+      expect(files).toHaveLength(2);
+    });
+
+    it('disambiguates branch/path with bounded 404-only ref lookup', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(apiResponse({}, 404))
+        .mockResolvedValueOnce(
+          apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+        )
+        .mockResolvedValueOnce(
+          apiResponse({
+            tree: [
+              { path: 'docs/guide.md', type: 'blob', mode: '100644' },
+              { path: 'other.md', type: 'blob', mode: '100644' },
+            ],
+            truncated: false,
+          })
+        );
+      const files = await fetchGitHubRepoFiles(
+        'https://github.com/o/r/tree/feature%2Fdocs/docs'
+      );
+      expect(files.map((f) => f.path)).toEqual(['docs/guide.md']);
+      expect(global.fetch.mock.calls[1][0]).toBe(
+        'https://api.github.com/repos/o/r/commits/feature%2Fdocs'
       );
     });
 
-    it('accepts a URL with a trailing slash', async () => {
+    it('treats GitHub missing-ref 422 as a ref miss, but does not hide other validation failures', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(
+          apiResponse({ message: 'No commit found for SHA: main/docs' }, 422)
+        )
+        .mockResolvedValueOnce(
+          apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+        )
+        .mockResolvedValueOnce(
+          apiResponse({
+            tree: [{ path: 'docs/guide.md', type: 'blob', mode: '100644' }],
+            truncated: false,
+          })
+        );
+      expect(
+        (
+          await fetchGitHubRepoFiles('https://github.com/o/r/tree/main/docs')
+        ).map((f) => f.path)
+      ).toEqual(['docs/guide.md']);
+      global.fetch = jest
+        .fn()
+        .mockResolvedValue(apiResponse({ message: 'Validation Failed' }, 422));
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r/tree/main/docs')
+      ).rejects.toThrow(/validation/i);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns an empty list for an empty repository', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(apiResponse({ default_branch: 'main' }))
+        .mockResolvedValueOnce(apiResponse({}, 409));
+      expect(await fetchGitHubRepoFiles('https://github.com/o/r')).toEqual([]);
+    });
+
+    it.each([403, 429, 404, 500])(
+      'surfaces API %i without falling through to HTML fetch',
+      async (status) => {
+        global.fetch = jest.fn().mockResolvedValue(apiResponse({}, status));
+        await expect(
+          fetchGitHubRepoFiles('https://github.com/o/r')
+        ).rejects.toThrow();
+        const h = {
+          clearError: jest.fn(),
+          showError: jest.fn(),
+          onSelectFile: jest.fn(),
+        };
+        expect(await handleRepoUrl('https://github.com/o/r', h)).toBe(true);
+        expect(h.showError).toHaveBeenCalledWith(
+          expect.stringMatching(
+            status === 403 || status === 429
+              ? /rate limit/i
+              : /unavailable|GitHub/i
+          )
+        );
+      }
+    );
+
+    it('traverses complete nonrecursive subtrees when recursive response is truncated', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(apiResponse({ default_branch: 'main' }))
+        .mockResolvedValueOnce(
+          apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+        )
+        .mockResolvedValueOnce(apiResponse({ tree: [], truncated: true }))
+        .mockResolvedValueOnce(
+          apiResponse({
+            tree: [
+              {
+                type: 'tree',
+                mode: '040000',
+                path: 'docs',
+                sha: 'c'.repeat(40),
+              },
+            ],
+            truncated: false,
+          })
+        )
+        .mockResolvedValueOnce(
+          apiResponse({
+            tree: [{ type: 'blob', mode: '100644', path: 'guide.md' }],
+            truncated: false,
+          })
+        );
+      expect(
+        (await fetchGitHubRepoFiles('https://github.com/o/r')).map(
+          (f) => f.path
+        )
+      ).toEqual(['docs/guide.md']);
+      expect(global.fetch).toHaveBeenCalledTimes(5);
+    });
+
+    it('rejects truncated fallback instead of advertising incomplete results', async () => {
+      publicRepo();
+      global.fetch
+        .mockReset()
+        .mockResolvedValueOnce(apiResponse({ default_branch: 'main' }))
+        .mockResolvedValueOnce(
+          apiResponse({ sha, commit: { tree: { sha: treeSha } } })
+        )
+        .mockImplementation(async () =>
+          apiResponse({ tree: [], truncated: true })
+        );
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/large|incomplete|limit/i);
+    });
+
+    it('rejects malformed paths and never follows supplied API URLs', async () => {
+      publicRepo([
+        {
+          path: '../secret.md',
+          type: 'blob',
+          mode: '100644',
+          url: 'https://evil.example',
+        },
+      ]);
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/invalid/i);
+      expect(global.fetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('rejects oversized response before reading it', async () => {
+      const response = apiResponse({});
+      response.headers.set('content-length', '999999999');
+      response.body.getReader = jest.fn();
+      global.fetch = jest.fn().mockResolvedValue(response);
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/large|limit/i);
+      expect(response.body.getReader).not.toHaveBeenCalled();
+    });
+
+    it('recognizes deep tree URLs and reports capacity without fetching repository HTML', async () => {
+      const url = 'https://github.com/o/r/tree/main/a/b/c/d/e/f/g/h/i';
+      const h = {
+        clearError: jest.fn(),
+        showError: jest.fn(),
+        onSelectFile: jest.fn(),
+      };
+      global.fetch = jest.fn();
+      expect(await handleRepoUrl(url, h)).toBe(true);
+      expect(h.showError).toHaveBeenCalledWith(expect.stringMatching(/limit/i));
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('bounds streamed bytes even without Content-Length and cancels the reader', async () => {
+      const cancel = jest.fn().mockResolvedValue(undefined);
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ items: [] }),
+        status: 200,
+        headers: new Headers(),
+        body: {
+          getReader: () => ({
+            read: async () => ({
+              done: false,
+              value: new Uint8Array(8 * 1024 * 1024 + 1),
+            }),
+            cancel,
+            releaseLock: jest.fn(),
+          }),
+        },
       });
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/size limit/i);
+      expect(cancel).toHaveBeenCalled();
+    });
 
-      const result = await fetchGitHubRepoFiles(
-        'https://github.com/owner/repo/'
+    it('bounds file count without returning a partial list', async () => {
+      publicRepo(
+        Array.from({ length: 2001 }, (_, i) => ({
+          path: `${i}.md`,
+          type: 'blob',
+          mode: '100644',
+        }))
       );
-      expect(result).toEqual([]);
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/file limit/i);
+    });
+
+    it('bounds fallback traversal requests instead of recursively exhausting the API', async () => {
+      let count = 0;
+      global.fetch = jest.fn(async () => {
+        count++;
+        if (count === 1) return apiResponse({ default_branch: 'main' });
+        if (count === 2)
+          return apiResponse({ sha, commit: { tree: { sha: treeSha } } });
+        if (count === 3) return apiResponse({ tree: [], truncated: true });
+        return apiResponse({
+          tree: [
+            { path: 'nested', type: 'tree', mode: '040000', sha: treeSha },
+          ],
+          truncated: false,
+        });
+      });
+      await expect(
+        fetchGitHubRepoFiles('https://github.com/o/r')
+      ).rejects.toThrow(/limit/i);
+      expect(global.fetch).toHaveBeenCalledTimes(32);
+    });
+
+    it('ignores a late result after the accepted document is replaced', async () => {
+      let resolve;
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(() => new Promise((r) => (resolve = r)));
+      const h = {
+        clearError: jest.fn(),
+        showError: jest.fn(),
+        onSelectFile: jest.fn(),
+      };
+      const pending = handleRepoUrl('https://github.com/o/r', h);
+      invalidateDocumentContext();
+      resolve(apiResponse({}, 404));
+      expect(await pending).toBe(true);
+      expect(h.showError).not.toHaveBeenCalled();
+    });
+
+    it('ignores a late repo response after another URL starts', async () => {
+      let resolve;
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(() => new Promise((r) => (resolve = r)));
+      const first = {
+        clearError: jest.fn(),
+        showError: jest.fn(),
+        onSelectFile: jest.fn(),
+      };
+      const pending = handleRepoUrl('https://github.com/o/r', first);
+      await handleRepoUrl('https://example.com/raw.md', first);
+      resolve(apiResponse({}, 404));
+      expect(await pending).toBe(true);
+      expect(first.showError).not.toHaveBeenCalled();
     });
   });
 
@@ -155,6 +416,20 @@ describe('GitHub Repo Browser', () => {
           'https://raw.githubusercontent.com/owner/repo/HEAD/docs/guide.md',
       },
     ];
+
+    it('opens the selected file with the keyboard', () => {
+      const selected = jest.fn();
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo', selected);
+      const item = document.querySelector('.repo-browser-item');
+      expect(item.getAttribute('tabindex')).toBe('0');
+      item.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+      );
+      expect(selected).toHaveBeenCalledWith(sampleFiles[0].rawUrl);
+      expect(document.getElementById('repo-browser-modal').style.display).toBe(
+        'none'
+      );
+    });
 
     it('creates and displays the repo browser modal', () => {
       showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
@@ -314,21 +589,8 @@ describe('GitHub Repo Browser', () => {
       expect(result).toBe(false);
     });
 
-    it('returns false when fetchGitHubRepoFiles returns null (fetch failed)', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false });
-
-      const result = await handleRepoUrl(
-        'https://github.com/owner/repo',
-        hooks()
-      );
-      expect(result).toBe(false);
-    });
-
     it('returns true and shows error when repo has no markdown files', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ items: [] }),
-      });
+      publicRepo([]);
 
       const result = await handleRepoUrl(
         'https://github.com/owner/repo',
@@ -338,17 +600,7 @@ describe('GitHub Repo Browser', () => {
     });
 
     it('returns true and shows the repo browser when files are found', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          items: [
-            {
-              path: 'README.md',
-              html_url: 'https://github.com/owner/repo/blob/main/README.md',
-            },
-          ],
-        }),
-      });
+      publicRepo();
 
       const result = await handleRepoUrl(
         'https://github.com/owner/repo',

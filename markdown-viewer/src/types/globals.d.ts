@@ -10,6 +10,11 @@ export {};
 
 /** Payload delivered by the desktop shell when a file is opened or changes. */
 interface SpecdownFileData {
+  annotationSource?: {
+    authorityId: string;
+    sourceToken: string;
+    requiresReconnect?: boolean;
+  } | null;
   filename: string;
   content: string;
   filePath: string;
@@ -67,7 +72,9 @@ interface SpecdownDesktopBridge {
   platform?: string;
   /** 'mas' for the Mac App Store build, 'direct' for the DMG/ZIP download. */
   distribution?: 'mas' | 'direct';
-  readBookmarkedFile?: (filePath: string) => Promise<SpecdownFileOpenData | null>;
+  readBookmarkedFile?: (
+    filePath: string
+  ) => Promise<SpecdownFileOpenData | null>;
   requestFileOpen?: () => void;
   requestOpenPath?: (filePath: string) => void;
   requestOpenFolder?: () => void;
@@ -143,7 +150,9 @@ declare global {
       };
     };
     /** Synchronously returns whether a native document passed preflight and opened. */
-    loadFileContent?: (content: string, filename: string) => boolean;
+    specdownReloadImages?: (token: string) => void;
+    specdownLoadNativeDocument?: (content: string, filename: string, nativeDocument: {id: string, expectedToken?: string, deliveryID?: string}) => {accepted: boolean, token: string, openIDs: string[]};
+    loadFileContent?: (content: string, filename: string, nativeDocument?: {id: string, expectedToken?: string, deliveryID?: string}) => boolean;
     /** Set by the app; called by the iOS shell to switch theme. */
     setTheme?: (theme: string) => void;
     /** Set by the app; called by the iOS shell on layout-class changes. */

@@ -80,8 +80,17 @@ struct ContentView: View {
                 }
             }
 
-            // "Recent" returns in 1.1, once picked files can be reopened via
-            // security-scoped bookmarks (it listed names that couldn't be tapped).
+            Section("Recent Files") {
+                ForEach(bridge.recentFiles) { entry in
+                    Button { bridge.reopenRecent(entry) } label: {
+                        VStack(alignment: .leading) {
+                            Text(entry.name)
+                            Text(entry.location).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                if bridge.recentFiles.isEmpty { Text("Open a file to remember it here.").foregroundStyle(.secondary) }
+            }
         }
         .listStyle(.sidebar)
         .navigationTitle("SpecDown")

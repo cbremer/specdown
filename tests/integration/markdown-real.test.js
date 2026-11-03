@@ -49,6 +49,14 @@ async function openRealMarkdown(markdown, name = 'synthetic.md') {
 }
 
 describe('real Marked and DOMPurify through document admission/rendering', () => {
+  test('native images decode URI filenames once before encoding the authority transport', async () => {
+    expect(window.loadFileContent('![Space](./my%20diagram.png)', 'synthetic.md', {id:'native-synthetic'})).toBe(true);
+    await flushRealRender();
+    const image = rendered().querySelector('img');
+    expect(image.getAttribute('src')).toMatch(/^specdown-resource:\/\//);
+    expect(image.getAttribute('src')).toContain('my%20diagram.png');
+    expect(image.getAttribute('src')).not.toContain('%2520');
+  });
   test('renders GFM tables, task lists, strikethrough, links and soft breaks', async () => {
     expect(
       await openRealMarkdown(

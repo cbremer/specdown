@@ -111,6 +111,7 @@ describe.each([false, true])('startup delivery (MAS=%s)', (mas) => {
 
   afterEach(() => {
     wc.emit('destroyed');
+    electron.app.on.mock.calls.find(([name]) => name === 'will-quit')[1]();
     fs.rmSync(root, { recursive: true, force: true });
     console.log.mockRestore();
     process.mas = originalMas;

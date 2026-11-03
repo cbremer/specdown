@@ -200,6 +200,87 @@ class ChannelArtifactTests(unittest.TestCase):
         write_plist(entitlement_file, {"application-identifier": own, "keychain-access-groups": [own + ".beta"]})
         self.check_app(extra=("--entitlements", entitlement_file), error="keychain-access-groups")
 
+    def add_hosted_test_target(self):
+        self.objects["PROJECT"]["targets"].append("TEST")
+        self.objects["TEST"] = {
+            "isa": "PBXNativeTarget", "name": "SpecDownTests",
+            "productType": "com.apple.product-type.bundle.unit-test",
+            "buildConfigurationList": "TEST_CONFIGS", "dependencies": ["TEST_APP_DEP"],
+        }
+        self.objects["TEST_APP_DEP"] = {"isa": "PBXTargetDependency", "target": "APP"}
+        self.objects["TEST_CONFIGS"] = {"isa": "XCConfigurationList", "buildConfigurations": []}
+        for channel, prefix, _, _, _ in CASES:
+            for kind in ("Debug", "Release"):
+                config = prefix + kind
+                ref = "TEST_" + config
+                self.objects["TEST_CONFIGS"]["buildConfigurations"].append(ref)
+                self.objects[ref] = {"isa": "XCBuildConfiguration", "name": config, "buildSettings": {
+                    "PRODUCT_BUNDLE_IDENTIFIER": "com.mosaicpando.specdown.synthetic-tests",
+                    "GENERATE_INFOPLIST_FILE": "YES",
+                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/Specdown.app/Specdown",
+                    "BUNDLE_LOADER": "$(TEST_HOST)",
+                }}
+        self.save_project()
+
+    def test_known_hosted_unit_test_bundle_preserves_all_app_channel_checks(self):
+        self.add_hosted_test_target()
+        self.run_cli("--project", self.project, "--version", "2.3.4", "--build", "901")
+        self.objects["Beta Release"]["buildSettings"]["PRODUCT_BUNDLE_IDENTIFIER"] = "com.mosaicpando.specdown"
+        self.save_project()
+        self.run_cli("--project", self.project, error="Beta Release bundle ID")
+
+    def test_unknown_native_aggregate_and_extra_app_targets_fail_closed(self):
+        for isa, name, product in [
+            ("PBXNativeTarget", "UnexpectedTests", "com.apple.product-type.bundle.unit-test"),
+            ("PBXNativeTarget", "OtherApp", "com.apple.product-type.application"),
+            ("PBXAggregateTarget", "UnexpectedAggregate", None),
+        ]:
+            with self.subTest(name=name):
+                self.objects["PROJECT"]["targets"] = ["APP", "OTHER"]
+                self.objects["OTHER"] = {"isa": isa, "name": name}
+                if product is not None:
+                    self.objects["OTHER"]["productType"] = product
+                self.save_project()
+                self.run_cli("--project", self.project, error="Unknown project target")
+
+    def test_test_target_name_cannot_hide_an_application(self):
+        self.add_hosted_test_target()
+        self.objects["TEST"]["productType"] = "com.apple.product-type.application"
+        self.save_project()
+        self.run_cli("--project", self.project, error="unit-test bundle")
+
+    def test_duplicate_test_target_and_wrong_host_dependency_fail(self):
+        self.add_hosted_test_target()
+        self.objects["PROJECT"]["targets"].append("TEST")
+        self.save_project()
+        self.run_cli("--project", self.project, error="Duplicate project target")
+        self.objects["PROJECT"]["targets"].pop()
+        self.objects["TEST_APP_DEP"]["target"] = "OTHER"
+        self.save_project()
+        self.run_cli("--project", self.project, error="host dependency")
+
+    def test_test_bundle_identity_and_host_cannot_replace_production(self):
+        self.add_hosted_test_target()
+        settings = self.objects["TEST_Dev Debug"]["buildSettings"]
+        original = copy.deepcopy(settings)
+        for key, value, error in [
+            ("PRODUCT_BUNDLE_IDENTIFIER", "com.mosaicpando.specdown", "test bundle ID"),
+            ("TEST_HOST", "$(BUILT_PRODUCTS_DIR)/Other.app/Other", "test host"),
+            ("BUNDLE_LOADER", "$(OTHER)", "test bundle loader"),
+        ]:
+            with self.subTest(key=key):
+                settings.clear()
+                settings.update(original)
+                settings[key] = value
+                self.save_project()
+                self.run_cli("--project", self.project, error=error)
+
+    def test_application_cannot_start_depending_on_test_bundle(self):
+        self.add_hosted_test_target()
+        self.objects["APP"]["dependencies"] = ["TEST_APP_DEP"]
+        self.save_project()
+        self.run_cli("--project", self.project, error="application dependencies")
+
     def test_all_six_generated_configurations_and_three_schemes(self):
         self.run_cli("--project", self.project, "--version", "2.3.4", "--build", "901")
 

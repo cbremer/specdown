@@ -27,6 +27,7 @@ function makeStore(initial = {}) {
     get: jest.fn((key, fallback) => (key in data ? data[key] : fallback)),
     set: jest.fn((key, value) => {
       data[key] = value;
+      return true;
     }),
   };
 }
@@ -130,7 +131,7 @@ describe('createMasAccess', () => {
   it('persists a bookmark for a user-granted file and uses it after relaunch', () => {
     native.live.add(FILE); // Finder open / drop grant this session
     expect(access.noteUserIntent(FILE, 'file')).toBe(true);
-    expect(store.data[MAS_GRANTS_KEY]).toEqual({
+    expect(store.data[MAS_GRANTS_KEY]).toMatchObject({
       version: MAS_GRANTS_VERSION,
       entries: {
         [FILE]: { kind: 'file', bookmark: `b64:${FILE}`, savedAt: 1000 },
@@ -210,13 +211,13 @@ describe('createMasAccess', () => {
     const result = access.withAccess(FILE, (p) => p);
     expect(result).toEqual({ ok: true, path: NEW, value: NEW });
     const entries = store.data[MAS_GRANTS_KEY].entries;
-    expect(entries[NEW]).toEqual({
+    expect(entries[NEW]).toMatchObject({
       kind: 'file',
       bookmark: `b64:${NEW}`,
       savedAt: 1000,
     });
     // The old path stays as an alias so recents/session entries still work.
-    expect(entries[FILE]).toEqual({
+    expect(entries[FILE]).toMatchObject({
       kind: 'file',
       bookmark: `b64:${NEW}`,
       savedAt: 1000,
@@ -325,20 +326,23 @@ describe('createMasAccess', () => {
     expect(access.hasGrant(FILE)).toBe(false);
   });
 
-  it.each(['old', 'new'])('forget revokes every alias of a moved item via its %s path', (which) => {
-    native.live.add(FILE);
-    access.noteUserIntent(FILE, 'file');
-    const moved = '/Users/me/archive/plan.md';
-    native.moved.set(FILE, moved);
-    expect(access.withAccess(FILE, (p) => p).path).toBe(moved);
-    access.forget(which === 'old' ? FILE : moved);
-    expect(access.hasGrant(FILE)).toBe(false);
-    expect(access.hasGrant(moved)).toBe(false);
-    expect(store.data[MAS_GRANTS_KEY].entries).toEqual({});
-    const relaunched = createMasAccess({ getStore: () => store, native });
-    expect(relaunched.withAccess(FILE, jest.fn()).ok).toBe(false);
-    expect(relaunched.withAccess(moved, jest.fn()).ok).toBe(false);
-  });
+  it.each(['old', 'new'])(
+    'forget revokes every alias of a moved item via its %s path',
+    (which) => {
+      native.live.add(FILE);
+      access.noteUserIntent(FILE, 'file');
+      const moved = '/Users/me/archive/plan.md';
+      native.moved.set(FILE, moved);
+      expect(access.withAccess(FILE, (p) => p).path).toBe(moved);
+      access.forget(which === 'old' ? FILE : moved);
+      expect(access.hasGrant(FILE)).toBe(false);
+      expect(access.hasGrant(moved)).toBe(false);
+      expect(store.data[MAS_GRANTS_KEY].entries).toEqual({});
+      const relaunched = createMasAccess({ getStore: () => store, native });
+      expect(relaunched.withAccess(FILE, jest.fn()).ok).toBe(false);
+      expect(relaunched.withAccess(moved, jest.fn()).ok).toBe(false);
+    }
+  );
 
   it('caps the store to the most recent grants', () => {
     let t = 0;
@@ -362,7 +366,7 @@ describe('createMasAccess', () => {
     store.data[MAS_GRANTS_KEY] = { version: 99, entries: { keep: 'me' } };
     native.live.add(FILE);
     access.noteUserIntent(FILE, 'file');
-    expect(store.data[MAS_GRANTS_KEY]).toEqual({
+    expect(store.data[MAS_GRANTS_KEY]).toMatchObject({
       version: 99,
       entries: { keep: 'me' },
     });
@@ -380,7 +384,7 @@ describe('createMasAccess', () => {
       });
       native.live.add(FILE);
       // open-file arrives before app.whenReady(): no store yet.
-      expect(coldStart.noteUserIntent(FILE, 'file')).toBe(true);
+      expect(coldStart.noteUserIntent(FILE, 'file')).toBe(false);
       expect(coldStart.hasGrant(FILE)).toBe(true);
 
       ready = makeStore({
@@ -458,3 +462,95 @@ describe('createMasAccess', () => {
     });
   });
 });
+
+test('I05/T05: repeat selection retains a durable key only after accepted-source proof; failed new enrollment stays ephemeral', () => {
+  const store = makeStore(),
+    native = makeNative(),
+    access = createMasAccess({ getStore: () => store, native });
+  native.live.add(FILE);
+  expect(access.noteUserIntent(FILE, 'file')).toBe(true);
+  const read = () =>
+    access.withAccess(FILE, (resolved, continuity) =>
+      continuity.afterRead(resolved)
+    ).value;
+  const first = read();
+  expect(first.sourceKind).toBe('file-bookmark');
+  access.noteUserIntent(FILE, 'file');
+  expect(read()).toEqual(first);
+  const other = ROOT + '/new.md';
+  native.live.add(other);
+  store.set.mockImplementation(() => false);
+  expect(access.noteUserIntent(other, 'file')).toBe(false);
+  expect(
+    access.withAccess(other, (resolved, continuity) =>
+      continuity.afterRead(resolved)
+    ).value
+  ).toEqual({ ephemeral: true });
+  store.set.mockImplementation((key, value) => {
+    store.data[key] = value;
+    return true;
+  });
+  expect(access.flushPendingGrants()).toBe(true);
+  expect(
+    access.withAccess(other, (resolved, continuity) =>
+      continuity.afterRead(resolved)
+    ).value.sourceKind
+  ).toBe('file-bookmark');
+  expect(native.active.size).toBe(0);
+});
+
+test('T05: thrown permission persistence leaves new read-issued continuity ephemeral', () => {
+  const store = makeStore(),
+    native = makeNative();
+  store.set.mockImplementation(() => {
+    throw Error('synthetic disk failure');
+  });
+  native.live.add(FILE);
+  const access = createMasAccess({ getStore: () => store, native });
+  expect(access.noteUserIntent(FILE, 'file')).toBe(false);
+  expect(
+    access.withAccess(FILE, (resolved, continuity) =>
+      continuity.afterRead(resolved)
+    ).value
+  ).toEqual({ ephemeral: true });
+  expect(native.active.size).toBe(0);
+});
+test.each(['file', 'folder'])(
+  'I04/I06: owned session-only %s holds permit ephemeral polling and fail closed after release or revocation',
+  (kind) => {
+    const store = makeStore(),
+      access = createMasAccess({ getStore: () => store, native: null });
+    const granted = kind === 'folder' ? ROOT : FILE;
+    access.noteUserIntent(granted, kind);
+    const held = access.hold(FILE);
+    const read = jest.fn((resolved, continuity) => ({ resolved, continuity }));
+    expect(held).not.toBeNull();
+    expect(access.withAccess(FILE, read, held)).toEqual({
+      ok: true,
+      path: FILE,
+      value: { resolved: FILE, continuity: { ephemeral: true } },
+    });
+    expect(
+      access.withAccess(FILE, read, { path: FILE, release: () => {} }).ok
+    ).toBe(false);
+    expect(
+      createMasAccess({ getStore: () => store, native: null }).withAccess(
+        FILE,
+        read,
+        held
+      ).ok
+    ).toBe(false);
+    held.path = '/ungranted/forged.md';
+    expect(access.withAccess(FILE, read, held).value.resolved).toBe(FILE);
+    held.release();
+    held.release();
+    read.mockClear();
+    expect(access.withAccess(FILE, read, held).ok).toBe(false);
+    expect(read).not.toHaveBeenCalled();
+    const revoked = access.hold(FILE);
+    access.forget(granted);
+    expect(access.withAccess(FILE, read, revoked).ok).toBe(false);
+    expect(access.hold(FILE)).toBeNull();
+    expect(read).not.toHaveBeenCalled();
+  }
+);

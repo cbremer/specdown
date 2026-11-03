@@ -8,11 +8,18 @@ import {
   assertDocumentSize,
   readDocumentResponse,
 } from '../core/document-limits.js';
+import {
+  captureDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 import { recordRecentFile, renderRecentFiles } from './recent-files.js';
-import { bridgeGetPathForFile } from '../platform/bridge.js';
+import {
+  bridgeGetPathForFile,
+  bridgeRequestOpenPath,
+} from '../platform/bridge.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -74,6 +81,11 @@ export function handleFile(file) {
   // returns '' off the desktop shell or when a path can't be resolved, so this
   // is null on the web surface, exactly as before.
   const filePath = bridgeGetPathForFile(file) || null;
+  // Successful native content read and its identity travel together.
+  if (filePath) {
+    bridgeRequestOpenPath(filePath);
+    return;
+  }
 
   // Read file and open in a new tab
   const reader = new FileReader();
@@ -143,8 +155,15 @@ function clearUrlError() {
   urlError.textContent = '';
 }
 
+let fileLoadingUrlRequest = 0;
+
 /** @param {string} url */
 export async function handleUrl(url) {
+  const urlRequest = ++fileLoadingUrlRequest;
+  const documentContext = captureDocumentContext();
+  const urlRequestCurrent = () =>
+    urlRequest === fileLoadingUrlRequest &&
+    isDocumentContextCurrent(documentContext);
   clearUrlError();
 
   if (!url || !/^https:\/\//i.test(url)) {
@@ -154,20 +173,17 @@ export async function handleUrl(url) {
 
   const urlInput = /** @type {HTMLInputElement | null} */ (el('url-input'));
 
-  // Check if this is a GitHub repo URL to show the file browser
-  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(
-    url
-  );
-  if (isRepoBrowserUrl) {
-    const handled = await handleRepoUrl(url, {
+  // Every submitted URL invalidates pending repository results, including
+  // switching from a repository to a raw document URL.
+  if (
+    await handleRepoUrl(url, {
       clearError: clearUrlError,
       showError: showUrlError,
       onSelectFile: handleUrl,
-    });
-    if (handled) {
-      if (urlInput) urlInput.value = '';
-      return;
-    }
+    })
+  ) {
+    if (urlRequestCurrent() && urlInput) urlInput.value = '';
+    return;
   }
 
   const fetchUrl = normalizeMarkdownUrl(url);
@@ -178,6 +194,10 @@ export async function handleUrl(url) {
       credentials: 'omit',
       signal: AbortSignal.timeout(30000),
     });
+    if (!urlRequestCurrent()) {
+      await response.body?.cancel();
+      return;
+    }
     if (!response.ok) {
       showUrlError('Failed to fetch URL: HTTP ' + response.status);
       return;
@@ -185,6 +205,7 @@ export async function handleUrl(url) {
     if (response.url && !response.url.startsWith('https://'))
       throw new Error('The document redirected to an insecure URL.');
     const markdown = await readDocumentResponse(response);
+    if (!urlRequestCurrent()) return;
     if (urlInput) urlInput.value = '';
     // Record the source URL so the File info sheet can show where it came from.
     openTabFromFile(filename, markdown, null, { url });
@@ -192,6 +213,7 @@ export async function handleUrl(url) {
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();
   } catch (error) {
+    if (!urlRequestCurrent()) return;
     showUrlError(
       error instanceof Error &&
         /^(?:This document|The document)/.test(error.message)

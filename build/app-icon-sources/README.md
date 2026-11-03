@@ -1,7 +1,7 @@
 # Alternate icon masters
 
 These 1254×1254 PNGs are the source of truth for the six legacy alternate icons
-and the separate iOS Light choice.
+and Light on desktop and iOS.
 They are build inputs, excluded from the desktop app's packaged file glob.
 Do not regenerate from the 1024-pixel exports or the original presentation sheet.
 
@@ -54,7 +54,7 @@ The verifier still checks desktop's 824px geometry, then compares iOS to an
 independent full-frame crop from the master and checks all four mid-edges.
 Original, Light, the masters and desktop exports are not changed by this fix.
 
-## Separate iOS Light choice
+## Approved Light choice
 
 The owner requested a manually selectable **Light** option and approved the
 generated preview ("Looks ok"). `light.png` is the exact approved opaque RGB
@@ -88,7 +88,24 @@ python3 scripts/test-app-icons.py
 Use a Python interpreter with Pillow installed. The exporter performs a single
 full-canvas resample to 1024×1024, tags sRGB, writes an opaque iOS AppIcon, and
 copies those exact bytes into its picker preview. It does not apply the legacy
-824-pixel desktop normalization, extract edges, add an inset or create a desktop
+824-pixel desktop normalization, extract edges, add an inset or change the desktop
 Light icon. The default export/verify commands include both legacy icons and
 Light; use `--ios-light-only` to reproduce Light independently from the six
 existing alternate icons.
+
+
+## Desktop Light geometry
+
+Light is available alongside the same seven existing desktop choices. Rebuild only
+its desktop asset with `swift scripts/export-app-icons.swift --desktop-light-only`
+and verify with `python3 scripts/verify-app-icons.py --desktop-light-only`.
+The default export command now includes it too.
+
+The approved opaque master is resampled as a whole into a centered 824×824 tile
+on a transparent 1024×1024 sRGB canvas. A 184px corner radius supplies the desktop
+mask; iOS still receives the unchanged full-bleed opaque artwork and its system
+mask. No face, ring, color, internal layout or source artwork is redesigned.
+The independent verifier checks the footprint, margins, rounded corners, all four
+mid-edges, and opaque artwork against a full-master resample. Mutation tests reject
+iOS geometry, square corners and recolored artwork. Existing six desktop exports,
+all iOS assets, and primary bundle artwork are preserved byte-for-byte.
