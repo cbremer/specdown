@@ -114,6 +114,7 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 2, 2026 | Tasks | [Session 78: Dev/Beta signing handoff](2026-11-02-tasks-session-78-test-channels-signing-handoff.md) | Record signed Dev/Beta 230, separate Dev installations, Mac runtime checks and both Owner-only TestFlight deliveries; new Owner acceptance remains pending. |
 | Nov 2, 2026 | Tasks | [Session 79: testing and next-release handoffs](2026-11-02-tasks-session-79-platform-testing-runbook.md) | Save a host-safe platform testing runbook and six-feature 1.0.2 implementation brief; reconcile current pointers and separate completed controls from pending maintenance. |
 | Nov 2, 2026 | Tasks | [Session 80: remaining build-tool advisories](2026-11-02-tasks-session-80-toolchain-advisory-recheck.md) | Recheck the two open development-tool advisories against live upstream releases, preserve precise compatibility blockers and keep WK-19 open without changing release dependencies. |
+| Nov 2, 2026 | Tasks | [Session 81: release credential scope](2026-11-02-tasks-session-81-credential-scope-cleanup.md) | Prepare a protected no-publication credential check and existing-secret migration with personal owner approval retained; distinguish completed tag-rule readback from pending credential validation and token retirement. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
