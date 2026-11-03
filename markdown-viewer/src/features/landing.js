@@ -94,7 +94,7 @@ export async function openLandingBundledSample(sampleName) {
       return;
     }
     const markdown = await response.text();
-    openTabFromLanding(sampleName, markdown, null, { url });
+    openTabFromLanding(sampleName, markdown, null, { url, sample: sampleName });
   } catch {
     showToast('Could not load the sample document.', { type: 'error' });
   }

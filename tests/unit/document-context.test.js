@@ -1,10 +1,17 @@
+const {
+  waitForAnnotationContext,
+  waitForAnnotationState,
+} = require('../helpers/annotationReadiness');
+const {
+  installAnnotationAuthority,
+} = require('../helpers/annotationAuthority');
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 
-const NOTES_KEY = 'specdown-annotations';
 const flush = async () => {
-  for (let i = 0; i < 8; i++) await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  for (let i = 0; i < 24; i++) await Promise.resolve();
 };
-const stored = () => localStorage.getItem(NOTES_KEY);
+const stored = () => JSON.stringify(annRoot);
 const root = () => document.getElementById('markdown-content');
 const editor = () => document.getElementById('annotation-editor-backdrop');
 const note = (text) => ({
@@ -13,14 +20,11 @@ const note = (text) => ({
   anchor: null,
   legacyIdx: 0,
 });
-const setNotes = () =>
-  localStorage.setItem(
-    NOTES_KEY,
-    JSON.stringify({
-      version: 2,
-      files: { 'A.md': [note('A original')], 'B.md': [note('B original')] },
-    })
-  );
+const setNotes = () => {
+  installAnnotationAuthority({
+    collections: { 'A.md': [note('A original')], 'B.md': [note('B original')] },
+  });
+};
 function deferred() {
   let resolve;
   let reject;
@@ -35,9 +39,12 @@ async function openDocument(
   text = '<p>Body A</p>',
   path = null
 ) {
-  createTab(name, text, path);
-  await flush();
-  return state.tabs.find((tab) => tab.id === state.activeTabId);
+  createTab(name, text, path, {
+    url: `https://synthetic.test/${encodeURIComponent(name)}`,
+  });
+  const accepted = state.tabs.find((tab) => tab.id === state.activeTabId);
+  await waitForAnnotationContext();
+  return accepted;
 }
 function newDraft(text = 'Private draft') {
   openAnnotationEditor({ element: root().querySelector('p') });
@@ -66,11 +73,10 @@ beforeEach(() => {
   };
   loadHTML(document);
   loadApp(document);
-  mermaid.render
-    .mockReset()
-    .mockResolvedValue({
-      svg: '<svg viewBox="0 0 10 10"><text>Diagram</text></svg>',
-    });
+  installAnnotationAuthority();
+  mermaid.render.mockReset().mockResolvedValue({
+    svg: '<svg viewBox="0 0 10 10"><text>Diagram</text></svg>',
+  });
 });
 afterEach(() => {
   delete window.specdown;
@@ -132,7 +138,9 @@ describe('annotation actions retain their document context', () => {
     const target = root().querySelector('p');
     target.remove();
     const before = stored();
-    expect(commitAnnotation({ element: target }, 'Wrong target')).toBe(false);
+    expect(await commitAnnotation({ element: target }, 'Wrong target')).toBe(
+      false
+    );
     expect(stored()).toBe(before);
   });
 
@@ -163,7 +171,12 @@ describe('annotation actions retain their document context', () => {
     openAnnotationEditor({ element: root().querySelector('p') });
     editor().querySelector('textarea').value = 'B intentional note';
     editor().querySelector('.annotation-editor-save').click();
-    expect(JSON.parse(stored()).files['B.md'].map((n) => n.text)).toEqual([
+    await waitForAnnotationState(
+      () =>
+        editor().style.display === 'none' &&
+        annRoot.requests.some((request) => request.acknowledged)
+    );
+    expect(annFileNotes(annotationKey).map((n) => n.text)).toEqual([
       'B intentional note',
     ]);
   });
@@ -173,7 +186,12 @@ describe('annotation actions retain their document context', () => {
     newDraft();
     window.dispatchEvent(new Event('resize'));
     editor().querySelector('.annotation-editor-save').click();
-    expect(JSON.parse(stored()).files['A.md'][0].text).toBe('Private draft');
+    await waitForAnnotationState(
+      () =>
+        editor().style.display === 'none' &&
+        annRoot.requests.some((request) => request.acknowledged)
+    );
+    expect(annFileNotes(annotationKey)[0].text).toBe('Private draft');
     expect(editor().style.display).toBe('none');
   });
 
@@ -209,7 +227,12 @@ describe('annotation actions retain their document context', () => {
     await renderMarkdown('x'.repeat(65537), 'A.md');
     expect(root().textContent).toBe('Body A');
     editor().querySelector('.annotation-editor-save').click();
-    expect(JSON.parse(stored()).files['A.md'][0].text).toBe('Private draft');
+    await waitForAnnotationState(
+      () =>
+        editor().style.display === 'none' &&
+        annRoot.requests.some((request) => request.acknowledged)
+    );
+    expect(annFileNotes(annotationKey)[0].text).toBe('Private draft');
   });
 });
 
@@ -217,11 +240,7 @@ describe('only the current render can finish document setup', () => {
   test.each(['resolve', 'reject'])(
     'a stale A %s cannot change B context, anchors, split source or scroll',
     async (finish) => {
-      localStorage.setItem(
-        NOTES_KEY,
-        JSON.stringify({ version: 2, files: { 'A.md': [note('A original')] } })
-      );
-      const before = stored();
+      setNotes();
       const pending = deferred();
       global.processMermaidDiagrams = jest
         .fn()
@@ -230,12 +249,15 @@ describe('only the current render can finish document setup', () => {
       state.splitViewActive = true;
       createTab('A.md', '<p>Body A</p>');
       await openDocument('B.md', '<p>Body B</p>');
+      const before = stored();
       root().scrollTop = 321;
       const split = document.getElementById('split-raw-content').textContent;
       if (finish === 'resolve') pending.resolve();
       else pending.reject(new Error('Old diagram failure'));
       await flush();
-      expect(annotationKey).toBe('B.md');
+      expect(annRoot.documents.find((d) => d.id === annotationKey)?.label).toBe(
+        'B.md'
+      );
       expect(stored()).toBe(before);
       expect(root().textContent).toBe('Body B');
       expect(root().scrollTop).toBe(321);
@@ -283,7 +305,9 @@ describe('only the current render can finish document setup', () => {
     pending.resolve();
     await switching;
     expect(root().scrollTop).toBe(314);
-    expect(annotationKey).toBe('B.md');
+    expect(annRoot.documents.find((d) => d.id === annotationKey)?.label).toBe(
+      'B.md'
+    );
   });
 
   test('stale watcher completion neither restores scroll nor pulses the active tab', async () => {
@@ -308,7 +332,9 @@ describe('only the current render can finish document setup', () => {
     expect(root().scrollTop).toBe(273);
     expect(pulseWatchToggle).not.toHaveBeenCalled();
     expect(a.hasUnseenChanges).toBe(true);
-    expect(annotationKey).toBe('B.md');
+    expect(annRoot.documents.find((d) => d.id === annotationKey)?.label).toBe(
+      'B.md'
+    );
   });
 
   test('rejected same-tab watcher content leaves the unchanged draft usable', async () => {
@@ -321,7 +347,12 @@ describe('only the current render can finish document setup', () => {
       content: 'x'.repeat(65537),
     });
     editor().querySelector('.annotation-editor-save').click();
-    expect(JSON.parse(stored()).files['A.md'][0].text).toBe('Private draft');
+    await waitForAnnotationState(
+      () =>
+        editor().style.display === 'none' &&
+        annRoot.requests.some((request) => request.acknowledged)
+    );
+    expect(annFileNotes(annotationKey)[0].text).toBe('Private draft');
   });
 
   test('raw watcher replacement invalidates the document generation', async () => {

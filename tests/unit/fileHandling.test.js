@@ -26,7 +26,7 @@ describe('File Handling', () => {
 
       global.FileReader = class {
         constructor() {
-          this.readAsText = jest.fn(function() {
+          this.readAsText = jest.fn(function () {
             this.result = '# Test';
             setTimeout(() => {
               if (this.onload) {
@@ -49,13 +49,15 @@ describe('File Handling', () => {
     });
 
     it('should accept .markdown files', (done) => {
-      const file = new File(['# Test'], 'test.markdown', { type: 'text/markdown' });
+      const file = new File(['# Test'], 'test.markdown', {
+        type: 'text/markdown',
+      });
 
       const originalFileReader = global.FileReader;
 
       global.FileReader = class {
         constructor() {
-          this.readAsText = jest.fn(function() {
+          this.readAsText = jest.fn(function () {
             this.result = '# Test';
             setTimeout(() => {
               if (this.onload) {
@@ -101,7 +103,9 @@ describe('File Handling', () => {
     });
 
     it('should reject .txt files with a warning toast', () => {
-      const file = new File(['Test content'], 'test.txt', { type: 'text/plain' });
+      const file = new File(['Test content'], 'test.txt', {
+        type: 'text/plain',
+      });
 
       handleFile(file);
 
@@ -134,7 +138,7 @@ describe('File Handling', () => {
 
       global.FileReader = class {
         constructor() {
-          this.readAsText = jest.fn(function() {
+          this.readAsText = jest.fn(function () {
             setTimeout(() => {
               if (this.onerror) {
                 this.onerror(new Error('Read failed'));
@@ -142,7 +146,9 @@ describe('File Handling', () => {
 
               const toast = document.querySelector('.toast');
               expect(toast).not.toBeNull();
-              expect(toast.textContent).toBe('Error reading file. Please try again.');
+              expect(toast.textContent).toBe(
+                'Error reading file. Please try again.'
+              );
               expect(toast.classList.contains('toast-error')).toBe(true);
               expect(toast.getAttribute('role')).toBe('alert');
               done();
@@ -165,7 +171,7 @@ describe('File Handling', () => {
 
       global.FileReader = class {
         constructor() {
-          this.readAsText = jest.fn(function() {
+          this.readAsText = jest.fn(function () {
             this.result = '# Test';
             setTimeout(() => {
               if (this.onload) {
@@ -190,8 +196,8 @@ describe('File Handling', () => {
       const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
       const event = {
         target: {
-          files: [file]
-        }
+          files: [file],
+        },
       };
 
       // Spy on handleFile
@@ -208,8 +214,8 @@ describe('File Handling', () => {
     it('should handle empty file list', () => {
       const event = {
         target: {
-          files: []
-        }
+          files: [],
+        },
       };
 
       const originalHandleFile = global.handleFile;
@@ -247,8 +253,8 @@ describe('File Handling', () => {
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
         dataTransfer: {
-          files: [file]
-        }
+          files: [file],
+        },
       };
 
       const originalHandleFile = global.handleFile;
@@ -268,8 +274,8 @@ describe('File Handling', () => {
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
         dataTransfer: {
-          files: []
-        }
+          files: [],
+        },
       };
 
       const originalHandleFile = global.handleFile;
@@ -291,8 +297,8 @@ describe('File Handling', () => {
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
         dataTransfer: {
-          files: [file]
-        }
+          files: [file],
+        },
       };
 
       handleDrop(event);
@@ -343,7 +349,9 @@ describe('Drag and drop (desktop bridge routing)', () => {
     const file = new File(['# Test'], 'test.md', { type: 'text/markdown' });
     handleDrop(dropEvent([file]));
 
-    expect(window.specdown.openDroppedPath).toHaveBeenCalledWith('/abs/test.md');
+    expect(window.specdown.openDroppedPath).toHaveBeenCalledWith(
+      '/abs/test.md'
+    );
     // The tab arrives later via the shell's file-opened event — the renderer
     // must NOT also open a pathless copy through the web reader.
     expect(state.tabs.length).toBe(0);
@@ -398,38 +406,15 @@ describe('handleFile (desktop bridge path resolution)', () => {
     delete window.specdown;
   });
 
-  it('opens a file-backed tab using the bridge-resolved path and records it', (done) => {
+  it('delegates a native path to the authorized successful-read route without a renderer FileReader shortcut', () => {
     const file = new File(['# Test'], 'notes.md', { type: 'text/markdown' });
-
-    // Mock FileReader (as the other handleFile tests do) so onload fires
-    // deterministically — no arbitrary wait for the real async read.
-    const originalFileReader = global.FileReader;
-    global.FileReader = class {
-      constructor() {
-        this.readAsText = jest.fn(function () {
-          this.result = '# Test';
-          setTimeout(() => {
-            if (this.onload) this.onload({ target: this });
-
-            const tab = state.tabs.find((t) => t.filename === 'notes.md');
-            expect(tab).toBeTruthy();
-            expect(tab.filePath).toBe('/abs/notes.md');
-            // A resolved path means it should be watched (Live) and recorded.
-            expect(window.specdown.watchFile).toHaveBeenCalledWith('/abs/notes.md');
-            const recents = JSON.parse(localStorage.getItem('specdown-recent-files') || '[]');
-            expect(recents.some((r) => r.ref === '/abs/notes.md' && r.type === 'path')).toBe(true);
-
-            global.FileReader = originalFileReader;
-            done();
-          }, 0);
-        });
-      }
-    };
-
+    window.specdown.requestOpenPath = jest.fn();
     handleFile(file);
-
-    // Path resolution happens synchronously, before the read.
     expect(window.specdown.getPathForFile).toHaveBeenCalledWith(file);
+    expect(window.specdown.requestOpenPath).toHaveBeenCalledWith(
+      '/abs/notes.md'
+    );
+    expect(state.tabs).toHaveLength(0);
+    expect(localStorage.getItem('specdown-recent-files')).toBeNull();
   });
 });
-

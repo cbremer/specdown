@@ -1,6 +1,11 @@
 const { loadHTML, loadApp } = require('../helpers/loadApp');
+const {
+  waitForAnnotationContext,
+  waitForAnnotationState,
+} = require('../helpers/annotationReadiness');
 
 const flush = async () => {
+  await new Promise(resolve=>setTimeout(resolve,5));
   for (let i = 0; i < 8; i++) await Promise.resolve();
 };
 const contentRoot = () => document.getElementById('markdown-content');
@@ -171,15 +176,21 @@ describe('document opens commit only after synchronous validation', () => {
   test('desktop/web annotation draft stays usable after a rejected new file', async () => {
     boot(false);
     createTab('A.md', '<p>A</p>');
-    await flush();
+    await waitForAnnotationContext();
     openAnnotationEditor({ element: contentRoot().querySelector('p') });
     const input = document.querySelector('.annotation-editor-input');
     input.value = 'Synthetic retained draft';
     createTab('B.md', 'x'.repeat(65537));
     document.querySelector('.annotation-editor-save').click();
-    const saved = JSON.parse(localStorage.getItem('specdown-annotations'));
-    expect(saved.files['A.md'][0].text).toBe('Synthetic retained draft');
-    expect(saved.files['B.md']).toBeUndefined();
+    await waitForAnnotationState(
+      () =>
+        annFileNotes(annotationKey)[0]?.text === 'Synthetic retained draft' &&
+        annRoot.requests.every((request) => request.acknowledged)
+    );
+    expect(annFileNotes(annotationKey)[0].text).toBe(
+      'Synthetic retained draft'
+    );
+    expect(annRoot.documents.some((d) => d.label === 'B.md')).toBe(false);
     expect(state.tabs).toHaveLength(1);
   });
 });

@@ -16,6 +16,7 @@ const current = JSON.stringify({
 });
 const root = () => document.getElementById('markdown-content');
 const flush = async () => {
+  await new Promise(resolve=>setTimeout(resolve,5));
   for (let i = 0; i < 8; i++) await Promise.resolve();
 };
 let listenerSpy;
@@ -136,8 +137,12 @@ describe('native iOS keeps deferred annotations inactive', () => {
     openAnnotationPanel();
     openAnnotationEditor(target, context);
     openAnnotationEditor({ id: 'synthetic-note' }, context);
-    expect(commitAnnotation(target, 'Synthetic new note', context)).toBe(false);
-    expect(commitAnnotation({ id: 'synthetic-note' }, '', context)).toBe(false);
+    expect(await commitAnnotation(target, 'Synthetic new note', context)).toBe(
+      false
+    );
+    expect(await commitAnnotation({ id: 'synthetic-note' }, '', context)).toBe(
+      false
+    );
     showAnnotationPopover(target.element, NOTE_TEXT);
     target.element.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
 
@@ -153,13 +158,11 @@ describe('native iOS keeps deferred annotations inactive', () => {
     expectNotesUntouched(current);
   });
 
-  test('direct storage entry points fail closed without touching existing raw data', () => {
+  test('direct storage entry points fail closed without touching existing raw data', async () => {
     boot();
     expect(annReadStore().store).toBeNull();
-    expect(annWriteStore({ version: 2, files: {} })).toBe(false);
-    expect(annPutFileNotes(FILENAME, [])).toBe(false);
-    expect(importAnnotations(current)).toBe(false);
-    expect(() => getAnnotationsJSON()).toThrow(/not available.*iOS/);
+    expect(await importAnnotations(current)).toBe(false);
+    expect(() => getAnnotationsJSON()).toThrow(/not available/);
     expectNotesUntouched(current);
   });
 
@@ -185,21 +188,17 @@ describe('native iOS keeps deferred annotations inactive', () => {
 });
 
 test.each(['web', 'desktop'])(
-  '%s retains migration, popovers, editing and backup commands',
+  '%s stages legacy notes without filename attachment and retains the active editor',
   async (platform) => {
     boot(platform, legacy);
     createTab(FILENAME, '<p>Synthetic source</p>');
+    await annLoadAuthority();
     await flush();
-    const badge = root().querySelector('.annotation-badge');
-    expect(badge).not.toBeNull();
-    badge.click();
-    expect(document.querySelector('.annotation-popover').textContent).toBe(
-      NOTE_TEXT
-    );
-    const migrated = JSON.parse(getAnnotationsJSON());
-    expect(migrated.version).toBe(2);
-    expect(migrated.files[FILENAME][0].anchor).not.toBeNull();
-    expect(importAnnotations(current)).toBe(true);
+    expect(root().querySelector('.annotation-badge')).toBeNull();
+    expect(getAnnotationsJSON()).toBe(legacy);
+    expect(annRoot.archives[0].raw).toBe(legacy);
+    expect(await importAnnotations(current)).toBe(true);
+    await renderAnnotations(FILENAME);
     toggleAnnotationMode();
     root()
       .querySelector('p')
@@ -208,10 +207,7 @@ test.each(['web', 'desktop'])(
     document.querySelector('.annotation-editor-cancel').click();
     openCommandPalette();
     expect(document.querySelector('.command-palette').textContent).toContain(
-      'Import annotations'
-    );
-    expect(document.querySelector('.command-palette').textContent).toContain(
-      'Export annotations'
+      'Unassigned notes and recovery'
     );
   }
 );
