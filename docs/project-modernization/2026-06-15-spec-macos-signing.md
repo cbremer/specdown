@@ -1,5 +1,7 @@
 # Spec — macOS Code-Signing & Notarization (Phase 3)
 
+> **Superseded — reviewed November 2, 2026.** Historical design and setup record. The repository-secret and automatic-release instructions below are superseded. Current desktop signing uses the protected `desktop-release` environment with the approval mode required by current policy and explicit exact-tag dispatch; unsigned previews do not publish. Follow [CLAUDE.md](../../CLAUDE.md#release-pipeline) and the current workflow. Do not create or copy signing credentials while reviewing this document. Base64 is encoding, not encryption; never print credential contents into chat or logs.
+
 **Date:** 2026-06-15
 **Type:** spec (setup guide + what the code change does)
 **Phase:** 3 — distribution

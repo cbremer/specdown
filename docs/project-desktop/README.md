@@ -53,7 +53,14 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 
 ---
 
-## Historical status (Mar 02, 2026)
+## Historical feature snapshot (March 2, 2026)
+
+Current setup and supported features are in the [root README](../../README.md).
+The table below preserves an early implementation snapshot: it is not current
+security or release evidence. In particular, the diagram share-link action was
+removed, and direct-download and sandboxed Mac Store release channels have
+different access/update policies. See [CLAUDE.md](../../CLAUDE.md#release-pipeline)
+and the [MAS contract](../project-appstore/mas-interface.md).
 
 | Feature | Status |
 |---|---|

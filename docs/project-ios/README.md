@@ -6,7 +6,7 @@ An iOS and iPad application bringing the Specdown markdown viewer to Apple's mob
 
 ## What It Is
 
-Specdown for iOS & iPad would be a native mobile app that renders markdown files with the same capabilities as the web and desktop versions:
+SpecDown for iOS & iPad is a native mobile app that renders markdown files with the same capabilities as the web and desktop versions:
 - GitHub Flavored Markdown rendering
 - Interactive Mermaid diagrams with touch-friendly zoom/pan
 - Syntax-highlighted code blocks
@@ -18,7 +18,7 @@ The goal is to bring the Specdown viewing experience to iPhone and iPad, taking 
 
 ## Why iOS & iPad
 
-The web version works in mobile Safari but isn't optimized for touch. The desktop version is macOS-only. An iOS/iPad app would:
+The web version works in mobile Safari but isn't optimized for touch. Desktop downloads support macOS, Windows and Linux. The iOS/iPad app adds:
 1. Let users view markdown files on the go
 2. Integrate with the iOS/iPadOS Files app and Share Sheet
 3. Support iPad multitasking (Split View, Slide Over)
@@ -39,9 +39,15 @@ The web version works in mobile Safari but isn't optimized for touch. The deskto
 
 ---
 
-## Current Status (as of May 15, 2026)
+## Current guidance (reviewed November 2, 2026)
 
-**Phase: iOS shell implemented, iPadOS shell upgraded** — The shared WKWebView-based app is now running, and the latest revision adds an adaptive iPadOS split layout on top of the existing iPhone-first shell.
+The Swift + WKWebView shell is implemented, with adaptive iPad layout and
+separate Dev, Beta and production identities. Use [ios/README.md](../../ios/README.md)
+for setup and [the channel contract](../project-appstore/2026-10-31-spec-ios-development-channels.md)
+for identity/signing boundaries. CI validates unsigned simulator builds; the June
+distribution setup guide below is historical and does not activate uploads.
+Apple delivery and device acceptance are tracked separately in
+[project-appstore](../project-appstore/README.md).
 
 ---
 

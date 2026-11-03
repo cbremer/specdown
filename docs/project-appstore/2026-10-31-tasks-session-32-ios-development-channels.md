@@ -13,7 +13,7 @@ Chris approved documenting and implementing separate production, local developme
 
 ## Validation and provenance
 
-The feature starts at reviewed `b157b29d6e4eeb36628ee6def166fda6da92eace`; final commit identity is retained in `ios/DerivedData/ios-channels-20261031/COMMIT.json`. Review work remains inside `.claude/worktrees/specdown-ios-channels-20261031` and the canonical owner project remains `/Users/chrisbremer/code/specdown/ios/SpecDown.xcodeproj`.
+The feature starts at reviewed `b157b29d6e4eeb36628ee6def166fda6da92eace`; final commit identity is retained in `ios/DerivedData/ios-channels-20261031/COMMIT.json`. Review work remains inside `.claude/worktrees/specdown-ios-channels-20261031` and the canonical owner project remains `<repo>/ios/SpecDown.xcodeproj`.
 
 The full shared suite passed **1,128 tests / 67 suites**, plus lint, typecheck, icon export verification, native security checks and all 24 channel/artwork mapping checks. Actual unsigned generic-simulator builds passed for `Dev Debug`, `Beta Release` and production `Release`. The first simulator attempt was blocked by the host sandbox's SwiftUI compiler-service restrictions; the identical signing-disabled builds passed with scoped local execution access. No app security protection was removed.
 

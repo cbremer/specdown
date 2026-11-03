@@ -1,5 +1,7 @@
 # Setup Guide: iOS TestFlight & App Store Distribution
 
+> **Superseded — reviewed November 2, 2026.** Historical setup proposal; do not execute this checklist. The current `ios-release.yml` validates an unsigned simulator build only. Adding secrets does not activate uploads. The old bundle ID, tag/run-number stamping and upload instructions below are superseded by the [channel contract](../project-appstore/2026-10-31-spec-ios-development-channels.md) and [current release policy](../../CLAUDE.md#release-pipeline). Signing and uploads require a separately authorized owner handoff. Base64 is encoding, not encryption; never print private-key contents into chat or logs.
+
 **Date:** 2026-06-21 (expanded 2026-06-22)
 **Type:** spec (setup checklist for activating the distribution lane)
 **Builds on:** [`../project-modernization/2026-06-16-spec-ios-distribution.md`](../project-modernization/2026-06-16-spec-ios-distribution.md)
@@ -69,12 +71,10 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `APPSTORE_API_KEY_P8` | **base64 of the `.p8`** (command below) |
 | `APPLE_TEAM_ID` | your **Team ID** from A3 (may already exist) |
 
-Produce the `.p8` value locally and paste the output verbatim:
+Historical clipboard example (not needed by the current validation-only workflow; run only during an authorized credential setup, outside the repository):
 
 ```bash
 base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy   # macOS — copies to clipboard
-# or just print it:
-base64 -i AuthKey_XXXXXXXXXX.p8
 ```
 
 The moment `APPSTORE_API_KEY_P8` is present, the next `v*` tag (or a manual run)

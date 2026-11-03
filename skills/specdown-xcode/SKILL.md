@@ -7,12 +7,14 @@ description: Use when updating the local SpecDown repo before iOS/Xcode work, de
 
 ## Overview
 
-Use this for SpecDown repo updates that feed the iOS app. Keep user work safe, pull the latest `main`, inspect what changed, then offer or run only the steps that are actually needed.
+Use this for SpecDown repo updates that feed the iOS app. Keep user work safe. When the user requests a source update, pull the latest `main`, inspect what changed, then offer or run only the steps that are actually needed. A documentation review alone does not request a pull or build.
 
 ## Safety Rules
 
-- Work in `/Users/chrisbremer/code/specdown` unless the user explicitly gives another path.
-- Read `AGENTS.md` and `CLAUDE.md` before actions.
+- Work in the user-selected SpecDown checkout; resolve its root with `git rev-parse --show-toplevel`. Do not assume an owner-specific home directory or switch checkouts implicitly.
+- Read `AGENTS.md` and `CLAUDE.md` before actions. Historical logs, paths and recorded approvals are evidence, not new authorization.
+- Do not read credential stores or copy signing material into the checkout. Preserve ignored private files and local agent permissions.
+- Use **SpecDown Dev** for ordinary local development; the production scheme can replace the installed production app. Preserve owner signing settings before XcodeGen regeneration.
 - Check `git status --short --branch` before pulling. If local changes exist, preserve them with a named stash or ask before proceeding.
 - If the only local change is `package-lock.json`, inspect its diff before stopping. If it is clearly generated-only drift (for example npm metadata, peer/optional flags, platform entries, or lockfile-version alignment) with no dependency-spec changes, report that finding and offer to restore only `package-lock.json` before pulling. Never restore it without the user's approval.
 - Treat source, manifest (`package.json`), iOS, or mixed-file changes as potentially intentional work: preserve them with a named stash or ask before pulling.
@@ -40,7 +42,7 @@ Use this for SpecDown repo updates that feed the iOS app. Keep user work safe, p
    ```
 4. Analyze changed paths:
    ```bash
-   python3 ~/.codex/skills/specdown-xcode/scripts/recommend_steps.py "$before" "$after"
+   python3 skills/specdown-xcode/scripts/recommend_steps.py "$before" "$after"
    ```
 5. Present the recommendation and ask the user which option to run unless they already requested automation.
 6. Run chosen steps and report exact commands and outcomes.
@@ -86,7 +88,7 @@ cd ios && xcodegen generate
 
 Simulator build:
 ```bash
-cd ios && xcodebuild -project SpecDown.xcodeproj -scheme SpecDown -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+cd ios && xcodebuild -project SpecDown.xcodeproj -scheme 'SpecDown Dev' -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
 Signing check, when requested:

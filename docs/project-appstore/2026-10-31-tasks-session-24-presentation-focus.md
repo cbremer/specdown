@@ -3,7 +3,7 @@
 Date: 2026-10-31. Base: `91d03967a4a4d94d56e4cc1409c9862435dac7cd`
 (draft #335). Review branch: `codex/presentation-focus-ownership`.
 Working source remains under
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-presentation-focus-20261031`.
+`<repo>/.claude/worktrees/specdown-presentation-focus-20261031`.
 
 ## Problem and correction
 
@@ -56,7 +56,7 @@ and release workflows are unchanged.
   Screenshot: `browser-presentation.jpg` in the evidence directory below.
 
 Complete local logs are retained at
-`/Users/chrisbremer/code/specdown/ios/DerivedData/presentation-focus-20261031/`:
+`<repo>/ios/DerivedData/presentation-focus-20261031/`:
 `negative.log`, `focused.log`, `full.log`, `lint.log`, `typecheck.log`, and
 `build.log`. Existing harness listener warnings and negative Git-revision stderr
 remain visible in the successful full-suite log. Build output retains its

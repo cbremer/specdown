@@ -1,5 +1,7 @@
 # Spec / Scope: iOS & iPadOS Distribution (Phase 3)
 
+> **Superseded — reviewed November 2, 2026.** Historical distribution proposal, not current operating instructions. The current iOS release workflow performs unsigned simulator validation only; adding repository secrets does not enable signing or upload. Use the [current release policy](../../CLAUDE.md#release-pipeline) and [channel contract](../project-appstore/2026-10-31-spec-ios-development-channels.md). This record does not authorize account changes or credential creation.
+
 **Date:** 2026-06-16
 **Type:** spec (scope + setup guide for getting SpecDown onto real devices)
 **Phase:** 3 — distribution

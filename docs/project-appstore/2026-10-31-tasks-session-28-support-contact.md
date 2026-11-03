@@ -4,7 +4,7 @@ Date: 2026-10-31. Task: WK-26. Base:
 `e230784434be07926b40217cc89e7758f8597e95`.
 Branch: `codex/support-contact-clarity`.
 Source worktree:
-`/Users/chrisbremer/code/specdown/.claude/worktrees/specdown-support-contact-20261031`.
+`<repo>/.claude/worktrees/specdown-support-contact-20261031`.
 
 ## Report and observed behavior
 
@@ -60,7 +60,7 @@ visually inspected. No email was sent and no GitHub login was performed.
 
 Logs, `browser-candidate.json`, `browser-support-phone.jpg` and the final
 scope/hash manifest are retained under
-`/Users/chrisbremer/code/specdown/ios/DerivedData/support-contact-20261031/`.
+`<repo>/ios/DerivedData/support-contact-20261031/`.
 The signed-out public-link observations are recorded separately in
 `ios/DerivedData/launch-followup-20261101-0422/support-link-browser.json`.
 The loopback preview was stopped and the temporary dependency symlink removed

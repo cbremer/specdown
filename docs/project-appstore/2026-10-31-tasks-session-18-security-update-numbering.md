@@ -14,7 +14,7 @@ The prior 996-test source review and focused iPad callback smoke remain evidence
 
 ## Current owner signing packet
 
-The replacement packet is `/Users/chrisbremer/Documents/SpecDown/ReleaseArchives/release/ios-1.0.1-228-20261031/`. Its `HANDOFF.md`, `SHA256SUMS.json` and `VERIFIED.json` record the exact final source revision and rebuilt unsigned products. Preserve the previous `ios-1.1-228-20261031` packet without modification.
+The replacement packet is `<owner-local-release-archive>/release/ios-1.0.1-228-20261031/`. Its `HANDOFF.md`, `SHA256SUMS.json` and `VERIFIED.json` record the exact final source revision and rebuilt unsigned products. Preserve the previous `ios-1.1-228-20261031` packet without modification.
 
 Open the replacement packet's `source/ios/SpecDown.xcodeproj`. Confirm **1.0.1 (228)**, the SpecDown scheme and `com.mosaicpando.specdown`; Chris selects the existing signing setup and creates the signed archive. Follow its handoff and `WHAT-TO-TEST.md`, which copies `app-store/metadata/testflight-1.0.1-228.md`. The unsigned validation archive is not uploadable.
 

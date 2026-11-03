@@ -1,5 +1,7 @@
 # SpecDown Privacy Policy (DRAFT — owner must confirm facts before publishing)
 
+> Historical draft. The public policy source is [markdown-viewer/public/privacy.html](../../markdown-viewer/public/privacy.html). Do not publish this placeholder draft as a replacement; verify privacy statements against the exact release.
+
 _Effective: [DATE]_
 
 SpecDown is a Markdown viewer for iPhone, iPad and Mac, published by [LEGAL NAME].
