@@ -126,6 +126,34 @@ describe('URL Handling', () => {
       expect(errorEl.style.display).not.toBe('none');
     });
 
+    it.each(['new repository', 'accepted document replacement'])(
+      'does not accept a pending selected raw file after %s',
+      async (reason) => {
+        let finish;
+        const accepted = jest.fn();
+        configureFileLoading({ createTab: accepted });
+        global.fetch = jest
+          .fn()
+          .mockImplementationOnce(
+            () => new Promise((resolve) => (finish = resolve))
+          )
+          .mockResolvedValue({ ok: false, status: 404 });
+        const pending = handleUrl(
+          'https://raw.githubusercontent.com/o/r/' +
+            'a'.repeat(40) +
+            '/README.md'
+        );
+        await Promise.resolve();
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        if (reason === 'new repository')
+          await handleUrl('https://github.com/o/r');
+        else invalidateDocumentContext();
+        finish({ ok: true, body: documentResponseBody('# Late document') });
+        await pending;
+        expect(accepted).not.toHaveBeenCalled();
+      }
+    );
+
     it('fetches the normalized URL on success and creates a tab', async () => {
       const markdown = '# Hello from URL';
       global.fetch.mockImplementation(() =>
