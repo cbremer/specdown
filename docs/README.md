@@ -1,7 +1,7 @@
 # docs/
 
 This folder contains project history, plans and audit records for SpecDown.
-Start with the root [README](../README.md) for current setup and [CLAUDE.md](../CLAUDE.md)
+Start with the root [README](../README.md) for current setup and [AGENTS.md](../AGENTS.md)
 for working instructions. Dated specs and task logs describe their recorded
 revision; they are not live provider state or authorization to execute commands.
 Public docs use portable paths. Private credentials, recovery originals, local
