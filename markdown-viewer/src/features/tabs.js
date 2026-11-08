@@ -16,7 +16,8 @@ import {
   invalidateDocumentContext,
   isDocumentContextCurrent,
 } from '../core/document-context.js';
-import { isDesktop } from '../core/platform.js';
+import { annotationSourceForTab } from '../core/annotation-source.js';
+import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { closeSearch } from './search.js';
 import { toggleToc } from './toc.js';
@@ -28,6 +29,7 @@ import {
   syncIOSChrome,
   closeIOSActionSheet,
   closeIOSTocSheet,
+  openIOSOpenChoices,
 } from '../platform/ios-chrome.js';
 
 /** @typedef {import('../core/state.js').Tab} Tab */
@@ -117,7 +119,8 @@ export function renderTabBar() {
     html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab" aria-label="Close ${escapeHtml(tab.filename)}">×</button>`;
     html += `</div>`;
   }
-  html += `<button class="tab-new" title="Open new file" aria-label="Open new file">+</button>`;
+  const newTabLabel = isIOSNative ? 'Open file or URL' : 'Open new file';
+  html += `<button class="tab-new" title="${newTabLabel}" aria-label="${newTabLabel}">+</button>`;
 
   tabBar.innerHTML = html;
 
@@ -141,6 +144,7 @@ export function renderTabBar() {
   const newTabBtn = tabBar.querySelector('.tab-new');
   if (newTabBtn) {
     newTabBtn.addEventListener('click', () => {
+      if (newTabBtn instanceof HTMLElement && openIOSOpenChoices(newTabBtn)) return;
       if (requestNativeOpenIfAvailable()) return;
       const fileInput = el('file-input');
       if (fileInput) fileInput.click();
@@ -196,6 +200,7 @@ export function createTab(filename, content, filePath, sourceMeta) {
     hasUnseenChanges: false,
     sourceMeta: sourceMeta || null,
   };
+  if (!isIOSNative) annotationSourceForTab(tab);
   state.tabs.push(tab);
   state.activeTabId = id;
 

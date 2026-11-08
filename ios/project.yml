@@ -49,7 +49,7 @@ targets:
         # (docs/project-appstore, decision D02): the Mac App Store build must use
         # this same bundle ID.
         PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown
-        MARKETING_VERSION: "1.0.1"
+        MARKETING_VERSION: "1.0.2"
         CURRENT_PROJECT_VERSION: "230"
         PRODUCT_NAME: Specdown
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -137,9 +137,32 @@ targets:
               public.mime-type:
                 - text/markdown
 
+  SpecDownTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SpecDownTests
+    dependencies:
+      - target: SpecDown
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.mosaicpando.specdown.synthetic-tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Specdown.app/Specdown"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 # Always select the identity explicitly for Run and Archive. The production
 # scheme remains named SpecDown for existing CI and the real release candidate.
 schemes:
+  SpecDown Synthetic Tests:
+    build:
+      targets:
+        SpecDown: all
+        SpecDownTests: [test]
+    test:
+      config: Dev Debug
+      targets:
+        - SpecDownTests
   SpecDown Dev:
     build:
       targets:

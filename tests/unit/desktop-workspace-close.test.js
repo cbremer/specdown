@@ -86,6 +86,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
   wc.emit('destroyed');
+  native.app.on.mock.calls.find(([name]) => name === 'will-quit')[1]();
   fs.rmSync(temp, { recursive: true, force: true });
   console.log.mockRestore();
   for (const [object, key] of [

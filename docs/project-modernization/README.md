@@ -4,6 +4,28 @@ A product, UX, and engineering modernization effort spanning all three
 SpecDown surfaces (web, desktop, iOS/iPadOS). Kicked off with a full
 three-lens evaluation of the app at v0.0.82 and a phased roadmap.
 
+## Store 1.0.2 development wave
+
+The November 2 batch targets iOS and Mac App Store 1.0.2. Track implementation,
+exact commits, draft PRs and acceptance evidence in
+[Session 81](../project-appstore/2026-11-02-tasks-session-81-development-wave-102.md).
+The canonical phone checkout and 1.0.1 (230) products remain frozen. This is a
+development candidate; Store build-number allocation, signing, installation,
+TestFlight delivery, submission and public release require their own applicable
+authorization. Direct desktop retains its independent version series.
+
+| Workstream | Development status |
+| --- | --- |
+| iOS durable Recent Files | [Draft #401](https://github.com/cbremer/specdown/pull/401); accepted-bookmark lifecycle reviewed, Phone/iPad simulator evidence |
+| iOS local relative images | [Draft #401](https://github.com/cbremer/specdown/pull/401); explicit folder authority, bounded raster reads and real WK image tests |
+| iOS native diagram PNG/SVG Save/Share | [Draft #401](https://github.com/cbremer/specdown/pull/401); actual Files/Share presentation, SVG/PNG staging and cancellation tests |
+| Approved icon parity | [Draft #396](https://github.com/cbremer/specdown/pull/396), independently reviewed, exact-head CI green |
+| Public GitHub repository browser | [Draft #395](https://github.com/cbremer/specdown/pull/395), independently reviewed, exact-head CI green |
+| Safe annotation identity/recovery | [Draft #402](https://github.com/cbremer/specdown/pull/402); complete workflow independently reviewed, all 36 rows mapped to tests/runtime and remaining platform gates |
+
+[Proposed release notes and owner checklist](../project-appstore/2026-11-02-spec-1-0-2-candidate-review.md)
+separate source/test evidence from native provider, signed-device and owner acceptance.
+
 ## Timeline
 
 | Date       | Doc                                                                                                      | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                  |

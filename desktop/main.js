@@ -7,10 +7,12 @@ const { randomUUID } = require('crypto');
 const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
 const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
+const { nativeAboutArguments } = require('./native-about');
 const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
 const { createFileResourcePolicy } = require('./file-resource-policy');
 const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
+const { createAnnotationIdentity } = require('./annotation-identity');
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -481,6 +483,7 @@ function getViewerArguments() {
       ? version.match(/^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/)
       : null;
     if (match && match[0] === version) args.push(`--specdown-app-version=${version}`);
+    args.push(...nativeAboutArguments(app));
   }
   return args;
 }
@@ -645,26 +648,52 @@ function isValidMarkdownFile(filePath) {
   return VALID_EXTENSIONS.includes(ext);
 }
 
-function readMarkdownFile(filePath) {
-  if (!isValidMarkdownFile(filePath)) throw new Error('Unsupported document type.');
-  const fd = fs.openSync(filePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+let annotationIdentityRegistry = null;
+function readMarkdownFile(filePath, continuity) {
+  if (!isValidMarkdownFile(filePath))
+    throw new Error('Unsupported document type.');
+  const fd = fs.openSync(
+    filePath,
+    fs.constants.O_RDONLY | fs.constants.O_NONBLOCK
+  );
   try {
     const stats = fs.fstatSync(fd);
-    if (!stats.isFile()) throw new Error('Please choose a regular Markdown file.');
-    if (stats.size > MAX_DOCUMENT_BYTES) throw new Error('Markdown files must be 8 MiB or smaller.');
+    if (!stats.isFile())
+      throw new Error('Please choose a regular Markdown file.');
+    if (stats.size > MAX_DOCUMENT_BYTES)
+      throw new Error('Markdown files must be 8 MiB or smaller.');
     // Bounded reads also cover files that grow after fstat; never read an
     // unbounded string into memory before applying the size limit.
     const chunks = [];
     let total = 0;
     while (total <= MAX_DOCUMENT_BYTES) {
-      const chunk = Buffer.alloc(Math.min(64 * 1024, MAX_DOCUMENT_BYTES + 1 - total));
+      const chunk = Buffer.alloc(
+        Math.min(64 * 1024, MAX_DOCUMENT_BYTES + 1 - total)
+      );
       const count = fs.readSync(fd, chunk, 0, chunk.length, null);
       if (!count) break;
       chunks.push(chunk.subarray(0, count));
       total += count;
     }
-    if (total > MAX_DOCUMENT_BYTES) throw new Error('Markdown files must be 8 MiB or smaller.');
-    return { filename: path.basename(filePath), filePath, content: Buffer.concat(chunks, total).toString('utf8') };
+    if (total > MAX_DOCUMENT_BYTES)
+      throw new Error('Markdown files must be 8 MiB or smaller.');
+    // No source-identity stat/realpath probes. The location is the logical path
+    // supplied by the already authorized reader. Missing registry => ephemeral
+    // notes only, while the document can still open successfully.
+    let annotationSource = null;
+    try {
+      annotationIdentityRegistry ||= createAnnotationIdentity(
+        path.join(app.getPath('userData'), 'annotation-identity.sqlite')
+      );
+      const identityEvidence=typeof continuity?.afterRead==='function' ? continuity.afterRead(filePath) : continuity;
+      annotationSource = annotationIdentityRegistry.afterAuthorizedRead(filePath,identityEvidence);
+    } catch {}
+    return {
+      filename: path.basename(filePath),
+      filePath,
+      content: Buffer.concat(chunks, total).toString('utf8'),
+      annotationSource,
+    };
   } finally {
     fs.closeSync(fd);
   }
@@ -713,8 +742,8 @@ function openFileByPath(filePath, context) {
   }
 
   try {
-    const access = fileAccess.withAccess(filePath, (resolved) => {
-      const document = readMarkdownFile(resolved);
+    const access = fileAccess.withAccess(filePath, (resolved, continuity) => {
+      const document = readMarkdownFile(resolved, continuity);
       fileResourcePolicy.noteDocument(resolved);
       return document;
     });
@@ -1010,14 +1039,22 @@ function watchFilePolling(filePath) {
   }
   const listener = (curr, prev) => {
     if (curr.mtimeMs === prev.mtimeMs && curr.size === prev.size && curr.ino === prev.ino) return;
-    if (curr.mtimeMs === 0 && curr.ino === 0) return; // deleted; wait for it to return
     try {
-      // Keep the tab's identity even when the grant followed a moved file.
-      const fileData = { ...readMarkdownFile(held.path), filePath };
+      // Re-resolve the owned scoped bookmark for each actual read. A cached
+      // old path may now contain an unrelated file after the original moved.
+      const access=fileAccess.withAccess(filePath,readMarkdownFile,held);
+      if(!access.ok){unwatchFilePolling(filePath);notifyFileAccessNeeded(filePath);return;}
+      const fileData = { ...access.value, filePath };
       const wc = mainWindow && mainWindow.webContents;
       if (wc && !wc.isDestroyed()) wc.send('file-changed', fileData);
     } catch (err) {
       logError(`Failed to re-read watched file: ${held.path}`, err);
+    } finally {
+      const entry=pollWatchers.get(filePath);
+      if(entry && entry.watchedPath!==held.path){
+        fs.watchFile(held.path,{interval:MAS_POLL_INTERVAL_MS},listener);
+        fs.unwatchFile(entry.watchedPath,listener);entry.watchedPath=held.path;
+      }
     }
   };
   fs.watchFile(held.path, { interval: MAS_POLL_INTERVAL_MS }, listener);
@@ -1363,8 +1400,8 @@ handleTrustedIpc('read-bookmarked-file', async (event, filePath) => {
   if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
       !isValidMarkdownFile(filePath)) return null;
   try {
-    const access = fileAccess.withAccess(filePath, (resolved) => {
-      const document = readMarkdownFile(resolved);
+    const access = fileAccess.withAccess(filePath, (resolved, continuity) => {
+      const document = readMarkdownFile(resolved, continuity);
       fileResourcePolicy.noteDocument(resolved);
       return document;
     });
@@ -1465,11 +1502,11 @@ onTrustedIpc('restart-to-update', () => {
 // The renderer catalog (markdown-viewer/src/core/visual-theme-catalog.js) is
 // the source of truth and replaces this list over `visual-theme-catalog`.
 const DEFAULT_VISUAL_THEME_CATALOG = [
-  { id: 'default', label: 'Default' },
+  { id: 'default', label: 'Basic' },
   { id: 'starfield', label: 'Starfield' },
 ];
 let visualThemeCatalogItems = DEFAULT_VISUAL_THEME_CATALOG.slice();
-let currentVisualThemeId = 'default';
+let currentVisualThemeId = 'starfield';
 
 function normalizeVisualThemeCatalog(raw) {
   if (!Array.isArray(raw)) return null;
@@ -1824,6 +1861,8 @@ process.on('unhandledRejection', (reason) => {
 })();
 
 app.on('will-quit', () => {
+  annotationIdentityRegistry?.close();
+  annotationIdentityRegistry = null;
   globalShortcut.unregisterAll();
 });
 

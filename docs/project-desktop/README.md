@@ -4,6 +4,8 @@ An Electron desktop application wrapping the shared SpecDown web viewer, distrib
 
 **Testing entry point:** [Cross-platform testing runbook](2026-11-02-spec-platform-testing-runbook.md), including host authorization, safe test data, separate Windows/Linux commands, an agent prompt and a results template. It does not request or execute a test run.
 
+**Current development wave:** [Apple-wave desktop parity](2026-11-08-tasks-session-10-apple-wave-parity.md) keeps direct desktop packaging, shared features and release acceptance alongside Apple Dev 1.0.2 (237). Direct desktop versioning remains independent.
+
 **Last verified release checkpoint, November 2, 2026:** direct desktop [0.0.232 is public](../project-appstore/2026-11-02-tasks-session-77-direct-desktop-232-published.md), with signed/notarized Mac artifacts and unsigned Windows/Linux artifacts. Windows/Linux remain less tested in real desktop use than macOS; package/CI success is not hands-on acceptance. Separate Store [Dev/Beta 230 delivery](../project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md) is complete, with new Owner acceptance still pending. The earlier sections below describe the original Mac implementation, not a current cross-platform acceptance report.
 
 ---
@@ -50,6 +52,7 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Sep 07, 2026 | Tasks | [2026-09-07-tasks-session-09-signing-keychain.md](2026-09-07-tasks-session-09-signing-keychain.md) | Session 9 — Backport temporary signing keychain password correction |
 | Nov 02, 2026 | Spec | [Cross-platform testing runbook](2026-11-02-spec-platform-testing-runbook.md) | Repeatable, host-authorized artifact/source testing with Windows/Linux commands, synthetic fixtures, agent handoff and result template; no tests executed by this document. |
 | Nov 02, 2026 | Tasks | [Session 79: testing and next-release handoffs](../project-appstore/2026-11-02-tasks-session-79-platform-testing-runbook.md) | Documentation-only runbook, saved six-feature 1.0.2 brief and current checkpoint/maintenance guidance. |
+| Nov 8, 2026 | Tasks | [Session 10: Apple-wave parity](2026-11-08-tasks-session-10-apple-wave-parity.md) | Include shared viewer edits in desktop packaging checks and verify a direct-desktop candidate from the Apple Dev source |
 
 ---
 

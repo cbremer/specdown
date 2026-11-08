@@ -12,7 +12,7 @@
       img-src allow HTTPS for remote Markdown/images and retain self for local
       previews. Cleartext redirects are blocked before a request is sent.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: specdown:; script-src 'self' 'unsafe-eval' file: specdown:; style-src 'self' 'unsafe-inline' file: specdown:; img-src 'self' data: blob: https: file: specdown: specdown-resource:; font-src 'self' data: file: specdown:; connect-src 'self' https: file: specdown:; object-src 'none'; base-uri 'self'; form-action 'none'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SpecDown: A Markdown Viewer</title>
     <meta name="description" content="Read Markdown specs, plans and Mermaid diagrams from your AI workflow. Desktop Live reload follows saved changes to open files.">
@@ -62,7 +62,7 @@
             <div class="header-controls">
                 <button id="bookmarks-button" class="theme-toggle" type="button" aria-label="Bookmarks" title="Bookmarks"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="bookmarks-button-label">Bookmarks</span></button>
                 <div class="visual-theme-picker">
-                    <button id="visual-theme-toggle" class="theme-toggle visual-theme-toggle" title="Theme: Default" aria-label="Theme: Default" aria-haspopup="listbox" aria-expanded="false" aria-controls="visual-theme-menu">
+                    <button id="visual-theme-toggle" class="theme-toggle visual-theme-toggle" title="Theme: Starfield" aria-label="Theme: Starfield" aria-haspopup="listbox" aria-expanded="false" aria-controls="visual-theme-menu">
                         <span class="theme-icon" aria-hidden="true" data-icon="palette"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></span>
                         <span class="visual-theme-toggle-label">Theme</span>
                     </button>
@@ -124,13 +124,16 @@
                     </div>
                 </div>
                 <div class="url-section">
+                    <button id="ios-open-url-button" class="sample-button" type="button" hidden>Open from URL…</button>
+                    <div id="inline-url-entry">
                     <span class="url-separator">or open from URL</span>
                     <div class="url-input-row">
                         <input type="url" id="url-input" placeholder="https://..." autocomplete="off" spellcheck="false">
                         <button id="open-url-btn">Open</button>
                     </div>
                     <p id="url-error" class="url-error" style="display: none;"></p>
-                    <p class="url-note">Note: Some enterprise GitHub instances may require authentication and won't load here.</p>
+                    <p class="url-note">Open a public GitHub repository or branch/folder URL to choose a Markdown file. Private repositories are not supported; GitHub rate limits may require trying later.</p>
+                    </div>
                 </div>
             </div>
             <div id="landing-diagram-host" class="landing-diagram-host landing-interactive" hidden>
@@ -276,7 +279,7 @@
         </div>
 
         <div id="ios-action-bar" class="ios-action-bar" style="display: none;">
-            <button id="ios-open-button" class="ios-action-button" title="Open file">
+            <button id="ios-open-button" class="ios-action-button" title="Open file or URL" aria-haspopup="dialog" aria-controls="ios-open-sheet">
                 <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                 <span class="ios-action-label">Open</span>
             </button>
@@ -292,6 +295,19 @@
                 <span class="ios-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
                 <span class="ios-action-label">More</span>
             </button>
+        </div>
+
+        <div id="ios-open-sheet" class="ios-sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="ios-open-sheet-title" style="display: none;">
+            <div class="ios-sheet">
+                <div class="ios-sheet-header">
+                    <h2 id="ios-open-sheet-title" class="ios-sheet-title">Open</h2>
+                    <button id="ios-open-sheet-close" class="ios-sheet-close" title="Cancel opening">✕</button>
+                </div>
+                <div class="ios-sheet-actions">
+                    <button id="ios-open-file-choice" class="ios-sheet-action-button">Open File…</button>
+                    <button id="ios-open-url-choice" class="ios-sheet-action-button">Open from URL…</button>
+                </div>
+            </div>
         </div>
 
         <div id="ios-toc-sheet" class="ios-sheet-backdrop" style="display: none;">

@@ -5,6 +5,8 @@ import {
 } from '../core/document-limits.js';
 // Explicit, durable favorites. Paths/URLs reopen their current source; files
 // without a reusable reference retain a clearly labeled snapshot instead.
+import { annotationSourceForTab } from '../core/annotation-source.js';
+import { bindAnnotationSavedCopy } from './annotations.js';
 import { state } from '../core/state.js';
 import { trapFocus } from '../core/focus-trap.js';
 import { platformIsTouchFirst } from '../core/platform.js';
@@ -16,7 +18,7 @@ import {
 } from '../platform/bridge.js';
 import { showToast } from './toast.js';
 
-/** @typedef {{ id: string, title: string, filename: string, type: 'path'|'url'|'copy', ref: string, content?: string, savedAt: number }} Bookmark */
+/** @typedef {{ id: string, title: string, filename: string, type: 'path'|'url'|'copy', ref: string, content?: string, annotationCopyId?: string, savedAt: number }} Bookmark */
 const BOOKMARK_KEY = 'specdown-bookmarks-v1';
 const BOOKMARK_COPY_LIMIT = 1024 * 1024;
 /** @type {HTMLElement | null} */
@@ -91,10 +93,7 @@ function bookmarkForTab(tab, entries) {
       ? b.type === 'path' && b.ref === tab.filePath
       : url
         ? b.type === 'url' && b.ref === url
-        : b.id === tab.sourceMeta?.bookmarkId ||
-          (b.type === 'copy' &&
-            b.filename === tab.filename &&
-            b.content === tab.rawMarkdown)
+        : b.id === tab.sourceMeta?.bookmarkId
   );
 }
 
@@ -105,7 +104,9 @@ export function bookmarkCurrentFile() {
     return;
   }
   try {
+    let noteBindingTask = Promise.resolve();
     const entries = getBookmarks();
+    annotationSourceForTab(tab);
     if (bookmarkForTab(tab, entries)) {
       openBookmarks();
       showToast('This document is already bookmarked.', { type: 'info' });
@@ -134,11 +135,21 @@ export function bookmarkCurrentFile() {
         filename: tab.filename,
         type,
         ref: tab.filePath || url || '',
-        ...(type === 'copy' ? { content: tab.rawMarkdown } : {}),
+        ...(type === 'copy'
+          ? { content: tab.rawMarkdown, annotationCopyId: id }
+          : {}),
         savedAt: Date.now(),
       },
     ]);
-    if (type === 'copy') tab.sourceMeta = { ...tab.sourceMeta, bookmarkId: id };
+    if (type === 'copy') {
+      tab.sourceMeta = { ...tab.sourceMeta, bookmarkId: id, savedCopyId: id };
+      noteBindingTask = bindAnnotationSavedCopy(tab, id).catch(() => {
+        showToast(
+          'Bookmark saved; annotation continuity could not be committed. Use recovery to reconnect notes.',
+          { type: 'warning' }
+        );
+      });
+    }
     openBookmarks();
     bookmarkRenderList();
     showToast(
@@ -147,6 +158,7 @@ export function bookmarkCurrentFile() {
         : 'Bookmark saved.',
       { type: 'success' }
     );
+    return noteBindingTask;
   } catch {
     bookmarkStorageError();
   }
@@ -175,6 +187,7 @@ export function updateBookmark(id, patch) {
       return false;
     }
     bookmarkPersist(entries.map((b) => (b.id === id ? next : b)));
+    ++bookmarkRecallGeneration;
     return true;
   } catch {
     bookmarkStorageError();
@@ -221,6 +234,7 @@ export async function recallBookmark(id, status) {
     }
     let content = entry.content || '';
     let filename = entry.filename;
+    let bookmarkAnnotationSource;
     if (status) status.textContent = 'Opening…';
     if (entry.type === 'path') {
       const file = await bridgeReadBookmarkedFile(entry.ref);
@@ -230,6 +244,7 @@ export async function recallBookmark(id, status) {
         );
       bookmarkOpenReceipt = file.openReceipt;
       bookmarkFilePath = file.filePath;
+      bookmarkAnnotationSource = file.annotationSource;
       content = file.content;
       filename = file.filename;
     } else if (entry.type === 'url') {
@@ -269,8 +284,10 @@ export async function recallBookmark(id, status) {
         entry.type === 'url'
           ? { url: entry.ref }
           : entry.type === 'copy'
-            ? { bookmarkId: id }
-            : null
+            ? { bookmarkId: id, savedCopyId: entry.annotationCopyId || id }
+            : bookmarkAnnotationSource
+              ? { annotationSource: bookmarkAnnotationSource }
+              : null
       ) === true;
     if (state.tabs.length === tabCount) return; // Tab limit: leave the list open.
     closeBookmarks();
@@ -338,22 +355,50 @@ function bookmarkLocateFile(entry) {
     const reader = new FileReader();
     reader.onload = () => {
       if (
-        updateBookmark(entry.id, {
-          type: 'copy',
-          ref: '',
-          filename: file.name,
-          content: String(reader.result ?? ''),
-          savedAt: Date.now(),
-        })
-      ) {
-        // Existing recalled copies must no longer mask the replacement.
-        for (const tab of state.tabs) {
-          if (tab.sourceMeta?.bookmarkId === entry.id)
-            delete tab.sourceMeta.bookmarkId;
+        !bookmarkOverlay?.isConnected ||
+        !getBookmarks().some((b) => b.id === entry.id)
+      )
+        return;
+      const choice = document.createElement('div');
+      choice.className = 'bookmark-replace-choice';
+      const message = document.createElement('p');
+      message.textContent =
+        'Is the replacement a new revision of the same document, or a different document? Existing tabs retain their captured collection.';
+      /** @param {boolean} sameDocument */
+      const commit = (sameDocument) => {
+        if (
+          updateBookmark(entry.id, {
+            type: 'copy',
+            ref: '',
+            filename: file.name,
+            content: String(reader.result ?? ''),
+            annotationCopyId: sameDocument
+              ? entry.annotationCopyId || entry.id
+              : crypto.randomUUID(),
+            savedAt: Date.now(),
+          })
+        ) {
+          for (const tab of state.tabs)
+            if (tab.sourceMeta?.bookmarkId === entry.id)
+              delete tab.sourceMeta.bookmarkId;
+          bookmarkRenderList();
+          showToast('Saved copy replaced with your explicit identity choice.', {
+            type: 'success',
+          });
         }
-        bookmarkRenderList();
-        showToast('Saved copy replaced.', { type: 'success' });
-      }
+      };
+      const revision = bookmarkButton('New revision of same document', () =>
+        commit(true)
+      );
+      const separate = bookmarkButton('Different document', () =>
+        commit(false)
+      );
+      const cancel = bookmarkButton('Cancel replacement', () =>
+        choice.remove()
+      );
+      choice.append(message, revision, separate, cancel);
+      bookmarkOverlay.append(choice);
+      revision.focus();
     };
     reader.onerror = () =>
       showToast('Could not read that file. Your bookmark is unchanged.', {

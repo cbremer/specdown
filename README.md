@@ -27,14 +27,23 @@ Linux), and as an **iOS / iPadOS** app.
 - **Print / Save as PDF** (`Cmd/Ctrl + P`) — prints the full document as a clean,
   paginated layout (diagrams re-rendered light for paper); the desktop app also
   has **File > Export as PDF…** (`Cmd/Ctrl + Shift + E`) for one-step PDF files
-- **Notes (web and desktop)** — double-click a document block to attach a note;
-  export and import notes as JSON. Imports are limited to 2 MiB. Notes are saved
-  in local app or browser storage; native iOS does not expose annotation tools
+- **Notes (web and desktop)** — double-click a document block to attach a note.
+  Collections follow the accepted source; unrelated same-name files do not share
+  notes. A new browser file selection requires explicit reconnect to an existing
+  collection. Native iOS does not expose annotation tools.
+- **Unassigned notes and recovery** (command palette) — preserve legacy notes,
+  preview selected occurrences, explicitly associate or reconnect a collection,
+  and undo while keeping newer edits. Private `.sdr` backups preserve raw data;
+  portable JSON exchange is separately labeled and deliberately redacted/lossy.
+  Restore never grants file access. Keep the original backup and reselect the
+  saved file to verify it; unsupported capacity fails without truncation.
 
 ### Interactive Mermaid diagrams
 - Per-diagram **zoom, pan, reset, and fullscreen** controls
 - **Mouse-wheel zoom** and **click-drag pan** with a pointer; touch controls on iOS
-- **Web and desktop:** minimap in fullscreen and diagram export as **SVG** or **PNG**
+- **SVG / PNG diagram files** on web and desktop; the iOS 1.0.2 candidate adds
+  native **Save to Files / Share**. Fullscreen keeps the minimap on web/desktop.
+  There is no hosted diagram-link sharing.
 - **Presentation mode** — step through a document's diagrams full-screen
 - Diagrams re-theme automatically with light/dark
 
@@ -43,9 +52,19 @@ Linux), and as an **iOS / iPadOS** app.
   use **Files**, **iCloud Drive** or a compatible app on iPhone and iPad
 - **Open from URL** using a public HTTPS link to a Markdown file. Links requiring
   sign-in or blocked by the host may not open; download the file and open it locally
-- **Bookmarks** — save frequently used files with **Bookmark** (`Cmd/Ctrl + D`), then recall them from the header’s **Bookmarks** list. Search, rename, remove, or **Locate file** when a desktop file moves. Desktop files and URLs reopen their current source; browser/iOS files without a reusable path retain a clearly labeled **saved copy**, with **Replace copy** to update it. Bookmarks stay separate from recents and are stored on this device (clearing app/browser data removes them).
-- **Recent files (web and desktop)** for reopening documents; **session restore**
-  reopens your last document on the web
+- **Bookmarks** — save frequently used files with **Bookmark** (`Cmd/Ctrl + D`), then recall them from the header’s **Bookmarks** list. Search, rename, remove, or **Locate file** when a desktop file moves. Desktop files and URLs reopen their current source; browser/iOS files without a reusable path retain a clearly labeled **saved copy**, with **Replace copy** to choose a new revision or a different document explicitly. Bookmarks stay separate from recents and are stored on this device (clearing app/browser data removes them).
+- **Recent files** — web/desktop reopening and, in the iOS 1.0.2 candidate,
+  accepted Files documents retained through provider bookmarks with Retry/Locate
+  recovery. A new picker selection stays distinct; a filename never grants access.
+- **Local images on iOS 1.0.2** — choose **Allow Local Images…** and explicitly
+  select the containing folder. Permission belongs to the current document view;
+  raster images are bounded and traversal/symlink escapes are refused.
+- **Public GitHub repositories** — paste a repository or `/tree/<branch>/<folder>`
+  URL to choose a Markdown file without signing in. Listing limits and unavailable
+  or rate-limited repositories show guidance; private repositories are unsupported.
+- **Desktop session restore** keeps supported prior tabs when permissions remain
+  usable. On the web, choose **Open Recent** explicitly to reopen history entries.
+  Source identity does not grant file access.
 - **Workspace (folder) mode (desktop and supported browsers)** — use **Open Folder**
   or drop a folder in a compatible browser, browse its Markdown in a sidebar, and
   follow relative `.md` links. **Close Folder** closes the folder browser
@@ -58,8 +77,13 @@ Linux), and as an **iOS / iPadOS** app.
 
 ### Navigation & UX
 - **Command palette** (`Cmd/Ctrl + K`) with fuzzy search for available commands
+- **Native icon choices** — eight approved artworks including Light; selections
+  persist. Desktop choices affect the running Dock/window, while Finder and
+  installed shortcuts keep their shipped artwork. Channel defaults remain distinct.
 - **Keyboard shortcut sheet** (`?`)
 - Auto / light / dark theme that follows your OS, plus reduced-motion support
+- Starfield is the initial visual theme on every platform. Choose Basic, Aurora
+  or Blueprint instead; your selection is remembered.
 - Accessible: skip link, ARIA roles, keyboard navigation
 
 ---

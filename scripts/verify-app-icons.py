@@ -8,12 +8,40 @@ from PIL import Image, ImageChops, ImageStat
 
 parser = argparse.ArgumentParser(description=__doc__)
 scope = parser.add_mutually_exclusive_group()
+scope.add_argument('--desktop-light-only', action='store_true', help='Check desktop Light geometry and approved master artwork')
 scope.add_argument('--ios-light-only', action='store_true', help='Check only the separate full-bleed iOS Light choice')
 scope.add_argument('--ios-legacy-only', action='store_true', help='Check the six legacy iOS choices and unchanged desktop geometry')
 parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
 args = parser.parse_args()
 ROOT = args.root.resolve()
 VARIANTS = ('flat', 'glass', 'ceramic', 'metallic', 'layered', 'minimal')
+
+def verify_desktop_light():
+    with Image.open(ROOT / 'desktop/icons/light.png') as source:
+        desktop = source.copy()
+    assert desktop.size == (1024, 1024) and desktop.mode == 'RGBA', 'light: desktop requires 1024px RGBA'
+    assert desktop.info.get('srgb') == 0, 'light: desktop must declare sRGB'
+    alpha = desktop.getchannel('A')
+    assert alpha.point(lambda value: 255 if value >= 128 else 0).getbbox() == (100, 100, 924, 924), 'light: desktop must have centered 824px geometry'
+    assert alpha.getbbox() == (100, 100, 924, 924), 'light: desktop must have clean transparent margins'
+    for point in ((100, 100), (923, 100), (100, 923), (923, 923)):
+        assert alpha.getpixel(point) == 0, 'light: desktop tile corners must be rounded'
+    for point in ((100, 512), (923, 512), (512, 100), (512, 923)):
+        assert alpha.getpixel(point) == 255, 'light: tile must reach all four mid-edges'
+    with Image.open(ROOT / 'build/app-icon-sources/light.png') as source:
+        reference = source.convert('RGB').resize((824, 824), Image.Resampling.LANCZOS)
+    # Compare all opaque pixels to an independent full-master resize. The mask
+    # is platform geometry; it must never rescale/crop/recolor the approved face.
+    difference = ImageChops.difference(desktop.crop((100, 100, 924, 924)).convert('RGB'), reference)
+    mask = alpha.crop((100, 100, 924, 924)).point(lambda value: 255 if value == 255 else 0)
+    assert max(ImageStat.Stat(difference, mask).mean) <= 2, 'light: desktop must preserve the complete approved master'
+    print('light: desktop transparent sRGB; centered 824px rounded tile; approved artwork matches')
+
+
+if not (args.ios_light_only or args.ios_legacy_only):
+    verify_desktop_light()
+if args.desktop_light_only:
+    raise SystemExit(0)
 
 for variant in (() if args.ios_light_only else VARIANTS):
     with Image.open(ROOT / f'desktop/icons/{variant}.png') as source:
@@ -92,6 +120,5 @@ if not args.ios_legacy_only:
     choices = (ROOT / 'ios/SpecDown/AppIconPicker.swift').read_text()
     case_line = re.search(r'^\s*case\s+(.+)$', choices, re.MULTILINE)
     assert case_line and 'light' in [item.strip() for item in case_line.group(1).split(',')], 'light: manual picker choice missing'
-    assert not (ROOT / 'desktop/icons/light.png').exists(), 'light: this choice is iOS only'
     print('light: full-bleed master resize; iOS RGB/preview match; catalog and manual choice registered')
-    print('Light passed.' if args.ios_light_only else 'All six legacy alternates and iOS Light passed.')
+    print('Light passed.' if args.ios_light_only else 'All six legacy alternates and desktop/iOS Light passed.')

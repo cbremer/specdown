@@ -1,0 +1,39 @@
+Read the specs, plans and diagrams your AI workflow produces. SpecDown gives your Markdown a clean reading view, with formatted tables, highlighted code and interactive Mermaid diagrams right in the document. Keep the document beside your editor or agent and follow saved changes automatically with Live reload on.
+
+Built for developers and people using AI tools to review specs, design docs, READMEs and notes. Open saved Markdown from your editor or AI assistant.
+
+Follow changes as they’re saved
+
+When your editor or AI agent saves changes to an open local Markdown file, SpecDown refreshes the document automatically while Live reload is on. Click Live beside the filename to pause, or Paused to resume.
+
+Made for reading technical docs
+
+• Clean typography for long documents
+• Read headings, lists, tables and highlighted code
+• Jump between sections with the table of contents
+• Find text and move through matching passages
+• Switch between the rendered preview and raw Markdown
+• Compare raw Markdown and the rendered preview in split view
+• Keep several documents open in tabs
+
+Explore Mermaid diagrams
+
+• View Mermaid flowcharts, sequence diagrams, state diagrams and Gantt charts
+• Expand a diagram to zoom and pan
+• Focus on just the diagrams in Presentation mode, moving through them one at a time with zoom and pan
+• Use Reset to fit the diagram to the current view
+
+Open files your way
+
+• Open Markdown files from your Mac
+• Open a folder to browse its Markdown files
+• Close the folder while keeping your documents open
+
+Make reading comfortable
+
+• Choose light, dark or system appearance
+• Start with the Starfield theme, or choose Basic, Aurora or Blueprint
+
+The bundled Diagram Showcase works offline. Local documents render on your device. Opening an online document or loading a remote image connects to its host.
+
+No account is required. SpecDown has no ads or analytics.

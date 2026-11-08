@@ -1,9 +1,9 @@
 // @ts-check
 // Visual themes for the empty-state drop zone. Add an entry to
 // `visualThemeCatalog` and a `[data-visual-theme="<id>"]` CSS block to ship a
-// new look. Starfield is the first non-default theme (nebula + warping stars).
+// new look. Starfield (nebula + warping stars) is the initial look on every surface.
 //
-// Default: Starfield on the web showcase, Default on desktop/iOS. Persisted as
+// Default: Starfield on web, desktop, Mac Store and iOS. Persisted as
 // localStorage.visualTheme. Legacy localStorage.starfield = '1'|'0' is read
 // once as a fallback.
 //
@@ -12,7 +12,7 @@
 
 import { state } from '../core/state.js';
 import { iconSvg } from '../core/icons.js';
-import { isDesktop, isIOSNative } from '../core/platform.js';
+import { isIOSNative } from '../core/platform.js';
 import {
   visualThemeCatalog,
   visualThemeIsKnown,
@@ -30,10 +30,6 @@ const VISUAL_THEME_STORAGE_KEY = 'visualTheme';
 const VISUAL_THEME_LEGACY_KEY = 'starfield';
 const visualThemeEl = (/** @type {string} */ id) => document.getElementById(id);
 
-function visualThemeIsWebSurface() {
-  return !isDesktop && !isIOSNative;
-}
-
 function visualThemeCurrent() {
   return visualThemeCatalog.find((theme) => theme.id === state.visualTheme);
 }
@@ -44,7 +40,7 @@ function visualThemeReadPreference() {
   const legacy = localStorage.getItem(VISUAL_THEME_LEGACY_KEY);
   if (legacy === '1') return 'starfield';
   if (legacy === '0') return 'default';
-  return visualThemeIsWebSurface() ? 'starfield' : 'default';
+  return 'starfield';
 }
 
 /** @param {boolean} open */
@@ -122,7 +118,7 @@ export function setVisualTheme(themeId) {
   visualThemeApply(true);
 }
 
-/** Cycle Default → Starfield → … (iOS sheet, or a future compact control). */
+/** Cycle Basic → Starfield → … (iOS sheet, or a future compact control). */
 export function cycleVisualTheme() {
   const idx = visualThemeCatalog.findIndex(
     (theme) => theme.id === state.visualTheme
@@ -132,7 +128,7 @@ export function cycleVisualTheme() {
 }
 
 /**
- * Resolve the persisted (or surface-default) theme, paint it, and bind the
+ * Resolve the persisted (or initial Starfield) theme, paint it, and bind the
  * header dropdown.
  */
 export function setupVisualTheme() {

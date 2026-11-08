@@ -10,6 +10,8 @@ import {
   closeIOSActionSheet,
   closeIOSTocSheet,
   setIOSSheetVisibility,
+  openIOSOpenChoices,
+  iosOpenChoicesSource,
 } from './ios-chrome.js';
 import { bookmarkCurrentFile, openBookmarks } from '../features/bookmarks.js';
 import { toggleToc } from '../features/toc.js';
@@ -22,6 +24,7 @@ import { openAnnotationPanel } from '../features/annotations.js';
 import { startPresentation } from '../features/presentation.js';
 import { openFileInfoSheet } from '../features/file-info.js';
 import { openSearch } from '../features/search.js';
+import { requestIOSURLEntry } from './ios-url-entry.js';
 
 const iosWiringEl = (/** @type {string} */ id) => document.getElementById(id);
 
@@ -73,15 +76,43 @@ export function setupIOSEventListeners() {
   const iosThemeButton = iosWiringEl('ios-theme-button');
   const iosTocSheet = iosWiringEl('ios-toc-sheet');
   const iosTocClose = iosWiringEl('ios-toc-close');
+  const iosOpenSheet = iosWiringEl('ios-open-sheet');
 
   if (iosOpenButton) {
     iosOpenButton.addEventListener('click', () => {
+      if (openIOSOpenChoices(iosOpenButton)) return;
       closeIOSActionSheet();
       if (requestNativeOpenIfAvailable()) return;
       const fileInput = iosWiringEl('file-input');
       if (fileInput) fileInput.click();
     });
   }
+
+  const closeOpenChoices = () => {
+    const source = iosOpenChoicesSource;
+    closeIOSActionSheet();
+    source?.focus({preventScroll:true});
+    return source;
+  };
+  iosWiringEl('ios-open-file-choice')?.addEventListener('click', () => {
+    closeOpenChoices();
+    requestNativeOpenIfAvailable();
+  });
+  iosWiringEl('ios-open-url-choice')?.addEventListener('click', () => {
+    const source = closeOpenChoices();
+    // Anchor to the invoking control, not the now-hidden sheet action.
+    if (source) requestIOSURLEntry(source);
+  });
+  iosWiringEl('ios-open-sheet-close')?.addEventListener('click', closeOpenChoices);
+  iosOpenSheet?.addEventListener('click', (event) => {
+    if (event.target === iosOpenSheet) closeOpenChoices();
+  });
+  iosOpenSheet?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeOpenChoices();
+    }
+  });
 
   if (iosContentsButton) {
     iosContentsButton.addEventListener('click', () => {
@@ -101,6 +132,7 @@ export function setupIOSEventListeners() {
   if (iosMoreButton) {
     iosMoreButton.addEventListener('click', () => {
       if (iosMoreButton.disabled) return;
+      closeIOSActionSheet();
       closeIOSTocSheet();
       setIOSSheetVisibility(iosActionSheet, true);
     });
