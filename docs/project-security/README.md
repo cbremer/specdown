@@ -2,7 +2,7 @@
 
 This project records repository-documentation audits and the boundary between
 public material and owner-private local state. Start with [SECURITY.md](../../SECURITY.md)
-and the [agent instructions](../../CLAUDE.md#security-privacy-and-local-machine-boundaries).
+and the [agent instructions](../../AGENTS.md#security-privacy-and-local-machine-boundaries).
 
 | Date             | Document                                                                                  | Scope                                                                                                                                         |
 | ---------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
