@@ -7,10 +7,11 @@ design docs, READMEs and notes with clean typography, and zoom, pan or expand
 diagrams for a closer look.
 
 One shared viewer runs in the **browser**, as a **desktop app** (macOS / Windows /
-Linux), and as an **iOS / iPadOS** app.
+Linux), as an **iOS / iPadOS** app, and through the **Mac App Store**.
 
 - 🌐 **Web** — runs on GitHub Pages, installable as a PWA
 - 🖥️ **Desktop downloads** — Electron app, signed & notarized on macOS
+- 🍎 **Mac App Store** — [available free for Mac](https://apps.apple.com/app/specdown/id6822086808?mt=12), with updates delivered by Apple
 - 📱 **iOS / iPadOS** — [free on the App Store](https://apps.apple.com/app/specdown/id6822086808)
 
 ---
@@ -111,13 +112,17 @@ macOS builds. Please [report platform-specific issues on GitHub](https://github.
 On macOS, open the DMG, drag **Specdown Desktop** to Applications, and launch.
 The direct-download macOS release uses Developer ID signing and Apple notarization.
 
-The **Mac App Store edition is being prepared separately**. Its sandboxed build
-uses system file access and Apple-delivered updates. It is a separate distribution
-channel from the existing desktop download; a local build or TestFlight build is
-not a public Mac App Store release. See the [App Store preparation docs](docs/project-appstore/README.md).
+### Mac App Store
+
+SpecDown is available free on the
+**[Mac App Store](https://apps.apple.com/app/specdown/id6822086808?mt=12)**.
+The sandboxed edition uses system file pickers to grant access to documents and
+folders. Apple delivers its updates through the App Store. The direct desktop
+download remains available through GitHub Releases. See the
+[App Store release records](docs/project-appstore/README.md) for version status.
 
 ### iOS / iPadOS
-SpecDown 1.0 is available free for iPhone and iPad on the
+SpecDown is available free for iPhone and iPad on the
 **[App Store](https://apps.apple.com/app/specdown/id6822086808)**. Requires iOS or
 iPadOS 16.0 or later.
 

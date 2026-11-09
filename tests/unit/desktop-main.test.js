@@ -281,7 +281,7 @@ describe('desktop/main.js', () => {
       const fileMenu = template.find(m => m.label === 'File');
       expect(fileMenu).toBeDefined();
 
-      const openItem = fileMenu.submenu.find(item => item.label === 'Open...');
+      const openItem = fileMenu.submenu.find(item => item.label === 'Open File…');
       expect(openItem).toBeDefined();
       expect(openItem.accelerator).toBe('CmdOrCtrl+O');
       expect(typeof openItem.click).toBe('function');

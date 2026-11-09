@@ -100,8 +100,8 @@ describe('Command palette', () => {
       const titles = Array.from(document.querySelectorAll('.command-palette-item-title')).map(
         (el) => el.textContent
       );
-      // "Open file…" is always available; "Find in document" needs an open doc.
-      expect(titles).toContain('Open file…');
+      // "Open File…" is always available; "Find in document" needs an open doc.
+      expect(titles).toContain('Open File…');
       expect(titles).not.toContain('Find in document');
     });
   });

@@ -4,13 +4,22 @@
 
 End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versions, with traceable builds, native QA, screenshots, complete draft listings and an explicit later submission boundary.
 
+**Current availability — November 8, 2026:** Both iOS/iPadOS and Mac App Store
+**1.0.1 (230)** are **Ready for Distribution** and publicly available. Both
+**1.0.2 (240)** update drafts are prepared with manual release and eight
+screenshots per display set; App Review submission and owner functional
+acceptance of Beta 240 remain pending.
+[Session 94](2026-11-08-tasks-session-94-mac-store-live-copy.md) records the
+availability-copy correction. The November 2 records below describe their
+historical checkpoints, before the Mac App Store launch.
+
 **Status as of 2026-11-02:** The latest retained Apple checkpoint has production iOS and Mac **1.0.1 (230)** **Waiting for Review**, with manual release selected; no production Store approval or public release is claimed. [Session 74](2026-11-02-tasks-session-74-release-checkpoint.md) records the **9:18 AM PST** same-build iOS resubmission with approved Search Results artwork and all five Duo screenshots retained in order; the original Mac submission remains unchanged. [Session 70](2026-11-02-tasks-session-70-duo-release-artwork.md) preserves the earlier **8:32 AM PST** Duo-only resubmission, exact screenshot archive and narrow upload recovery. [Session 69](2026-11-02-tasks-session-69-portal-sync-handoff.md) retains the original submissions, approved copy readback and owner-reported production 230 acceptance. Existing approved iPhone/iPad images remain. [Session 64](2026-11-01-tasks-session-64-release-230-refresh.md) retains the signed production-artifact evidence; older session checkpoints remain historical.
 
 **Later delivery checkpoints:** Direct desktop **0.0.232** is publicly shipped and verified in [Session 77](2026-11-02-tasks-session-77-direct-desktop-232-published.md). Separate Dev apps are installed and both iOS/Mac Beta **1.0.1 (230)** builds are **Testing for Owner only**, as recorded in [Session 78](2026-11-02-tasks-session-78-test-channels-signing-handoff.md); new Owner Beta acceptance remains pending. These deliveries do not change the production Store submissions or the frozen canonical checkout.
 
 **Approved submission copy:** [Session 67](2026-11-02-tasks-session-67-store-copy-sync.md) and the [submission packet](submission-copy-2026-11-02/README.md) supersede the retained Session 51 selection for the current Apple update. [Session 69](2026-11-02-tasks-session-69-portal-sync-handoff.md) records completed copy synchronization/readback, owner-reported 230 acceptance, uploaded Mac screenshot proof and both App Review submissions. The old gallery/selection files remain historical proof.
 
-**Public website as of 2026-11-02:** Approved homepage, support and privacy copy is deployed from `ae5d8be` through successful Pages run `41418925979`. Fresh public responses match the reviewed build; [Session 69](2026-11-02-tasks-session-69-portal-sync-handoff.md) records live verification. Mac App Store availability remains coming until review and manual release.
+**Public website as of 2026-11-02:** Approved homepage, support and privacy copy is deployed from `ae5d8be` through successful Pages run `41418925979`. Fresh public responses match the reviewed build; [Session 69](2026-11-02-tasks-session-69-portal-sync-handoff.md) records live verification. That website deployment predates the Mac App Store launch; current availability is recorded above.
 
 **Current local Xcode project:** `<repo>/ios/SpecDown.xcodeproj` — [Session 21: canonical local checkout](2026-10-31-tasks-session-21-canonical-local-checkout.md). Use this working project for phone builds; retained release packets are archive evidence.
 
@@ -134,6 +143,9 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 8, 2026 | Tasks | [Session 91: evening release assessment](2026-11-08-tasks-session-91-evening-release-cut.md) | Recommend a feature freeze, triage the live backlog, refresh dependency audit evidence and prepare current What's New drafts and release gates. |
 | Nov 8, 2026 | Tasks | [Session 92: Beta and listing preparation](2026-11-08-tasks-session-92-beta-and-listing-preparation.md) | Both 239 Betas Testing for Owner; saved Store drafts, capture review and exact-head CI. |
 | Nov 8, 2026 | Tasks | [Session 93: visible URL errors and production preparation](2026-11-08-tasks-session-93-visible-url-errors-production-prep.md) | Owner-approved error-visibility correction, failing/green regressions and refreshed 240 preparation. |
+| Nov 8, 2026 | Tasks | [Session 94: live Mac App Store copy](2026-11-08-tasks-session-94-mac-store-live-copy.md) | Update current README/support/review wording for the published Mac App Store edition; preserve 1.0.2 submission and website deployment boundaries. |
+| Nov 8, 2026 | Tasks | [Session 95: Open File wording](2026-11-08-tasks-session-95-open-file-wording.md) | Align the shared start button, iOS hint/sidebar, desktop picker/menu, command palette and current instructions around Open File. |
+| Nov 8, 2026 | Tasks | [Session 96: Open File in 1.0.2](2026-11-08-tasks-session-96-open-file-release-102.md) | Integrate the approved wording into the release candidate and prepare fresh build-241 packages and affected screenshots. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

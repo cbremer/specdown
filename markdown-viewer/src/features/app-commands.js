@@ -78,7 +78,7 @@ export function registerAppCommands() {
     },
     {
       id: 'open-file',
-      title: 'Open file…',
+      title: 'Open File…',
       keywords: ['browse', 'load', 'new'],
       run: () => {
         if (requestNativeOpenIfAvailable()) return;

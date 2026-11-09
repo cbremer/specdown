@@ -1,6 +1,17 @@
 # Historical App Store copy review
 
-Public text counterpart of the October 20 working Word document. This is historical discussion, not the selected current listing. Current selected copy remains in `release-proof-2026-11-01/copy/selected/`. Owner-local paths and working-document package metadata are omitted; the original Word file remains preserved and explicitly Git-ignored.
+Public text counterpart of the October 20 working Word document. This preserves
+the historical discussion and original pre-release proposals. Owner-local paths
+and working-document package metadata are omitted; the original Word file
+remains preserved and explicitly Git-ignored.
+
+**Availability update — November 8, 2026:** SpecDown 1.0.1 is publicly available
+on both iPhone/iPad and the Mac App Store. References below to a first Mac
+release, provisional Mac support or pending launch describe the October review.
+Use the [current platform-specific App Review notes](../../../app-store/metadata/review-notes.md)
+and current App Store Connect 1.0.2 drafts for the pending update. See
+[Session 94](../2026-11-08-tasks-session-94-mac-store-live-copy.md) for the current
+availability correction.
 
 SpecDown App Store Copy Review
 

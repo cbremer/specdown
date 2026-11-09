@@ -102,7 +102,7 @@ describe('iOS 1.0 reviewer-facing fixes', () => {
     );
     expect(
       document.querySelector('.drop-zone-content > p').textContent
-    ).toMatch(/^Tap Browse Files/);
+    ).toMatch(/^Tap Open File/);
   });
 
   it('shows native file errors as a toast', () => {
