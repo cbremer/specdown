@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.0.234 — 2026-11-09
+
+### Bug Fixes
+
+- verify desktop runtime downloads through the official asset API
+
 ## v0.0.233 — 2026-11-09
 
 ### Features
