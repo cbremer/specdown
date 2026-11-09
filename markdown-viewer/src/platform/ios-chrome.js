@@ -529,5 +529,5 @@ export function hideIOSDeferredFeatures() {
   const iosDropTitle = document.querySelector('.drop-zone-content h2');
   if (iosDropTitle) iosDropTitle.textContent = 'Open a Markdown File';
   const iosDropHint = document.querySelector('.drop-zone-content > p');
-  if (iosDropHint) iosDropHint.textContent = 'Tap Browse Files to choose one from Files or iCloud Drive.';
+  if (iosDropHint) iosDropHint.textContent = 'Tap Open File to choose one from Files or iCloud Drive.';
 }

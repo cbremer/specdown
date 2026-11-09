@@ -56,7 +56,7 @@ struct ContentView: View {
                 Button {
                     bridge.openDocumentPickerFromSidebar()
                 } label: {
-                    Label("Open Markdown File", systemImage: "doc.badge.plus")
+                    Label("Open File", systemImage: "doc.badge.plus")
                 }
             }
 

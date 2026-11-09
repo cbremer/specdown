@@ -129,6 +129,7 @@ historical checkpoints, before the Mac App Store launch.
 | Nov 3, 2026 | Tasks | [Session 82: isolated credential probe chain](2026-11-03-tasks-session-82-credential-probe-keychain-chain.md) | Repair temporary keychain search-list/chain visibility, preserve exact restoration and add fixed redacted signing diagnostics after the first protected probe failed; real validation remains separate. |
 | Nov 3, 2026 | Tasks | [Session 83: credential cleanup complete](2026-11-03-tasks-session-83-credential-cleanup-complete.md) | Record successful protected identity/authentication validation, removal of repository duplicates and passing scope-only verification; preserve personal approval and separate issuer-token/backup follow-ups. |
 | Nov 8, 2026 | Tasks | [Session 94: live Mac App Store copy](2026-11-08-tasks-session-94-mac-store-live-copy.md) | Update current README/support/review wording for the published Mac App Store edition; preserve 1.0.2 submission and website deployment boundaries. |
+| Nov 8, 2026 | Tasks | [Session 95: Open File wording](2026-11-08-tasks-session-95-open-file-wording.md) | Align the shared start button, iOS hint/sidebar, desktop picker/menu, command palette and current instructions around Open File. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

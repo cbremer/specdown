@@ -765,7 +765,7 @@ async function showOpenDialog() {
   if (!mainWindow) return;
 
   const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
-    title: 'Open Markdown File',
+    title: 'Open File',
     properties: ['openFile', 'multiSelections'],
     filters: [
       { name: 'Markdown Files', extensions: ['md', 'markdown'] },
@@ -1577,7 +1577,7 @@ function buildMenu() {
       label: 'File',
       submenu: [
         {
-          label: 'Open...',
+          label: 'Open File…',
           accelerator: 'CmdOrCtrl+O',
           click: () => showOpenDialog(),
         },

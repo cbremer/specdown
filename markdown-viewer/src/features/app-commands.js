@@ -60,7 +60,7 @@ export function registerAppCommands() {
     { id: 'bookmark-file', title: 'Bookmark this file', hint: CMD_MOD + ' D', keywords: ['favorite', 'save'], run: bookmarkCurrentFile, isAvailable: isDocumentOpen },
     {
       id: 'open-file',
-      title: 'Open file…',
+      title: 'Open File…',
       keywords: ['browse', 'load', 'new'],
       run: () => {
         if (requestNativeOpenIfAvailable()) return;
