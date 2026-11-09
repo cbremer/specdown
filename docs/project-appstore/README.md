@@ -132,6 +132,8 @@ End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versio
 | Nov 8, 2026 | Tasks | [Session 89: native URL entry implementation](2026-11-08-tasks-session-89-url-entry-implementation.md) | Implement the phone sheet and iPad popover, cancellable loading and repository handoff, with local Dev validation. |
 | Nov 8, 2026 | Tasks | [Session 90: repeat URL opening](2026-11-08-tasks-session-90-repeat-url-open.md) | Keep URL opening reachable from Open and the tab plus control after the first document, including portrait and hidden-sidebar layouts. |
 | Nov 8, 2026 | Tasks | [Session 91: evening release assessment](2026-11-08-tasks-session-91-evening-release-cut.md) | Recommend a feature freeze, triage the live backlog, refresh dependency audit evidence and prepare current What's New drafts and release gates. |
+| Nov 8, 2026 | Tasks | [Session 92: Beta and listing preparation](2026-11-08-tasks-session-92-beta-and-listing-preparation.md) | Both 239 Betas Testing for Owner; saved Store drafts, capture review and exact-head CI. |
+| Nov 8, 2026 | Tasks | [Session 93: visible URL errors and production preparation](2026-11-08-tasks-session-93-visible-url-errors-production-prep.md) | Owner-approved error-visibility correction, failing/green regressions and refreshed 240 preparation. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

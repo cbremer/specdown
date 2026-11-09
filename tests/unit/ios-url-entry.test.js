@@ -1,5 +1,6 @@
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 const { documentResponseBody } = require('../helpers/document-response');
+const { setImmediate } = require('node:timers');
 
 describe('native URL entry bridge', () => {
   beforeEach(() => {
@@ -118,6 +119,65 @@ describe('native URL entry bridge', () => {
       expect(document.getElementById('markdown-content').textContent).toContain(
         'Second URL'
       );
+    }
+  );
+  it.each([
+    ['HTTP failure', () => Promise.resolve({ ok: false, status: 404 }), /404/],
+    [
+      'network failure',
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      /cross-origin/i,
+    ],
+    [
+      'oversized document',
+      () =>
+        Promise.resolve({
+          ok: true,
+          headers: {
+            get: (name) => (name === 'content-length' ? '20971520' : null),
+          },
+          body: { ...documentResponseBody('# Too large'), async cancel() {} },
+        }),
+      /document.*(?:large|limit|MiB)/i,
+    ],
+  ])(
+    'shows a visible error for an initial repository file %s after native dismissal',
+    async (_name, failedResponse, message) => {
+      const original = fetchGitHubRepoFiles;
+      fetchGitHubRepoFiles = jest.fn().mockResolvedValue([
+        {
+          path: 'README.md',
+          url: 'https://github.com/owner/repo/blob/main/README.md',
+          rawUrl: 'https://raw.githubusercontent.com/owner/repo/main/README.md',
+        },
+      ]);
+      try {
+        const result = await window.specdownSubmitURL(
+          'https://github.com/owner/repo',
+          'repository'
+        );
+        expect(result.status).toBe('repository');
+        window.specdownFinishURL('repository');
+        global.fetch.mockImplementation(failedResponse);
+        document.querySelector('.repo-browser-item').click();
+        await new Promise((resolve) => setImmediate(resolve));
+
+        expect(
+          document.getElementById('repo-browser-modal').style.display
+        ).toBe('none');
+        expect(document.getElementById('inline-url-entry').hidden).toBe(true);
+        expect(document.getElementById('drop-zone').style.display).not.toBe(
+          'none'
+        );
+        const toast = document.querySelector('.toast-error[role="alert"]');
+        expect(toast).not.toBeNull();
+        expect(toast.textContent).toMatch(message);
+        expect(toast.closest('[hidden]')).toBeNull();
+        expect(toast.closest('#drop-zone')).toBeNull();
+        expect(state.tabs).toHaveLength(0);
+      } finally {
+        fetchGitHubRepoFiles = original;
+      }
     }
   );
   it('drops a cancelled response and ignores cancellation for an older form', async () => {

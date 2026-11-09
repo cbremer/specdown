@@ -138,7 +138,10 @@ function getFilenameFromUrl(url) {
 /** @param {string} message */
 function showUrlError(message) {
   const urlDropZone = el('drop-zone');
-  if (urlDropZone && getComputedStyle(urlDropZone).display === 'none') {
+  if (
+    (urlDropZone && getComputedStyle(urlDropZone).display === 'none') ||
+    el('inline-url-entry')?.hidden
+  ) {
     showToast(message, { type: 'error' });
     return;
   }
