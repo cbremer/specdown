@@ -93,6 +93,53 @@ jobs:
           npm run lint
           npm run typecheck
           npm run test:ci
+      # Use the official asset API to avoid intermittent archive-endpoint 504s.
+      # Pins come from the immutable application tag checked out above.
+      - name: Download verified Electron runtime
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const { execFileSync } = require('node:child_process');
+          const manifest = JSON.parse(fs.readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'package.json'), 'utf8'));
+          const version = manifest.devDependencies.electron;
+          if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Expected an exact Electron version');
+          if (!['darwin', 'win32', 'linux'].includes(process.platform)) throw new Error('Unsupported release platform');
+          const architectures = process.platform === 'darwin' ? ['x64', 'arm64'] : ['x64'];
+          const directory = path.join(process.env.RUNNER_TEMP, `specdown-electron-${version}`);
+          fs.mkdirSync(directory, { recursive: true });
+          const release = JSON.parse(execFileSync('gh', ['api', `repos/electron/electron/releases/tags/v${version}`], { encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 }));
+          for (const arch of architectures) {
+            const name = `electron-v${version}-${process.platform}-${arch}.zip`;
+            const pin = manifest.build.electronDownload?.checksums?.[name];
+            if (!/^[a-f0-9]{64}$/.test(pin)) throw new Error(`Missing pinned checksum: ${name}`);
+            const asset = release.assets.find(asset => asset.name === name);
+            if (!asset || !Number.isSafeInteger(asset.id) || asset.digest !== `sha256:${pin}`) throw new Error(`Vendor checksum mismatch: ${name}`);
+            const destination = path.join(directory, name);
+            const temporary = `${destination}.tmp`;
+            try {
+              const descriptor = fs.openSync(temporary, 'w');
+              try {
+                execFileSync('gh', ['api', `repos/electron/electron/releases/assets/${asset.id}`, '-H', 'Accept: application/octet-stream'], { stdio: ['ignore', descriptor, 'pipe'] });
+              } finally {
+                fs.closeSync(descriptor);
+              }
+              const bytes = fs.readFileSync(temporary);
+              const digest = crypto.createHash('sha256').update(bytes).digest('hex');
+              if (bytes.length !== asset.size || digest !== pin) throw new Error(`Runtime archive verification failed: ${name}`);
+              fs.renameSync(temporary, destination);
+              console.log(`Verified Electron runtime: ${name}`);
+            } catch (error) {
+              fs.rmSync(temporary, { force: true });
+              throw error;
+            }
+          }
+          fs.appendFileSync(process.env.GITHUB_ENV, `SPECDOWN_ELECTRON_DIST=${directory}\n`);
+          NODE
       - name: Linux dependencies
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgbm-dev
@@ -102,7 +149,7 @@ jobs:
         env:
           BUILD_ARGS: ${{ matrix.args }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npm run desktop:build -- $BUILD_ARGS --publish never
+        run: npm run desktop:build -- $BUILD_ARGS --config.electronDist="$SPECDOWN_ELECTRON_DIST" --publish never
       - name: Build signed and notarized macOS release
         if: ${{ !inputs.validate-only && matrix.platform == 'mac' }}
         shell: bash
@@ -115,7 +162,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$CSC_LINK" && test -n "$CSC_KEY_PASSWORD" && test -n "$APPLE_ID" && test -n "$APPLE_APP_SPECIFIC_PASSWORD" && test -n "$APPLE_TEAM_ID" || { echo 'Signing configuration is incomplete; release stopped'; exit 1; }
-          npm run desktop:build -- --mac dmg zip --universal -c.mac.notarize=true --publish never
+          npm run desktop:build -- --mac dmg zip --universal -c.mac.notarize=true --config.electronDist="$SPECDOWN_ELECTRON_DIST" --publish never
           codesign --verify --deep --strict 'dist/mac-universal/Specdown Desktop.app'
           spctl --assess --type execute 'dist/mac-universal/Specdown Desktop.app'
       - name: Verify macOS icon and associations
