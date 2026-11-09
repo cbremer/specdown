@@ -257,13 +257,18 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
 // Match the iOS shell's existing About-version hook. This is display metadata,
 // exposed only in the MAS runtime and only to the already trusted viewer page.
 if (process.mas === true && isBundledViewerPage()) {
-  const prefix = '--specdown-app-version=';
-  const versions = process.argv.filter((arg) => typeof arg === 'string' && arg.startsWith(prefix));
-  if (versions.length === 1) {
-    const version = versions[0].slice(prefix.length);
-    const match = version.match(/^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/);
+  const aboutFields = [
+    ['--specdown-app-version=', 'specdownAppVersion', /^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/],
+    ['--specdown-app-build=', 'specdownAppBuild', /^[0-9]{1,9}(?:\.[0-9]{1,9}){0,2}$/],
+    ['--specdown-app-channel=', 'specdownAppChannel', /^(?:production|development|beta)$/],
+  ];
+  for (const [prefix, name, pattern] of aboutFields) {
+    const values = process.argv.filter((arg) => typeof arg === 'string' && arg.startsWith(prefix));
+    if (values.length !== 1) continue;
+    const value = values[0].slice(prefix.length);
+    const match = value.match(pattern);
     // Comparing the entire match also rejects a trailing newline ($ permits it).
-    if (match && match[0] === version) contextBridge.exposeInMainWorld('specdownAppVersion', version);
+    if (match && match[0] === value) contextBridge.exposeInMainWorld(name, value);
   }
 }
 

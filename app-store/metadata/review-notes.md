@@ -16,7 +16,7 @@ Review on iPhone or iPad:
 2. Expand a diagram. Try the zoom controls, pan and Reset, then close fullscreen. The diagram toolbar has no Link action.
 3. Use Contents, Raw/Preview and Find. Try Find with the keyboard open, then dismiss it.
 4. Open Sample to inspect headings, tables, code and document comments.
-5. Use Open or Open Markdown File to choose a Markdown file from Files, including iCloud Drive, OneDrive or Dropbox when enabled there. Opening a document from another app is also supported.
+5. Choose Open File to select a Markdown file from Files, including iCloud Drive, OneDrive or Dropbox when enabled there. Opening a document from another app is also supported.
 6. Open another document and switch tabs. Try light/dark appearance and the App Icon choices.
 
 Remote documents and images loaded by the viewer require HTTPS. Tapped external web links open in the system browser. Documents are limited to 8 MiB, with additional rendering limits. Document-supplied active HTML, forms and styling are removed.
@@ -34,7 +34,7 @@ SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown) documents and Me
 Review on Mac:
 
 1. Launch SpecDown and click Try diagram showcase on the start view for an offline review.
-2. Choose File > Open... (Command-O) and select a Markdown file. The system picker grants access to the selected file.
+2. Choose File > Open File… (Command-O) and select a Markdown file. The system picker grants access to the selected file.
 3. Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then close fullscreen. The diagram toolbar has no Link action.
 4. Use Raw/Preview or Split to inspect the source and result. Try Contents, Command-F and more than one document tab.
 5. With Live reload on, save a change to the open file in an external editor and confirm the viewer updates. Use the Live control beside the filename to pause and resume.

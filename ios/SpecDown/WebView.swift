@@ -19,14 +19,21 @@ struct WebView: UIViewRepresentable {
         let handler = WeakMessageHandler(bridge)
         config.userContentController.add(handler, name: "specdown")
 
-        // Inject iOS detection flag before page load, plus the App Store
-        // marketing version so About shows "Version 1.0 (<web build>)".
+        // About identifies the installed native build, independently of the
+        // shared viewer version. Channel labels come only from bundle metadata.
         let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
             .filter { $0.isNumber || $0 == "." }
+        let appBuild = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "")
+            .filter { $0.isNumber || $0 == "." }
+        let configuredChannel = Bundle.main.infoDictionary?["SpecDownChannel"] as? String ?? "production"
+        let appChannel = configuredChannel == "development" || configuredChannel == "beta"
+            ? configuredChannel : "production"
         let iosScript = WKUserScript(
             source: """
                 window.iosNative = true;
                 window.specdownAppVersion = "\(appVersion)";
+                window.specdownAppBuild = "\(appBuild)";
+                window.specdownAppChannel = "\(appChannel)";
                 window.specdownIOS = {
                     requestFileOpen: function() {
                         window.webkit.messageHandlers.specdown.postMessage({ action: 'openFilePicker' });
@@ -55,6 +62,7 @@ struct WebView: UIViewRepresentable {
         // from file:// (null-origin CORS rule for modules), which left the app
         // unstyled with no JS. A custom scheme gives the page a real, same-origin
         // context where the Vite module bundle loads normally.
+        config.setURLSchemeHandler(DocumentResourceSchemeHandler(resources: bridge.documentResources), forURLScheme: "specdown-resource")
         let schemeHandler = BundleSchemeHandler()
         config.setURLSchemeHandler(schemeHandler, forURLScheme: BundleSchemeHandler.scheme)
 

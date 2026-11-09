@@ -78,6 +78,56 @@ class LightIconValidationTests(unittest.TestCase):
         self.assertIn('manual picker choice missing', result.stderr)
 
 
+class DesktopLightValidationTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        for relative in ('desktop/icons/light.png', 'build/app-icon-sources/light.png'):
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+
+    def verify(self):
+        return subprocess.run([sys.executable, str(ROOT / 'scripts/verify-app-icons.py'),
+                               '--desktop-light-only', '--root', str(self.root)],
+                              capture_output=True, text=True)
+
+    def test_actual_export_passes(self):
+        result = self.verify()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_rejects_ios_full_bleed_geometry(self):
+        shutil.copyfile(ROOT / ICON, self.root / 'desktop/icons/light.png')
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('RGBA', result.stderr)
+
+    def test_rejects_recolored_artwork_with_correct_geometry(self):
+        path = self.root / 'desktop/icons/light.png'
+        with Image.open(path) as source:
+            image = source.copy()
+        image.paste((0, 0, 0), (200, 200, 824, 824))
+        metadata = PngImagePlugin.PngInfo()
+        metadata.add(b'sRGB', b'\x00')
+        image.save(path, pnginfo=metadata)
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('complete approved master', result.stderr)
+
+    def test_rejects_square_corners(self):
+        path = self.root / 'desktop/icons/light.png'
+        with Image.open(self.root / 'build/app-icon-sources/light.png') as source:
+            image = Image.new('RGBA', (1024, 1024))
+            image.paste(source.resize((824, 824)), (100, 100))
+        metadata = PngImagePlugin.PngInfo()
+        metadata.add(b'sRGB', b'\x00')
+        image.save(path, pnginfo=metadata)
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('corners must be rounded', result.stderr)
+
+
 class LegacyIOSIconValidationTests(unittest.TestCase):
     variants = ('flat', 'glass', 'ceramic', 'metallic', 'layered', 'minimal')
 

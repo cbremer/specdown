@@ -15,7 +15,8 @@
 
 /** @type {ReadonlyArray<VisualThemeSpec>} */
 export const visualThemeCatalog = [
-  { id: 'default', label: 'Default', icon: 'palette' },
+  // Keep the historical ID so saved preferences and shell messages stay valid.
+  { id: 'default', label: 'Basic', icon: 'palette' },
   { id: 'starfield', label: 'Starfield', icon: 'sparkles' },
   { id: 'aurora', label: 'Aurora', icon: 'waves' },
   { id: 'blueprint', label: 'Blueprint', icon: 'grid' },
@@ -29,5 +30,5 @@ export function visualThemeIsKnown(id) {
 /** @param {string | null | undefined} id */
 export function visualThemeLabel(id) {
   const theme = visualThemeCatalog.find((entry) => entry.id === id);
-  return theme ? theme.label : 'Default';
+  return theme ? theme.label : 'Basic';
 }

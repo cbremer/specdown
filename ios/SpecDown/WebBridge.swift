@@ -14,6 +14,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private struct PendingFile {
         let name: String
         let content: String
+        let request: DocumentLoadAcceptance.Request
+        let recent: RecentDocuments.Entry?
+        let sourceURL: URL?
     }
 
     // The scene owns one renderer even if SwiftUI rebuilds a split-view column.
@@ -24,7 +27,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     weak var presentationWindow: UIWindow?
 
     @Published private(set) var currentDocumentName = "SpecDown Document"
-    @Published private(set) var recentFiles: [String]
+    @Published private(set) var recentFiles: [RecentDocuments.Entry]
     @Published private(set) var hasLoadedDocument = false
     @Published var showsAppIconPicker = false
     @Published private(set) var viewerPresentationRequest: UInt = 0
@@ -34,19 +37,42 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private var pendingTheme: String?
     private var pendingLayoutMode: String?
     private var appliedLayoutMode: String?
+    private let documentDeliveries = DocumentDeliveryQueue()
     private var pendingFile: PendingFile?
     private var pendingError: String?
+    private let diagramExports = NativeDiagramExport()
+    private(set) var urlInputController: NativeURLInputController?
+    private weak var pendingURLInputSource: UIView?
+    private var pendingURLInputRect: CGRect?
+    let documentResources = DocumentResources()
+    private var sourceURLs: [String: URL] = [:]
+    private var currentViewID = ""
+    private var documentViewTransitions = NativeDocumentViewTransitions()
+    private var viewerHasStarted = false
+    private var openSourceIDs = Set<String>()
+    private let imageFolderPickers = NSMapTable<UIDocumentPickerViewController, NSString>(keyOptions: .weakMemory, valueOptions: .strongMemory)
+    private weak var activeImageFolderPicker: UIDocumentPickerViewController?
     private var documentLoadAcceptance = DocumentLoadAcceptance()
 
-    private let defaults = UserDefaults.standard
+    private let recentDocuments: RecentDocuments
+    private struct ProviderRead {
+        let request: DocumentLoadAcceptance.Request
+        let permit: DocumentReadPermit
+    }
+    private var activeProviderReads: [UUID: ProviderRead] = [:]
+    private let fileQueue = DispatchQueue(label: "specdown.provider-reads", qos: .userInitiated, attributes: .concurrent)
+    private let defaults: UserDefaults
     private enum Keys {
         static let preferences = "specdown.preferences"
         static let recentFiles = "specdown.recentFiles"
     }
 
-    override init() {
-        recentFiles = UserDefaults.standard.stringArray(forKey: Keys.recentFiles) ?? []
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        recentDocuments = RecentDocuments(defaults: defaults)
+        recentFiles = recentDocuments.entries
         super.init()
+        diagramExports.onError = { [weak self] message in self?.showError(message) }
     }
 
     // MARK: - JS → Swift
@@ -76,6 +102,18 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let data = body["data"] as? [String: Any]
 
         switch action {
+        case "openURLInput":
+            guard let webView, let data,
+                  let x = data["x"] as? Double, let y = data["y"] as? Double,
+                  let width = data["width"] as? Double, let height = data["height"] as? Double,
+                  let viewport = data["viewportWidth"] as? Double,
+                  [x, y, width, height, viewport].allSatisfy({ $0.isFinite }),
+                  viewport > 0, width > 0, height > 0 else { return }
+            let scale = webView.bounds.width / viewport
+            let rect = CGRect(x: x * scale, y: y * scale, width: width * scale, height: height * scale).intersection(webView.bounds)
+            guard !rect.isNull, !rect.isEmpty else { return }
+            presentURLInput(from: webView, sourceRect: rect)
+
         case "showAppIconPicker":
             showsAppIconPicker = true
 
@@ -99,10 +137,35 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             let title = data?["title"] as? String
             presentPrintController(markupText: html, title: title)
 
-        case "fileLoaded":
-            if let name = data?["name"] as? String {
-                trackRecentFile(name: name)
+        case "documentViewChanged":
+            guard let id = data?["id"] as? String, let token = data?["token"] as? String else { return }
+            let previousToken = documentViewTransitions.token
+            let transition = documentViewTransitions.observe(token: token, deliveryID: data?["deliveryID"] as? String,
+                initialWelcome: id == "empty" && token == "0-0")
+            if transition == .alreadyAcknowledged { return }
+            if transition == .manual {
+                documentLoadAcceptance.invalidateRequests()
+                for operation in activeProviderReads.values { operation.permit.cancel() }
             }
+            diagramExports.invalidate(unless: token)
+            if previousToken != token { invalidateImageFolderPicker() }
+            let ids = (data?["openIDs"] as? [String] ?? []).prefix(10).filter { $0.utf8.count <= 128 }
+            openSourceIDs = Set(ids)
+            pruneSourceURLs()
+            currentViewID = id
+            // A same-ID recent may have moved. Never seed a new native view
+            // from its old registry URL before the coordinated read is acknowledged.
+            documentResources.activate(token: token, documentURL: transition == .native ? nil : sourceURLs[id])
+        case "exportDiagram":
+            guard let token = data?["token"] as? String, token == documentViewTransitions.token, !token.isEmpty,
+                  let format = data?["format"] as? String, let payload = data?["payload"] as? String,
+                  let requestID = data?["requestID"] as? String, requestID.count <= 80,
+                  let presenter = topViewController() else { return }
+            diagramExports.begin(format: format, payload: payload, token: token, requestID: requestID, presenter: presenter)
+        case "authorizeImageFolder":
+            if let token = data?["token"] as? String { authorizeImageFolder(token: token) }
+        case "showRecentFiles":
+            presentRecentFiles()
 
         default:
             print("[Bridge] Unknown action: \(action)")
@@ -122,7 +185,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private func waitForRendererBridge(generation: Int, attempt: Int) {
         guard generation == readinessGeneration, !pageLoaded, let webView else { return }
         let check = """
-            ['setTheme', 'setIOSLayoutMode', 'loadFileContent', 'specdownShowError']
+            ['setTheme', 'setIOSLayoutMode', 'loadFileContent', 'specdownLoadNativeDocument', 'specdownShowError']
               .every(function (name) { return typeof window[name] === 'function'; })
             """
         webView.evaluateJavaScript(check) { [weak self] result, _ in
@@ -152,17 +215,36 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         }
         if let file = pendingFile {
             pendingFile = nil
-            loadFile(name: file.name, content: file.content)
+            deliverFile(name: file.name, content: file.content, request: file.request, recent: file.recent, sourceURL: file.sourceURL)
         }
         if let error = pendingError {
             pendingError = nil
             showError(error)
         }
+        if let source = pendingURLInputSource {
+            let rect = pendingURLInputRect
+            pendingURLInputSource = nil
+            pendingURLInputRect = nil
+            presentURLInput(from: source, sourceRect: rect)
+        }
     }
 
     func pageWillLoad() {
+        urlInputController?.cancel()
         pageLoaded = false
-        documentLoadAcceptance.invalidateRequests()
+        diagramExports.invalidate(unless: "")
+        invalidateImageFolderPicker()
+        documentViewTransitions.reset()
+        if viewerHasStarted { for operation in activeProviderReads.values { operation.permit.cancel() } }
+        viewerHasStarted = true
+        documentResources.activate(token: "", documentURL: nil)
+        documentLoadAcceptance.beginPageLoad()
+        if let pending = pendingFile {
+            // An intentional cold-start open belongs to the new page. Retain
+            // its content while invalidating callbacks from the previous page.
+            pendingFile = PendingFile(name: pending.name, content: pending.content,
+                request: documentLoadAcceptance.beginRequest(), recent: pending.recent, sourceURL: pending.sourceURL)
+        }
         // A WebKit process reload need not trigger a SwiftUI update. Restore
         // the last delivered mode unless a newer layout is already queued.
         pendingLayoutMode = pendingLayoutMode ?? appliedLayoutMode
@@ -204,22 +286,56 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Deliver a file's content to the web layer.
     func loadFile(name: String, content: String) {
+        deliverFile(name: name, content: content, request: documentLoadAcceptance.beginRequest(), recent: nil)
+    }
+
+    private func deliverFile(name: String, content: String, request: DocumentLoadAcceptance.Request, recent: RecentDocuments.Entry?, sourceURL: URL? = nil) {
+        guard documentLoadAcceptance.canDeliver(request) else { return }
         viewerPresentationRequest &+= 1
         guard pageLoaded else {
-            pendingFile = PendingFile(name: name, content: content)
+            pendingFile = PendingFile(name: name, content: content, request: request, recent: recent, sourceURL: sourceURL)
             return
         }
-        let request = documentLoadAcceptance.beginRequest()
-        evaluateJavaScript(function: "window.loadFileContent", arguments: [content, name], context: "loadFileContent") { [weak self] result, error in
-            guard let self,
-                  self.documentLoadAcceptance.accept(request, rendererAccepted: error == nil && result as? Bool == true)
-            else { return }
-            // The renderer may reject limits, malformed input or the tab cap.
-            // Keep the native title and recents attached to accepted content.
-            self.currentDocumentName = name
-            self.hasLoadedDocument = true
-            self.trackRecentFile(name: name)
+        let submitted = documentDeliveries.submit { [weak self] done in
+            guard let self, self.documentLoadAcceptance.canDeliver(request) else { done(); return }
+            let deliveryID = UUID().uuidString
+            let sourceID = recent?.id ?? UUID().uuidString
+            self.documentViewTransitions.beginDelivery(deliveryID)
+            let nativeDocument = ["id": sourceID, "expectedToken": self.documentViewTransitions.token.isEmpty ? "0-0" : self.documentViewTransitions.token, "deliveryID": deliveryID]
+            self.evaluateJavaScript(function: "window.specdownLoadNativeDocument", arguments: [content, name, nativeDocument], context: "loadFileContent") { [weak self] result, error in
+                defer { done() }
+                guard let self else { return }
+                let outcome = result as? [String: Any]
+                guard self.documentLoadAcceptance.accept(request, rendererAccepted: error == nil && outcome?["accepted"] as? Bool == true),
+                      let token = outcome?["token"] as? String else {
+                    self.documentViewTransitions.rejectDelivery(deliveryID)
+                    return
+                }
+                if self.documentViewTransitions.token != token {
+                    self.diagramExports.invalidate(unless: token)
+                    self.invalidateImageFolderPicker()
+                }
+                self.documentViewTransitions.acknowledge(deliveryID, token: token)
+                for operation in self.activeProviderReads.values where !self.documentLoadAcceptance.canDeliver(operation.request) {
+                    operation.permit.cancel()
+                }
+                self.openSourceIDs = Set((outcome?["openIDs"] as? [String] ?? []).prefix(10).filter { $0.utf8.count <= 128 })
+                self.currentViewID = sourceID
+                self.documentResources.activate(token: token, documentURL: sourceURL)
+                self.currentDocumentName = name
+                self.hasLoadedDocument = true
+                if let recent {
+                    self.recentDocuments.record(recent)
+                    self.recentFiles = self.recentDocuments.entries
+                    if let sourceURL {
+                        self.sourceURLs[recent.id] = sourceURL
+                        self.pruneSourceURLs()
+                        if self.currentViewID == recent.id { self.documentResources.activate(token: self.documentViewTransitions.token, documentURL: sourceURL) }
+                    }
+                }
+            }
         }
+        if !submitted { showError("Too many pending files. Wait for the current file to finish, then retry.") }
     }
 
     func openDocumentPickerFromSidebar() {
@@ -230,28 +346,117 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     /// web layer. Shared by the document picker and by external opens — Files
     /// "Open in place", the share sheet, and "Open With… SpecDown" — routed here
     /// via SwiftUI's `.onOpenURL`.
-    func openDocument(at url: URL) {
-        let granted = url.startAccessingSecurityScopedResource()
-        defer {
-            if granted {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
+    func openDocument(at url: URL, recentID: String? = nil) {
+        readDocument(at: url, request: documentLoadAcceptance.beginRequest(), recentID: recentID)
+    }
 
-        do {
-            let data = try SpecDownSecurityPolicy.readDocument(at: url)
-            guard let content = String(data: data, encoding: .utf8) else {
-                print("[Bridge] Unsupported file encoding for \(url.lastPathComponent)")
-                showError("\(url.lastPathComponent) couldn't be opened. SpecDown reads UTF-8 text files, such as Markdown (.md).")
-                return
+    func reopenRecent(_ entry: RecentDocuments.Entry) {
+        readDocument(at: nil, request: documentLoadAcceptance.beginRequest(), recentID: entry.id)
+    }
+
+    /// Bookmark resolution and coordinated reading share one bounded worker slot
+    /// and deadline. A blocked provider retains its slot until the worker exits.
+    private func readDocument(at suppliedURL: URL?, request: DocumentLoadAcceptance.Request, recentID: String?) {
+        guard documentLoadAcceptance.canDeliver(request) else { return }
+        guard activeProviderReads.count < 4 else { showError("Several files are still waiting for their providers. Try again after they finish."); return }
+        let operationID = UUID()
+        let permit = DocumentReadPermit()
+        activeProviderReads[operationID] = ProviderRead(request: request, permit: permit)
+        let previous = recentID.flatMap { id in recentFiles.first { $0.id == id } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+            guard let self, self.activeProviderReads[operationID] != nil else { return }
+            if self.documentLoadAcceptance.canDeliver(request) {
+                if let previous { self.recentFailed(previous, request: request) }
+                else { self.showError("This provider is taking too long. Download the file in Files, then choose it again.") }
             }
-            loadFile(name: url.lastPathComponent, content: content)
-        } catch SpecDownSecurityPolicy.FileError.tooLarge {
-            showError("\(url.lastPathComponent) is too large. SpecDown opens files up to 8 MiB.")
-        } catch {
-            print("[Bridge] Failed to read file: \(error)")
-            showError("\(url.lastPathComponent) couldn't be opened. Check that the file is available and try again.")
+            permit.cancel()
+            self.documentLoadAcceptance.cancel(request)
         }
+        fileQueue.async { [weak self] in
+            defer { Task { @MainActor [weak self] in _ = self?.activeProviderReads.removeValue(forKey: operationID) } }
+            do {
+                guard !permit.isCancelled else { throw CancellationError() }
+                let url: URL
+                if let suppliedURL { url = suppliedURL }
+                else if let previous {
+                    var stale = false
+                    url = try URL(resolvingBookmarkData: previous.bookmark, options: [.withoutUI], relativeTo: nil, bookmarkDataIsStale: &stale)
+                } else { throw CocoaError(.fileReadNoPermission) }
+                guard !permit.isCancelled else { throw CancellationError() }
+                let granted = url.startAccessingSecurityScopedResource()
+                defer { if granted { url.stopAccessingSecurityScopedResource() } }
+                var readError: NSError?
+                var result: Result<(String, Data, URL), Error>?
+                NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &readError) { coordinatedURL in
+                    result = Result {
+                        guard !permit.isCancelled else { throw CancellationError() }
+                        let data = try SpecDownSecurityPolicy.readDocument(at: coordinatedURL)
+                        guard let content = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                        let bookmark = try coordinatedURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+                        return (content, bookmark, coordinatedURL)
+                    }
+                }
+                if let readError { throw readError }
+                guard let result else { throw CocoaError(.fileReadUnknown) }
+                let (content, bookmark, coordinatedURL) = try result.get()
+                let entry = RecentDocuments.Entry(id: recentID ?? UUID().uuidString, name: coordinatedURL.lastPathComponent,
+                    location: coordinatedURL.deletingLastPathComponent().path, bookmark: bookmark)
+                Task { @MainActor [weak self] in
+                    guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
+                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: coordinatedURL)
+                }
+            } catch {
+                if error is CancellationError { return }
+                Task { @MainActor [weak self] in
+                    guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
+                    if let previous { self.recentFailed(previous, request: request) }
+                    else { self.showError("The file could not be opened. Choose an available UTF-8 file up to 8 MiB in Files, then try again.") }
+                }
+            }
+        }
+    }
+
+    private func pruneSourceURLs() {
+        let retained = openSourceIDs.union(recentFiles.map(\.id))
+        sourceURLs = sourceURLs.filter { retained.contains($0.key) }
+    }
+
+    func authorizeImageFolder(token: String) {
+        guard token == documentViewTransitions.token, sourceURLs[currentViewID] != nil, activeImageFolderPicker == nil,
+              let presenter = topViewController() else { return }
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        imageFolderPickers.setObject(token as NSString, forKey: picker)
+        activeImageFolderPicker = picker
+        presenter.present(picker, animated: true)
+    }
+
+    private func invalidateImageFolderPicker() {
+        let picker = activeImageFolderPicker
+        activeImageFolderPicker = nil
+        picker?.dismiss(animated: true)
+    }
+
+    private func recentFailed(_ entry: RecentDocuments.Entry, request: DocumentLoadAcceptance.Request) {
+        guard documentLoadAcceptance.canDeliver(request), let presenter = topViewController() else { return }
+        let alert = UIAlertController(title: "File unavailable", message: "\(entry.name) may have moved, lost permission, or be offline. Download it in Files and retry, or locate the file. Your current document is unchanged.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Retry", style: .default) { [weak self] _ in self?.reopenRecent(entry) })
+        alert.addAction(UIAlertAction(title: "Locate…", style: .default) { [weak self] _ in self?.presentDocumentPicker() })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        presenter.present(alert, animated: true)
+    }
+
+    private func presentRecentFiles() {
+        guard let presenter = topViewController() else { return }
+        let sheet = UIAlertController(title: "Recent Files", message: recentFiles.isEmpty ? "Open a file from Files to remember it here." : "Choose a previously accepted file.", preferredStyle: .actionSheet)
+        for entry in recentFiles {
+            sheet.addAction(UIAlertAction(title: "\(entry.name) — \(entry.location)", style: .default) { [weak self] _ in self?.reopenRecent(entry) })
+        }
+        sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        sheet.popoverPresentationController?.sourceView = presenter.view
+        sheet.popoverPresentationController?.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 1, height: 1)
+        presenter.present(sheet, animated: true)
     }
 
     func openBundledSampleFromSidebar(named fileName: String) {
@@ -391,19 +596,59 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         return top
     }
 
-    private func trackRecentFile(name: String) {
-        var recent = defaults.stringArray(forKey: Keys.recentFiles) ?? []
-        recent.removeAll { $0 == name }
-        recent.insert(name, at: 0)
-        let trimmedRecent = Array(recent.prefix(10))
-        defaults.set(trimmedRecent, forKey: Keys.recentFiles)
-        recentFiles = trimmedRecent
+    func presentURLInput(from source: UIView, sourceRect: CGRect? = nil) {
+        guard urlInputController == nil, source.window != nil else { return }
+        // The welcome button becomes interactive before didFinish/readiness
+        // polling completes. Preserve that first tap just like a cold file open.
+        guard pageLoaded else {
+            pendingURLInputSource = source
+            pendingURLInputRect = sourceRect
+            return
+        }
+        guard let webView, let presenter = topViewController(),
+              !presenter.isBeingDismissed, !(presenter is UIAlertController),
+              !(presenter is UIDocumentPickerViewController) else { return }
+        let controller = NativeURLInputController(webView: webView)
+        urlInputController = controller
+        controller.onClose = { [weak self] in self?.urlInputController = nil }
+        if source.traitCollection.horizontalSizeClass == .regular {
+            controller.modalPresentationStyle = .popover
+            controller.popoverPresentationController?.sourceView = source
+            controller.popoverPresentationController?.sourceRect = sourceRect ?? source.bounds
+            controller.popoverPresentationController?.delegate = controller
+        } else {
+            controller.modalPresentationStyle = .pageSheet
+            controller.sheetPresentationController?.detents = [.medium(), .large()]
+            controller.sheetPresentationController?.prefersGrabberVisible = true
+        }
+        controller.presentationController?.delegate = controller
+        presenter.present(controller, animated: true)
     }
+
+
 }
 
 extension WebBridge: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
         guard let url = urls.first else { return }
+        // Remember weak controller identity even after invalidation/cancellation:
+        // stale folder callbacks must never fall through to normal file opening.
+        if let storedToken = imageFolderPickers.object(forKey: controller) {
+            let token = storedToken as String
+            guard controller === activeImageFolderPicker else { return }
+            activeImageFolderPicker = nil
+            guard token == documentViewTransitions.token else { return }
+            guard documentResources.grant(root: url, token: token) else {
+                showError("Choose the folder containing this Markdown document to allow its relative images.")
+                return
+            }
+            evaluateJavaScript(function: "window.specdownReloadImages", arguments: [token], context: "reloadImages")
+            return
+        }
         openDocument(at: url)
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        if controller === activeImageFolderPicker { activeImageFolderPicker = nil }
     }
 }

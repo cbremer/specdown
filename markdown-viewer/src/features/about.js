@@ -62,7 +62,15 @@ export function openAboutDialog() {
   const heading = document.createElement('h2');
   heading.id = 'about-title';
   heading.className = 'shortcuts-title';
-  heading.textContent = 'SpecDown';
+  const aboutBuildChannel = window.specdownAppChannel;
+  const aboutChannelLabel =
+    aboutBuildChannel === 'development'
+      ? 'Development'
+      : aboutBuildChannel === 'beta'
+        ? 'Beta'
+        : '';
+  heading.textContent =
+    'SpecDown' + (aboutChannelLabel ? ' — ' + aboutChannelLabel : '');
   dialog.appendChild(heading);
 
   const tagline = document.createElement('p');
@@ -73,10 +81,15 @@ export function openAboutDialog() {
   const version = document.createElement('p');
   version.id = 'about-version';
   version.className = 'about-version';
-  // Native shells with their own store version show it first, web build after.
+  // Native build numbers identify test installs; the viewer version is separate.
   const aboutStoreVersion = window.specdownAppVersion;
+  const aboutNativeBuild = window.specdownAppBuild;
   version.textContent = aboutStoreVersion
-    ? 'Version ' + aboutStoreVersion + ' (' + getAppVersion() + ')'
+    ? 'Version ' +
+      aboutStoreVersion +
+      (aboutNativeBuild
+        ? ' (build ' + aboutNativeBuild + ')'
+        : ' (' + getAppVersion() + ')')
     : 'Version ' + getAppVersion();
   dialog.appendChild(version);
 

@@ -1,0 +1,8 @@
+More flexibility for reading technical documents:
+
+• Browse Markdown files in public GitHub repositories without signing in, with clearer messages for unavailable repositories and rate limits.
+• Keep notes separate for unrelated documents, and back up, preview, explicitly reconnect and undo recovered notes.
+• Choose the Light app icon alongside the existing artwork choices.
+• Start with Starfield when no theme is saved, or choose Basic, Aurora or Blueprint.
+• Improved URL-opening feedback keeps your entered URL available when a document cannot be opened.
+• See the app’s actual version and build number in About SpecDown.
