@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.0.233 — 2026-11-09
+
+### Features
+
+- isolate Mac Store development and beta channels
+
+### Bug Fixes
+
+- verify Electron downloads with pinned vendor checksums
+- Repair isolated credential probe certificate-chain setup
+
+### Documentation
+
+- reflect live Mac App Store availability
+- Document completed release credential scope cleanup
+- audit privacy and harden repository guidance
+- add platform testing and 1.0.2 implementation handoffs
+- retain approved Duo artwork and iOS resubmission
+- record current tooling advisory blockers
+- record Dev and Beta 230 delivery and acceptance handoff
+- record artwork and published desktop release
+
+### Other Changes
+
+- Align direct desktop with the submitted Apple 1.0.2 feature batch
+- Make AGENTS.md the single agent-instructions source
+- Protect and validate existing desktop release credentials
+
 ## v0.0.232 — 2026-11-02
 
 ### Tests
