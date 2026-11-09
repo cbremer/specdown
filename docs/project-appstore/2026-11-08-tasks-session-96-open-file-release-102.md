@@ -20,7 +20,20 @@ labels. Keep the uploaded build-240 source and artifacts as historical evidence.
 
 Integrated source passes 89 suites / 1,527 tests, scoped lint, strict type checks
 and the web build. The existing generated-project and native-package outputs
-remain ignored. Signed package verification and affected screenshot refreshes
-are in progress. Native artifact and provider evidence belongs in ignored local
-build records. Preparing new packages does not submit the app for review or
-publish a release.
+remain ignored. Production and internal Beta packages for iOS and macOS were
+signed, verified and uploaded successfully. Both production drafts now select
+1.0.2 (241) with manual release. Both Beta builds are Testing in the existing
+one-tester Owner group, with fresh testing notes.
+
+The signed application payloads were built from commit
+`b11b25594e5f093ca8152d9225200a9d75736257`. This delivery record and the Mac
+reviewer-instruction wording are documentation-only follow-ups.
+
+Eleven affected screenshots were refreshed and uploaded. The saved listing
+retains eight images each for iPhone, iPad, iPhone Duo and Mac, in the intended
+order. Reviewer instructions use Open File on both platforms. Native artifact
+and provider evidence remains in ignored local build records.
+
+Owner functional acceptance of build 241, source merging, App Review submission
+and public release remain separate, unfinished steps. No physical-device Dev
+installation or installed Mac Dev replacement was performed for build 241.

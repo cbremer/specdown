@@ -34,7 +34,7 @@ SpecDown is a sandboxed Mac viewer for Markdown (.md/.markdown) documents and Me
 Review on Mac:
 
 1. Launch SpecDown and click Try diagram showcase on the start view for an offline review.
-2. Choose File > Open... (Command-O) and select a Markdown file. The system picker grants access to the selected file.
+2. Choose File > Open File… (Command-O) and select a Markdown file. The system picker grants access to the selected file.
 3. Expand a Mermaid diagram. Try zoom, drag to pan and Reset, then close fullscreen. The diagram toolbar has no Link action.
 4. Use Raw/Preview or Split to inspect the source and result. Try Contents, Command-F and more than one document tab.
 5. With Live reload on, save a change to the open file in an external editor and confirm the viewer updates. Use the Live control beside the filename to pause and resume.
