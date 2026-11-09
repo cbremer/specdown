@@ -12,7 +12,12 @@ import {
   performPrint,
   syncIOSChrome,
 } from '../platform/ios-chrome.js';
-import { openWorkspaceFolder, closeWorkspaceFolder, canOpenWorkspaceFolder, hasWorkspace } from './workspace.js';
+import {
+  openWorkspaceFolder,
+  closeWorkspaceFolder,
+  canOpenWorkspaceFolder,
+  hasWorkspace,
+} from './workspace.js';
 import { toggleTheme } from './theme.js';
 import { toggleViewMode } from './view-mode.js';
 import { toggleToc } from './toc.js';
@@ -24,6 +29,7 @@ import {
   exportAnnotations,
   importAnnotationsFromFile,
 } from './annotations.js';
+import { openAnnotationRecovery } from './annotation-recovery-ui.js';
 import { openSearch } from './search.js';
 import { startPresentation, hasPresentableDiagrams } from './presentation.js';
 import { openShortcutsSheet } from './shortcuts.js';
@@ -56,11 +62,23 @@ const isDesktopFileTabActive = () => {
 
 export function registerAppCommands() {
   registerCommands([
-    { id: 'bookmarks', title: 'Show bookmarks', keywords: ['favorites', 'saved', 'files'], run: openBookmarks },
-    { id: 'bookmark-file', title: 'Bookmark this file', hint: CMD_MOD + ' D', keywords: ['favorite', 'save'], run: bookmarkCurrentFile, isAvailable: isDocumentOpen },
+    {
+      id: 'bookmarks',
+      title: 'Show bookmarks',
+      keywords: ['favorites', 'saved', 'files'],
+      run: openBookmarks,
+    },
+    {
+      id: 'bookmark-file',
+      title: 'Bookmark this file',
+      hint: CMD_MOD + ' D',
+      keywords: ['favorite', 'save'],
+      run: bookmarkCurrentFile,
+      isAvailable: isDocumentOpen,
+    },
     {
       id: 'open-file',
-      title: 'Open file…',
+      title: 'Open File…',
       keywords: ['browse', 'load', 'new'],
       run: () => {
         if (requestNativeOpenIfAvailable()) return;
@@ -171,6 +189,13 @@ export function registerAppCommands() {
       isAvailable: () => isDocumentOpen() && hasPresentableDiagrams(),
     },
     {
+      id: 'annotation-recovery',
+      title: 'Unassigned notes and recovery',
+      keywords: ['annotations', 'notes', 'recovery', 'backup', 'undo'],
+      run: () => openAnnotationRecovery(),
+      isAvailable: () => !isIOSNative,
+    },
+    {
       id: 'export-annotations',
       title: 'Export annotations',
       keywords: ['annotations', 'notes', 'download', 'backup', 'json'],
@@ -201,7 +226,19 @@ export function registerAppCommands() {
     {
       id: 'file-info',
       title: 'Show file info',
-      keywords: ['metadata', 'path', 'location', 'directory', 'created', 'modified', 'owner', 'size', 'creator', 'generated', 'generator'],
+      keywords: [
+        'metadata',
+        'path',
+        'location',
+        'directory',
+        'created',
+        'modified',
+        'owner',
+        'size',
+        'creator',
+        'generated',
+        'generator',
+      ],
       run: () => openFileInfoSheet(),
       isAvailable: isDocumentOpen,
     },

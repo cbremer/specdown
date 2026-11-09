@@ -1,7 +1,7 @@
 // @ts-check
 // Web-only empty-state showcase. Desktop and iOS keep the compact drop-zone.
 // The empty-state look is a Theme picker (features/starfield.js) shared by
-// every surface — Starfield is the first named theme after Default.
+// every surface — Starfield is the initial theme, with Basic also available.
 //
 // Named uniquely (landing* prefixes): the test harness
 // (tests/helpers/loadApp.js) flattens every module to global scope.
@@ -94,7 +94,7 @@ export async function openLandingBundledSample(sampleName) {
       return;
     }
     const markdown = await response.text();
-    openTabFromLanding(sampleName, markdown, null, { url });
+    openTabFromLanding(sampleName, markdown, null, { url, sample: sampleName });
   } catch {
     showToast('Could not load the sample document.', { type: 'error' });
   }

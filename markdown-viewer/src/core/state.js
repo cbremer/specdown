@@ -12,6 +12,10 @@
  * fetch), surfaced by the File info sheet. Desktop file tabs read their metadata
  * live from disk instead, so they don't populate this.
  * @typedef {object} TabSourceMeta
+ * @property {{authorityId:string,sourceToken:string,requiresReconnect?:boolean}} [annotationSource] Successful native read identity; never a grant.
+ * @property {string} [savedCopyId] Captured saved-copy collection identity.
+ * @property {string} [sample] Explicit bundled namespace.
+ * @property {{ id: string }} [nativeDocument] Native file authority identifier, never a path grant.
  * @property {string} [bookmarkId] Identity of a recalled saved copy.
  * @property {string} [url] Source URL when the document was fetched from one.
  * @property {number} [size] Byte size (from a browser File).
@@ -67,9 +71,8 @@ export const state = {
   themePreference: /** @type {'light' | 'dark' | 'auto'} */ (
     localStorage.getItem('theme') || 'auto'
   ),
-  // Resolved in setupVisualTheme(): 'starfield' on the web showcase, 'default'
-  // on desktop/iOS until the user picks a look. Persisted as visualTheme.
-  visualTheme: 'default',
+  // Starfield on every surface until setupVisualTheme() resolves a saved choice.
+  visualTheme: 'starfield',
   currentRawMarkdown: '',
   currentViewMode: 'preview', // 'preview' or 'raw'
 

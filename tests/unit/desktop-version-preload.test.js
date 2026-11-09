@@ -17,6 +17,8 @@ function exposePreload({
   mas = true,
   href = viewerUrl,
   versions = ['1.0.1'],
+  builds = [],
+  channels = [],
 } = {}) {
   const exposed = new Map();
   vm.runInNewContext(preloadSource, {
@@ -33,6 +35,8 @@ function exposePreload({
       argv: [
         `--specdown-app-url=${viewerUrl}`,
         ...versions.map((value) => `--specdown-app-version=${value}`),
+        ...builds.map((value) => `--specdown-app-build=${value}`),
+        ...channels.map((value) => `--specdown-app-channel=${value}`),
       ],
     },
     URL,
@@ -60,12 +64,54 @@ test('the trusted MAS preload exposes the native version used by the real About 
   }
 });
 
+test.each([
+  ['development', 'SpecDown — Development'],
+  ['beta', 'SpecDown — Beta'],
+  ['production', 'SpecDown'],
+])('the real About dialog identifies the native %s build', (channel, title) => {
+  const exposed = exposePreload({
+    versions: ['1.0.2'],
+    builds: ['235'],
+    channels: [channel],
+  });
+  loadHTML(document);
+  loadApp(document);
+  window.specdownAppVersion = exposed.get('specdownAppVersion');
+  window.specdownAppBuild = exposed.get('specdownAppBuild');
+  window.specdownAppChannel = exposed.get('specdownAppChannel');
+  try {
+    setupVersionInfo('0.0.232');
+    openAboutDialog();
+    expect(document.getElementById('about-title').textContent).toBe(title);
+    expect(document.getElementById('about-version').textContent).toBe(
+      'Version 1.0.2 (build 235)'
+    );
+  } finally {
+    closeAboutDialog();
+    delete window.specdownAppVersion;
+    delete window.specdownAppBuild;
+    delete window.specdownAppChannel;
+  }
+});
+
+test.each([
+  { builds: ['235', '236'], channels: ['beta', 'development'] },
+  { builds: ['235\n'], channels: ['beta\n'] },
+  { builds: ['not-a-build'], channels: ['unknown'] },
+])('ambiguous or malformed build metadata is not exposed (%p)', (options) => {
+  const exposed = exposePreload(options);
+  expect(exposed.has('specdownAppBuild')).toBe(false);
+  expect(exposed.has('specdownAppChannel')).toBe(false);
+});
+
 test.each([false, null, 'true', 1])(
   'a non-MAS runtime (%p) gets no Store version even with the argument present',
   (mas) => {
-    const exposed = exposePreload({ mas });
+    const exposed = exposePreload({ mas, builds: ['235'], channels: ['beta'] });
     expect(exposed.has('specdown')).toBe(true);
     expect(exposed.has('specdownAppVersion')).toBe(false);
+    expect(exposed.has('specdownAppBuild')).toBe(false);
+    expect(exposed.has('specdownAppChannel')).toBe(false);
   }
 );
 

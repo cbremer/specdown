@@ -1,0 +1,9 @@
+More ways to open and read your Markdown:
+
+• Open public HTTPS Markdown links and browse Markdown files in public GitHub repositories.
+• Use focused URL entry on iPhone and an anchored popover on iPad. Open another file or URL from Open or the tab bar’s + button while keeping your current documents in tabs.
+• Reopen accepted local documents from Recent Files, with clearer handling when access is unavailable.
+• View local images beside a Markdown document after explicitly choosing its containing folder.
+• Save or share Mermaid diagrams as PNG and SVG files.
+• Start with Starfield when no theme is saved, or choose Basic, Aurora or Blueprint.
+• See the app’s actual version and build number in About SpecDown.

@@ -26,21 +26,79 @@ describe('native app icon switching', () => {
   });
   it('offers every bundled choice and changes the real platform target before persisting', () => {
     for (const id of APP_ICONS) controller.apply(id);
-    expect(app.dock.setIcon).toHaveBeenCalledTimes(7);
-    expect(store.set).toHaveBeenLastCalledWith('appIcon', 'minimal');
+    expect(app.dock.setIcon).toHaveBeenCalledTimes(8);
+    expect(store.set).toHaveBeenLastCalledWith('appIcon', 'light');
     expect(
-      controller.menu()[0].submenu.find((item) => item.label === 'Minimal')
+      controller.menu()[0].submenu.find((item) => item.label === 'Light')
         .checked
     ).toBe(true);
     expect(window.setIcon).not.toHaveBeenCalled();
   });
-  it('restores a saved choice on launch without rewriting settings', () => {
-    store.get.mockReturnValue('glass');
-    controller.restore();
-    expect(controller.getSelected()).toBe('glass');
-    expect(store.set).not.toHaveBeenCalled();
-    expect(app.dock.setIcon).toHaveBeenCalledTimes(1);
+  it.each(['darwin', 'win32', 'linux'])(
+    'persists Light across restart and resets to Original on %s',
+    (platform) => {
+      const settings = new Map();
+      store = {
+        get: (key, fallback) => settings.get(key) ?? fallback,
+        set: (key, value) => settings.set(key, value),
+      };
+      controller = make(platform);
+      const light = controller
+        .menu()[0]
+        .submenu.find((item) => item.label === 'Light');
+      expect(light).toBeDefined();
+      light.click();
+      expect(settings.get('appIcon')).toBe('light');
+      controller = make(platform);
+      controller.restore();
+      expect(controller.getSelected()).toBe('light');
+      expect(
+        controller.menu()[0].submenu.find((item) => item.label === 'Light')
+          .checked
+      ).toBe(true);
+      controller
+        .menu()[0]
+        .submenu.find((item) => item.label === 'Original')
+        .click();
+      expect(settings.get('appIcon')).toBe('original');
+      expect(controller.getSelected()).toBe('original');
+      controller = make(platform);
+      controller.restore();
+      expect(controller.getSelected()).toBe('original');
+    }
+  );
+  it('bundles PNG files for every selectable artwork', () => {
+    const fs = require('fs');
+    const path = require('path');
+    expect(APP_ICONS).toEqual([
+      'original',
+      'flat',
+      'glass',
+      'ceramic',
+      'metallic',
+      'layered',
+      'minimal',
+      'light',
+    ]);
+    for (const id of APP_ICONS) {
+      const bytes = fs.readFileSync(
+        path.join(__dirname, '../../desktop/icons', `${id}.png`)
+      );
+      expect(bytes.subarray(0, 8)).toEqual(
+        Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+      );
+    }
   });
+  it.each(APP_ICONS.filter((id) => id !== 'original'))(
+    'restores saved %s on launch without rewriting settings',
+    (saved) => {
+      store.get.mockReturnValue(saved);
+      controller.restore();
+      expect(controller.getSelected()).toBe(saved);
+      expect(store.set).not.toHaveBeenCalled();
+      expect(app.dock.setIcon).toHaveBeenCalledTimes(1);
+    }
+  );
   it('leaves a fresh installation on its bundled primary icon', () => {
     controller.restore();
     expect(app.dock.setIcon).not.toHaveBeenCalled();

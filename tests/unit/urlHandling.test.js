@@ -111,6 +111,83 @@ describe('URL Handling', () => {
   // handleUrl
   // ===========================
   describe('handleUrl', () => {
+    it('retains the URL and reports a full tab list without recording a successful open', async () => {
+      for (let i = 0; i < 10; i++) createTab(`tab-${i}.md`, '# Existing');
+      const current = state.activeTabId;
+      const recents = localStorage.getItem('specdown-recent-files');
+      const input = document.getElementById('url-input');
+      input.value = 'https://example.com/another.md';
+      const showError = jest.fn();
+      global.fetch.mockResolvedValue({
+        ok: true,
+        body: documentResponseBody('# New'),
+      });
+      expect(await handleUrl(input.value, { showError })).toEqual({
+        status: 'error',
+      });
+      expect(showError).toHaveBeenCalledWith(
+        expect.stringMatching(/close a tab/i)
+      );
+      expect(input.value).toBe('https://example.com/another.md');
+      expect(state.activeTabId).toBe(current);
+      expect(state.tabs).toHaveLength(10);
+      expect(localStorage.getItem('specdown-recent-files')).toBe(recents);
+    });
+
+    it('returns adjacent-form errors without using the homepage error', async () => {
+      const showError = jest.fn();
+      const result = await handleUrl('http://example.com/a.md', { showError });
+      expect(result).toEqual({ status: 'error' });
+      expect(showError).toHaveBeenCalledWith(expect.stringMatching(/https/));
+      expect(document.getElementById('url-error').textContent).toBe('');
+    });
+
+    it('cancels a pending URL without accepting a late response', async () => {
+      let finish;
+      const controller = new AbortController();
+      const accepted = jest.fn();
+      const showError = jest.fn();
+      configureFileLoading({ createTab: accepted });
+      global.fetch = jest.fn(
+        () => new Promise((resolve) => (finish = resolve))
+      );
+      const pending = handleUrl('https://example.com/a.md', {
+        signal: controller.signal,
+        showError,
+      });
+      await Promise.resolve();
+      controller.abort();
+      finish({ ok: true, body: documentResponseBody('# Late') });
+      expect(await pending).toEqual({ status: 'stale' });
+      expect(accepted).not.toHaveBeenCalled();
+      expect(showError).not.toHaveBeenCalled();
+      expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+    });
+
+    it('prepares a repository chooser without showing it over the native form', async () => {
+      const files = [
+        { path: 'README.md', rawUrl: 'https://example.com/README.md', url: '' },
+      ];
+      const oldFetchRepo = fetchGitHubRepoFiles;
+      fetchGitHubRepoFiles = jest.fn().mockResolvedValue(files);
+      let present;
+      try {
+        const result = await handleUrl('https://github.com/o/r', {
+          deferRepository: (show) => {
+            present = show;
+          },
+        });
+        expect(result).toEqual({ status: 'repository' });
+        expect(document.getElementById('repo-browser-modal')).toBeNull();
+        present();
+        expect(
+          document.getElementById('repo-browser-modal').style.display
+        ).toBe('flex');
+      } finally {
+        fetchGitHubRepoFiles = oldFetchRepo;
+      }
+    });
+
     it('shows an error and does not fetch for an empty string', async () => {
       await handleUrl('');
       expect(global.fetch).not.toHaveBeenCalled();
@@ -125,6 +202,34 @@ describe('URL Handling', () => {
       const errorEl = document.getElementById('url-error');
       expect(errorEl.style.display).not.toBe('none');
     });
+
+    it.each(['new repository', 'accepted document replacement'])(
+      'does not accept a pending selected raw file after %s',
+      async (reason) => {
+        let finish;
+        const accepted = jest.fn();
+        configureFileLoading({ createTab: accepted });
+        global.fetch = jest
+          .fn()
+          .mockImplementationOnce(
+            () => new Promise((resolve) => (finish = resolve))
+          )
+          .mockResolvedValue({ ok: false, status: 404 });
+        const pending = handleUrl(
+          'https://raw.githubusercontent.com/o/r/' +
+            'a'.repeat(40) +
+            '/README.md'
+        );
+        await Promise.resolve();
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        if (reason === 'new repository')
+          await handleUrl('https://github.com/o/r');
+        else invalidateDocumentContext();
+        finish({ ok: true, body: documentResponseBody('# Late document') });
+        await pending;
+        expect(accepted).not.toHaveBeenCalled();
+      }
+    );
 
     it('fetches the normalized URL on success and creates a tab', async () => {
       const markdown = '# Hello from URL';

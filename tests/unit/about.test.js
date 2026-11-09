@@ -72,6 +72,44 @@ describe('About SpecDown', () => {
     }
   });
 
+  it('identifies the native build independently of the shared viewer version', () => {
+    setupVersionInfo('0.0.232');
+    window.specdownAppVersion = '1.0.2';
+    window.specdownAppBuild = '233';
+    try {
+      openAboutDialog();
+      expect(document.getElementById('about-version').textContent).toBe(
+        'Version 1.0.2 (build 233)'
+      );
+
+      closeAboutDialog();
+      window.specdownAppBuild = '234';
+      openAboutDialog();
+      expect(document.getElementById('about-version').textContent).toBe(
+        'Version 1.0.2 (build 234)'
+      );
+    } finally {
+      delete window.specdownAppVersion;
+      delete window.specdownAppBuild;
+    }
+  });
+
+  it.each([
+    ['development', 'SpecDown — Development'],
+    ['beta', 'SpecDown — Beta'],
+    ['production', 'SpecDown'],
+    [undefined, 'SpecDown'],
+    ['unexpected', 'SpecDown'],
+  ])('labels only explicit non-production channels (%s)', (channel, title) => {
+    window.specdownAppChannel = channel;
+    try {
+      openAboutDialog();
+      expect(document.getElementById('about-title').textContent).toBe(title);
+    } finally {
+      delete window.specdownAppChannel;
+    }
+  });
+
   it('closes on Escape and on Done', () => {
     openAboutDialog();
     document

@@ -8,11 +8,18 @@ import {
   assertDocumentSize,
   readDocumentResponse,
 } from '../core/document-limits.js';
+import {
+  captureDocumentContext,
+  isDocumentContextCurrent,
+} from '../core/document-context.js';
 import { normalizeMarkdownUrl } from '../core/utils.js';
 import { handleRepoUrl } from './repo-browser.js';
 import { showToast } from './toast.js';
 import { recordRecentFile, renderRecentFiles } from './recent-files.js';
-import { bridgeGetPathForFile } from '../platform/bridge.js';
+import {
+  bridgeGetPathForFile,
+  bridgeRequestOpenPath,
+} from '../platform/bridge.js';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -22,7 +29,7 @@ const el = (/** @type {string} */ id) => document.getElementById(id);
 // module-top `openTab` here collides with the identically-named binding in
 // share-links.js — whichever configure*() runs last wins the shared global, and
 // this module's createTab (with its filePath/sourceMeta args) silently loses.
-/** @type {(filename: string, content?: string, filePath?: string | null, sourceMeta?: import('../core/state.js').TabSourceMeta | null) => void} */
+/** @type {(filename: string, content?: string, filePath?: string | null, sourceMeta?: import('../core/state.js').TabSourceMeta | null) => boolean | void} */
 let openTabFromFile = () => {};
 
 /** @param {{ createTab?: Function }} [deps] */
@@ -74,6 +81,11 @@ export function handleFile(file) {
   // returns '' off the desktop shell or when a path can't be resolved, so this
   // is null on the web surface, exactly as before.
   const filePath = bridgeGetPathForFile(file) || null;
+  // Successful native content read and its identity travel together.
+  if (filePath) {
+    bridgeRequestOpenPath(filePath);
+    return;
+  }
 
   // Read file and open in a new tab
   const reader = new FileReader();
@@ -126,7 +138,10 @@ function getFilenameFromUrl(url) {
 /** @param {string} message */
 function showUrlError(message) {
   const urlDropZone = el('drop-zone');
-  if (urlDropZone && getComputedStyle(urlDropZone).display === 'none') {
+  if (
+    (urlDropZone && getComputedStyle(urlDropZone).display === 'none') ||
+    el('inline-url-entry')?.hidden
+  ) {
     showToast(message, { type: 'error' });
     return;
   }
@@ -143,60 +158,109 @@ function clearUrlError() {
   urlError.textContent = '';
 }
 
-/** @param {string} url */
-export async function handleUrl(url) {
+let fileLoadingUrlRequest = 0;
+/** @type {AbortController | null} */
+let fileLoadingUrlController = null;
+
+/**
+ * @param {string} url
+ * @param {{ signal?: AbortSignal, showError?: (message: string) => void,
+ * deferRepository?: (show: () => void) => void }} [options]
+ * @returns {Promise<{status: 'document' | 'repository' | 'error' | 'stale'}>}
+ */
+export async function handleUrl(url, options = {}) {
+  const urlRequest = ++fileLoadingUrlRequest;
+  fileLoadingUrlController?.abort();
+  const controller = new AbortController();
+  fileLoadingUrlController = controller;
+  const cancel = () => controller.abort();
+  options.signal?.addEventListener('abort', cancel, { once: true });
+  if (options.signal?.aborted) cancel();
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    cancel();
+  }, 30000);
+  const documentContext = captureDocumentContext();
+  const urlRequestCurrent = () =>
+    urlRequest === fileLoadingUrlRequest &&
+    !options.signal?.aborted &&
+    isDocumentContextCurrent(documentContext);
+  let failed = false;
+  const reportError = (/** @type {string} */ message) => {
+    if (!urlRequestCurrent()) return;
+    failed = true;
+    (options.showError || showUrlError)(message);
+  };
   clearUrlError();
-
-  if (!url || !/^https:\/\//i.test(url)) {
-    showUrlError('Please enter a valid URL starting with https://');
-    return;
-  }
-
   const urlInput = /** @type {HTMLInputElement | null} */ (el('url-input'));
-
-  // Check if this is a GitHub repo URL to show the file browser
-  const isRepoBrowserUrl = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/?$/.test(
-    url
-  );
-  if (isRepoBrowserUrl) {
-    const handled = await handleRepoUrl(url, {
-      clearError: clearUrlError,
-      showError: showUrlError,
-      onSelectFile: handleUrl,
-    });
-    if (handled) {
-      if (urlInput) urlInput.value = '';
-      return;
-    }
-  }
-
-  const fetchUrl = normalizeMarkdownUrl(url);
-  const filename = getFilenameFromUrl(url);
-
   try {
-    const response = await fetch(fetchUrl, {
+    if (!urlRequestCurrent()) return { status: 'stale' };
+    if (!url || !/^https:\/\//i.test(url)) {
+      reportError('Please enter a valid URL starting with https://');
+      return { status: 'error' };
+    }
+    if (
+      await handleRepoUrl(url, {
+        clearError: clearUrlError,
+        showError: reportError,
+        onSelectFile: handleUrl,
+        signal: controller.signal,
+        deferPresentation: options.deferRepository
+          ? (show) =>
+              options.deferRepository?.(() => {
+                if (urlRequestCurrent()) show();
+              })
+          : undefined,
+      })
+    ) {
+      if (!urlRequestCurrent()) return { status: 'stale' };
+      if (timedOut) throw new Error('URL request timed out');
+      if (!failed && urlInput) urlInput.value = '';
+      return { status: failed ? 'error' : 'repository' };
+    }
+    if (!urlRequestCurrent()) return { status: 'stale' };
+    const response = await fetch(normalizeMarkdownUrl(url), {
       credentials: 'omit',
-      signal: AbortSignal.timeout(30000),
+      signal: controller.signal,
     });
+    if (!urlRequestCurrent()) {
+      await response.body?.cancel();
+      return { status: 'stale' };
+    }
     if (!response.ok) {
-      showUrlError('Failed to fetch URL: HTTP ' + response.status);
-      return;
+      reportError('Failed to fetch URL: HTTP ' + response.status);
+      await response.body?.cancel();
+      return { status: 'error' };
     }
     if (response.url && !response.url.startsWith('https://'))
       throw new Error('The document redirected to an insecure URL.');
     const markdown = await readDocumentResponse(response);
+    if (!urlRequestCurrent()) return { status: 'stale' };
+    const filename = getFilenameFromUrl(url);
+    if (openTabFromFile(filename, markdown, null, { url }) === false) {
+      reportError(
+        'Could not open this document. If all 10 tabs are open, close a tab and try again.'
+      );
+      return { status: 'error' };
+    }
     if (urlInput) urlInput.value = '';
-    // Record the source URL so the File info sheet can show where it came from.
-    openTabFromFile(filename, markdown, null, { url });
-    // Remember this URL for one-click re-open from Open Recent.
     recordRecentFile({ ref: url, title: filename });
     renderRecentFiles();
+    return { status: 'document' };
   } catch (error) {
-    showUrlError(
-      error instanceof Error &&
-        /^(?:This document|The document)/.test(error.message)
-        ? error.message
-        : 'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
+    if (!urlRequestCurrent()) return { status: 'stale' };
+    reportError(
+      controller.signal.aborted
+        ? 'Opening took too long. Please try again.'
+        : error instanceof Error &&
+            /^(?:This document|The document)/.test(error.message)
+          ? error.message
+          : 'Could not fetch URL — the server may not allow cross-origin requests. Try using the raw file URL.'
     );
+    return { status: 'error' };
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', cancel);
   }
 }

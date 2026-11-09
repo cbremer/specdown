@@ -105,6 +105,7 @@ beforeEach(async () => {
 });
 afterEach(() => {
   acceptanceWc.emit('destroyed');
+  electron.app.on.mock.calls.find(([name]) => name === 'will-quit')[1]();
   fs.rmSync(acceptanceRoot, { recursive: true, force: true });
   console.log.mockRestore();
   for (const [name, previous] of acceptanceProcessListeners) {
@@ -116,11 +117,13 @@ afterEach(() => {
 test('positive control: bounded read still returns the authorized synthetic document', () => {
   const filePath = path.join(acceptanceRoot, 'control.md');
   fs.writeFileSync(filePath, '# Control');
-  expect(acceptanceMain.readMarkdownFile(filePath)).toEqual({
-    filename: 'control.md',
-    content: '# Control',
-    filePath,
-  });
+  expect(acceptanceMain.readMarkdownFile(filePath)).toEqual(
+    expect.objectContaining({
+      filename: 'control.md',
+      content: '# Control',
+      filePath,
+    })
+  );
 });
 
 test('did-finish-load restores a session but commits its recents only after admission', () => {
@@ -278,3 +281,42 @@ test.each(['send-throws', 'detached', 'loading', 'destroyed'])(
     expect(electron.app.addRecentDocument).not.toHaveBeenCalled();
   }
 );
+test('I04/T05: production reader resolves continuity only after a complete bounded read and honors ephemeral evidence', () => {
+  const filePath = path.join(acceptanceRoot, 'evidence.md');
+  fs.writeFileSync(filePath, '# Accepted');
+  const afterRead = jest.fn((actual) => {
+    expect(actual).toBe(filePath);
+    return { ephemeral: true };
+  });
+  const value = acceptanceMain.readMarkdownFile(filePath, { afterRead });
+  expect(afterRead).toHaveBeenCalledTimes(1);
+  expect(value.content).toBe('# Accepted');
+  expect(value.annotationSource).toBeNull();
+  fs.writeFileSync(
+    filePath,
+    Buffer.alloc(acceptanceMain.MAX_DOCUMENT_BYTES + 1)
+  );
+  afterRead.mockClear();
+  expect(() =>
+    acceptanceMain.readMarkdownFile(filePath, { afterRead })
+  ).toThrow(/8 MiB/);
+  expect(afterRead).not.toHaveBeenCalled();
+});
+
+test('application quit closes the native identity registry before filesystem cleanup', () => {
+  const { DatabaseSync } = require('node:sqlite');
+  const close = jest.spyOn(DatabaseSync.prototype, 'close');
+  try {
+    const opened = deliverSyntheticOpen('Shutdown');
+    expect(opened.payload.annotationSource).not.toBeNull();
+    const quit = electron.app.on.mock.calls.find(
+      ([name]) => name === 'will-quit'
+    )[1];
+    quit();
+    expect(close).toHaveBeenCalledTimes(1);
+    quit();
+    expect(close).toHaveBeenCalledTimes(1);
+  } finally {
+    close.mockRestore();
+  }
+});
