@@ -6,6 +6,8 @@ An Electron desktop application wrapping the shared SpecDown web viewer, distrib
 
 **Current development wave:** [Apple 241 desktop parity](2026-11-08-tasks-session-11-apple-241-parity.md) consolidates the shared changes sent to Apple as 1.0.2 (241) for the next direct desktop release. Direct desktop versioning remains independent.
 
+**Deployment preparation:** [Session 12](2026-11-08-tasks-session-12-desktop-deploy-prep.md) records the verified-download packaging correction and source/release checks for this batch.
+
 **Last verified release checkpoint, November 2, 2026:** direct desktop [0.0.232 is public](../project-appstore/2026-11-02-tasks-session-77-direct-desktop-232-published.md), with signed/notarized Mac artifacts and unsigned Windows/Linux artifacts. Windows/Linux remain less tested in real desktop use than macOS; package/CI success is not hands-on acceptance. Separate Store [Dev/Beta 230 delivery](../project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md) is complete, with new Owner acceptance still pending. The earlier sections below describe the original Mac implementation, not a current cross-platform acceptance report.
 
 ---
@@ -54,6 +56,7 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Nov 02, 2026 | Tasks | [Session 79: testing and next-release handoffs](../project-appstore/2026-11-02-tasks-session-79-platform-testing-runbook.md) | Documentation-only runbook, saved six-feature 1.0.2 brief and current checkpoint/maintenance guidance. |
 | Nov 8, 2026 | Tasks | [Session 10: Apple-wave parity](2026-11-08-tasks-session-10-apple-wave-parity.md) | Include shared viewer edits in desktop packaging checks and verify a direct-desktop candidate from the Apple Dev source |
 | Nov 8, 2026 | Tasks | [Session 11: Apple 241 parity](2026-11-08-tasks-session-11-apple-241-parity.md) | Consolidate the submitted Apple source onto current main and verify a fresh direct desktop candidate |
+| Nov 8, 2026 | Tasks | [Session 12: desktop deploy preparation](2026-11-08-tasks-session-12-desktop-deploy-prep.md) | Pin verified Electron download checksums and prepare the consolidated source for deployment |
 
 ---
 
