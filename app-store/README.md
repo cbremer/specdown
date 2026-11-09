@@ -1,7 +1,15 @@
 # App Store assets
 
-Draft listing copy, screenshots and review material for the iPhone/iPad App Store and the
+Listing copy, screenshots and review material for the iPhone/iPad App Store and
 Mac App Store. Plan and tracker: [docs/project-appstore](../docs/project-appstore/).
+
+**Current availability — November 8, 2026:** SpecDown 1.0.1 is publicly
+available on both the iPhone/iPad App Store and Mac App Store. The 1.0.2 update
+is prepared in App Store Connect with production build 240 selected on both
+platforms; it has not been submitted for review. The
+[current platform-specific review notes](metadata/review-notes.md) describe
+the published app and pending update. Older metadata JSON, copy proposals and
+versioned screenshot packets below retain their original release context.
 
 **Submitted Mac 1.0.1 (230) assets:** [Versioned screenshot packet](release-assets/1.0.1-230/mac/README.md) retains the five approved final images, five raw captures, exact provenance and a reproducible composition recipe. These are separate from the historical draft assets below. [Session 69](../docs/project-appstore/2026-11-02-tasks-session-69-portal-sync-handoff.md) records submission evidence and release status.
 
@@ -16,7 +24,7 @@ must be recaptured from the frozen candidate; copy must be rechecked against it.
 | `demo/`                                    | Original demo Markdown used for screenshots and App Review                                       | AS-036/038 |
 | `metadata/en-US/ios.json`, `mac.json`      | Name, subtitle, promo text, description, keywords, URLs (limits validated)                       | AS-036     |
 | `metadata/next-mobile-release.md` | Next security revision notes and owner upload/device-QA gates; draft only | WK-13/14 |
-| `metadata/review-notes.md`                 | App Review notes (no login needed)                                                               | AS-036     |
+| `metadata/review-notes.md`                 | Current iOS/Mac 1.0.2 App Review notes (no login needed)                                                               | AS-036     |
 | `metadata/privacy-policy.md`, `support.md` | Page drafts with `[PLACEHOLDERS]` for owner facts                                                | AS-037     |
 | `metadata/app-privacy-answers.md`          | Proposed App Privacy / encryption / age answers with code evidence                               | AS-040     |
 | `screenshots/iphone63/en-US/`              | **Required** iPhone 6.1"/6.3" slot, 1206×2622 (iPhone 17 Pro simulator)                          | AS-039     |
