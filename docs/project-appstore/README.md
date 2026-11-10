@@ -150,3 +150,5 @@ historical checkpoints, before the Mac App Store launch.
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
 The Markdown plan owns scope/constraints; the live Sheet owns task status/evidence/accepted Decisions. Future work follows repo `CLAUDE.md`, preserves the phone checkout and Developer ID channel, and uses one logical change per PR with rebase merging. Add the next dated numbered tasks file and timeline entry for a future execution session.
+
+- [Session 97 — screenshot-only Store 1.0.3](2026-11-09-tasks-session-97-screenshot-release-103.md)

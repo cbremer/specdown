@@ -55,8 +55,8 @@ module.exports = {
   productName: 'SpecDown',
   // Store releases align with iOS; the direct channel keeps package.json's
   // independent version and update feed. These only affect packaged metadata.
-  extraMetadata: { version: '1.0.2' },
-  buildVersion: '230',
+  extraMetadata: { version: '1.0.3' },
+  buildVersion: '242',
   directories: { output: 'dist-mas' },
   // The bookmark module ships only here; its sources and build tree do not.
   files: [
