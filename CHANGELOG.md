@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.0.234 — 2026-11-11
+
+### Bug Fixes
+
+- verify desktop runtime downloads through the official asset API
+
+### Documentation
+
+- record shipped Store 1.0.3 build 242 on main
+
+### Chores
+
+- **deps-dev:** bump Electron from 45.1.0 to 45.2.3 (#436)
+- **deps-dev:** bump ESLint, globals and Vite
+- **deps:** bump mermaid from 12.2.0 to 12.3.0
+- **deps:** bump marked from 18.1.2 to 18.1.3
+
 ## v0.0.233 — 2026-11-09
 
 ### Features
