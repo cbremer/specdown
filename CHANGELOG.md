@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.234 — 2026-11-11
+
+### Bug Fixes
+
+- verify desktop runtime downloads through the official asset API
+
+### Documentation
+
+- record shipped Store 1.0.3 build 242 on main
+
+### Chores
+
+- **deps:** bump marked from 18.1.2 to 18.1.3
+
 ## v0.0.233 — 2026-11-09
 
 ### Features
