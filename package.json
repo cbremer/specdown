@@ -43,7 +43,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "electron": "45.1.0",
+    "electron": "45.2.3",
     "electron-builder": "^26.8.1",
     "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
@@ -94,14 +94,14 @@
   "build": {
     "electronDownload": {
       "checksums": {
-        "electron-v45.1.0-darwin-arm64.zip": "002b71efcf90e247317d3da486f2d4e51860e9c2889d49f33e229ab2268b0f3b",
-        "electron-v45.1.0-darwin-x64.zip": "b4667d820149e33a6f016d103de0fcf5d6f05b8297a204232a0d970c00b163a5",
-        "electron-v45.1.0-linux-arm64.zip": "64b78d93d1129ab805cdc0f2710f446716afbe814a1d08e639dab3175d2285a1",
-        "electron-v45.1.0-linux-x64.zip": "9dafab2c57ce209f8f716f8f3e4fddd8ffe0820e2455bfbbfc00b0fc13e03a3b",
-        "electron-v45.1.0-mas-arm64.zip": "d7d7872db44cbb301596ab26860746e02f5cbc1db7b4abfaed297184bbf3a954",
-        "electron-v45.1.0-mas-x64.zip": "4608fb25a1b0dd20e5291a611dff73d113123aa547d0c3ba4ddc407517cd40e5",
-        "electron-v45.1.0-win32-arm64.zip": "c0adce10031826896060bba848777bf9f059bfe4a2f7f9d4795008498eeeb248",
-        "electron-v45.1.0-win32-x64.zip": "55eaba17abff7b5bba6c3bbc85068967379024fe742fe9c7fdba9118922ccbe2"
+        "electron-v45.2.3-darwin-arm64.zip": "4d7c429064087a47b855d9bd06c76ead4819b7f02b385de232d4a5c37ecef55f",
+        "electron-v45.2.3-darwin-x64.zip": "d87323533cc8750ef177e5b48058f7a8b381f677d4e103cc63360006c08829c2",
+        "electron-v45.2.3-linux-arm64.zip": "397c060fd9da99ab72b78787d65545b432fcadf13ef6c96658e4f525692aae0f",
+        "electron-v45.2.3-linux-x64.zip": "a87fe741f6d121285117e574da6c9a2e65210d410123bbc04713b099add0263b",
+        "electron-v45.2.3-mas-arm64.zip": "76bf57029ad822866775d5e88c57d53fb1460fb9e1f38424d606ff755d6c219c",
+        "electron-v45.2.3-mas-x64.zip": "50b590fe1538e8f45f85b94d512f5e4e0e8fc20e8e4b437d9d1808d84ce05f5f",
+        "electron-v45.2.3-win32-arm64.zip": "f664bd7a4adfc45ac237a6f5fbf6c8e041b71b174466e9cb6fc9416c918e249d",
+        "electron-v45.2.3-win32-x64.zip": "489cd061908e697394b004298bf5ffd345c935d10e8ca197ba819f019ab2dec0"
       }
     },
     "appId": "com.specdown.desktop",
