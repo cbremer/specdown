@@ -147,6 +147,8 @@ historical checkpoints, before the Mac App Store launch.
 | Nov 8, 2026 | Tasks | [Session 95: Open File wording](2026-11-08-tasks-session-95-open-file-wording.md) | Align the shared start button, iOS hint/sidebar, desktop picker/menu, command palette and current instructions around Open File. |
 | Nov 8, 2026 | Tasks | [Session 96: Open File in 1.0.2](2026-11-08-tasks-session-96-open-file-release-102.md) | Integrate the approved wording into the release candidate and prepare fresh build-241 packages and affected screenshots. |
 
+| Nov 16, 2026 | Tasks | [Session 100: iOS 1.0.4 bottom background](2026-11-16-tasks-session-100-ios-104-bottom-background.md) | Prepare and test the iPhone layout fix on the current release baseline. |
+
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 
 The Markdown plan owns scope/constraints; the live Sheet owns task status/evidence/accepted Decisions. Future work follows repo `CLAUDE.md`, preserves the phone checkout and Developer ID channel, and uses one logical change per PR with rebase merging. Add the next dated numbered tasks file and timeline entry for a future execution session.
