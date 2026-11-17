@@ -44,10 +44,12 @@ struct ContentView: View {
     }
 
     private var viewerSurface: some View {
-        // Readable and interactive content respects all four native safe edges.
-        // Only backgrounds may extend behind a persistent vertical system bar.
+        // Extend the web background below the home indicator. WebKit exposes
+        // that bottom inset to CSS, which keeps the viewer actions above it.
+        // Top and side system areas remain outside the web view.
         GeometryReader { geometry in
             WebView(bridge: bridge, layoutMode: usesExpandedShell && geometry.size.width > 768 ? "pad" : "phone")
+                .ignoresSafeArea(.container, edges: .bottom)
         }
     }
 
@@ -281,6 +283,9 @@ private struct AdaptiveViewerDetail: View {
             // split-view scene can still offer a narrow detail column; that
             // column needs the compact Contents/Raw/More controls.
             WebView(bridge: bridge, layoutMode: horizontalSizeClass == .regular && geometry.size.width > 768 ? "pad" : "phone")
+                // Paint through the bottom system area; the page retains its
+                // safe-area padding for controls and scrollable content.
+                .ignoresSafeArea(.container, edges: .bottom)
         }
             .navigationTitle(bridge.hasLoadedDocument ? bridge.currentDocumentName : "SpecDown")
             .navigationBarTitleDisplayMode(.inline)
