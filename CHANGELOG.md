@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.0.235 — 2026-11-17
+
+### Bug Fixes
+
+- Fix iOS background at the bottom safe area
+
 ## v0.0.234 — 2026-11-11
 
 ### Bug Fixes
