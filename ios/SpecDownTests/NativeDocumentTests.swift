@@ -42,6 +42,28 @@ final class NativeDocumentTests: XCTestCase {
         throw NSError(domain: "NativeDocumentTests", code: 1)
     }
 
+    func testSourceEditingSaveConflictAndDraftPreview() async throws {
+        let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
+        let web = try await host(bridge)
+        let url = fixture.appendingPathComponent("source-edit-save.md")
+        try Data("# Original\r\n\r\n  tail  \r\n".utf8).write(to: url)
+        bridge.openDocument(at: url)
+        try await wait("local source accepted") { bridge.currentDocumentName == "source-edit-save.md" }
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); const input=document.querySelector('#source-editor-host textarea:not([hidden])'); input.value='# Changed\\n\\n  tail  \\n'; input.dispatchEvent(new Event('input')); document.getElementById('source-edit').click()")
+        try await wait("draft preview") { (try? await web.evaluateJavaScript("document.getElementById('markdown-content').textContent.includes('Changed')")) as? Bool == true }
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); document.getElementById('source-save').click()")
+        try await wait("native local save") { (try? String(contentsOf: url, encoding: .utf8)) == "# Changed\r\n\r\n  tail  \r\n" }
+        try await wait("save acknowledgment") { (try? await web.evaluateJavaScript("document.getElementById('source-status').textContent")) as? String == "No unsaved changes" }
+        _ = try await web.evaluateJavaScript("document.querySelector('#source-editor-host textarea:not([hidden])').value='# My draft'; document.querySelector('#source-editor-host textarea:not([hidden])').dispatchEvent(new Event('input'))")
+        try Data("# External".utf8).write(to: url)
+        _ = try await web.evaluateJavaScript("document.getElementById('source-save').click()")
+        try await wait("conflict choices") { (try? await web.evaluateJavaScript("!!document.querySelector('[data-editor-choice=overwrite]')")) as? Bool == true }
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "# External")
+        _ = try await web.evaluateJavaScript("document.querySelector('[data-editor-choice=overwrite]').click()")
+        try await wait("explicit overwrite") { (try? String(contentsOf: url, encoding: .utf8)) == "# My draft" }
+        try await wait("final save acknowledgment") { (try? await web.evaluateJavaScript("document.getElementById('source-status').textContent")) as? String == "No unsaved changes" }
+    }
+
     func testAboutShowsNativeBundleBuildAndChannel() async throws {
         let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
         let web = try await host(bridge)

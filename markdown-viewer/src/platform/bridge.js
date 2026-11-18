@@ -245,3 +245,9 @@ export function bridgeRequestWorkspaceFile(filePath, id) {
 export function bridgeOnWorkspaceClosed(cb) {
   nativeBridge()?.onWorkspaceClosed?.(cb);
 }
+
+/** @param {Parameters<NonNullable<DesktopBridge['saveMarkdown']>>[0]} request */
+export async function bridgeSaveMarkdown(request) { return await nativeBridge()?.saveMarkdown?.(request) || {status:'error'}; }
+/** @param {()=>void} callback */
+export function bridgeOnEditorClose(callback) { nativeBridge()?.onEditorClose?.(callback); }
+export function bridgeCloseEditorWindow() { nativeBridge()?.closeEditorWindow?.(); }

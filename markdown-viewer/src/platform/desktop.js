@@ -1,3 +1,4 @@
+import { protectSourceDraft } from '../features/source-editor.js';
 // @ts-check
 // Desktop (Electron) integration: the file-watch model, the watch-toggle UI,
 // session persistence, and the IPC wiring to the main process (native menus,
@@ -228,7 +229,8 @@ export function setupDesktopIPC() {
   // same file was open twice and the active copy wasn't the first: the handler
   // took the background branch and never refreshed the view.
   bridgeOnFileChanged(async function (fileData) {
-    const matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath && (!t.sourceMeta?.annotationSource || (t.sourceMeta.annotationSource.authorityId === fileData.annotationSource?.authorityId && t.sourceMeta.annotationSource.sourceToken === fileData.annotationSource?.sourceToken)));
+    let matchingTabs = state.tabs.filter((t) => t.filePath === fileData.filePath && (!t.sourceMeta?.annotationSource || (t.sourceMeta.annotationSource.authorityId === fileData.annotationSource?.authorityId && t.sourceMeta.annotationSource.sourceToken === fileData.annotationSource?.sourceToken)));
+    matchingTabs = matchingTabs.filter(tab => !protectSourceDraft(tab, fileData.content));
     if (matchingTabs.length === 0) return;
 
     // A rejected refresh must preserve every accepted copy, including hidden

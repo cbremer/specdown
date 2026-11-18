@@ -1,3 +1,4 @@
+import {showSourceDraft, syncSourceEditor, isSourceDirty, confirmSourceDiscard, forgetSourceDraft, hasSourceSavePending} from './source-editor.js';
 // @ts-check
 // Tab management: the open-document model (create / switch / close), the tab
 // bar UI, and the empty-state drop zone reset.
@@ -115,7 +116,7 @@ export function renderTabBar() {
       const dotTitle = hasChanges ? 'File changed on disk' : 'Watching for changes';
       html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
     }
-    html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
+    html += `<span class="tab-filename">${escapeHtml(tab.filename)}${isSourceDirty(tab) ? ' • Unsaved' : ''}</span>`;
     html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab" aria-label="Close ${escapeHtml(tab.filename)}">×</button>`;
     html += `</div>`;
   }
@@ -213,6 +214,7 @@ export function createTab(filename, content, filePath, sourceMeta) {
     refreshWatchUI();
     persistSession();
   }
+  syncSourceEditor();
   renderDoc(content, filename, prepared);
   return true;
 }
@@ -234,6 +236,7 @@ export async function switchTab(id) {
 
   const markdownContent = el('markdown-content');
   if (!markdownContent) return;
+  if (showSourceDraft(tab)) return;
 
   if (tab.viewMode === 'raw') {
     invalidateDocumentContext();
@@ -267,15 +270,19 @@ export async function closeTab(id) {
   const idx = state.tabs.findIndex((t) => t.id === id);
   if (idx === -1) return;
 
-  const wasActive = id === state.activeTabId;
   const closedTab = state.tabs[idx];
+  if ((isSourceDirty(closedTab) || hasSourceSavePending(closedTab)) && !await confirmSourceDiscard(closedTab)) return;
+  const currentIndex = state.tabs.indexOf(closedTab);
+  if (currentIndex < 0) return;
+  const wasActive = id === state.activeTabId;
+  forgetSourceDraft(closedTab);
 
   // Stop watching before removing the tab
   if (isDesktop && closedTab.watching && closedTab.filePath) {
     endWatch(closedTab.filePath);
   }
 
-  state.tabs.splice(idx, 1);
+  state.tabs.splice(currentIndex, 1);
 
   if (isDesktop) persistSession();
 
@@ -291,6 +298,7 @@ export async function closeTab(id) {
     renderTabBar();
     if (isDesktop) refreshWatchUI();
 
+    if (showSourceDraft(newTab)) return;
     if (newTab.viewMode === 'raw') {
       invalidateDocumentContext();
       if (state.tocVisible) {
@@ -352,4 +360,5 @@ export function showDropZone() {
   setDisplay('content-area', 'none');
   setDisplay('drop-zone', 'flex');
   syncIOSChrome();
+  syncSourceEditor();
 }

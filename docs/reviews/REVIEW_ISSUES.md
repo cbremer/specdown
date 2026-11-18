@@ -1,5 +1,22 @@
 # Advisory review issues
 
+## Document import PRD, 2026-11-18
+
+Reviewer — Codex `prd_review`, completed read-only review of
+`docs/project-document-import/2026-11-18-spec-document-import-prd.md` in the working
+tree against base commit `d3e5256b46a03a7b2dcee5e9a4869fa5d0a57c47`.
+The review covers the owner's functional PRD and planning scope. It does not
+establish converter, device, or release acceptance. Suggestions below are proposed
+draft refinements. They have no implementation authorization and create no extra
+execution tasks or publication gate.
+
+| Concern                                                                                                                | Proposed follow-up                                                                                                                            | Status                             |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| F4's offline-image guarantee and the initial text-PDF scope leave PDF-figure preservation ambiguous.                   | Define format-specific figure guarantees and qualify a PDF containing meaningful figures.                                                     | Proposed — owner decision pending. |
+| F6 retains converted copies after removing recent entries but does not name where those copies are subsequently found. | Define a minimal imported-copy management entry point and a locate/delete acceptance scenario.                                                | Proposed — owner decision pending. |
+| F2/F6/F8 leave ordinary, partial, and refreshed-copy acceptance timing implicit.                                       | Define automatic first-import acceptance, explicit partial-result acceptance, and refresh replace/keep-both behavior, including interruption. | Proposed — owner decision pending. |
+| A14's tracked-change qualification could miss sole-occurrence deletions or unresolved revisions.                       | Add concrete qualification examples distinguishing accepted-changes text from an unsupported-content result.                                  | Proposed — owner decision pending. |
+
 ## URL entry, 2026-11-08
 
 Reviewer: Codex `url_entry_review`, completed. Reviewed base commit:

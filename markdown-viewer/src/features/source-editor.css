@@ -1,0 +1,74 @@
+#source-editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid var(--border-color, #8885);
+  flex-shrink: 0;
+}
+#source-editor-bar[hidden],
+#source-editor-host[hidden],
+.source-editor-input[hidden],
+#markdown-content[hidden] {
+  display: none !important;
+}
+#source-editor-bar button,
+.source-choice button {
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--bg-secondary, #8882);
+  border: 1px solid var(--border-color, #8885);
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+#source-status {
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
+#source-editor-host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.source-editor-input {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 8rem;
+  resize: none;
+  padding: 1rem;
+  border: 0;
+  background: var(--bg-primary, white);
+  color: var(--text-primary, black);
+  font:
+    1rem/1.6 ui-monospace,
+    monospace;
+  tab-size: 4;
+}
+.source-choice {
+  max-width: min(90vw, 32rem);
+  max-height: 85dvh;
+  overflow: auto;
+  color: var(--text-primary, black);
+  background: var(--bg-primary, white);
+  border-radius: 0.7rem;
+}
+.source-choice::backdrop {
+  background: #0008;
+}
+.source-choice button {
+  display: block;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+#source-recover {
+  min-height: 44px;
+}
+
+.source-editing-active #split-raw-pane {
+  display: none !important;
+}

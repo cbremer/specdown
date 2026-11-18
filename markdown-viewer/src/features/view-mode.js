@@ -1,3 +1,4 @@
+import { hasSourceDraft, previewSourceDraft } from './source-editor.js';
 // @ts-check
 // Preview / raw-markdown view toggle. The preview render lives in the render
 // core (main.js) and is supplied via configureViewMode.
@@ -21,6 +22,8 @@ export function configureViewMode(deps) {
 }
 
 export function toggleViewMode() {
+  const editingTab = state.tabs.find(t => t.id === state.activeTabId);
+  if (editingTab && hasSourceDraft(editingTab)) { void previewSourceDraft(editingTab); return; }
   if (!state.currentRawMarkdown) return;
   const markdownContent = el('markdown-content');
   if (!markdownContent) return;

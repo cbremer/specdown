@@ -51,6 +51,9 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // the App Store build.
   distribution: process.mas === true ? 'mas' : 'direct',
 
+  saveMarkdown: (request) => ipcRenderer.invoke('save-markdown', request),
+  onEditorClose: (callback) => ipcRenderer.on('editor-close-request', () => callback()),
+  closeEditorWindow: () => ipcRenderer.send('editor-close-approved'),
   readBookmarkedFile: (filePath) => ipcRenderer.invoke('read-bookmarked-file', filePath),
 
   // Called by the renderer to open the native file dialog
