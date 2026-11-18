@@ -20,6 +20,7 @@ Each project gets its own subdirectory:
 | [project-html/](project-html/) | HTML documents — forked viewing runtime; staging rail before any merge to `main` |
 | [project-editorial-diagrams/](project-editorial-diagrams/) | Viewer integration for diagram-design HTML/SVG (brainstorm; not built) |
 | [project-bookmarks/](project-bookmarks/) | Persistent document bookmarks, saved copies, and moved-file recovery |
+| [project-document-import/](project-document-import/) | Lightweight source editing and experimental document import — functional PRD and parallel desktop/mobile planning |
 | [project-app-icons/](project-app-icons/) | Native desktop and iOS icon switching |
 | [project-appstore/](project-appstore/) | iPhone/iPad and native Mac App Store release preparation — execution plan, task tracker, native QA and kickoff prompts |
 | [project-security/](project-security/) | Documentation privacy audit, local-machine boundaries and remaining verification limits |

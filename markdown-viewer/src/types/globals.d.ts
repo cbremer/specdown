@@ -123,6 +123,9 @@ interface SpecdownDesktopBridge {
     catalog: ReadonlyArray<{ id: string; label: string; icon?: string }>
   ) => void;
   onApplyCustomCss?: (cb: (cssContent: string) => void) => void;
+  saveMarkdown?: (request: {filePath:string|null; filename:string; content:string; expected:string; copy:boolean}) => Promise<{status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string}>;
+  onEditorClose?: (callback:()=>void)=>void;
+  closeEditorWindow?: ()=>void;
   saveSession?: (tabs: SpecdownSessionTab[]) => void;
   onUpdateDownloaded?: (cb: (info: { version?: string }) => void) => void;
   restartToUpdate?: () => void;
@@ -134,6 +137,7 @@ interface WebkitMessageHandler {
 }
 
 declare global {
+  interface Window { specdownSourceSaveResult?: (id:string, result: {status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string; sourceMeta?:import('../core/state.js').TabSourceMeta|null})=>void; }
   interface Window {
     /** Electron preload bridge (desktop only). */
     specdown?: SpecdownDesktopBridge;

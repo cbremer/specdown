@@ -45,6 +45,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private weak var pendingURLInputSource: UIView?
     private var pendingURLInputRect: CGRect?
     let documentResources = DocumentResources()
+    private struct MarkdownExport {
+        let requestID: String
+        let temporaryURL: URL
+        let content: String
+    }
+    private var markdownExports: [ObjectIdentifier: MarkdownExport] = [:]
+    private var markdownExportPicker: UIDocumentPickerViewController?
+    private var activeMarkdownSaves = Set<String>()
     private var sourceURLs: [String: URL] = [:]
     private var currentViewID = ""
     private var documentViewTransitions = NativeDocumentViewTransitions()
@@ -164,6 +172,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             diagramExports.begin(format: format, payload: payload, token: token, requestID: requestID, presenter: presenter)
         case "authorizeImageFolder":
             if let token = data?["token"] as? String { authorizeImageFolder(token: token) }
+        case "saveMarkdown":
+            if let data { saveMarkdown(data) }
         case "showRecentFiles":
             presentRecentFiles()
 
@@ -497,6 +507,85 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         return String(encoded.dropFirst().dropLast())
     }
 
+    // Save replies describe local provider completion, never remote synchronization.
+    private func markdownSaveReply(_ requestID: String, _ result: [String: Any]) {
+        activeMarkdownSaves.remove(requestID)
+        evaluateJavaScript(function: "window.specdownSourceSaveResult", arguments: [requestID, result], context: "saveMarkdown")
+    }
+
+    private func saveMarkdown(_ request: [String: Any]) {
+        guard let requestID = request["requestID"] as? String, requestID.count <= 80,
+              let content = request["content"] as? String, content.utf8.count <= 8 * 1024 * 1024,
+              let expected = request["expected"] as? String, expected.utf8.count <= 8 * 1024 * 1024,
+              !activeMarkdownSaves.contains(requestID) else { return }
+        activeMarkdownSaves.insert(requestID)
+        let sourceID = request["sourceID"] as? String ?? ""
+        let copy = request["copy"] as? Bool ?? false
+        guard !copy, let url = sourceURLs[sourceID], openSourceIDs.contains(sourceID) else {
+            exportMarkdown(requestID: requestID, content: content, filename: request["filename"] as? String ?? "Document.md")
+            return
+        }
+        fileQueue.async { [weak self] in
+            var response: [String: Any] = ["status": "error", "message": "Provider save failed. Draft retained. Retry or Save As."]
+            let granted = url.startAccessingSecurityScopedResource()
+            defer { if granted { url.stopAccessingSecurityScopedResource() } }
+            var coordinationError: NSError?
+            NSFileCoordinator().coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) { coordinatedURL in
+                do {
+                    let bytes = try SpecDownSecurityPolicy.readDocument(at: coordinatedURL)
+                    guard let current = String(data: bytes, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                    if current != expected { response = ["status": "conflict", "content": current]; return }
+                    try Data(content.utf8).write(to: coordinatedURL, options: .atomic)
+                    response = ["status": "saved"]
+                } catch { /* Keep error response and the renderer draft. */ }
+            }
+            if coordinationError != nil { response = ["status": "error", "message": "The file provider could not complete the local save. Draft retained. Retry or Save As."] }
+            let result = response
+            Task { @MainActor [weak self] in self?.markdownSaveReply(requestID, result) }
+        }
+    }
+
+    private func exportMarkdown(requestID: String, content: String, filename: String) {
+        guard markdownExportPicker == nil, let presenter = topViewController() else {
+            markdownSaveReply(requestID, ["status": "error", "message": "Finish the current destination chooser, then retry. Draft retained."])
+            return
+        }
+        do {
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("specdown-markdown-" + UUID().uuidString, isDirectory: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let base = (filename as NSString).lastPathComponent
+            let name = base.lowercased().hasSuffix(".md") || base.lowercased().hasSuffix(".markdown") ? base : base + ".md"
+            let url = folder.appendingPathComponent(name.isEmpty ? "Document.md" : name)
+            try Data(content.utf8).write(to: url, options: .atomic)
+            let picker = UIDocumentPickerViewController(forExporting: [url], asCopy: true)
+            picker.delegate = self
+            markdownExports[ObjectIdentifier(picker)] = MarkdownExport(requestID: requestID, temporaryURL: url, content: content)
+            markdownExportPicker = picker
+            presenter.present(picker, animated: true)
+        } catch { markdownSaveReply(requestID, ["status": "error", "message": "Could not prepare the Markdown copy. Draft retained."]) }
+    }
+
+    private func finishMarkdownExport(_ controller: UIDocumentPickerViewController, destination: URL?) -> Bool {
+        guard let export = markdownExports.removeValue(forKey: ObjectIdentifier(controller)) else { return false }
+        markdownExportPicker = nil
+        defer { try? FileManager.default.removeItem(at: export.temporaryURL.deletingLastPathComponent()) }
+        guard let destination else { markdownSaveReply(export.requestID, ["status": "canceled"]); return true }
+        // The export picker completion confirms provider acceptance. Reusable
+        // source access is a separate capability and may not be returned.
+        var result: [String: Any] = ["status": "saved", "copied": true, "filename": destination.lastPathComponent]
+        let granted = destination.startAccessingSecurityScopedResource()
+        defer { if granted { destination.stopAccessingSecurityScopedResource() } }
+        if let bookmark = try? destination.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
+            let id = UUID().uuidString
+            sourceURLs[id] = destination
+            let entry = RecentDocuments.Entry(id: id, name: destination.lastPathComponent, location: destination.deletingLastPathComponent().path, bookmark: bookmark)
+            recentDocuments.record(entry); recentFiles = recentDocuments.entries
+            result["sourceMeta"] = ["nativeDocument": ["id": id]]
+        }
+        markdownSaveReply(export.requestID, result)
+        return true
+    }
+
     // MARK: - Native integrations
 
     private func presentDocumentPicker() {
@@ -630,6 +719,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
 extension WebBridge: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        if finishMarkdownExport(controller, destination: urls.first) { return }
         guard let url = urls.first else { return }
         // Remember weak controller identity even after invalidation/cancellation:
         // stale folder callbacks must never fall through to normal file opening.
@@ -649,6 +739,7 @@ extension WebBridge: UIDocumentPickerDelegate {
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        if finishMarkdownExport(controller, destination: nil) { return }
         if controller === activeImageFolderPicker { activeImageFolderPicker = nil }
     }
 }

@@ -1,3 +1,6 @@
+// @ts-expect-error -- Vite stylesheet import
+import './features/source-editor.css';
+import {configureSourceEditor, setupSourceEditor, syncSourceEditor} from './features/source-editor.js';
 // @ts-check
 import { cancelDiagramRasterExport } from './features/diagram-export.js';
 import { getIOSDocumentView, beginIOSNativeDocumentDelivery } from './platform/ios-documents.js';
@@ -84,7 +87,7 @@ import {
   configureShareLinks,
 } from './features/share-links.js';
 import { configureBookmarks, setupBookmarks } from './features/bookmarks.js';
-import { createTab, switchTab, configureTabs } from './features/tabs.js';
+import { createTab, switchTab, configureTabs, renderTabBar } from './features/tabs.js';
 import { showToast } from './features/toast.js';
 import {
   setupToolbarOverflow,
@@ -221,6 +224,8 @@ function init() {
     configureViewMode({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
     });
+    configureSourceEditor({render: renderMarkdown, changed: renderTabBar, createTab});
+    setupSourceEditor();
     configureTabs({
         renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title, /** @type {{ html: string } | undefined} */ prepared) => renderMarkdown(content, title, prepared),
         updateWatchToggle: () => updateWatchToggle(),
@@ -511,6 +516,7 @@ async function renderMarkdown(content, filename, prepared) {
         dropZone.style.display = 'none';
         contentArea.style.display = 'flex';
         syncIOSChrome();
+        syncSourceEditor();
 
         // Process mermaid diagrams
         await processMermaidDiagrams();

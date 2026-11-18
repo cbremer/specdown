@@ -1,3 +1,4 @@
+const { saveExistingMarkdown, saveMarkdownCopy } = require('./markdown-save');
 const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell, nativeImage } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -13,6 +14,8 @@ const { createFileResourcePolicy } = require('./file-resource-policy');
 const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
 const { createAnnotationIdentity } = require('./annotation-identity');
+
+if (require('../package.json').specdownChannel === 'development') process.env.SPECDOWN_DISABLE_UPDATER = '1';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -118,6 +121,7 @@ function isSignedUpdatePlatform(platform) {
 }
 
 let mainWindow = null;
+let editorCloseApproved = false;
 let viewerReadyWindow = null;
 let store = null;
 let logFilePath = null;
@@ -628,6 +632,13 @@ function createWindow() {
     store.set('windowBounds', { width, height });
   });
 
+  editorCloseApproved = false;
+  mainWindow.on('close', (event) => {
+    if (editorCloseApproved || viewerReadyWindow !== mainWindow) return;
+    event.preventDefault();
+    mainWindow.webContents.send('editor-close-request');
+  });
+  mainWindow.webContents.on('will-prevent-unload', (event) => { if (editorCloseApproved) event.preventDefault(); });
   mainWindow.on('closed', () => {
     disposeStartup();
     fileOpenReceipts.forget(windowWebContents);
@@ -1926,3 +1937,38 @@ module.exports = {
   applyVisualThemeCatalog,
   DEFAULT_VISUAL_THEME_CATALOG,
 };
+
+// Saving uses the same trusted-page and selected-file capability boundaries as opening.
+handleTrustedIpc('save-markdown', async (_event, request) => {
+  if (!request || typeof request.content !== 'string' || typeof request.expected !== 'string' ||
+      Buffer.byteLength(request.content) > MAX_DOCUMENT_BYTES || Buffer.byteLength(request.expected) > MAX_DOCUMENT_BYTES) return {status:'error', message:'Markdown must be 8 MiB or smaller.'};
+  try {
+    if (!request.copy && request.filePath) {
+      if (!isValidMarkdownFile(request.filePath)) return {status:'error'};
+      const access = fileAccess.withAccess(request.filePath, resolved => saveExistingMarkdown(resolved, request.content, request.expected));
+      return access.ok ? access.value : {status:'error',message:'Source access unavailable. Reopen the file or use Save As. Draft retained.'};
+    }
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title:'Save Markdown copy', defaultPath:path.basename(typeof request.filename === 'string' ? request.filename : 'Document.md'),
+      filters:[{name:'Markdown', extensions:['md','markdown']}], securityScopedBookmarks:IS_MAS,
+      properties:['showOverwriteConfirmation','createDirectory'],
+    });
+    if (result.canceled || !result.filePath) return {status:'canceled'};
+    if (!isValidMarkdownFile(result.filePath)) return {status:'error',message:'Choose a .md or .markdown filename.'};
+    if (request.filePath && path.resolve(request.filePath) === path.resolve(result.filePath)) return {status:'error',message:'Save As needs a different destination. Use Save to update the original.'};
+    // Only this fresh OS save-panel result authorizes creation/overwrite.
+    if (request.filePath) {
+      const original = fileAccess.withAccess(request.filePath, resolved => fs.realpathSync(resolved));
+      if (original.ok && fs.existsSync(result.filePath) && fs.realpathSync(result.filePath) === original.value) return {status:'error',message:'Choose a different file for Save As.'};
+    }
+    const written = saveMarkdownCopy(result.filePath,request.content);
+    if (written.status !== 'saved') return written;
+    fileAccess.noteUserIntent(result.filePath,'file',result.bookmark);
+    const read = fileAccess.withAccess(result.filePath, readMarkdownFile);
+    if (!read.ok) return {status:'saved',copied:true,filename:path.basename(result.filePath)};
+    fileResourcePolicy.noteDocument(result.filePath);
+    addRecentFile(result.filePath);
+    return {status:'saved',filePath:result.filePath,filename:read.value.filename, sourceMeta:read.value.annotationSource ? {annotationSource:read.value.annotationSource} : null};
+  } catch { return {status:'error',message:'Save failed. Check destination access and available storage, then Retry or Save As. Draft retained.'}; }
+});
+onTrustedIpc('editor-close-approved', () => { editorCloseApproved = true; mainWindow?.close(); });

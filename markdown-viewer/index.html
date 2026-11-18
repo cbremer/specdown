@@ -178,6 +178,7 @@
         </div>
 
         <!-- Content Area (shown when file is loaded) -->
+        <button id="source-recover" type="button" hidden>Recover unsaved drafts…</button>
         <div id="content-area" class="content-area" style="display: none;">
             <div class="content-header">
                 <div class="file-info">
@@ -245,6 +246,13 @@
                 <button id="search-close" class="search-close-btn" title="Close search (Esc)" aria-label="Close search">&#10005;</button>
             </div>
 
+            <div id="source-editor-bar" role="region" aria-label="Source editing" hidden>
+                <button id="source-edit" type="button">Edit</button>
+                <button id="source-save" type="button" hidden>Save</button>
+                <button id="source-save-as" type="button" hidden>Save As…</button>
+                <button id="source-cancel" type="button" hidden>Cancel</button>
+                <span id="source-status" role="status" aria-live="polite"></span>
+            </div>
             <!-- Body with TOC sidebar + main content -->
             <div class="content-body">
                 <!-- Workspace (folder) Sidebar -->
@@ -261,6 +269,7 @@
 
                 <!-- Main content pane (preview + optional raw split) -->
                 <div id="content-main" class="content-main">
+                    <div id="source-editor-host" hidden></div>
                     <div id="markdown-content" class="markdown-content" tabindex="-1" role="main"></div>
                     <div id="split-raw-pane" class="split-raw-pane" style="display: none;">
                         <pre id="split-raw-content" class="raw-markdown split-raw-content"></pre>
@@ -327,6 +336,10 @@
                     <button id="ios-action-sheet-close" class="ios-sheet-close" title="Close actions">✕</button>
                 </div>
                 <div class="ios-sheet-actions">
+                    <button id="ios-source-edit" class="ios-sheet-action-button">Edit / Preview Markdown</button>
+                    <button id="ios-source-save" class="ios-sheet-action-button">Save Markdown</button>
+                    <button id="ios-source-save-as" class="ios-sheet-action-button">Save Markdown As…</button>
+                    <button id="ios-source-cancel" class="ios-sheet-action-button">Cancel Editing</button>
                     <button id="ios-find-button" class="ios-sheet-action-button">Find in Document</button>
                     <button id="ios-split-button" class="ios-sheet-action-button">Split View</button>
                     <button id="ios-present-button" class="ios-sheet-action-button" style="display: none;">Present Diagrams</button>
