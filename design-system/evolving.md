@@ -28,17 +28,11 @@ Ten panels each hand-roll their own scrim, size, radius, title and close button.
 - **Radii:** 3px, 18px, 20px and 16px stragglers. Fold them into `radius-sm` / `radius-xl` / a new `radius-2xl` for the drop card.
 - **Motion:** `--transition` and `--transition-fast` exist as composites. Expose `duration-fast` 120ms, `duration-base` 200ms and `easing` as primitives.
 
-## 4. Decide how much brand the chrome carries (a product call)
+## 4. Brand in the chrome: decided, C+ (Dev preview)
 
-The logo's teal/coral identity never reaches the UI, which runs on a generic blue. Options:
+Decided 19 Nov 2026 (ZIL-226): **C+ · brand moments**. Blue stays the only interaction colour; the logo's teal→coral appears where it has a job. It ships behind a Dev-only gate first (ZIL-235). Chris reviews it on device builds (ZIL-236), then it moves to Beta and Prod (ZIL-237). Full spec: `docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md`. The "C+ brand moments" section of the brand book lists what's in it.
 
-| Option                | What changes                                                                                             | Trade-off                                                             |
-| --------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| A. Keep blue          | Nothing                                                                                                  | Safe and calm, but SpecDown looks like any viewer once a file is open |
-| B. Teal accent        | `accent-color` becomes a darkened `brand-teal` (about #007a90 light, 5.0:1; `brand-teal` itself in dark) | Ties the app to its icon. Needs a contrast pass on every accent fill  |
-| C. Brand moments only | Keep blue for interaction. Use teal→coral in the empty state, the About dialog and the active tab rule   | Most personality for least risk. Two hues to keep apart               |
-
-Recommendation: **C first**, then evaluate B with real screenshots across all six surfaces.
+Options considered: A (keep blue, generic once a file is open), B (teal accent everywhere, competes with green status and needs a contrast pass on every fill), C (brand moments only). C+ extends C so each moment does something: reading progress, read sections, the drop moment.
 
 ## 5. Make it consumable by every shell
 

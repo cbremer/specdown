@@ -15,7 +15,8 @@ const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
 const { createAnnotationIdentity } = require('./annotation-identity');
 
-const isTestChannel = ['development', 'beta'].includes(require('../package.json').specdownChannel);
+const PACKAGED_SPECDOWN_CHANNEL = require('../package.json').specdownChannel;
+const isTestChannel = ['development', 'beta'].includes(PACKAGED_SPECDOWN_CHANNEL);
 if (isTestChannel) process.env.SPECDOWN_DISABLE_UPDATER = '1';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
@@ -480,8 +481,23 @@ function restoreSession(entries) {
   }
 }
 
+// Channel the direct (non-Store) viewer reports: the packaged Dev/Beta
+// metadata, or `development` for an unpackaged local run. Prod reports none.
+// The viewer uses it for the About label and the Dev-only C+ brand preview.
+function directViewerChannel(
+  packaged = app.isPackaged,
+  channel = PACKAGED_SPECDOWN_CHANNEL
+) {
+  if (channel === 'development' || channel === 'beta') return channel;
+  return packaged ? null : 'development';
+}
+
 function getViewerArguments() {
   const args = [`--specdown-app-url=${APP_INDEX_URL}`];
+  if (!IS_MAS) {
+    const channel = directViewerChannel();
+    if (channel) args.push(`--specdown-app-channel=${channel}`);
+  }
   if (IS_MAS) {
     const version = app.getVersion();
     // Native Store metadata only; reject malformed values without coercion.
@@ -1937,6 +1953,7 @@ module.exports = {
   DISTRIBUTION_CHANNEL,
   APP_INDEX_URL,
   getViewerArguments,
+  directViewerChannel,
   isAppPageUrl,
   routeNavigation,
   isTrustedIpcSender,

@@ -105,15 +105,31 @@ test.each([
 });
 
 test.each([false, null, 'true', 1])(
-  'a non-MAS runtime (%p) gets no Store version even with the argument present',
+  'a non-MAS runtime (%p) gets no Store version or build, only its channel',
   (mas) => {
     const exposed = exposePreload({ mas, builds: ['235'], channels: ['beta'] });
     expect(exposed.has('specdown')).toBe(true);
     expect(exposed.has('specdownAppVersion')).toBe(false);
     expect(exposed.has('specdownAppBuild')).toBe(false);
-    expect(exposed.has('specdownAppChannel')).toBe(false);
+    expect(exposed.get('specdownAppChannel')).toBe('beta');
   }
 );
+
+test.each([
+  [['production']],
+  [['development', 'beta']],
+  [['development\n']],
+  [['unknown']],
+  [[]],
+])('a non-MAS runtime exposes no channel for %p', (channels) => {
+  const exposed = exposePreload({ mas: false, channels });
+  expect(exposed.has('specdownAppChannel')).toBe(false);
+});
+
+test('a direct Dev runtime exposes the development channel', () => {
+  const exposed = exposePreload({ mas: false, channels: ['development'] });
+  expect(exposed.get('specdownAppChannel')).toBe('development');
+});
 
 test.each(['https://example.test/index.html', 'file:///synthetic/other.html'])(
   'an untrusted page %s gets neither bridge nor Store version',

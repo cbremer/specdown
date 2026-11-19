@@ -10,6 +10,8 @@ SpecDown's shared visual language across web/PWA, Electron desktop (direct downl
 | 2026-11-19 | [Session 02](2026-11-19-tasks-session-02-toast-layer-and-save-contrast.md)         | Fix toasts hidden under dialogs (ZIL-220) and dark-theme Save contrast (ZIL-219)                       |
 | 2026-11-19 | [Session 03](2026-11-19-tasks-session-03-search-highlights-and-logo-correction.md) | Fix search highlight contrast (ZIL-222); correct the dark-logo finding (ZIL-221 was not a bug)         |
 | 2026-11-19 | [Session 04](2026-11-19-tasks-session-04-shared-modal-and-dialog-a11y.md)          | Shared Modal in the app for Shortcuts, About, File info (ZIL-230); dialog accessibility gaps (ZIL-223) |
+| 2026-11-19 | [Spec: C+ brand moments](2026-11-19-spec-brand-moments-cplus.md)                   | Chosen direction, gate, tokens and rollout (ZIL-226)                                                   |
+| 2026-11-19 | [Session 05](2026-11-19-tasks-session-05-cplus-dev-preview.md)                     | C+ in Dev builds behind a Dev-only gate (ZIL-235)                                                      |
 
 ## Status
 

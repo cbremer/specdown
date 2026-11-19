@@ -117,10 +117,15 @@ function updateTocActiveHeading() {
   const scrollTop = markdownContent.scrollTop;
   /** @type {string | null} */
   let activeId = null;
+  // Headings scrolled past before the active one: "read" sections. The class
+  // is inert unless the C+ brand preview styles it (a teal tick).
+  /** @type {Set<string>} */
+  const tocReadIds = new Set();
 
   headings.forEach((h) => {
     const heading = /** @type {HTMLElement} */ (h);
     if (heading.offsetTop - 60 <= scrollTop) {
+      if (activeId) tocReadIds.add(activeId);
       activeId = heading.id;
     }
   });
@@ -128,8 +133,10 @@ function updateTocActiveHeading() {
   [el('toc-nav'), el('ios-toc-nav')].forEach((navElement) => {
     if (!navElement) return;
     navElement.querySelectorAll('.toc-link').forEach((link) => {
-      const isActive = link.getAttribute('href') === '#' + activeId;
+      const href = link.getAttribute('href') || '';
+      const isActive = href === '#' + activeId;
       link.classList.toggle('toc-link-active', isActive);
+      link.classList.toggle('toc-link-read', tocReadIds.has(href.slice(1)));
     });
   });
 }

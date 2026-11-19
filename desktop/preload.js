@@ -275,5 +275,22 @@ if (process.mas === true && isBundledViewerPage()) {
   }
 }
 
+// The direct (non-Store) build exposes only its channel, which main passes for
+// Dev and Beta packages and unpackaged local runs. Version and build stay
+// MAS-only. The viewer uses it for the About label and the Dev-only C+ preview.
+if (process.mas !== true && isBundledViewerPage()) {
+  const directChannelPrefix = '--specdown-app-channel=';
+  const directChannelValues = process.argv.filter(
+    (arg) => typeof arg === 'string' && arg.startsWith(directChannelPrefix)
+  );
+  if (directChannelValues.length === 1) {
+    const directChannel = directChannelValues[0].slice(directChannelPrefix.length);
+    const directChannelMatch = directChannel.match(/^(?:development|beta)$/);
+    if (directChannelMatch && directChannelMatch[0] === directChannel) {
+      contextBridge.exposeInMainWorld('specdownAppChannel', directChannel);
+    }
+  }
+}
+
 // For tests (Node require); harmless in the Electron preload.
 module.exports = { isBundledViewerPage };

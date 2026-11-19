@@ -23,7 +23,7 @@ const stripCrossorigin = {
 //     'self', no 'unsafe-inline') would block. Native modulepreload support is
 //     fine for our targets; the polyfill is unnecessary.
 //   - stripCrossorigin plugin → see above; required for iOS WKWebView file://.
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   // Compile-time HTML-documents flag. `--mode html` (and an explicit
   // VITE_HTML_DOCUMENTS=true) inlines `true`; default production-shaped
   // builds inline `false`. Replaces the identifier so renderer code never
@@ -37,6 +37,10 @@ export default defineConfig(({ mode }) => {
     base: './',
     define: {
       __HTML_DOCUMENTS_ENABLED__: htmlDocumentsEnabledDefine ? 'true' : 'false',
+      // C+ brand preview (core/brand-preview.js): on for the local dev server
+      // only. Every `vite build` (web, desktop, iOS bundles) inlines false;
+      // native Dev builds turn the preview on through their channel instead.
+      __SPECDOWN_DEV_SERVER__: command === 'serve' ? 'true' : 'false',
     },
     plugins: [stripCrossorigin],
     // 5179 instead of Vite's default 5173 so a local `npm run dev` does not
