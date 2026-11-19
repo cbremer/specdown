@@ -36,6 +36,8 @@ xcodebuild -project SpecDown.xcodeproj \
 
 ## Development channels
 
+For the corresponding Mac editions and version sources, see the [app channel table](../README.md#app-names-build-channels-and-versions).
+
 One source target produces three separately installed apps:
 
 | Scheme | Bundle identifier | Run configuration | Archive configuration | Display name / default icon |

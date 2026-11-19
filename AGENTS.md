@@ -20,7 +20,12 @@ Its four distribution surfaces share the same `markdown-viewer/` codebase:
 - **Mac App Store app** — sandboxed Electron MAS build, with separate Store
   Dev/Beta identities and no direct updater
 
-Current channel evidence and acceptance boundaries are in
+For display names, bundle IDs, build configurations, output directories and
+version sources, use the [app channel table](README.md#app-names-build-channels-and-versions).
+“Desktop Dev” and “Mac App Store Dev” select separate Electron configurations.
+For an installed-version question, read the named bundle or the device's installed app metadata.
+
+Dated channel evidence and acceptance boundaries are in
 `docs/project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md`.
 Use `docs/project-desktop/2026-11-02-spec-platform-testing-runbook.md` for a
 host-authorized test handoff; a runbook is not permission to access another host.
@@ -153,7 +158,7 @@ npm run typecheck         # tsc --noEmit (checkJs) — must be clean before comm
 npm run format:check      # Prettier check; format only touched files
 npm run desktop           # build the web app, then launch Electron (graphical host)
 npm run desktop:build     # build web + host package; use explicit target / --publish never for QA
-npm run desktop:mas-dev   # sandboxed Mac App Store dev build → dist-mas/ (needs a Mac Development profile, or SPECDOWN_MAS_UNPROVISIONED=1 for a local smoke run)
+npm run desktop:mas-dev   # development-signed sandbox build, production Store bundle ID → dist-mas/ (needs a Mac Development profile, or SPECDOWN_MAS_UNPROVISIONED=1 for a local smoke run)
 npm run desktop:mas       # Store-signed .pkg (electron-builder.mas.js; Store certs + profile)
 ```
 
