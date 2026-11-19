@@ -2675,7 +2675,10 @@ mark.search-highlight-current {
     align-items: center;
     gap: 0.5rem;
     max-width: min(90vw, 32rem);
-    z-index: 10000;
+    /* Above every dialog, sheet and overlay (the highest, Recent Files and
+       Bookmarks, sit at 10020) so a toast fired while one is open — "Copied",
+       an error — is never hidden behind its scrim. */
+    z-index: 10030;
     /* The region itself doesn't intercept clicks; individual toasts do. */
     pointer-events: none;
 }
@@ -3618,7 +3621,9 @@ mark.search-highlight-current {
 .annotation-editor-save {
     background-color: var(--accent-color) !important;
     border-color: var(--accent-color) !important;
-    color: white !important;
+    /* text-on-accent, not white: the dark-theme accent is light (#7ab8f5),
+       where white text measures only 2.1:1. */
+    color: var(--text-on-accent) !important;
 }
 
 .annotation-editor-save:hover {

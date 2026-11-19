@@ -1,6 +1,6 @@
 # Modal
 
-The proposed shared pattern for every dialog, sheet and side panel in SpecDown. One anatomy and three variants replace 9 hand-rolled treatments. **Proposed. It isn't in `styles.css` yet.** The CSS is the `.sd-*` block at the end of `components/bundle.css` and uses only existing tokens.
+The proposed shared pattern for every dialog, sheet and side panel in SpecDown. One anatomy and three variants replace 10 hand-rolled treatments. **Proposed. It isn't in `styles.css` yet.** The CSS is the `.sd-*` block at the end of `components/bundle.css` and uses only existing tokens.
 
 ## Anatomy
 
@@ -31,23 +31,24 @@ The proposed shared pattern for every dialog, sheet and side panel in SpecDown. 
 - Trap focus with `trapFocus()` (`src/core/focus-trap.js`), focus the first field or the close button, and restore focus to the opener on close.
 - **Escape, the close button and a scrim click** all dismiss. A dialog with unsaved input asks before discarding.
 - Enter with `fadeIn` over 0.2s. `prefers-reduced-motion` already removes it.
-- Toasts must render **above** modals. Today they render below (toast 10000, modals 10002–10020).
+- Toasts render **above** every modal: the toast layer is 10030, above the highest dialogs at 10020.
 
 ## What it replaces
 
-| Today             | Scrim         | z         | Width     | Radius   | Title             | Close            | Becomes                                                           |
-| ----------------- | ------------- | --------- | --------- | -------- | ----------------- | ---------------- | ----------------------------------------------------------------- |
-| AboutDialog       | .4            | 10002     | 26rem     | xl       | 1.1rem            | Done button      | Dialog sm, footer "Done" removed in favour of the close button    |
-| ShortcutsSheet    | .4            | 10002     | 26rem     | xl       | 1.1rem            | none             | Dialog sm                                                         |
-| FileInfoSheet     | .4            | 10002     | 32rem     | xl       | 1.1rem            | none             | Dialog md, footer "Copy path"                                     |
-| RecentFilesDialog | .4            | **10020** | 34rem     | xl       | **1.2rem**        | `.sample-button` | Dialog md, footer: Clear history (danger) · Close                 |
-| RepoBrowser       | **.5 + blur** | **2000**  | **520px** | xl       | **0.95rem**       | ✕ turns red      | Dialog md, filter in the body's top                               |
-| NoteEditor        | .4            | **1000**  | 440px     | **lg**   | none              | none             | Dialog sm, footer Delete · Cancel · Save                          |
-| CommandPalette    | .4            | 10002     | 38rem     | xl       | (input)           | none             | Keeps its own top-anchored layout. Shares scrim, panel and z only |
-| IOSActionSheet    | **.28**       | **950**   | 540px     | **20px** | 1rem/**700**      | 34px pill        | Sheet                                                             |
-| AnnotationPanel   | none          | 600       | 280px     | none     | uppercase 0.75rem | small ✕          | Drawer                                                            |
-| DiagramFullscreen | n/a           | 1000      | full      | n/a      | n/a               | ✕                | Not a modal: full-surface viewer, keeps its own pattern           |
+| Today             | Scrim         | z         | Width     | Radius         | Title             | Close            | Becomes                                                                       |
+| ----------------- | ------------- | --------- | --------- | -------------- | ----------------- | ---------------- | ----------------------------------------------------------------------------- |
+| AboutDialog       | .4            | 10002     | 26rem     | xl             | 1.1rem            | Done button      | Dialog sm, footer "Done" removed in favour of the close button                |
+| ShortcutsSheet    | .4            | 10002     | 26rem     | xl             | 1.1rem            | none             | Dialog sm                                                                     |
+| FileInfoSheet     | .4            | 10002     | 32rem     | xl             | 1.1rem            | none             | Dialog md, footer "Copy path"                                                 |
+| RecentFilesDialog | .4            | **10020** | 34rem     | xl             | **1.2rem**        | `.sample-button` | Dialog md, footer: Clear history (danger) · Close                             |
+| Bookmarks         | .4            | **10020** | **620px** | 12px (literal) | own heading       | own buttons      | Dialog md; use `shadow-lg` and `radius-xl` instead of its own shadow and 12px |
+| RepoBrowser       | **.5 + blur** | **2000**  | **520px** | xl             | **0.95rem**       | ✕ turns red      | Dialog md, filter in the body's top                                           |
+| NoteEditor        | .4            | **1000**  | 440px     | **lg**         | none              | none             | Dialog sm, footer Delete · Cancel · Save                                      |
+| CommandPalette    | .4            | 10002     | 38rem     | xl             | (input)           | none             | Keeps its own top-anchored layout. Shares scrim, panel and z only             |
+| IOSActionSheet    | **.28**       | **950**   | 540px     | **20px**       | 1rem/**700**      | 34px pill        | Sheet                                                                         |
+| AnnotationPanel   | none          | 600       | 280px     | none           | uppercase 0.75rem | small ✕          | Drawer                                                                        |
+| DiagramFullscreen | n/a           | 1000      | full      | n/a            | n/a               | ✕                | Not a modal: full-surface viewer, keeps its own pattern                       |
 
 ## Proposed tokens this needs
 
-`scrim` rgba(0,0,0,.4) · `radius-2xl` 20px · z-layers `z-drawer` 600, `z-overlay` 1000, `z-modal` 10002, `z-toast` 10010, `z-skip` 10020 (see Evolving the system).
+`scrim` rgba(0,0,0,.4) · `radius-2xl` 20px · z-layers `z-drawer` 600, `z-overlay` 1000, `z-modal` 10002 (today up to 10020), `z-toast` 10030, `z-skip` above dialogs (see Evolving the system).

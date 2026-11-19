@@ -15,9 +15,9 @@ Everything above describes SpecDown as it ships today. This section holds **prop
 
 ## 2a. Converge the dialogs (proposed: the Modal component)
 
-Nine panels each hand-roll their own scrim, size, radius, title and close button. There are three scrim strengths (.28, .4, .5 + blur), six z-index values (600–10020), two radii plus a 20px one-off, three title sizes (0.95, 1.1, 1.2rem) and four close-button styles. Migrate them to the shared `.sd-modal` pattern in this order:
+Ten panels each hand-roll their own scrim, size, radius, title and close button. There are three scrim strengths (.28, .4, .5 + blur), six z-index values (600–10020), two radii plus a 20px one-off, three title sizes (0.95, 1.1, 1.2rem) and four close-button styles. Migrate them to the shared `.sd-modal` pattern in this order:
 
-1. **Fix the two bugs first.** The Note editor's Save button uses `color: white !important` (2.1:1 in dark), so switch it to `text-on-accent`. Toasts render underneath open dialogs (toast z 10000 against dialogs at 10002–10020).
+1. ~~Fix the two bugs first.~~ Done: the Note editor's Save button now uses `text-on-accent`, and toasts sit at 10030, above every dialog.
 2. **Shortcuts, About and File info.** They already share 90% of the styles, so this is the smallest diff.
 3. **Recent files, Repo browser and Note editor.** These carry the most drift.
 4. **iOS sheets.** Make them the Sheet variant and add `role="dialog"` to the Contents and Viewer Actions sheets.
@@ -25,7 +25,7 @@ Nine panels each hand-roll their own scrim, size, radius, title and close button
 
 ## 3. Name the scales the code already uses
 
-- **Z-index:** 2, 200, 500, 600, 900, 950, 1000, 2000, 10000, 10001 and 10002 appear ad hoc. Collapse them into named layers (`z-base`, `z-sticky`, `z-menu`, `z-ios-bar`, `z-overlay`, `z-toast`, `z-skip`, `z-modal`).
+- **Z-index:** 2, 200, 500, 600, 900, 950, 1000, 2000, 10001, 10002, 10020 and 10030 appear ad hoc. Collapse them into named layers (`z-base`, `z-sticky`, `z-menu`, `z-ios-bar`, `z-overlay`, `z-toast`, `z-skip`, `z-modal`).
 - **Font sizes:** 30+ distinct values (0.65–1.25rem). Snap UI text to the five Interface styles.
 - **Radii:** 3px, 18px, 20px and 16px stragglers. Fold them into `radius-sm` / `radius-xl` / a new `radius-2xl` for the drop card.
 - **Motion:** `--transition` and `--transition-fast` exist as composites. Expose `duration-fast` 120ms, `duration-base` 200ms and `easing` as primitives.

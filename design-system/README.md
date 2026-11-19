@@ -54,7 +54,7 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 - Under 640px wide, and on iOS, a modal becomes a **Sheet** that rises from the bottom. Persistent side panels are **Drawers**.
 - At most one primary button, filled `accent-color` with `text-on-accent`. Destructive actions are `color-danger` text on the far left.
 - Escape, the close button and a scrim click all dismiss. Focus is trapped and returned to the opener. Toasts stay visible above any open modal.
-- Today's 9 panels are documented as they ship under "Dialogs · current". The Modal component lists what each one becomes.
+- Today's 10 panels (including Bookmarks) are documented as they ship under "Dialogs · current". The Modal component lists what each one becomes.
 
 ## Motion
 
