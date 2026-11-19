@@ -768,7 +768,7 @@ function buildFileMetadata(filePath) {
   };
 }
 
-const documentImportEnabled = !app.isPackaged || isTestChannel;
+const documentImportEnabled = !app.isPackaged || isTestChannel || IS_MAS;
 function openFileByPath(filePath, context) {
   const ext = typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
   const isImport = documentImportEnabled && ['.docx', '.pdf'].includes(ext);
