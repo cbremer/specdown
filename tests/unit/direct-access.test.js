@@ -19,6 +19,7 @@ describe('direct desktop file capabilities', () => {
       get: (k, fallback) => data[k] ?? fallback,
       set: (k, v) => {
         data[k] = v;
+        return true;
       },
     };
     access = createDirectAccess({ getStore: () => store });
