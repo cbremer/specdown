@@ -95,6 +95,8 @@
     ]
   },
   "build": {
+    "afterPack": "./scripts/retain-electron-build.js",
+    "afterAllArtifactBuild": "./scripts/retain-electron-build.js",
     "electronDownload": {
       "checksums": {
         "electron-v45.2.3-darwin-arm64.zip": "4d7c429064087a47b855d9bd06c76ead4819b7f02b385de232d4a5c37ecef55f",

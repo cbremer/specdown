@@ -62,6 +62,7 @@ Three frameworks were evaluated (Tauri, Electron, Swift + WKWebView). Electron w
 | Nov 8, 2026 | Tasks | [Session 11: Apple 241 parity](2026-11-08-tasks-session-11-apple-241-parity.md) | Consolidate the submitted Apple source onto current main and verify a fresh direct desktop candidate |
 | Nov 8, 2026 | Tasks | [Session 12: desktop deploy preparation](2026-11-08-tasks-session-12-desktop-deploy-prep.md) | Pin verified Electron download checksums and prepare the consolidated source for deployment |
 | Nov 8, 2026 | Tasks | [Session 13: release runtime downloads](2026-11-08-tasks-session-13-release-runtime-downloads.md) | Download and verify vendor runtime archives through the official asset API while preserving the approved application tag |
+| Nov 18, 2026 | Tasks | [Session 14: standard local build retention](2026-11-18-tasks-session-14-local-build-retention.md) | Platform and channel folders outside worktrees, with verified copies of existing Dev builds |
 
 ---
 

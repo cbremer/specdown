@@ -12,7 +12,15 @@ evidence; verify their assumptions against the current checkout.
 **SpecDown** is a lightweight markdown viewer with interactive Mermaid diagram support.
 Track four app platforms: **Mac desktop (direct download), Mac App Store, iPadOS and iOS**. Each has Dev, Beta and Prod channel names. The [root README build matrix](README.md#app-names-build-channels-and-versions) gives implementation status, exact app names, bundle IDs, build commands, install locations and version sources. The shared viewer also powers the web/PWA and Windows/Linux downloads.
 
-Name the platform and channel when reporting a build. On Mac, distinguish **SpecDown Dev** (direct) from **SpecDown Store Dev** (sandboxed). iPadOS and iOS share the Xcode target but have separate device acceptance. Verify installed versions from the actual bundle or target device. See the [recommended retention layout](README.md#recommended-home-for-retained-builds) for packages that need to survive worktree cleanup.
+### Local build handoff
+
+1. Identify the platform and channel. Mac desktop Dev is **SpecDown Dev**. Mac App Store Dev is **SpecDown Store Dev**. iPhone and iPad share the Xcode target and have separate device acceptance.
+2. Use the repository's Mac packaging command or `scripts/build-mobile.sh` for iOS/iPadOS. Local Apple builds belong in `~/Builds/SpecDown/<platform>/<channel>/`. For a product built directly in Xcode or an older worktree, run `python3 scripts/retain-build.py --revision <build-commit> <product>`. Use `unknown` if the original commit cannot be established. The [README](README.md#standard-home-for-retained-builds) lists the paths and commands.
+3. Verify the retained artifact and report its platform, channel, version/build and retained path. For an install request, verify the installed bundle separately. An iPadOS link to an iOS artifact identifies supported hardware. Report device testing only for the device actually exercised.
+
+### Document import in Dev builds
+
+For the current conversion path, inspect `markdown-viewer/src/features/word-import.js` (DOCX via fflate and WordprocessingML), `markdown-viewer/src/platform/pdf-desktop.js` (PDF.js and local Tesseract.js OCR), and `ios/SpecDown/WebBridge.swift` (PDFKit and Vision). Both PDF paths feed `markdown-viewer/src/features/pdf-import.js`. Microsoft MarkItDown was evaluated separately in `scripts/evaluate-markitdown.py`. The [experiment record](docs/project-document-import/2026-11-18-spec-edit-save-dev-acceptance.md#markitdown-experiment) describes that host-only test.
 
 Dated channel evidence and acceptance boundaries are in
 `docs/project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md`.
