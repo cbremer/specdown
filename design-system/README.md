@@ -56,6 +56,20 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 - Escape, the close button and a scrim click all dismiss. Focus is trapped and returned to the opener. Toasts stay visible above any open modal.
 - Shortcuts, About and File info already use it. The other panels are documented as they ship under "Dialogs · current", and the Modal component lists what each one becomes.
 
+## C+ brand moments (Dev preview)
+
+**Preview: Dev builds only.** On when the viewer runs on the local dev server or in a native shell reporting the `development` channel; `core/brand-preview.js` then sets `html[data-brand-preview]`. Beta, Prod and the production web app are unchanged until ZIL-237.
+
+- **Brand bar:** a 3px `brand-teal`→`brand-coral` bar across the top of the app. In a document it fills with reading progress; on the empty state it's full.
+- **Active tab:** gradient top rule instead of solid `accent-color`.
+- **Title signature:** the document's first `h1` gets a 48px gradient underline in place of the full-width hairline.
+- **Read sections:** Contents links for sections scrolled past show a `brand-teal-text` tick.
+- **Quieter toolbar:** buttons rest flat and hover on `bg-tertiary`. Active toggles and the current Contents link use `accent-tint` with `accent-color` text, never a solid fill.
+- **Drop moment:** while a file is dragged over, the drop card's border becomes the gradient with a soft teal/coral glow.
+- **About:** a gradient strip tops the dialog, with the app icon above the tagline.
+- **SpecDown diagram style:** teal nodes and edges (`brand-teal-tint`, `brand-teal-text`), coral secondary (`brand-coral-tint`, `brand-coral-text`). Only for diagrams that carry the Mermaid comment line `%% specdown:brand`, which our bundled samples do. Users' Markdown is never restyled, and a diagram's own `%%{init}%%` always wins.
+- The gradient is decorative. It never carries text, and blue still means "you can act on this".
+
 ## Motion
 
 - Two speeds: 200ms for surface changes and 120ms for hover/press feedback. Animate only colour, background, border, shadow, opacity and transform, never `all`.

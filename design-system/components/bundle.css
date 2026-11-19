@@ -2821,3 +2821,188 @@ mark.search-highlight-current {
     box-shadow: var(--shadow-lg);
   }
 }
+
+/* ===========================
+   C+ brand moments (PREVIEW: Dev builds only)
+   On only when core/brand-preview.js sets html[data-brand-preview]:
+   the local dev server and native shells reporting the `development`
+   channel. Beta, Prod and the production web build never match these rules.
+   Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
+   =========================== */
+html[data-brand-preview] {
+  --brand-teal: #00a3bf;
+  --brand-coral: #ff7a4d;
+  --brand-gradient: linear-gradient(
+    90deg,
+    var(--brand-teal),
+    var(--brand-coral)
+  );
+  --accent-tint: #e4edf6;
+  --brand-teal-text: #007a90;
+  --brand-coral-text: #c2410c;
+  --brand-teal-tint: #e6f6f9;
+  --brand-coral-tint: #ffefea;
+}
+
+html[data-brand-preview][data-theme='dark'] {
+  --accent-tint: #29333d;
+  --brand-teal-text: #00a3bf;
+  --brand-coral-text: #ff7a4d;
+  --brand-teal-tint: #163034;
+  --brand-coral-tint: #3f2922;
+}
+
+/* 1. Brand bar: full on the empty state, fills with reading progress. */
+.brand-bar {
+  position: relative;
+  height: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 163, 191, 0.22),
+    rgba(255, 122, 77, 0.22)
+  );
+}
+
+.brand-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--brand-gradient);
+  transform-origin: left center;
+  transform: scaleX(var(--brand-reading-progress, 1));
+  transition: transform 120ms ease-out;
+}
+
+/* 2. Active tab: gradient rule instead of solid accent. */
+html[data-brand-preview] .tab-active {
+  border-top-color: transparent;
+  background-image: var(--brand-gradient);
+  background-size: 100% 2px;
+  background-repeat: no-repeat;
+  background-position: top left;
+  background-origin: border-box;
+}
+
+/* 3. Title signature: short gradient underline under the document title. */
+html[data-brand-preview] .markdown-content > h1:first-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+html[data-brand-preview] .markdown-content > h1:first-of-type::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 3px;
+  margin-top: 0.4em;
+  border-radius: var(--radius-pill);
+  background: var(--brand-gradient);
+}
+
+/* 4. Read sections: teal tick on contents links already scrolled past. */
+html[data-brand-preview] .toc-link-read::before {
+  content: '✓';
+  display: inline-block;
+  width: 1.1em;
+  margin-left: -1.1em;
+  color: var(--brand-teal-text);
+  font-weight: 700;
+}
+
+html[data-brand-preview] .toc-link-read {
+  padding-left: calc(1rem + 1.1em);
+}
+
+html[data-brand-preview] .toc-link-active {
+  color: var(--accent-color);
+  background-color: var(--accent-tint);
+  border-left-color: transparent;
+  border-radius: var(--radius-md);
+}
+
+/* 5. Quieter toolbar: flat until hovered; active toggles take a tint. */
+html[data-brand-preview]
+  :is(
+    .workspace-toggle-button,
+    .toc-toggle-button,
+    .split-toggle-button,
+    .comments-toggle-button,
+    .annotation-toggle-button,
+    .annotation-list-toggle-button,
+    .print-button,
+    .present-button,
+    .view-toggle-button,
+    .search-toggle-button,
+    .overflow-toggle-button,
+    .source-read-entry
+  ) {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+html[data-brand-preview]
+  :is(
+    .workspace-toggle-button,
+    .toc-toggle-button,
+    .split-toggle-button,
+    .comments-toggle-button,
+    .annotation-toggle-button,
+    .annotation-list-toggle-button,
+    .print-button,
+    .present-button,
+    .view-toggle-button,
+    .search-toggle-button,
+    .overflow-toggle-button,
+    .source-read-entry
+  ):hover {
+  background-color: var(--bg-tertiary);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+
+html[data-brand-preview]
+  :is(
+    .workspace-toggle-button,
+    .toc-toggle-button,
+    .split-toggle-button,
+    .comments-toggle-button,
+    .annotation-list-toggle-button,
+    .view-toggle-button
+  ).active {
+  background-color: var(--accent-tint);
+  border-color: transparent;
+  color: var(--accent-color);
+}
+
+/* 6. Drop moment: gradient ring and glow while a file is dragged over. */
+html[data-brand-preview] .drop-zone.drag-over .drop-zone-content {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--bg-primary), var(--bg-primary)) padding-box,
+    linear-gradient(135deg, var(--brand-teal), var(--brand-coral)) border-box;
+  box-shadow:
+    0 0 60px rgba(0, 163, 191, 0.3),
+    0 0 120px rgba(255, 122, 77, 0.16);
+}
+
+/* 7. About: brand strip above the header, app icon above the tagline. */
+html[data-brand-preview] .about-sheet::before {
+  content: '';
+  height: 4px;
+  flex-shrink: 0;
+  background: var(--brand-gradient);
+}
+
+html[data-brand-preview] .about-mark {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 0.75rem;
+}
+
+@media print {
+  .brand-bar {
+    display: none;
+  }
+}

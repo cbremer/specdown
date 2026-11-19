@@ -19,6 +19,7 @@ The classic. Expand it to zoom, pan, and explore.
 
 ```mermaid
 graph TD
+%% specdown:brand
     U[User] -->|HTTPS| LB[Load Balancer]
     LB --> A[App Server 1]
     LB --> B[App Server 2]
@@ -40,6 +41,7 @@ graph TD
 
 ```mermaid
 sequenceDiagram
+%% specdown:brand
     autonumber
     participant U as User
     participant App as SpecDown
@@ -61,6 +63,7 @@ sequenceDiagram
 
 ```mermaid
 classDiagram
+%% specdown:brand
     class Tab {
         +int id
         +string filename
@@ -95,6 +98,7 @@ The actual state machine behind the "Live" chip next to the filename.
 
 ```mermaid
 stateDiagram-v2
+%% specdown:brand
     [*] --> Live : file-backed tab opened
     Live --> Paused : click chip
     Paused --> Live : click chip
@@ -108,6 +112,7 @@ stateDiagram-v2
 
 ```mermaid
 erDiagram
+%% specdown:brand
     DOCUMENT ||--o{ HEADING : contains
     DOCUMENT ||--o{ DIAGRAM : contains
     DOCUMENT ||--o{ ANNOTATION : "annotated by"
@@ -128,6 +133,7 @@ erDiagram
 
 ```mermaid
 gantt
+%% specdown:brand
     title Modernization at a glance
     dateFormat  YYYY-MM-DD
     section Foundations
@@ -147,6 +153,7 @@ gantt
 
 ```mermaid
 pie showData
+%% specdown:brand
     title Bundle composition (gzipped)
     "Mermaid (lazy)" : 380
     "App shell" : 92
@@ -159,6 +166,7 @@ pie showData
 
 ```mermaid
 gitGraph
+%% specdown:brand
     commit id: "v0.0.165"
     branch claude/fix
     checkout claude/fix
@@ -173,6 +181,7 @@ gitGraph
 
 ```mermaid
 journey
+%% specdown:brand
     title Reading a spec in SpecDown
     section Getting in
       Drag folder onto app: 5: Reader
@@ -189,6 +198,7 @@ journey
 
 ```mermaid
 mindmap
+%% specdown:brand
   root((SpecDown))
     Reading
       Tabs

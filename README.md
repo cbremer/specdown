@@ -57,6 +57,8 @@ On Mac, Command-click a running app’s Dock icon to reveal that exact copy in F
 
 **Document-import Dev builds verified November 18, 2026.** The direct Mac Dev package reports **0.0.234**. Mac App Store Dev **1.0.4 (252)** was installed on Mac and verified through its sandboxed Save panel. iOS Dev **1.0.4 (251)** was installed on iPhone. Physical iPadOS installation and OCR acceptance are open. These are local Dev checkpoints. [iOS and direct Mac OCR results](docs/project-document-import/2026-11-18-tasks-session-07-pdf-ocr-dev.md) · [Mac App Store Dev results](docs/project-document-import/2026-11-18-tasks-session-08-mac-store-dev.md)
 
+**Design preview in Dev builds.** Dev builds (Mac direct Dev, Mac App Store Dev, iPhone/iPad Dev) and the local dev server show the C+ brand moments design: a brand bar that fills as you read, read ticks in Contents, a quieter toolbar, a brand drop moment and About, and the SpecDown diagram style on the bundled samples. Beta and Prod are unchanged. [Spec](docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md)
+
 ### Standard home for retained builds
 
 Open **`~/Builds/SpecDown`** in Finder to find a completed local build from any worktree. Pick the platform, then the channel. Each build folder contains the runnable app or archive, its matching packaging outputs, and a `manifest.json`. For example, the Mac App Store Dev builds are in `~/Builds/SpecDown/mac-store/dev/`.

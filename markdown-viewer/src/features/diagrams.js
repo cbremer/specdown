@@ -11,6 +11,8 @@ import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import { getSvgNaturalDimensions } from '../core/utils.js';
 import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
+import { state } from '../core/state.js';
+import { brandDiagramSource } from '../core/brand-preview.js';
 import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
 
@@ -94,7 +96,7 @@ export async function processMermaidDiagrams() {
             const diagramId = `mermaid-diagram-${i}-${Date.now()}`;
 
             // Render mermaid diagram
-            const { svg } = await mermaid.render(diagramId, mermaidCode);
+            const { svg } = await mermaid.render(diagramId, brandDiagramSource(mermaidCode, state.currentTheme === 'dark'));
             if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
 
             // Create diagram container with mermaid source for re-rendering
@@ -133,7 +135,7 @@ export async function renderStandaloneMermaid(host, mermaidCode, idPrefix) {
     const mermaid = await loadMermaid();
     const diagramId = `${idPrefix || 'standalone-diagram'}-${Date.now()}`;
     try {
-        const { svg } = await mermaid.render(diagramId, mermaidCode);
+        const { svg } = await mermaid.render(diagramId, brandDiagramSource(mermaidCode, state.currentTheme === 'dark'));
         const container = createDiagramContainer(svg, diagramId, mermaidCode);
         host.replaceChildren(container);
         initializeInlineDiagram(diagramId);
@@ -775,7 +777,7 @@ export async function reRenderMermaidDiagrams() {
 
         try {
             // Re-render with new theme
-            const { svg } = await mermaid.render(`${diagramId}-rerender`, mermaidCode);
+            const { svg } = await mermaid.render(`${diagramId}-rerender`, brandDiagramSource(mermaidCode, state.currentTheme === 'dark'));
             if (generation !== diagramRenderGeneration || !isDocumentContextCurrent(context)) return;
 
             // Update wrapper content

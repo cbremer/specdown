@@ -6,6 +6,7 @@ This document is bundled with SpecDown so the iOS app always ships with a Mermai
 
 ```mermaid
 graph TD
+%% specdown:brand
     A[User] --> B[Web App]
     B --> C[API Server]
     C --> D[Database]
@@ -15,5 +16,6 @@ graph TD
 
 ```mermaid
 flowchart LR
+%% specdown:brand
     Start --> Stop
 ```

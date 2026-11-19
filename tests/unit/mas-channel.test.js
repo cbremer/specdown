@@ -144,6 +144,20 @@ describe('Store version metadata passed to the viewer', () => {
     ]);
   });
 
+  it.each([
+    [true, undefined, null],
+    [true, 'production', null],
+    [true, 'development', 'development'],
+    [true, 'beta', 'beta'],
+    [false, undefined, 'development'],
+  ])(
+    'direct viewer channel: packaged=%p, specdownChannel=%p -> %p',
+    (packaged, channel, expected) => {
+      const main = loadMain(false);
+      expect(main.directViewerChannel(packaged, channel)).toBe(expected);
+    }
+  );
+
   it('does not coerce a native version object', () => {
     const main = loadMain(true);
     const toString = jest.fn(() => '1.0.1');

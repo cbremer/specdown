@@ -34,6 +34,8 @@ module.exports = [
         webkit: 'readonly',
         // Vite `define` identifier (html-flag.js). Undeclared under Jest.
         __HTML_DOCUMENTS_ENABLED__: 'readonly',
+        // Vite `define`: true only under the dev server (brand-preview.js).
+        __SPECDOWN_DEV_SERVER__: 'readonly',
       },
     },
     rules: {
