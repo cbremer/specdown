@@ -11,7 +11,7 @@ import DOMPurify from 'dompurify';
 import { setupIOSURLEntry } from './ios-url-entry.js';
 import { syncIOSDocumentView, requestIOSImageFolder, reloadIOSDocumentImages } from './ios-documents.js';
 import { state } from '../core/state.js';
-import { trapFocus } from '../core/focus-trap.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import { isDesktop, isIOSNative } from '../core/platform.js';
 import { escapeHtml } from '../core/utils.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
@@ -116,15 +116,34 @@ const sheetTraps = new Map();
 export function setIOSSheetVisibility(sheet, visible) {
   if (!sheet) return;
   sheet.style.display = visible ? 'flex' : 'none';
-  // Sheets are aria-modal surfaces; trap Tab while open (external keyboards
-  // on iPad are common) and release on close.
+  // Sheets are aria-modal surfaces (external keyboards on iPad are common):
+  // trap Tab while open, close on Escape through the sheet's own close button
+  // (so its specific close path runs), and return focus to the opener.
   const existing = sheetTraps.get(sheet.id);
   if (existing) {
     existing();
     sheetTraps.delete(sheet.id);
   }
   if (visible) {
-    sheetTraps.set(sheet.id, trapFocus(sheet));
+    const iosSheetOpener = document.activeElement;
+    const iosSheetReleaseTrap = trapFocus(sheet);
+    /** @param {KeyboardEvent} event */
+    const iosSheetOnKey = (event) => {
+      if (event.key !== 'Escape') return;
+      const closeButton = /** @type {HTMLElement | null} */ (
+        sheet.querySelector('.ios-sheet-close')
+      );
+      if (!closeButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeButton.click();
+    };
+    sheet.addEventListener('keydown', iosSheetOnKey);
+    sheetTraps.set(sheet.id, () => {
+      iosSheetReleaseTrap();
+      sheet.removeEventListener('keydown', iosSheetOnKey);
+      if (canRestoreNonEditableFocus(iosSheetOpener)) iosSheetOpener.focus();
+    });
   }
 }
 

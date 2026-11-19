@@ -158,7 +158,8 @@ When starting a new session, **add a tasks file** with the next session number a
 - **Before UI work**, read `design-system/README.md`, then the relevant section (`native-platforms.md`, `visual-themes.md`) or `components/<Name>/README.md`.
 - **Use tokens, not raw values.** `design-system/tokens.json` names every colour (light and dark), type style, spacing step, radius and shadow by its CSS variable name (`--<name>`). If nothing fits, add a token in the same PR.
 - **Keep it current.** A PR that changes a token, a component's look or behaviour, a visual theme, or native shell UI updates the matching `design-system/` file in the same PR. If you change a rule that `design-system/components/bundle.css` copies, refresh the copy.
-- **Proposals are not tokens.** `design-system/evolving.md` and the proposed `.sd-*` Modal are planned, not shipped. Don't treat them as current until adopted.
+- **Proposals are not tokens.** `design-system/evolving.md` and the Modal's Sheet and Drawer variants are planned, not shipped. Don't treat them as current until adopted.
+- **New dialogs use the shared Modal.** Build them with `createSdModal` in `markdown-viewer/src/core/modal.js` (see `design-system/components/Modal/README.md`), not a hand-rolled overlay.
 
 ---
 

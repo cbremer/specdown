@@ -11,7 +11,7 @@ import {
 } from '../core/document-context.js';
 import { fetchGitHubRepoFiles, parsePublicRepoUrl } from './repo-api.js';
 
-import { trapFocus } from '../core/focus-trap.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 import { platformIsTouchFirst } from '../core/platform.js';
 import { iconSvg } from '../core/icons.js';
 import { escapeHtml } from '../core/utils.js';
@@ -96,6 +96,15 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
       if (e.target === modal && repoBrowserActiveClose)
         repoBrowserActiveClose();
     });
+    // Escape closes, like every other modal. Bound once on the reused element
+    // and delegated through the active-close ref, like the backdrop click.
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && repoBrowserActiveClose) {
+        e.preventDefault();
+        e.stopPropagation();
+        repoBrowserActiveClose();
+      }
+    });
     document.body.appendChild(modal);
   }
   const panel = modal;
@@ -103,6 +112,7 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
   // Re-opened while already open: release the previous instance's focus trap
   // before it gets orphaned by the innerHTML rebuild below.
   if (repoBrowserActiveClose) repoBrowserActiveClose();
+  const repoBrowserOpener = document.activeElement;
 
   const repoName = repoUrl
     .replace(/^https?:\/\/github\.com\//, '')
@@ -137,6 +147,9 @@ function showRepoBrowser(files, repoUrl, onSelectFile) {
     releaseTrap();
     panel.style.display = 'none';
     repoBrowserActiveClose = null;
+    // Return focus to the control that opened the browser (never re-focus a
+    // text field, which would reopen the on-screen keyboard).
+    if (canRestoreNonEditableFocus(repoBrowserOpener)) repoBrowserOpener.focus();
   };
   repoBrowserActiveClose = closeModal;
 

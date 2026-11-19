@@ -16,7 +16,7 @@ Everything above describes SpecDown as it ships today. This section holds **prop
 Ten panels each hand-roll their own scrim, size, radius, title and close button. There are three scrim strengths (.28, .4, .5 + blur), six z-index values (600–10020), two radii plus a 20px one-off, three title sizes (0.95, 1.1, 1.2rem) and four close-button styles. Migrate them to the shared `.sd-modal` pattern in this order:
 
 1. ~~Fix the two bugs first.~~ Done: the Note editor's Save button now uses `text-on-accent`, and toasts sit at 10030, above every dialog.
-2. **Shortcuts, About and File info.** They already share 90% of the styles, so this is the smallest diff.
+2. ~~Shortcuts, About and File info.~~ Done: all three use the shared Modal (`core/modal.js`).
 3. **Recent files, Repo browser and Note editor.** These carry the most drift.
 4. **iOS sheets.** Make them the Sheet variant and add `role="dialog"` to the Contents and Viewer Actions sheets.
 5. **Annotation panel** becomes the Drawer variant. Command palette and Diagram fullscreen keep their own layouts but share the scrim and the z-layer.

@@ -107,7 +107,10 @@ describe('File info sheet (web)', () => {
     expect(dialog).not.toBeNull();
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(dialog.getAttribute('aria-label')).toBe('File info');
+    const labelledBy = dialog.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelledBy).textContent).toBe('File info');
+    // Shared modal: a visible close button that dismisses the dialog.
+    expect(dialog.querySelector('.sd-modal-close')).not.toBeNull();
 
     const nameCell = document.querySelector('[data-info-value="name"]');
     expect(nameCell.textContent).toBe('notes.md');

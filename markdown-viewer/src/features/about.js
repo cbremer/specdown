@@ -4,6 +4,7 @@
 // sit in the header — a public app keeps build details out of the main chrome.
 
 import { trapFocus } from '../core/focus-trap.js';
+import { createSdModal } from '../core/modal.js';
 import { getAppVersion, getAvailableUpdate } from './version-check.js';
 
 const ABOUT_LINKS = [
@@ -40,28 +41,6 @@ export function openAboutDialog() {
   if (aboutOverlay) return;
   aboutPreviousFocus = document.activeElement;
 
-  aboutOverlay = document.createElement('div');
-  aboutOverlay.className = 'shortcuts-overlay';
-  aboutOverlay.addEventListener('mousedown', (e) => {
-    if (e.target === aboutOverlay) closeAboutDialog();
-  });
-
-  const dialog = document.createElement('div');
-  dialog.className = 'shortcuts-sheet about-sheet';
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-labelledby', 'about-title');
-  dialog.tabIndex = -1;
-  dialog.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closeAboutDialog();
-    }
-  });
-
-  const heading = document.createElement('h2');
-  heading.id = 'about-title';
-  heading.className = 'shortcuts-title';
   const aboutBuildChannel = window.specdownAppChannel;
   const aboutChannelLabel =
     aboutBuildChannel === 'development'
@@ -69,14 +48,22 @@ export function openAboutDialog() {
       : aboutBuildChannel === 'beta'
         ? 'Beta'
         : '';
-  heading.textContent =
-    'SpecDown' + (aboutChannelLabel ? ' — ' + aboutChannelLabel : '');
-  dialog.appendChild(heading);
+  const aboutModal = createSdModal({
+    title: 'SpecDown' + (aboutChannelLabel ? ' — ' + aboutChannelLabel : ''),
+    titleId: 'about-title',
+    size: 'sm',
+    scrimClass: 'about-overlay',
+    dialogClass: 'about-sheet',
+    onClose: closeAboutDialog,
+  });
+  aboutOverlay = aboutModal.scrim;
+  const dialog = aboutModal.dialog;
+  const aboutBody = aboutModal.body;
 
   const tagline = document.createElement('p');
   tagline.className = 'about-tagline';
   tagline.textContent = 'A Markdown viewer with live Mermaid diagrams.';
-  dialog.appendChild(tagline);
+  aboutBody.appendChild(tagline);
 
   const version = document.createElement('p');
   version.id = 'about-version';
@@ -91,7 +78,7 @@ export function openAboutDialog() {
         ? ' (build ' + aboutNativeBuild + ')'
         : ' (' + getAppVersion() + ')')
     : 'Version ' + getAppVersion();
-  dialog.appendChild(version);
+  aboutBody.appendChild(version);
 
   const update = getAvailableUpdate();
   if (update) {
@@ -100,7 +87,7 @@ export function openAboutDialog() {
     updateLine.appendChild(
       aboutLink('Version ' + update.version + ' is available', update.url)
     );
-    dialog.appendChild(updateLine);
+    aboutBody.appendChild(updateLine);
   }
 
   const links = document.createElement('ul');
@@ -110,16 +97,15 @@ export function openAboutDialog() {
     item.appendChild(aboutLink(label, href));
     links.appendChild(item);
   }
-  dialog.appendChild(links);
+  aboutBody.appendChild(links);
 
   const done = document.createElement('button');
   done.type = 'button';
-  done.className = 'about-done';
+  done.className = 'sd-button about-done';
   done.textContent = 'Done';
   done.addEventListener('click', () => closeAboutDialog());
-  dialog.appendChild(done);
+  aboutModal.footer().appendChild(done);
 
-  aboutOverlay.appendChild(dialog);
   document.body.appendChild(aboutOverlay);
   aboutReleaseTrap = trapFocus(aboutOverlay);
   dialog.focus();

@@ -1,6 +1,6 @@
 # Modal
 
-The proposed shared pattern for every dialog, sheet and side panel in SpecDown. One anatomy and three variants replace 10 hand-rolled treatments. **Proposed. It isn't in `styles.css` yet.** The CSS is the `.sd-*` block at the end of `components/bundle.css` and uses only existing tokens.
+The proposed shared pattern for every dialog, sheet and side panel in SpecDown. One anatomy and three variants replace 10 hand-rolled treatments. **Dialog variant: shipped** for Shortcuts, About and File info (`markdown-viewer/src/core/modal.js` builds it; styles in `styles.css`). **Sheet and Drawer variants, and the remaining dialogs: proposed.** The full CSS is the `.sd-*` block at the end of `components/bundle.css` and uses only existing tokens.
 
 ## Anatomy
 
@@ -25,6 +25,10 @@ The proposed shared pattern for every dialog, sheet and side panel in SpecDown. 
 - Danger: a text button in `color-danger`, left-aligned and never primary.
 - One primary per dialog at most. Information-only dialogs (About, Shortcuts, File info) have no primary; the close button is enough.
 
+## Using it in code
+
+`createSdModal({ title, size, onClose, scrimClass, dialogClass })` from `src/core/modal.js` returns `{ scrim, dialog, title, body, footer() }`. Append `scrim` to the page, put content in `body`, add buttons with `footer()`, then trap focus in `scrim` and focus `dialog`. Escape, the close button and a scrim click call `onClose`. The caller keeps its own open state and restores focus on close.
+
 ## Behaviour (all variants)
 
 - `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` pointing at the title.
@@ -37,9 +41,9 @@ The proposed shared pattern for every dialog, sheet and side panel in SpecDown. 
 
 | Today             | Scrim         | z         | Width     | Radius         | Title             | Close            | Becomes                                                                       |
 | ----------------- | ------------- | --------- | --------- | -------------- | ----------------- | ---------------- | ----------------------------------------------------------------------------- |
-| AboutDialog       | .4            | 10002     | 26rem     | xl             | 1.1rem            | Done button      | Dialog sm, footer "Done" removed in favour of the close button                |
-| ShortcutsSheet    | .4            | 10002     | 26rem     | xl             | 1.1rem            | none             | Dialog sm                                                                     |
-| FileInfoSheet     | .4            | 10002     | 32rem     | xl             | 1.1rem            | none             | Dialog md, footer "Copy path"                                                 |
+| AboutDialog       | .4            | 10002     | 26rem     | xl             | 1.1rem            | Done button      | **Done:** Dialog sm, footer keeps "Done"                                      |
+| ShortcutsSheet    | .4            | 10002     | 26rem     | xl             | 1.1rem            | none             | **Done:** Dialog sm                                                           |
+| FileInfoSheet     | .4            | 10002     | 32rem     | xl             | 1.1rem            | none             | **Done:** Dialog md, footer "Copy path" (desktop)                             |
 | RecentFilesDialog | .4            | **10020** | 34rem     | xl             | **1.2rem**        | `.sample-button` | Dialog md, footer: Clear history (danger) · Close                             |
 | Bookmarks         | .4            | **10020** | **620px** | 12px (literal) | own heading       | own buttons      | Dialog md; use `shadow-lg` and `radius-xl` instead of its own shadow and 12px |
 | RepoBrowser       | **.5 + blur** | **2000**  | **520px** | xl             | **0.95rem**       | ✕ turns red      | Dialog md, filter in the body's top                                           |

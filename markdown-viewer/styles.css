@@ -2919,34 +2919,121 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   Keyboard Shortcuts Sheet
+   Modal (design system: components/Modal)
+   One shared dialog for every modal surface: scrim, panel, header with a
+   close button, scrolling body, optional footer. Built by core/modal.js.
    =========================== */
-.shortcuts-overlay {
+.sd-scrim {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10002;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10002;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) calc(1rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px));
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
-.shortcuts-sheet {
-    width: min(92vw, 26rem);
+.sd-modal {
+    width: min(100%, 32rem);
+    max-height: min(85vh, 100%);
+    display: flex;
+    flex-direction: column;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    padding: 1.25rem 1.5rem;
+    overflow: hidden;
     outline: none;
+    animation: fadeIn 0.2s ease;
 }
 
-.shortcuts-title {
+.sd-modal--sm {
+    width: min(100%, 26rem);
+}
+
+.sd-modal--lg {
+    width: min(100%, 38rem);
+}
+
+.sd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sd-modal-title {
+    margin: 0;
+    min-width: 0;
     font-size: 1.1rem;
-    margin-bottom: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
+.sd-modal-close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.sd-modal-close:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.sd-modal-body {
+    min-height: 0;
+    padding: var(--space-4) var(--space-5);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.sd-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5) var(--space-4);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sd-button {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.sd-button:hover {
+    border-color: var(--accent-color);
+}
+
+/* ===========================
+   Keyboard Shortcuts Sheet (content; container is .sd-modal)
+   =========================== */
 .shortcuts-list {
     margin: 0;
 }
@@ -2978,36 +3065,8 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   File Info Sheet
+   File Info Sheet (content; container is .sd-modal)
    =========================== */
-.file-info-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10002;
-}
-
-.file-info-sheet {
-    width: min(92vw, 32rem);
-    max-height: 85vh;
-    overflow-y: auto;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
-    padding: 1.25rem 1.5rem;
-    outline: none;
-}
-
-.file-info-title {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-}
-
 .file-info-list {
     margin: 0;
 }
@@ -3041,26 +3100,6 @@ mark.search-highlight-current {
     font-family: "SFMono-Regular", SFMono-Regular, ui-monospace, Menlo, monospace;
     font-size: 0.9rem;
     user-select: text;
-}
-
-.file-info-actions {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.file-info-copy {
-    padding: 0.4rem 0.9rem;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.file-info-copy:hover {
-    background-color: var(--bg-secondary);
 }
 
 /* ===========================
@@ -3812,7 +3851,7 @@ mark.search-highlight-current {
 
 .about-links {
     list-style: none;
-    margin: 0 0 1rem;
+    margin: 0;
     padding: 0;
 }
 
@@ -3822,18 +3861,6 @@ mark.search-highlight-current {
 
 .about-sheet a {
     color: var(--accent-color);
-}
-
-.about-done {
-    display: block;
-    margin-left: auto;
-    padding: 0.4rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    font: inherit;
-    cursor: pointer;
 }
 
 /* Quiet "update available" marker on the ⋮ toggle (web, Windows, Linux). */

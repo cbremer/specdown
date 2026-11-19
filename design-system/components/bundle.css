@@ -1879,32 +1879,6 @@ mark.search-highlight-current {
 /* ===========================
    Keyboard Shortcuts Sheet
    =========================== */
-.shortcuts-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10002;
-}
-
-.shortcuts-sheet {
-  width: min(92vw, 26rem);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  padding: 1.25rem 1.5rem;
-  outline: none;
-}
-
-.shortcuts-title {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
-}
-
 .shortcuts-list {
   margin: 0;
 }
@@ -1938,34 +1912,6 @@ mark.search-highlight-current {
 /* ===========================
    File Info Sheet
    =========================== */
-.file-info-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10002;
-}
-
-.file-info-sheet {
-  width: min(92vw, 32rem);
-  max-height: 85vh;
-  overflow-y: auto;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  padding: 1.25rem 1.5rem;
-  outline: none;
-}
-
-.file-info-title {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
-}
-
 .file-info-list {
   margin: 0;
 }
@@ -1999,26 +1945,6 @@ mark.search-highlight-current {
   font-family: 'SFMono-Regular', SFMono-Regular, ui-monospace, Menlo, monospace;
   font-size: 0.9rem;
   user-select: text;
-}
-
-.file-info-actions {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.file-info-copy {
-  padding: 0.4rem 0.9rem;
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.file-info-copy:hover {
-  background-color: var(--bg-secondary);
 }
 
 .ios-action-bar {
@@ -2600,7 +2526,7 @@ mark.search-highlight-current {
 
 .about-links {
   list-style: none;
-  margin: 0 0 1rem;
+  margin: 0;
   padding: 0;
 }
 
@@ -2610,18 +2536,6 @@ mark.search-highlight-current {
 
 .about-sheet a {
   color: var(--accent-color);
-}
-
-.about-done {
-  display: block;
-  margin-left: auto;
-  padding: 0.4rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  font: inherit;
-  cursor: pointer;
 }
 
 .toast-region:has(.native-file-recovery) {
@@ -2713,9 +2627,11 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   PROPOSED — shared Modal / Sheet / Drawer (not in styles.css yet)
-   One pattern for every dialog. Uses existing tokens only; values with no
-   token yet (scrim, 20px sheet radius, z layer) are marked PROPOSED-TOKEN.
+   Shared Modal / Sheet / Drawer. The Dialog parts (.sd-scrim, .sd-modal,
+   header, close, body, footer, .sd-button) ship in styles.css and are built by
+   core/modal.js. The Sheet and Drawer variants, the primary and danger button
+   styles, and the 640px sheet switch are still PROPOSED. Values with no token
+   yet (scrim, 20px sheet radius, z layer) are marked PROPOSED-TOKEN.
    =========================== */
 .sd-scrim {
   position: fixed;

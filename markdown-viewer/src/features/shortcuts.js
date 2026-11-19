@@ -3,6 +3,7 @@
 // shortcuts. Opened with `?` or from the command palette.
 
 import { trapFocus } from '../core/focus-trap.js';
+import { createSdModal } from '../core/modal.js';
 
 const MOD = /Mac|iPhone|iPad/.test(
   (typeof navigator !== 'undefined' && navigator.platform) || ''
@@ -42,29 +43,15 @@ export function openShortcutsSheet() {
   if (overlay) return;
   previouslyFocused = document.activeElement;
 
-  overlay = document.createElement('div');
-  overlay.className = 'shortcuts-overlay';
-  overlay.addEventListener('mousedown', (e) => {
-    if (e.target === overlay) closeShortcutsSheet();
+  const modal = createSdModal({
+    title: 'Keyboard shortcuts',
+    size: 'sm',
+    scrimClass: 'shortcuts-overlay',
+    dialogClass: 'shortcuts-sheet',
+    onClose: closeShortcutsSheet,
   });
-
-  const dialog = document.createElement('div');
-  dialog.className = 'shortcuts-sheet';
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', 'Keyboard shortcuts');
-  dialog.tabIndex = -1;
-  dialog.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closeShortcutsSheet();
-    }
-  });
-
-  const heading = document.createElement('h2');
-  heading.className = 'shortcuts-title';
-  heading.textContent = 'Keyboard shortcuts';
-  dialog.appendChild(heading);
+  overlay = modal.scrim;
+  const dialog = modal.dialog;
 
   const list = document.createElement('dl');
   list.className = 'shortcuts-list';
@@ -84,9 +71,8 @@ export function openShortcutsSheet() {
     row.appendChild(dd);
     list.appendChild(row);
   }
-  dialog.appendChild(list);
+  modal.body.appendChild(list);
 
-  overlay.appendChild(dialog);
   document.body.appendChild(overlay);
   releaseTrap = trapFocus(overlay);
   dialog.focus();

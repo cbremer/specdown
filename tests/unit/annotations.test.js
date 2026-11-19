@@ -82,6 +82,31 @@ test('heading paths distinguish duplicate text', async () => {
     root.querySelectorAll('p')[1].querySelector('.annotation-badge')
   ).not.toBeNull();
 });
+test('note editor traps Tab and returns focus to its opener on Cancel', async () => {
+  const root = await open();
+  const opener = document.createElement('button');
+  opener.textContent = 'Annotate';
+  document.body.appendChild(opener);
+  opener.focus();
+
+  openAnnotationEditor({ element: root.querySelector('p') });
+  const editor = document.getElementById('annotation-editor-backdrop');
+  const save = editor.querySelector('.annotation-editor-save');
+  save.focus();
+  const tab = new KeyboardEvent('keydown', {
+    key: 'Tab',
+    bubbles: true,
+    cancelable: true,
+  });
+  editor.dispatchEvent(tab);
+  // Tab from the last control wraps inside the editor instead of escaping.
+  expect(tab.defaultPrevented).toBe(true);
+  expect(editor.contains(document.activeElement)).toBe(true);
+
+  editor.querySelector('.annotation-editor-cancel').click();
+  expect(editor.style.display).toBe('none');
+  expect(document.activeElement).toBe(opener);
+});
 test('real editor commits only on acknowledgement, keeps draft on conflict, and preserves unrelated work', async () => {
   const root = await open();
   openAnnotationEditor({ element: root.querySelector('p') });
