@@ -8,6 +8,7 @@ export const RECOVERY_LIMITS = Object.freeze({
   manifestBytes: 256 * 1024,
   archives: 128,
   storeArchives: 256,
+  restoreMetadata: 1024,
   occurrences: 20000,
   inventoryOccurrences: 60000,
   depth: 48,
@@ -1630,50 +1631,117 @@ export async function recoveryRestoreFile(bytes) {
       ? { ...a, privateState: true }
       : a
   );
-  /** @type {any[]} */
-  const all = [...contents];
+  // Bound the entire nested descriptor workload before constructing or hashing
+  // any embedded history. The outer manifest cap alone does not constrain it.
+  let metadataCount = 0;
+  let restoreBytes = bytes.length;
+  for (const archive of contents) restoreBytes += archive.bytes.length;
+  /** @type {any[][]} */
+  const metadataGroups = [];
+  const plannedIds = new Set(contents.map((archive) => archive.id));
   for (const state of contents) {
     if (!state.status.startsWith('supported private state')) continue;
     const parsed = recoveryJSON(state.raw || state.previewText || '');
-    for (const metadata of parsed.archives || []) {
-      if (!metadata.privateState) continue;
-      const embedded = await recoveryArchive(
-        metadata.raw !== null && metadata.kind === 'utf16le-units'
-          ? metadata.raw
-          : new Uint8Array(metadata.embeddedBytes),
-        metadata.claim
-      );
-      if (embedded.id !== metadata.id)
-        recoveryFail('Embedded private history integrity mismatch.');
-      if (all.some((a) => a.id === embedded.id)) continue;
-      if (
-        all.reduce((n, a) => n + a.occurrences.length, 0) +
-          embedded.occurrences.length >
-        RECOVERY_LIMITS.inventoryOccurrences
-      )
-        recoveryFail(
-          'Embedded inventory exceeds capacity. Preserve the input opaque.'
-        );
-      if (!all.some((a) => a.id === embedded.id))
-        all.push({ ...embedded, privateState: true });
+    const metadata = parsed.archives === undefined ? [] : parsed.archives;
+    if (!Array.isArray(metadata))
+      recoveryFail('Invalid embedded archive metadata.');
+    metadataCount += metadata.length;
+    if (metadataCount > RECOVERY_LIMITS.restoreMetadata)
+      recoveryFail('Embedded metadata count exceeds restore capacity.');
+    metadataGroups.push(metadata);
+    for (const entry of metadata) {
+      if (!recoveryRecord(entry))
+        recoveryFail('Invalid embedded archive metadata.');
+      if (entry.privateState || entry.containerRecipe) {
+        if (
+          typeof entry.id !== 'string' ||
+          !/^sha256:(?:utf16le-units|original-bytes):[0-9a-f]{64}$/.test(
+            entry.id
+          )
+        )
+          recoveryFail('Invalid embedded archive identity.');
+        plannedIds.add(entry.id);
+        // Every restore also retains the exact outer container. References to
+        // an already planned archive do not consume another unique slot.
+        if (plannedIds.size >= RECOVERY_LIMITS.storeArchives)
+          recoveryFail('Expanded archive count exceeds restore capacity.');
+      }
+      if (entry.privateState) {
+        if (entry.kind === 'utf16le-units' && typeof entry.raw === 'string') {
+          if (entry.raw.length * 2 > RECOVERY_LIMITS.archiveBytes)
+            recoveryFail('Embedded archive exceeds restore capacity.');
+          restoreBytes += entry.raw.length * 2;
+        } else if (
+          entry.kind === 'original-bytes' &&
+          entry.raw === null &&
+          Array.isArray(entry.embeddedBytes) &&
+          entry.embeddedBytes.length <= RECOVERY_LIMITS.archiveBytes &&
+          entry.embeddedBytes.every(
+            (/** @type {any} */ b) => Number.isInteger(b) && b >= 0 && b <= 255
+          )
+        ) {
+          restoreBytes += entry.embeddedBytes.length;
+        } else recoveryFail('Invalid embedded archive payload.');
+      }
+      const recipe = entry.containerRecipe;
+      if (recipe) {
+        if (
+          !recoveryRecord(recipe) ||
+          !Array.isArray(recipe.prefix) ||
+          recipe.prefix.length > RECOVERY_LIMITS.manifestBytes + 8 ||
+          !recipe.prefix.every(
+            (/** @type {any} */ b) => Number.isInteger(b) && b >= 0 && b <= 255
+          ) ||
+          !Array.isArray(recipe.parts) ||
+          recipe.parts.length > RECOVERY_LIMITS.archives ||
+          !Number.isSafeInteger(recipe.total) ||
+          recipe.total < 0 ||
+          recipe.total > RECOVERY_LIMITS.transportBytes
+        )
+          recoveryFail('Invalid retained container recipe.');
+        restoreBytes += recipe.total;
+      }
+      if (restoreBytes > RECOVERY_LIMITS.storeBytes)
+        recoveryFail('Embedded archive bytes exceed restore capacity.');
     }
-    for (const metadata of parsed.archives || []) {
-      const recipe = metadata.containerRecipe;
+  }
+
+  // ID lookup and running totals keep restore linear in its bounded input,
+  // rather than rescanning a growing list for every occurrence and recipe part.
+  /** @type {Map<string, any>} */
+  const archivesById = new Map();
+  let inventoryCount = 0;
+  /** @param {any} archive */
+  const addArchive = (archive) => {
+    if (archivesById.has(archive.id)) return;
+    if (archivesById.size >= RECOVERY_LIMITS.storeArchives)
+      recoveryFail('Expanded archive count exceeds restore capacity.');
+    inventoryCount += archive.occurrences.length;
+    if (inventoryCount > RECOVERY_LIMITS.inventoryOccurrences)
+      recoveryFail(
+        'Embedded inventory exceeds capacity. Preserve the input opaque.'
+      );
+    archivesById.set(archive.id, archive);
+  };
+  for (const archive of contents) addArchive(archive);
+  for (const metadata of metadataGroups) {
+    for (const entry of metadata) {
+      if (!entry.privateState) continue;
+      const embedded = await recoveryArchive(
+        entry.kind === 'utf16le-units'
+          ? entry.raw
+          : new Uint8Array(entry.embeddedBytes),
+        entry.claim
+      );
+      if (embedded.id !== entry.id)
+        recoveryFail('Embedded private history integrity mismatch.');
+      addArchive({ ...embedded, privateState: true });
+    }
+    for (const entry of metadata) {
+      const recipe = entry.containerRecipe;
       if (!recipe) continue;
-      if (
-        !Array.isArray(recipe.prefix) ||
-        recipe.prefix.length > RECOVERY_LIMITS.manifestBytes + 8 ||
-        !recipe.prefix.every(
-          (/** @type {any} */ b) => Number.isInteger(b) && b >= 0 && b <= 255
-        ) ||
-        !Array.isArray(recipe.parts) ||
-        recipe.parts.length > RECOVERY_LIMITS.archives ||
-        !Number.isSafeInteger(recipe.total) ||
-        recipe.total > RECOVERY_LIMITS.transportBytes
-      )
-        recoveryFail('Invalid retained container recipe.');
       const payloads = recipe.parts.map((/** @type {string} */ id) =>
-        all.find((a) => a.id === id)
+        archivesById.get(id)
       );
       if (
         payloads.some((/** @type {any} */ a) => !a) ||
@@ -1693,10 +1761,10 @@ export async function recoveryRestoreFile(bytes) {
         original.set(payload.bytes, offset);
         offset += payload.bytes.length;
       }
-      const archive = await recoveryArchive(original, metadata.claim);
-      if (archive.id !== metadata.id)
+      const archive = await recoveryArchive(original, entry.claim);
+      if (archive.id !== entry.id)
         recoveryFail('Retained container digest mismatch.');
-      all.push(recoveryContainerEnvelope(archive, recipe));
+      addArchive(recoveryContainerEnvelope(archive, recipe));
     }
   }
   const length = new DataView(
@@ -1705,16 +1773,14 @@ export async function recoveryRestoreFile(bytes) {
     bytes.byteLength
   ).getUint32(4, true);
   const original = await recoveryArchive(bytes);
-  all.push(
+  addArchive(
     recoveryContainerEnvelope(original, {
       prefix: Array.from(bytes.slice(0, 8 + length)),
       parts: contents.map((a) => a.id),
       total: bytes.length,
     })
   );
-  const verified = all.filter(
-    (archive, index) => all.findIndex((a) => a.id === archive.id) === index
-  );
+  const verified = [...archivesById.values()];
   recoveryVerifiedRestoreInputs.set(
     verified,
     recoveryRestoreFingerprint(verified)

@@ -15,6 +15,7 @@ function directIsInside(root, target) {
 }
 
 function createDirectAccess({ getStore = () => null, fsModule = fs } = {}) {
+  // Keep session grants and removals (null) until the store acknowledges them.
   const pending = new Map();
   function entries() {
     const raw = getStore()?.get(DIRECT_GRANTS_KEY, null);
@@ -32,16 +33,26 @@ function createDirectAccess({ getStore = () => null, fsModule = fs } = {}) {
           result.set(entry.path, entry);
       }
     }
-    for (const [key, entry] of pending) result.set(key, entry);
+    for (const [key, entry] of pending) {
+      if (entry) result.set(key, entry);
+      else result.delete(key);
+    }
     return result;
   }
   function save(all) {
     const store = getStore();
     if (!store) return false;
-    store.set(DIRECT_GRANTS_KEY, {
-      version: 1,
-      entries: [...all.values()].slice(-DIRECT_GRANTS_MAX),
-    });
+    try {
+      if (
+        store.set(DIRECT_GRANTS_KEY, {
+          version: 1,
+          entries: [...all.values()].slice(-DIRECT_GRANTS_MAX),
+        }) !== true
+      )
+        return false;
+    } catch {
+      return false;
+    }
     pending.clear();
     return true;
   }
@@ -100,10 +111,8 @@ function createDirectAccess({ getStore = () => null, fsModule = fs } = {}) {
     hold: (target) =>
       allowed(target) ? { path: target, release: () => {} } : null,
     forget(target) {
-      const all = entries();
-      all.delete(target);
-      pending.delete(target);
-      save(all);
+      pending.set(target, null);
+      save(entries());
     },
     flushPendingGrants: () => pending.size > 0 && save(entries()),
     hasGrant: allowed,
