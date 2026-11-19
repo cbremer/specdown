@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.0.235 — 2026-11-19
+
+### Features
+
+- Add the SpecDown design system as the UI source of truth
+- Support sandboxed Markdown saves and map the four app platforms
+- Add Markdown source editing and safe local save Dev builds
+
+### Bug Fixes
+
+- Fix bounded recovery restore and retryable direct file grants
+- Fix iOS background at the bottom safe area
+
+### Documentation
+
+- Document device-specific TestFlight install verification
+
+### Other Changes
+
+- Keep toasts above dialogs and fix dark-theme Save contrast (#452)
+- Define TestFlight delivery for SpecDown Beta requests
+- Flush staged Markdown through its writable handle on Windows
+- Retain local Apple builds by platform and channel outside worktrees
+- Recognize scanned PDF pages in Dev and document build channels
+- Import PDF text into editable Markdown copies in Dev
+- Open Word documents as editable Markdown copies in Dev
+- Refine contextual editor controls and discard confirmation
+
 ## v0.0.234 — 2026-11-11
 
 ### Bug Fixes
