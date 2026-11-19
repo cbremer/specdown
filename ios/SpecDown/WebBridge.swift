@@ -315,7 +315,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             self.documentViewTransitions.beginDelivery(deliveryID)
             var nativeDocument = ["id": sourceID, "expectedToken": self.documentViewTransitions.token.isEmpty ? "0-0" : self.documentViewTransitions.token, "deliveryID": deliveryID]
             let format = (name as NSString).pathExtension.lowercased()
-            if Self.documentImportEnabled, recent != nil, ["pdf", "docx"].contains(format) {
+            if recent != nil, ["pdf", "docx"].contains(format) {
                 nativeDocument["format"] = format
             }
             self.evaluateJavaScript(function: "window.specdownLoadNativeDocument", arguments: [content, name, nativeDocument], context: "loadFileContent") { [weak self] result, error in
@@ -390,7 +390,6 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             permit.cancel()
             self.documentLoadAcceptance.cancel(request)
         }
-        let allowImport = Self.documentImportEnabled
         fileQueue.async { [weak self] in
             defer { Task { @MainActor [weak self] in _ = self?.activeProviderReads.removeValue(forKey: operationID) } }
             do {
@@ -411,9 +410,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                         guard !permit.isCancelled else { throw CancellationError() }
                         let data = try SpecDownSecurityPolicy.readDocument(at: coordinatedURL)
                         let content: String
-                        switch (allowImport, coordinatedURL.pathExtension.lowercased()) {
-                        case (true, "pdf"): content = try Self.extractPDFPages(data, permit: permit)
-                        case (true, "docx"): content = data.base64EncodedString()
+                        switch coordinatedURL.pathExtension.lowercased() {
+                        case "pdf": content = try Self.extractPDFPages(data, permit: permit)
+                        case "docx": content = data.base64EncodedString()
                         default:
                             guard let text = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
                             content = text
@@ -429,7 +428,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     location: coordinatedURL.deletingLastPathComponent().path, bookmark: bookmark)
                 Task { @MainActor [weak self] in
                     guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
-                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: allowImport && ["docx", "pdf"].contains(coordinatedURL.pathExtension.lowercased()) ? nil : coordinatedURL)
+                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: ["docx", "pdf"].contains(coordinatedURL.pathExtension.lowercased()) ? nil : coordinatedURL)
                 }
             } catch {
                 if error is CancellationError { return }
@@ -680,12 +679,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Native integrations
 
-    private static let documentImportEnabled = ["development", "beta"].contains(Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String ?? "")
-
     private func presentDocumentPicker() {
-        var types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
-        if Self.documentImportEnabled { types.append(.pdf) }
-        if Self.documentImportEnabled, let word = UTType(filenameExtension: "docx") { types.append(word) }
+        var types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml, .pdf]
+        if let word = UTType(filenameExtension: "docx") { types.append(word) }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
         picker.delegate = self
         picker.allowsMultipleSelection = false
