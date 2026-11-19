@@ -33,7 +33,7 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 - Code blocks are always dark (`code-surface`, `code-border`, `code-text`) in both themes, matching the github-dark highlight theme.
 - Toasts are always a dark chip (`toast-surface`, white text), with a 4px status edge.
 - The `brand-*` colours belong to the logo and the app icon. Starfield borrows `brand-teal` and `brand-coral` for its nebulae. Otherwise they don't appear in UI chrome today (see Evolving the system).
-- **Known contrast gaps (kept as in the source):** `color-success` (1.9:1) and `color-warning` (2.2:1) on light grounds work only as edges or dots beside a word. The dark `search-highlight` (3.3:1 with white text) and `search-highlight-current` (2.2:1) miss 4.5:1. `border-color` is below 3:1 as a control boundary, so controls also differ by fill.
+- **Known contrast gaps (kept as in the source):** `color-success` (1.9:1) and `color-warning` (2.2:1) on light grounds work only as edges or dots beside a word. `border-color` is below 3:1 as a control boundary, so controls also differ by fill.
 
 ## Type
 
@@ -80,7 +80,7 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 
 - The logo (Assets → Logos) is a shield mark in a teal-to-coral halo with a gold core, plus the "SpecDown" wordmark. "Spec" is set in `brand-ink` and "Down" in the gradient. The header shows it 40px tall.
 - The app ships eight interchangeable icon artworks (Assets → App Icons), identical on iOS and desktop: Original, Flat, Glass, Ceramic, Metallic, Layered, Minimal and Light. People switch them in Appearance.
-- `logo-dark.svg` is currently byte-identical to `logo.svg`. The dark header shows a wordmark in `brand-ink` on `bg-primary` dark, which is close to invisible.
+- The dark header uses `markdown-viewer/logo-dark.svg`: the same lockup with "Spec" in white instead of `brand-ink` (17.4:1 on `bg-primary` dark). The header swaps the two with `.header-logo-light` / `.header-logo-dark`.
 
 ## Using and changing this system
 

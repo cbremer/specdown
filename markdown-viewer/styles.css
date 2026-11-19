@@ -2638,7 +2638,10 @@ body {
     background-color: rgba(231, 76, 60, 0.1);
 }
 
-/* Search highlights */
+/* Search highlights. Match text is dark ink on every amber/orange fill:
+   white measured 3.3:1 (dark match) and 2.2:1 (current match). Dark ink is
+   5.35:1 and 8.08:1. The current match keeps its orange fill and #e65100
+   outline so it stays distinguishable from other matches. */
 mark.search-highlight {
     background-color: #ffe082;
     color: inherit;
@@ -2648,18 +2651,20 @@ mark.search-highlight {
 
 [data-theme="dark"] mark.search-highlight {
     background-color: #b8860b;
-    color: #fff;
+    color: #1a1a1a;
 }
 
 mark.search-highlight-current {
     background-color: #ff9800;
-    color: #fff;
+    color: #1a1a1a;
     outline: 2px solid #e65100;
 }
 
+/* The current mark also carries .search-highlight, whose dark-theme rule is
+   more specific; restate the orange fill so it doesn't turn amber. */
 [data-theme="dark"] mark.search-highlight-current {
     background-color: #ff9800;
-    color: #fff;
+    color: #1a1a1a;
 }
 
 /* ===========================

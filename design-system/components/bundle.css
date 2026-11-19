@@ -1710,18 +1710,18 @@ mark.search-highlight {
 
 [data-theme='dark'] mark.search-highlight {
   background-color: #b8860b;
-  color: #fff;
+  color: #1a1a1a;
 }
 
 mark.search-highlight-current {
   background-color: #ff9800;
-  color: #fff;
+  color: #1a1a1a;
   outline: 2px solid #e65100;
 }
 
 [data-theme='dark'] mark.search-highlight-current {
   background-color: #ff9800;
-  color: #fff;
+  color: #1a1a1a;
 }
 
 /* ===========================
