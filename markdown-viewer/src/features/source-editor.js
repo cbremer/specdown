@@ -11,7 +11,7 @@ import { showToast } from './toast.js';
 
 /** @typedef {import('../core/state.js').Tab} EditorTab */
 /** @typedef {{status:string, message?:string, content?:string, filePath?:string, filename?:string, sourceMeta?:import('../core/state.js').TabSourceMeta|null, copied?:boolean}} SourceSaveResult */
-/** @typedef {{text:string, baseline:string, input:HTMLTextAreaElement, editing:boolean, saving:boolean, recoveryID:string, external?:string}} SourceDraft */
+/** @typedef {{text:string, baseline:string, input:HTMLTextAreaElement, inEditor:boolean, editing:boolean, saving:boolean, recoveryID:string, external?:string}} SourceDraft */
 /** @type {Map<number, SourceDraft>} */
 const sourceDrafts = new Map();
 const sourceRecoveryKey = 'specdown.sourceDrafts.v1';
@@ -115,6 +115,7 @@ function sourceEnsureDraft(tab) {
     baseline: tab.rawMarkdown,
     input,
     editing: true,
+    inEditor: true,
     saving: false,
     recoveryID: crypto.randomUUID(),
   };
@@ -138,20 +139,37 @@ export function startSourceEditing() {
   const draft = sourceEnsureDraft(tab);
   invalidateDocumentContext();
   draft.editing = true;
+  draft.inEditor = true;
   state.currentRawMarkdown = draft.text;
   syncIOSChrome();
   syncSourceEditor();
   draft.input.focus();
 }
+/** Hide only the menu; never discard a source draft. */
+function closeSourceEditorMenu(restoreFocus = false) {
+  const menu = document.getElementById('source-menu');
+  if (menu) menu.hidden = true;
+  document
+    .getElementById('source-more')
+    ?.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) document.getElementById('source-more')?.focus();
+}
+
 export function syncSourceEditor() {
   const recover = document.getElementById('source-recover');
   if (recover) recover.hidden = sourceRecovery.length === 0;
   const tab = sourceActiveTab(),
     draft = tab && sourceDrafts.get(tab.id);
+  const inEditor = !!draft?.inEditor;
+  const editing = inEditor && !!draft?.editing;
   const bar = document.getElementById('source-editor-bar');
-  if (bar) bar.hidden = !tab;
+  if (bar) bar.hidden = !inEditor;
+  if (!inEditor) closeSourceEditorMenu();
+  document
+    .getElementById('content-area')
+    ?.classList.toggle('source-editor-active', inEditor);
+  document.body.classList.toggle('source-editor-active', inEditor);
   const host = document.getElementById('source-editor-host');
-  const editing = !!draft?.editing;
   if (host) host.hidden = !editing;
   document
     .getElementById('content-main')
@@ -162,33 +180,99 @@ export function syncSourceEditor() {
   if (content) content.hidden = editing;
   const edit = document.getElementById('source-edit');
   if (edit) {
-    edit.textContent = editing ? 'Preview' : 'Edit';
-    edit.setAttribute('aria-pressed', String(editing));
+    edit.hidden = !tab || inEditor;
+    edit.textContent = tab && isSourceDirty(tab) ? 'Resume editing' : 'Edit';
   }
+  document
+    .getElementById('source-source')
+    ?.setAttribute('aria-pressed', String(editing));
+  document
+    .getElementById('source-preview')
+    ?.setAttribute('aria-pressed', String(inEditor && !editing));
+  const description = draft?.saving
+    ? 'Saving…'
+    : draft?.external !== undefined
+      ? 'Source changed — draft retained'
+      : tab && isSourceDirty(tab)
+        ? 'Unsaved changes'
+        : 'No unsaved changes';
   const status = document.getElementById('source-status');
-  if (status)
-    status.textContent = draft?.saving
+  if (status) status.textContent = description;
+  const visibleStatus = document.getElementById('source-state');
+  if (visibleStatus) {
+    visibleStatus.hidden = !draft || description === 'No unsaved changes';
+    visibleStatus.textContent = draft?.saving
       ? 'Saving…'
       : draft?.external !== undefined
-        ? 'Source changed — draft retained'
-        : tab && isSourceDirty(tab)
-          ? 'Unsaved changes'
-          : 'No unsaved changes';
-  for (const id of ['source-save', 'source-save-as', 'source-cancel']) {
+        ? 'Source changed'
+        : 'Unsaved';
+    visibleStatus.title = description;
+  }
+  const save = /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('source-save')
+  );
+  if (save) {
+    save.disabled =
+      !draft ||
+      !!draft.saving ||
+      (!isSourceDirty(/** @type {EditorTab} */ (tab)) &&
+        draft.external === undefined);
+    save.textContent = draft?.saving ? 'Saving…' : 'Save';
+  }
+  for (const id of ['source-save-as', 'source-cancel']) {
     const button = /** @type {HTMLButtonElement|null} */ (
       document.getElementById(id)
     );
     if (button) {
       button.hidden = !draft;
-      button.disabled = !!draft?.saving;
+      button.disabled =
+        !!draft?.saving ||
+        (id === 'source-cancel' && !!tab && !isSourceDirty(tab));
     }
   }
+  for (const action of [
+    'edit',
+    'preview',
+    'return',
+    'save',
+    'save-as',
+    'cancel',
+  ]) {
+    const button = /** @type {HTMLButtonElement|null} */ (
+      document.getElementById('ios-source-' + action)
+    );
+    if (!button) continue;
+    button.hidden = action === 'edit' ? !tab : !draft;
+    if (action === 'edit')
+      button.textContent = inEditor
+        ? 'Edit source'
+        : tab && isSourceDirty(tab)
+          ? 'Resume editing'
+          : 'Edit Markdown';
+    if (['save', 'save-as', 'cancel'].includes(action))
+      button.disabled = !!draft?.saving;
+  }
+}
+/** Return to reading while retaining the same textarea, undo history and recovery record. */
+export async function returnToSourceReading() {
+  const tab = sourceActiveTab();
+  if (!tab) return;
+  const draft = sourceDrafts.get(tab.id);
+  if (!draft) return;
+  closeSourceEditorMenu();
+  draft.inEditor = false;
+  draft.editing = false;
+  await sourceRender(draft.text, tab.filename);
+  syncSourceEditor();
+  if (sourceActiveTab() === tab)
+    document.getElementById('source-edit')?.focus();
 }
 /** @param {EditorTab} tab */
 export async function previewSourceDraft(tab) {
   const draft = sourceDrafts.get(tab.id);
   if (!draft) return;
   draft.editing = false;
+  draft.inEditor = true;
   await sourceRender(draft.text, tab.filename);
   syncSourceEditor();
 }
@@ -223,14 +307,25 @@ export function protectSourceDraft(tab, content) {
   syncSourceEditor();
   return true;
 }
-/** @param {string} title @param {Array<[string,string]>} choices @returns {Promise<string>} */
-export function sourceEditorChoice(title, choices) {
+/** @param {string} title @param {Array<[string,string]>} choices @param {string} [detail] @returns {Promise<string>} */
+export function sourceEditorChoice(title, choices, detail) {
   return new Promise((resolve) => {
     const dialog = document.createElement('dialog');
     dialog.className = 'source-choice';
+    if (choices.length === 2) dialog.classList.add('source-choice-compact');
     const heading = document.createElement('h2');
     heading.textContent = title;
+    heading.id = 'source-choice-' + crypto.randomUUID();
+    dialog.setAttribute('aria-labelledby', heading.id);
     dialog.append(heading);
+    if (detail) {
+      const description = document.createElement('p');
+      description.textContent = detail;
+      dialog.append(description);
+    }
+    const actions = document.createElement('div');
+    actions.className = 'source-choice-actions';
+    dialog.append(actions);
     const finish = (/** @type {string} */ choice) => {
       dialog.remove();
       resolve(choice);
@@ -245,7 +340,7 @@ export function sourceEditorChoice(title, choices) {
       button.textContent = label;
       button.dataset.editorChoice = value;
       button.onclick = () => finish(value);
-      dialog.append(button);
+      actions.append(button);
     }
     document.body.append(dialog);
     if (typeof dialog.showModal === 'function') dialog.showModal();
@@ -510,7 +605,14 @@ export function setupSourceEditor() {
       { type: 'error' }
     );
   }
-  for (const action of ['edit', 'save', 'save-as', 'cancel']) {
+  for (const action of [
+    'edit',
+    'preview',
+    'return',
+    'save',
+    'save-as',
+    'cancel',
+  ]) {
     document
       .getElementById('ios-source-' + action)
       ?.addEventListener('click', () => {
@@ -521,24 +623,89 @@ export function setupSourceEditor() {
   document.getElementById('source-edit')?.addEventListener('click', () => {
     const tab = sourceActiveTab();
     if (!tab) return;
-    if (sourceDrafts.get(tab.id)?.editing) void previewSourceDraft(tab);
-    else startSourceEditing();
+    startSourceEditing();
+  });
+  document
+    .getElementById('source-source')
+    ?.addEventListener('click', startSourceEditing);
+  document.getElementById('source-preview')?.addEventListener('click', () => {
+    const tab = sourceActiveTab();
+    if (tab) void previewSourceDraft(tab);
+  });
+  document.getElementById('source-return')?.addEventListener('click', () => {
+    void returnToSourceReading();
+  });
+  document.getElementById('source-more')?.addEventListener('click', () => {
+    const menu = document.getElementById('source-menu');
+    if (!menu) return;
+    menu.hidden = !menu.hidden;
+    document
+      .getElementById('source-more')
+      ?.setAttribute('aria-expanded', String(!menu.hidden));
+    if (!menu.hidden) menu.querySelector('button')?.focus();
+  });
+  document.getElementById('source-menu')?.addEventListener('keydown', (e) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    const items = [
+      .../** @type {NodeListOf<HTMLButtonElement>} */ (
+        document.querySelectorAll(
+          '#source-menu button:not(:disabled):not([hidden])'
+        )
+      ),
+    ];
+    const index = items.indexOf(
+      /** @type {HTMLButtonElement} */ (document.activeElement)
+    );
+    const next =
+      e.key === 'Home'
+        ? 0
+        : e.key === 'End'
+          ? items.length - 1
+          : (index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) %
+            items.length;
+    e.preventDefault();
+    items[next]?.focus();
+  });
+  document.addEventListener('click', (e) => {
+    const target = /** @type {Node} */ (e.target);
+    if (!document.querySelector('.source-menu-anchor')?.contains(target))
+      closeSourceEditorMenu();
   });
   document.getElementById('source-save')?.addEventListener('click', () => {
     const tab = sourceActiveTab();
+    closeSourceEditorMenu();
     if (tab) void saveSourceDraft(tab);
   });
   document.getElementById('source-save-as')?.addEventListener('click', () => {
     const tab = sourceActiveTab();
+    closeSourceEditorMenu();
     if (tab) void saveSourceDraft(tab, true);
   });
   document
     .getElementById('source-cancel')
     ?.addEventListener('click', async () => {
       const tab = sourceActiveTab();
-      if (tab && (await confirmSourceDiscard(tab))) {
-        forgetSourceDraft(tab);
-        void sourceRender(tab.rawMarkdown, tab.filename);
+      closeSourceEditorMenu();
+      if (!tab || hasSourceSavePending(tab) || !isSourceDirty(tab)) return;
+      const choice = await sourceEditorChoice(
+        'Discard changes?',
+        [
+          ['keep', 'Cancel'],
+          ['discard', 'Discard changes'],
+        ],
+        `Your unsaved changes to ${tab.filename} will be lost.`
+      );
+      if (choice !== 'discard') {
+        if (sourceActiveTab() === tab)
+          document
+            .getElementById('source-more')
+            ?.focus({ preventScroll: true });
+        return;
+      }
+      forgetSourceDraft(tab);
+      if (sourceActiveTab() === tab) {
+        await sourceRender(tab.rawMarkdown, tab.filename);
+        document.getElementById('source-edit')?.focus({ preventScroll: true });
       }
     });
   document
@@ -552,11 +719,32 @@ export function setupSourceEditor() {
     resolve?.(result);
   };
   document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) return;
+    if (
+      e.key === 'Escape' &&
+      !document.querySelector('dialog[open]') &&
+      document
+        .getElementById('content-area')
+        ?.contains(/** @type {Node} */ (e.target))
+    ) {
+      const menu = document.getElementById('source-menu');
+      if (menu && !menu.hidden) {
+        e.preventDefault();
+        closeSourceEditorMenu(true);
+        return;
+      }
+      const tab = sourceActiveTab();
+      if (tab && sourceDrafts.get(tab.id)?.inEditor) {
+        e.preventDefault();
+        void returnToSourceReading();
+        return;
+      }
+    }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
       const tab = sourceActiveTab();
       if (tab) {
         e.preventDefault();
-        startSourceEditing();
+        if (!hasSourceDraft(tab)) startSourceEditing();
         void saveSourceDraft(tab, e.shiftKey);
       }
     }

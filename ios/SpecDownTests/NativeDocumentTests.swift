@@ -49,12 +49,22 @@ final class NativeDocumentTests: XCTestCase {
         try Data("# Original\r\n\r\n  tail  \r\n".utf8).write(to: url)
         bridge.openDocument(at: url)
         try await wait("local source accepted") { bridge.currentDocumentName == "source-edit-save.md" }
-        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); const input=document.querySelector('#source-editor-host textarea:not([hidden])'); input.value='# Changed\\n\\n  tail  \\n'; input.dispatchEvent(new Event('input')); document.getElementById('source-edit').click()")
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); const input=document.querySelector('#source-editor-host textarea:not([hidden])'); input.value='# Changed\\n\\n  tail  \\n'; input.dispatchEvent(new Event('input')); document.getElementById('source-preview').click()")
         try await wait("draft preview") { (try? await web.evaluateJavaScript("document.getElementById('markdown-content').textContent.includes('Changed')")) as? Bool == true }
-        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); document.getElementById('source-save').click()")
+        _ = try await web.evaluateJavaScript("document.getElementById('source-source').click(); document.getElementById('source-save').click()")
         try await wait("native local save") { (try? String(contentsOf: url, encoding: .utf8)) == "# Changed\r\n\r\n  tail  \r\n" }
         try await wait("save acknowledgment") { (try? await web.evaluateJavaScript("document.getElementById('source-status').textContent")) as? String == "No unsaved changes" }
         _ = try await web.evaluateJavaScript("document.querySelector('#source-editor-host textarea:not([hidden])').value='# My draft'; document.querySelector('#source-editor-host textarea:not([hidden])').dispatchEvent(new Event('input'))")
+        let headerReused = try await web.evaluateJavaScript("!!document.getElementById('source-editor-bar').closest('.content-header')") as? Bool
+        XCTAssertEqual(headerReused, true)
+        let touchTargets = try await web.evaluateJavaScript("['source-source','source-preview','source-save','source-more'].every(id => document.getElementById(id).getBoundingClientRect().height >= 44)") as? Bool
+        XCTAssertEqual(touchTargets, true)
+        _ = try await web.evaluateJavaScript("document.getElementById('source-more').click(); document.getElementById('source-return').click()")
+        try await wait("reading retains draft") { (try? await web.evaluateJavaScript("document.getElementById('source-editor-bar').hidden && document.getElementById('source-edit').textContent === 'Resume editing'")) as? Bool == true }
+        let recoveryRetained = try await web.evaluateJavaScript("localStorage.getItem('specdown.sourceDrafts.v1').includes('# My draft')") as? Bool
+        XCTAssertEqual(recoveryRetained, true)
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "# Changed\r\n\r\n  tail  \r\n")
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click()")
         try Data("# External".utf8).write(to: url)
         _ = try await web.evaluateJavaScript("document.getElementById('source-save').click()")
         try await wait("conflict choices") { (try? await web.evaluateJavaScript("!!document.querySelector('[data-editor-choice=overwrite]')")) as? Bool == true }
@@ -62,6 +72,30 @@ final class NativeDocumentTests: XCTestCase {
         _ = try await web.evaluateJavaScript("document.querySelector('[data-editor-choice=overwrite]').click()")
         try await wait("explicit overwrite") { (try? String(contentsOf: url, encoding: .utf8)) == "# My draft" }
         try await wait("final save acknowledgment") { (try? await web.evaluateJavaScript("document.getElementById('source-status').textContent")) as? String == "No unsaved changes" }
+        _ = try await web.evaluateJavaScript("const source=document.querySelector('#source-editor-host textarea:not([hidden])'); source.value='# Rollout plan\\n\\nShip the reading experience first.\\n\\n## Release checks\\n- [x] Validate the shared viewer\\n- [ ] Test file-provider saving\\n'; source.dispatchEvent(new Event('input'))")
+        let screenshot = try await web.takeSnapshot(configuration: nil)
+        let attachment = XCTAttachment(image: screenshot)
+        attachment.name = "contextual-editor-native"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        _ = try await web.evaluateJavaScript("document.getElementById('source-more').click(); document.getElementById('source-cancel').click()")
+        try await wait("discard confirmation") { (try? await web.evaluateJavaScript("!!document.querySelector('[data-editor-choice=discard]')")) as? Bool == true }
+        let directDiscard = try await web.evaluateJavaScript("document.querySelector('dialog h2').textContent === 'Discard changes?' && document.querySelectorAll('dialog button').length === 2 && !document.querySelector('dialog [data-editor-choice=save]')") as? Bool
+        XCTAssertEqual(directDiscard, true)
+        let discardLayout = try await web.evaluateJavaScript("(()=>{const d=document.querySelector('dialog[open]'), r=d.getBoundingClientRect(), s=getComputedStyle(d); return parseFloat(s.padding)>=16 && r.left>=8 && r.top>=8 && r.right<=innerWidth-8 && r.bottom<=innerHeight-8 && Math.abs(r.left-(innerWidth-r.width)/2)<=2 && Math.abs(r.top-(innerHeight-r.height)/2)<=2;})()") as? Bool
+        XCTAssertEqual(discardLayout, true, "Discard confirmation must be centered, padded and inside the native viewport")
+        let discardScreenshot = try await web.takeSnapshot(configuration: nil)
+        let discardAttachment = XCTAttachment(image: discardScreenshot)
+        discardAttachment.name = "discard-confirmation-native"
+        discardAttachment.lifetime = .keepAlways
+        add(discardAttachment)
+        _ = try await web.evaluateJavaScript("document.querySelector('[data-editor-choice=keep]').click()")
+        let keptDraft = try await web.evaluateJavaScript("document.getElementById('source-status').textContent === 'Unsaved changes' && localStorage.getItem('specdown.sourceDrafts.v1').includes('# Rollout plan')") as? Bool
+        XCTAssertEqual(keptDraft, true)
+        _ = try await web.evaluateJavaScript("document.getElementById('source-more').click(); document.getElementById('source-cancel').click(); document.querySelector('[data-editor-choice=discard]').click()")
+        try await wait("discard restores saved reading view") { (try? await web.evaluateJavaScript("document.getElementById('source-editor-bar').hidden && document.getElementById('markdown-content').textContent.includes('My draft') && !document.querySelector('dialog[open]')")) as? Bool == true }
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "# My draft")
+
     }
 
     func testAboutShowsNativeBundleBuildAndChannel() async throws {

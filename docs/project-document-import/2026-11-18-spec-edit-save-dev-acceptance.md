@@ -2,6 +2,8 @@
 
 November 18, 2026. Local development evidence; owner release acceptance is open.
 
+**Latest Dev update:** [Session 04](2026-11-18-tasks-session-04-contextual-editor-dev.md) supersedes the initial control layout and artifact build below with the contextual header, compact direct-discard confirmation and Dev 1.0.4 (248). The original build 245 evidence below remains historical. Session 04 records physical device installation separately from simulator validation.
+
 ## Delivered development behavior
 
 The shared viewer has Edit/Preview, Save, Save As and Cancel controls, a labeled Markdown textarea, per-tab drafts and native undo/redo, explicit unsaved status, and retained textarea selection/scroll across preview and tab switches. Controls are available in the shared document area and iPhone action sheet. Preview uses the real existing Markdown/Mermaid renderer.
