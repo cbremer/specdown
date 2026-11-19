@@ -1,0 +1,61 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 3 /Kids [6 0 R 8 0 R 10 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 4 >>
+stream
+ªw3Ì
+endstream
+endobj
+5 0 obj
+<<  /Length 97 >>
+stream
+BT /F 14 Tf 40 720 Td (Project review notes) Tj 0 -24 Td (Decision: ship the local import.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F 3 0 R >> /XObject << /I 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<<  /Length 31 >>
+stream
+q 180 0 0 240 40 400 cm /I Do Q
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F 3 0 R >> /XObject << /I 4 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<<  /Length 57 >>
+stream
+BT /F 14 Tf 40 720 Td (Final selectable paragraph.) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F 3 0 R >> /XObject << /I 4 0 R >> >> /Contents 9 0 R >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000128 00000 n 
+0000000198 00000 n 
+0000000345 00000 n 
+0000000493 00000 n 
+0000000642 00000 n 
+0000000724 00000 n 
+0000000873 00000 n 
+0000000981 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+1131
+%%EOF

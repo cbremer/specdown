@@ -750,21 +750,22 @@ function buildFileMetadata(filePath) {
   };
 }
 
-const wordImportEnabled = !app.isPackaged || require('../package.json').specdownChannel === 'development';
+const documentImportEnabled = !app.isPackaged || require('../package.json').specdownChannel === 'development';
 function openFileByPath(filePath, context) {
-  const isWord = wordImportEnabled && typeof filePath === 'string' && path.extname(filePath).toLowerCase() === '.docx';
-  if (!isWord && !isValidMarkdownFile(filePath)) {
+  const ext = typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
+  const isImport = documentImportEnabled && ['.docx', '.pdf'].includes(ext);
+  if (!isImport && !isValidMarkdownFile(filePath)) {
     openRecovery.report(filePath, 'Choose a Markdown file (.md or .markdown).', context?.entry);
     return false;
   }
 
   try {
     const access = fileAccess.withAccess(filePath, (resolved, continuity) => {
-      if (isWord) {
+      if (isImport) {
         return {
           filename: path.basename(resolved),
           filePath: resolved,
-          wordImport: true,
+          importFormat: ext.slice(1),
           content: readDocumentBytes(resolved).toString('base64'),
         };
       }
@@ -822,7 +823,7 @@ async function showOpenDialog() {
     title: 'Open File',
     properties: ['openFile', 'multiSelections'],
     filters: [
-      wordImportEnabled ? { name: 'Markdown and Word documents', extensions: ['md', 'markdown', 'docx'] } : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
+      documentImportEnabled ? { name: 'Markdown, Word and PDF documents', extensions: ['md', 'markdown', 'docx', 'pdf'] } : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   }));

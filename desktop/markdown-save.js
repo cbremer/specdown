@@ -30,10 +30,10 @@ function saveExistingMarkdown(target, content, expected, io = fs) {
   // Resolve symlinks only after access was granted, and preserve the selected item.
   const resolved = io.realpathSync(target);
   // A .md destination can be a symlink to the Word input.
-  if (path.extname(resolved).toLowerCase() === '.docx') {
+  if (['.docx', '.pdf'].includes(path.extname(resolved).toLowerCase())) {
     return {
       status: 'error',
-      message: 'Choose a Markdown destination separate from the Word document.',
+      message: 'Choose a Markdown destination separate from the imported document.',
     };
   }
   const original = readSaveSource(resolved, io);

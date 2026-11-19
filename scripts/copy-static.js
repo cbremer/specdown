@@ -28,3 +28,20 @@ for (const entry of fs.readdirSync(samplesSrc)) {
 }
 
 console.log('Copied samples/ into dist/samples/');
+
+// Text extraction can require Adobe character maps and built-in font metrics.
+// Ship the local data files (including their licenses) beside the viewer.
+const pdfDistribution = path.dirname(
+  require.resolve('pdfjs-dist/package.json')
+);
+for (const folder of ['cmaps', 'standard_fonts']) {
+  fs.cpSync(
+    path.join(pdfDistribution, folder),
+    path.join(root, 'dist', 'pdf-data', folder),
+    { recursive: true }
+  );
+}
+fs.copyFileSync(
+  path.join(pdfDistribution, 'LICENSE'),
+  path.join(root, 'dist', 'pdf-data', 'LICENSE')
+);
