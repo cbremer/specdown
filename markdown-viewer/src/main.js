@@ -1,5 +1,6 @@
 // @ts-expect-error -- Vite stylesheet import
 import './features/source-editor.css';
+import {openPdfPages} from './features/pdf-import.js';
 import {openWordDocument} from './features/word-import.js';
 import {configureSourceEditor, setupSourceEditor, syncSourceEditor} from './features/source-editor.js';
 // @ts-check
@@ -291,9 +292,19 @@ window.loadFileContent = function(content, filename, nativeDocument) {
     if (nativeDocument?.expectedToken && (getIOSDocumentView()?.token || '0-0') !== nativeDocument.expectedToken) return false;
     const finishDelivery = beginIOSNativeDocumentDelivery(nativeDocument?.deliveryID);
     try {
+        if (nativeDocument?.format === 'pdf') {
+            try {
+                return openPdfPages(JSON.parse(content), text =>
+                    createTab(filename, text, null, { importFormat: 'pdf', nativeDocument: { id: nativeDocument.id } })
+                );
+            } catch {
+                showToast('Could not import the extracted PDF text within the document limits.', { type: 'error' });
+                return false;
+            }
+        }
         if (nativeDocument?.format === 'docx') {
             return openWordDocument(content, filename, text =>
-                createTab(filename, text, null, { wordImport: true, nativeDocument: { id: nativeDocument.id } })
+                createTab(filename, text, null, { importFormat: 'docx', nativeDocument: { id: nativeDocument.id } })
             );
         }
         return createTab(filename, content, null, nativeDocument ? { nativeDocument: {id: nativeDocument.id} } : null);

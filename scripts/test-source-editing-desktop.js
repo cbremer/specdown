@@ -330,6 +330,90 @@ app.whenReady().then(async () => {
       imported + 'Edited on desktop'
     );
     assert.deepEqual(fs.readFileSync(word), wordBytes);
+    for (const kind of ['text', 'columns', 'mixed', 'scanned']) {
+      const name = 'pdf-' + kind + '.pdf';
+      const pdf = path.join(fixture, name);
+      const pdfBytes = fs.readFileSync(
+        path.join(__dirname, '../tests/fixtures', name)
+      );
+      fs.writeFileSync(pdf, pdfBytes);
+      let offeredPdf = false;
+      dialog.showOpenDialog = async (_window, options) => {
+        offeredPdf = options.filters.some((filter) =>
+          filter.extensions.includes('pdf')
+        );
+        return { canceled: false, filePaths: [pdf] };
+      };
+      await js("document.getElementById('browse-button').click()");
+      if (kind === 'scanned') {
+        await until(
+          async () =>
+            await js(
+              "document.getElementById('toast-region')?.textContent.includes('has no selectable text. Run OCR')"
+            ),
+          'scanned PDF explanation'
+        );
+        assert.equal(
+          await js("document.getElementById('file-name').textContent"),
+          'pdf-mixed.md'
+        );
+        continue;
+      }
+      await until(
+        async () =>
+          (await js("document.getElementById('file-name').textContent")) ===
+          name,
+        'PDF reading view: ' + kind
+      );
+      assert.ok(offeredPdf);
+      await js("document.getElementById('source-edit').click()");
+      const source = await js(
+        "document.querySelector('#source-editor-host textarea:not([hidden])').value"
+      );
+      assert.match(source, /Project review notes/);
+      if (kind === 'columns') {
+        for (const text of [
+          'Left column first',
+          'Left column second',
+          'Right column first',
+          'Right column second',
+          'Account',
+          'Amount',
+          'Research',
+          '150',
+        ])
+          assert.ok(source.includes(text));
+        assert.ok(
+          source.indexOf('Left column second') <
+            source.indexOf('Right column first')
+        );
+        continue;
+      }
+      if (kind === 'text') {
+        assert.doesNotMatch(source, /OCR/);
+        continue;
+      }
+      assert.match(source, /Page 2 has no selectable text.*OCR/);
+      assert.ok(
+        source.indexOf('Page 2') < source.indexOf('Final selectable paragraph')
+      );
+      await edit(source + 'Edited PDF text');
+      const output = path.join(fixture, 'pdf-mixed.md');
+      dialog.showSaveDialog = async (_window, options) => {
+        assert.equal(options.defaultPath, 'pdf-mixed.md');
+        return { canceled: false, filePath: output };
+      };
+      await js("document.getElementById('source-save').click()");
+      await until(
+        async () =>
+          await js(
+            "document.getElementById('file-name').textContent==='pdf-mixed.md'"
+          ),
+        'PDF to Markdown copy'
+      );
+      assert.equal(fs.readFileSync(output, 'utf8'), source + 'Edited PDF text');
+      assert.deepEqual(fs.readFileSync(pdf), pdfBytes);
+    }
     const screenshot = path.join(fixture, 'desktop-preview.png');
     fs.writeFileSync(screenshot, (await win.webContents.capturePage()).toPNG());
     console.log(
@@ -345,6 +429,7 @@ app.whenReady().then(async () => {
           'independent Save As',
           'canceled destination',
           'real Mermaid',
+          'text, mixed and scanned PDFs; export edited Markdown',
           'Open File DOCX to independent Markdown copy',
         ],
         screenshot,

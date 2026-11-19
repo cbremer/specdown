@@ -155,6 +155,12 @@ function closeSourceEditorMenu(restoreFocus = false) {
   if (restoreFocus) document.getElementById('source-more')?.focus();
 }
 
+/** Keep drafts written by the first Word Dev build exportable.
+ * @param {EditorTab|undefined} tab */
+function isImportedCopy(tab) {
+  return !!(tab?.sourceMeta?.importFormat || tab?.sourceMeta?.wordImport);
+}
+
 export function syncSourceEditor() {
   const recover = document.getElementById('source-recover');
   if (recover) recover.hidden = sourceRecovery.length === 0;
@@ -217,10 +223,10 @@ export function syncSourceEditor() {
       !!draft.saving ||
       (!isSourceDirty(/** @type {EditorTab} */ (tab)) &&
         draft.external === undefined &&
-        !tab?.sourceMeta?.wordImport);
+        !isImportedCopy(tab));
     save.textContent = draft?.saving
       ? 'Saving…'
-      : tab?.sourceMeta?.wordImport
+      : isImportedCopy(tab)
         ? 'Save as Markdown…'
         : 'Save';
   }
@@ -249,7 +255,7 @@ export function syncSourceEditor() {
     if (!button) continue;
     button.hidden = action === 'edit' ? !tab : !draft;
     if (action === 'save')
-      button.textContent = tab?.sourceMeta?.wordImport
+      button.textContent = isImportedCopy(tab)
         ? 'Save as Markdown…'
         : 'Save Markdown';
     if (action === 'edit')
@@ -361,7 +367,7 @@ export function sourceEditorChoice(title, choices, detail) {
 export async function saveSourceDraft(tab, copy = false) {
   const draft = sourceDrafts.get(tab.id);
   if (!draft || draft.saving) return false;
-  if (tab.sourceMeta?.wordImport) copy = true;
+  if (isImportedCopy(tab)) copy = true;
   // Reserve admission for the independent Save As tab before writing a copy.
   if (copy && state.tabs.length >= 10) {
     showToast('Close a tab before saving an independent copy.', {
@@ -471,7 +477,7 @@ export async function confirmSourceDiscard(tab) {
   if (!isSourceDirty(tab)) return true;
   const choice = await sourceEditorChoice(`Save changes to ${tab.filename}?`, [
     ['keep', 'Keep editing'],
-    ['save', tab.sourceMeta?.wordImport ? 'Save as Markdown…' : 'Save'],
+    ['save', isImportedCopy(tab) ? 'Save as Markdown…' : 'Save'],
     ['discard', 'Discard'],
   ]);
   if (choice === 'discard') return true;
@@ -555,8 +561,8 @@ async function restoreSourceDrafts() {
 }
 /** @param {EditorTab} tab @param {string} text @param {string} expected @param {boolean} copy @returns {Promise<SourceSaveResult>} */
 async function nativeSourceSave(tab, text, expected, copy) {
-  const filename = tab.sourceMeta?.wordImport
-    ? tab.filename.replace(/\.docx$/i, '.md')
+  const filename = isImportedCopy(tab)
+    ? tab.filename.replace(/\.(docx|pdf)$/i, '.md')
     : tab.filename;
   if (window.specdown)
     return await bridgeSaveMarkdown({

@@ -1,3 +1,4 @@
+import PDFKit
 import WebKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -312,7 +313,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             let sourceID = recent?.id ?? UUID().uuidString
             self.documentViewTransitions.beginDelivery(deliveryID)
             var nativeDocument = ["id": sourceID, "expectedToken": self.documentViewTransitions.token.isEmpty ? "0-0" : self.documentViewTransitions.token, "deliveryID": deliveryID]
-            if Self.wordImportEnabled, recent != nil, name.lowercased().hasSuffix(".docx") { nativeDocument["format"] = "docx" }
+            let format = (name as NSString).pathExtension.lowercased()
+            if Self.documentImportEnabled, recent != nil, ["pdf", "docx"].contains(format) {
+                nativeDocument["format"] = format
+            }
             self.evaluateJavaScript(function: "window.specdownLoadNativeDocument", arguments: [content, name, nativeDocument], context: "loadFileContent") { [weak self] result, error in
                 defer { done() }
                 guard let self else { return }
@@ -383,7 +387,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             permit.cancel()
             self.documentLoadAcceptance.cancel(request)
         }
-        let allowWord = Self.wordImportEnabled
+        let allowImport = Self.documentImportEnabled
         fileQueue.async { [weak self] in
             defer { Task { @MainActor [weak self] in _ = self?.activeProviderReads.removeValue(forKey: operationID) } }
             do {
@@ -403,8 +407,14 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     result = Result {
                         guard !permit.isCancelled else { throw CancellationError() }
                         let data = try SpecDownSecurityPolicy.readDocument(at: coordinatedURL)
-                        let isWord = allowWord && coordinatedURL.pathExtension.lowercased() == "docx"
-                        guard let content = isWord ? data.base64EncodedString() : String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                        let content: String
+                        switch (allowImport, coordinatedURL.pathExtension.lowercased()) {
+                        case (true, "pdf"): content = try Self.extractPDFPages(data, permit: permit)
+                        case (true, "docx"): content = data.base64EncodedString()
+                        default:
+                            guard let text = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                            content = text
+                        }
                         let bookmark = try coordinatedURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
                         return (content, bookmark, coordinatedURL)
                     }
@@ -416,17 +426,45 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     location: coordinatedURL.deletingLastPathComponent().path, bookmark: bookmark)
                 Task { @MainActor [weak self] in
                     guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
-                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: allowWord && coordinatedURL.pathExtension.lowercased() == "docx" ? nil : coordinatedURL)
+                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: allowImport && ["docx", "pdf"].contains(coordinatedURL.pathExtension.lowercased()) ? nil : coordinatedURL)
                 }
             } catch {
                 if error is CancellationError { return }
                 Task { @MainActor [weak self] in
                     guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
-                    if let previous { self.recentFailed(previous, request: request) }
-                    else { self.showError("The file could not be opened. Choose an available UTF-8 file up to 8 MiB in Files, then try again.") }
+                    if let pdfError = error as? PDFImportFailure { self.showError(pdfError.message) }
+                    else if let previous { self.recentFailed(previous, request: request) }
+                    else { self.showError("The file could not be opened. Choose an available file up to 8 MiB in Files, then try again.") }
                 }
             }
         }
+    }
+
+    private struct PDFImportFailure: Error { let message: String }
+
+    // Only page strings cross into the reader. The coordinated read never
+    // registers the original PDF as a writable Markdown source.
+    private nonisolated static func extractPDFPages(_ data: Data, permit: DocumentReadPermit) throws -> String {
+        guard let pdf = PDFDocument(data: data), pdf.pageCount > 0 else {
+            throw PDFImportFailure(message: "Could not read this PDF.")
+        }
+        guard !pdf.isLocked, pdf.allowsCopying else {
+            throw PDFImportFailure(message: "Choose an unlocked PDF that permits copying text.")
+        }
+        guard pdf.pageCount <= 500 else { throw PDFImportFailure(message: "Choose a PDF with 500 pages or fewer.") }
+        var pages: [String] = []
+        var bytes = 0
+        for index in 0..<pdf.pageCount {
+            guard !permit.isCancelled else { throw CancellationError() }
+            guard let page = pdf.page(at: index) else { throw PDFImportFailure(message: "Could not read page \(index + 1).") }
+            let text = page.string ?? ""
+            bytes += text.utf8.count
+            guard bytes <= SpecDownSecurityPolicy.maximumDocumentBytes else {
+                throw PDFImportFailure(message: "Extracted PDF text exceeds 8 MiB.")
+            }
+            pages.append(text)
+        }
+        return String(decoding: try JSONEncoder().encode(pages), as: UTF8.self)
     }
 
     private func pruneSourceURLs() {
@@ -524,7 +562,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         activeMarkdownSaves.insert(requestID)
         let sourceID = request["sourceID"] as? String ?? ""
         let copy = request["copy"] as? Bool ?? false
-        guard !copy, let url = sourceURLs[sourceID], url.pathExtension.lowercased() != "docx", openSourceIDs.contains(sourceID) else {
+        guard !copy, let url = sourceURLs[sourceID], !["docx", "pdf"].contains(url.pathExtension.lowercased()), openSourceIDs.contains(sourceID) else {
             exportMarkdown(requestID: requestID, content: content, filename: request["filename"] as? String ?? "Document.md")
             return
         }
@@ -591,11 +629,12 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Native integrations
 
-    private static let wordImportEnabled = Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String == "development"
+    private static let documentImportEnabled = Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String == "development"
 
     private func presentDocumentPicker() {
         var types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
-        if Self.wordImportEnabled, let word = UTType(filenameExtension: "docx") { types.append(word) }
+        if Self.documentImportEnabled { types.append(.pdf) }
+        if Self.documentImportEnabled, let word = UTType(filenameExtension: "docx") { types.append(word) }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
         picker.delegate = self
         picker.allowsMultipleSelection = false

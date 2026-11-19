@@ -1,3 +1,5 @@
+import { openPdfPages } from '../features/pdf-import.js';
+import { extractDesktopPdf } from './pdf-desktop.js';
 import { openWordDocument } from '../features/word-import.js';
 import { protectSourceDraft } from '../features/source-editor.js';
 // @ts-check
@@ -193,16 +195,27 @@ export function setupDesktopIPC() {
   if (!hasDesktopBridge()) return;
 
   // Listen for files opened from the main process (Cmd+O, Finder, drag-to-dock)
-  bridgeOnFileOpened(function (fileData) {
+  bridgeOnFileOpened(async function (fileData) {
     if (fileData.workspaceId !== undefined && !isCurrentWorkspaceFileOpen(fileData.workspaceId)) {
       if (fileData.openReceipt) bridgeReportFileOpenResult(fileData.openReceipt, false);
       return;
     }
     let accepted = false;
     try {
-      if (fileData.wordImport) {
+      if (fileData.importFormat === 'pdf') {
+        try {
+          const pages = await extractDesktopPdf(fileData.content);
+          accepted = openPdfPages(pages, text =>
+            createTab(fileData.filename, text, null, { importFormat: 'pdf' })
+          );
+        } catch (error) {
+          const message = error instanceof Error ? error.message : '';
+          showToast(/password/i.test(message) ? 'Choose a PDF without password protection.' :
+            'Could not import PDF. ' + (message || 'Check that the file is readable.'), { type: 'error' });
+        }
+      } else if (fileData.importFormat === 'docx') {
         accepted = openWordDocument(fileData.content, fileData.filename, text =>
-          createTab(fileData.filename, text, null, { wordImport: true })
+          createTab(fileData.filename, text, null, { importFormat: 'docx' })
         );
       } else accepted = createTab(fileData.filename, fileData.content, fileData.filePath, fileData.annotationSource ? {annotationSource:fileData.annotationSource} : null) === true;
     } finally {

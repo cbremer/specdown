@@ -22,7 +22,7 @@ interface SpecdownFileData {
 
 /** Main-issued receipt exists only for a newly delivered desktop open. */
 interface SpecdownFileOpenData extends SpecdownFileData {
-  wordImport?: boolean;
+  importFormat?: 'docx' | 'pdf';
   workspaceId?: string;
   openReceipt: string;
 }

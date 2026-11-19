@@ -129,6 +129,60 @@ final class NativeDocumentTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), bytes)
     }
 
+    func testPDFOpenAndMarkdownExport() async throws {
+        let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
+        let web = try await host(bridge)
+        let presenter = try XCTUnwrap(retainedWindow?.rootViewController)
+        func makePDF(_ name: String, pages: [String?]) throws -> URL {
+            let url = fixture.appendingPathComponent(name)
+            let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 500, height: 700))
+            try renderer.writePDF(to: url) { context in
+                for text in pages {
+                    context.beginPage()
+                    if let text {
+                        (text as NSString).draw(at: CGPoint(x: 25, y: 25), withAttributes: [.font: UIFont.systemFont(ofSize: 16)])
+                    } else {
+                        let image = UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100)).image { renderer in
+                            UIColor.gray.setFill()
+                            renderer.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
+                        }
+                        image.draw(at: CGPoint(x: 25, y: 25))
+                    }
+                }
+            }
+            return url
+        }
+        let simple = try makePDF("text.pdf", pages: ["First selectable paragraph."])
+        bridge.openDocument(at: simple)
+        try await wait("text PDF") { bridge.currentDocumentName == "text.pdf" }
+        let mixed = try makePDF("Report.pdf", pages: ["First selectable paragraph.", nil, "Last selectable paragraph."])
+        let original = try Data(contentsOf: mixed)
+        _ = try await web.evaluateJavaScript("document.getElementById('browse-button').click()")
+        try await wait("PDF open picker") { presenter.presentedViewController is UIDocumentPickerViewController }
+        let picker = try XCTUnwrap(presenter.presentedViewController as? UIDocumentPickerViewController)
+        picker.dismiss(animated: false)
+        bridge.documentPicker(picker, didPickDocumentsAt: [mixed])
+        try await wait("mixed PDF") { bridge.currentDocumentName == "Report.pdf" }
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); const pdfInput=document.querySelector('#source-editor-host textarea:not([hidden])'); pdfInput.value += 'Edited PDF text'; pdfInput.dispatchEvent(new Event('input')); document.getElementById('source-save').click()")
+        try await wait("PDF Markdown export picker") { presenter.presentedViewController is UIDocumentPickerViewController }
+        let exportPicker = try XCTUnwrap(presenter.presentedViewController as? UIDocumentPickerViewController)
+        let folders = try FileManager.default.contentsOfDirectory(at: FileManager.default.temporaryDirectory, includingPropertiesForKeys: nil)
+        let prepared = try XCTUnwrap(folders.filter { $0.lastPathComponent.hasPrefix("specdown-markdown-") }.map { $0.appendingPathComponent("Report.md") }.first { (try? String(contentsOf: $0, encoding: .utf8))?.contains("Edited PDF text") == true })
+        let destination = fixture.appendingPathComponent("Exported.md")
+        try FileManager.default.copyItem(at: prepared, to: destination)
+        exportPicker.dismiss(animated: false)
+        bridge.documentPicker(exportPicker, didPickDocumentsAt: [destination])
+        try await wait("exported Markdown") { (try? await web.evaluateJavaScript("document.getElementById('file-name').textContent")) as? String == "Exported.md" }
+        let markdown = try String(contentsOf: destination, encoding: .utf8)
+        XCTAssertTrue(markdown.contains("First selectable paragraph.") && markdown.contains("Last selectable paragraph."))
+        XCTAssertTrue(markdown.contains("Page 2 has no selectable text. OCR may be needed."))
+        XCTAssertEqual(try Data(contentsOf: mixed), original)
+        bridge.openDocument(at: try makePDF("scan.pdf", pages: [nil]))
+        try await wait("scan OCR explanation") { (try? await web.evaluateJavaScript("document.getElementById('toast-region').textContent.includes('has no selectable text. Run OCR')")) as? Bool == true }
+        let current = try await web.evaluateJavaScript("document.getElementById('file-name').textContent") as? String
+        XCTAssertEqual(current, "Exported.md")
+    }
+
     func testAboutShowsNativeBundleBuildAndChannel() async throws {
         let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
         let web = try await host(bridge)
