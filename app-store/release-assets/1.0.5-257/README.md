@@ -15,22 +15,26 @@ Provide the [Word guide](review-files/Stargazing%20guide.docx) and [scanned PDF]
 
 [Open the screenshot gallery](gallery.html). Select an image to inspect it at its exported resolution.
 
-Each device has eight new captures from the 1.0.5 candidate. The frames, typography, navy gradient, headline placement and subtitle styling come from the approved 1.0.3 artwork. The original dark Starfield opening, diagram presentation, mindmap with a table, release timeline and light-mode ending retain their places. Word import, Markdown editing and PDF recognition occupy positions 03, 04 and 07.
+Each device has eight new captures from the 1.0.5 candidate. The frames, typography, navy gradient, headline placement and subtitle styling come from the approved 1.0.3 artwork. The dark Starfield opening, diagram presentation, mindmap with a table, release timeline and light-mode ending retain their places. The presentation now shows how Word and PDF imports lead to an editable Markdown copy. The timeline follows the same release. Word import, Markdown editing and PDF recognition occupy positions 03, 04 and 07.
 
 | Position | Screen |
 | --- | --- |
 | 01 | Starfield home in dark mode |
-| 02 | Sign-in sequence in diagram presentation |
+| 02 | Word and PDF import flowchart in diagram presentation |
 | 03 | A Word guide opened as Markdown |
 | 04 | An edited heading and the Save as Markdown control |
 | 05 | A feature mindmap with its reference table |
-| 06 | A release timeline in presentation mode |
+| 06 | Document import release timeline in presentation mode |
 | 07 | Text recovered from the scanned observing log |
 | 08 | API reference in light mode |
 
 [Mac](screenshots/mac/) · [iPhone](screenshots/iphone/) · [iPad](screenshots/ipad/) · [iPhone Duo](screenshots/duo/)
 
 Mac images show the production Store renderer in a local development-signed sandboxed app, at 1440 × 900 points and 2× scale. Mobile images show the production interface on simulators. A temporary simulator-only driver opened the demo documents, performed the edit and waited for each capture. The signed distribution apps contain the regular interface. The iPad gallery uses the native collapsed-sidebar view.
+
+### Recapture the diagrams
+
+Use the [document import flowchart](diagram-samples/Document%20import.md) for slide 02 and the [release plan](diagram-samples/Release%20plan.md) for slide 06. Open each file in the Store candidate in dark mode and enter Presentation. The `%% specdown:brand` line inside each Mermaid block selects the app’s diagram palette. Check the teal shapes and connectors in the flowchart and the teal active task in the timeline before composing the artwork.
 
 ### Rebuild the artwork
 
