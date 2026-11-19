@@ -311,7 +311,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             let deliveryID = UUID().uuidString
             let sourceID = recent?.id ?? UUID().uuidString
             self.documentViewTransitions.beginDelivery(deliveryID)
-            let nativeDocument = ["id": sourceID, "expectedToken": self.documentViewTransitions.token.isEmpty ? "0-0" : self.documentViewTransitions.token, "deliveryID": deliveryID]
+            var nativeDocument = ["id": sourceID, "expectedToken": self.documentViewTransitions.token.isEmpty ? "0-0" : self.documentViewTransitions.token, "deliveryID": deliveryID]
+            if Self.wordImportEnabled, recent != nil, name.lowercased().hasSuffix(".docx") { nativeDocument["format"] = "docx" }
             self.evaluateJavaScript(function: "window.specdownLoadNativeDocument", arguments: [content, name, nativeDocument], context: "loadFileContent") { [weak self] result, error in
                 defer { done() }
                 guard let self else { return }
@@ -382,6 +383,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             permit.cancel()
             self.documentLoadAcceptance.cancel(request)
         }
+        let allowWord = Self.wordImportEnabled
         fileQueue.async { [weak self] in
             defer { Task { @MainActor [weak self] in _ = self?.activeProviderReads.removeValue(forKey: operationID) } }
             do {
@@ -401,7 +403,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     result = Result {
                         guard !permit.isCancelled else { throw CancellationError() }
                         let data = try SpecDownSecurityPolicy.readDocument(at: coordinatedURL)
-                        guard let content = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                        let isWord = allowWord && coordinatedURL.pathExtension.lowercased() == "docx"
+                        guard let content = isWord ? data.base64EncodedString() : String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
                         let bookmark = try coordinatedURL.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
                         return (content, bookmark, coordinatedURL)
                     }
@@ -413,7 +416,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     location: coordinatedURL.deletingLastPathComponent().path, bookmark: bookmark)
                 Task { @MainActor [weak self] in
                     guard let self, self.documentLoadAcceptance.canDeliver(request) else { return }
-                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: coordinatedURL)
+                    self.deliverFile(name: entry.name, content: content, request: request, recent: entry, sourceURL: allowWord && coordinatedURL.pathExtension.lowercased() == "docx" ? nil : coordinatedURL)
                 }
             } catch {
                 if error is CancellationError { return }
@@ -521,7 +524,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         activeMarkdownSaves.insert(requestID)
         let sourceID = request["sourceID"] as? String ?? ""
         let copy = request["copy"] as? Bool ?? false
-        guard !copy, let url = sourceURLs[sourceID], openSourceIDs.contains(sourceID) else {
+        guard !copy, let url = sourceURLs[sourceID], url.pathExtension.lowercased() != "docx", openSourceIDs.contains(sourceID) else {
             exportMarkdown(requestID: requestID, content: content, filename: request["filename"] as? String ?? "Document.md")
             return
         }
@@ -588,8 +591,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Native integrations
 
+    private static let wordImportEnabled = Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String == "development"
+
     private func presentDocumentPicker() {
-        let types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
+        var types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
+        if Self.wordImportEnabled, let word = UTType(filenameExtension: "docx") { types.append(word) }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
         picker.delegate = self
         picker.allowsMultipleSelection = false

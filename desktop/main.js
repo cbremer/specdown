@@ -660,9 +660,7 @@ function isValidMarkdownFile(filePath) {
 }
 
 let annotationIdentityRegistry = null;
-function readMarkdownFile(filePath, continuity) {
-  if (!isValidMarkdownFile(filePath))
-    throw new Error('Unsupported document type.');
+function readDocumentBytes(filePath) {
   const fd = fs.openSync(
     filePath,
     fs.constants.O_RDONLY | fs.constants.O_NONBLOCK
@@ -688,26 +686,32 @@ function readMarkdownFile(filePath, continuity) {
     }
     if (total > MAX_DOCUMENT_BYTES)
       throw new Error('Markdown files must be 8 MiB or smaller.');
-    // No source-identity stat/realpath probes. The location is the logical path
-    // supplied by the already authorized reader. Missing registry => ephemeral
-    // notes only, while the document can still open successfully.
-    let annotationSource = null;
-    try {
-      annotationIdentityRegistry ||= createAnnotationIdentity(
-        path.join(app.getPath('userData'), 'annotation-identity.sqlite')
-      );
-      const identityEvidence=typeof continuity?.afterRead==='function' ? continuity.afterRead(filePath) : continuity;
-      annotationSource = annotationIdentityRegistry.afterAuthorizedRead(filePath,identityEvidence);
-    } catch {}
-    return {
-      filename: path.basename(filePath),
-      filePath,
-      content: Buffer.concat(chunks, total).toString('utf8'),
-      annotationSource,
-    };
+    return Buffer.concat(chunks, total);
   } finally {
     fs.closeSync(fd);
   }
+}
+
+function readMarkdownFile(filePath, continuity) {
+  if (!isValidMarkdownFile(filePath)) throw new Error('Unsupported document type.');
+  const bytes = readDocumentBytes(filePath);
+  // No source-identity stat/realpath probes. The location is the logical path
+  // supplied by the already authorized reader. Missing registry => ephemeral
+  // notes only, while the document can still open successfully.
+  let annotationSource = null;
+  try {
+    annotationIdentityRegistry ||= createAnnotationIdentity(
+      path.join(app.getPath('userData'), 'annotation-identity.sqlite')
+    );
+    const identityEvidence=typeof continuity?.afterRead==='function' ? continuity.afterRead(filePath) : continuity;
+    annotationSource = annotationIdentityRegistry.afterAuthorizedRead(filePath,identityEvidence);
+  } catch {}
+  return {
+    filename: path.basename(filePath),
+    filePath,
+    content: bytes.toString('utf8'),
+    annotationSource,
+  };
 }
 
 // Best-effort owner name for a stat result. Node has no portable uid→username
@@ -746,14 +750,24 @@ function buildFileMetadata(filePath) {
   };
 }
 
+const wordImportEnabled = !app.isPackaged || require('../package.json').specdownChannel === 'development';
 function openFileByPath(filePath, context) {
-  if (!isValidMarkdownFile(filePath)) {
+  const isWord = wordImportEnabled && typeof filePath === 'string' && path.extname(filePath).toLowerCase() === '.docx';
+  if (!isWord && !isValidMarkdownFile(filePath)) {
     openRecovery.report(filePath, 'Choose a Markdown file (.md or .markdown).', context?.entry);
     return false;
   }
 
   try {
     const access = fileAccess.withAccess(filePath, (resolved, continuity) => {
+      if (isWord) {
+        return {
+          filename: path.basename(resolved),
+          filePath: resolved,
+          wordImport: true,
+          content: readDocumentBytes(resolved).toString('base64'),
+        };
+      }
       const document = readMarkdownFile(resolved, continuity);
       fileResourcePolicy.noteDocument(resolved);
       return document;
@@ -808,7 +822,7 @@ async function showOpenDialog() {
     title: 'Open File',
     properties: ['openFile', 'multiSelections'],
     filters: [
-      { name: 'Markdown Files', extensions: ['md', 'markdown'] },
+      wordImportEnabled ? { name: 'Markdown and Word documents', extensions: ['md', 'markdown', 'docx'] } : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   }));

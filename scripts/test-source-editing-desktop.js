@@ -268,6 +268,68 @@ app.whenReady().then(async () => {
       'discard restores saved reading view'
     );
     assert.equal(fs.readFileSync(copy, 'utf8'), '# Recover me');
+    const word = path.join(fixture, 'Report.docx');
+    const wordBytes = fs.readFileSync(
+      path.join(__dirname, '../tests/fixtures/word-import.docx')
+    );
+    fs.writeFileSync(word, wordBytes);
+    let offeredWord = false;
+    dialog.showOpenDialog = async (_window, options) => {
+      offeredWord = options.filters.some((filter) =>
+        filter.extensions.includes('docx')
+      );
+      return { canceled: false, filePaths: [word] };
+    };
+    await js("document.getElementById('browse-button').click()");
+    await until(
+      async () =>
+        await js(
+          "document.querySelector('#markdown-content h1')?.textContent==='Synthetic heading'"
+        ),
+      'DOCX reading view from Open File'
+    );
+    assert.ok(offeredWord);
+    await js("document.getElementById('source-edit').click()");
+    const imported = await js(
+      "document.querySelector('#source-editor-host textarea:not([hidden])').value"
+    );
+    assert.match(imported, /INSERTED/);
+    assert.doesNotMatch(imported, /DELETED/);
+    assert.match(imported, /Cell two/);
+    await edit(imported + 'Edited on desktop');
+    const wordOutput = path.join(fixture, 'Report.md');
+    const alias = path.join(fixture, 'linked.md');
+    fs.symlinkSync(word, alias);
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath: alias });
+    await js("document.getElementById('source-save').click()");
+    await until(
+      async () =>
+        await js(
+          "document.getElementById('source-status').textContent==='Unsaved changes'"
+        ),
+      'Word alias rejected and draft retained'
+    );
+    assert.deepEqual(fs.readFileSync(word), wordBytes);
+    let suggestedName;
+    dialog.showSaveDialog = async (_window, options) => {
+      suggestedName = options.defaultPath;
+      return { canceled: false, filePath: wordOutput };
+    };
+    assert.equal(
+      await js("document.getElementById('source-save').textContent"),
+      'Save as Markdown…'
+    );
+    await js("document.getElementById('source-save').click()");
+    await until(
+      () => fs.existsSync(wordOutput),
+      'Word edits saved as Markdown'
+    );
+    assert.equal(suggestedName, 'Report.md');
+    assert.equal(
+      fs.readFileSync(wordOutput, 'utf8'),
+      imported + 'Edited on desktop'
+    );
+    assert.deepEqual(fs.readFileSync(word), wordBytes);
     const screenshot = path.join(fixture, 'desktop-preview.png');
     fs.writeFileSync(screenshot, (await win.webContents.capturePage()).toPNG());
     console.log(
@@ -283,6 +345,7 @@ app.whenReady().then(async () => {
           'independent Save As',
           'canceled destination',
           'real Mermaid',
+          'Open File DOCX to independent Markdown copy',
         ],
         screenshot,
       })

@@ -1,5 +1,6 @@
 // @ts-expect-error -- Vite stylesheet import
 import './features/source-editor.css';
+import {openWordDocument} from './features/word-import.js';
 import {configureSourceEditor, setupSourceEditor, syncSourceEditor} from './features/source-editor.js';
 // @ts-check
 import { cancelDiagramRasterExport } from './features/diagram-export.js';
@@ -290,6 +291,11 @@ window.loadFileContent = function(content, filename, nativeDocument) {
     if (nativeDocument?.expectedToken && (getIOSDocumentView()?.token || '0-0') !== nativeDocument.expectedToken) return false;
     const finishDelivery = beginIOSNativeDocumentDelivery(nativeDocument?.deliveryID);
     try {
+        if (nativeDocument?.format === 'docx') {
+            return openWordDocument(content, filename, text =>
+                createTab(filename, text, null, { wordImport: true, nativeDocument: { id: nativeDocument.id } })
+            );
+        }
         return createTab(filename, content, null, nativeDocument ? { nativeDocument: {id: nativeDocument.id} } : null);
     } finally { finishDelivery(); }
 };
