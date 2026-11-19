@@ -18,8 +18,8 @@
     ],
     "headline": "See diagrams in presentation mode",
     "subtitle": "Zoom, pan, and step through your diagrams",
-    "sha256": "d9827ab910b0cc442168f2952d428cebdac263b607defdca73fa08c08c6d8e93",
-    "captureSha256": "166a56301c5ea774770f95e63864408e3690af42dfc3079b15f805bf93d696e4"
+    "sha256": "ba15e37ace4784dd95282cec352611917b3a93050a195edd8487939eb93e4f58",
+    "captureSha256": "306ad3544efa75c6417a96d84772941930183bd67e76f4b92362f6543823ad9c"
   },
   {
     "file": "duo/03-word.png",
@@ -62,8 +62,8 @@
     ],
     "headline": "Follow the plan",
     "subtitle": "Charts and diagrams beside your document",
-    "sha256": "5d98186e0bf79efdf2804d7bea510cf6c6040ccf776e460d6b6aa9172cd19f6c",
-    "captureSha256": "884df46ed4f4074ac4c5acf316b59523f9432403a9407a61cdcb51c2badbdc92"
+    "sha256": "48e6d89ffe51f704357153c478cd13f1f87811b9e79b482f0e0934123dc3c9a2",
+    "captureSha256": "9a334985bc205d384e375e631a28d7b446a16eb0394b4cc1a0abeb0d7ddba143"
   },
   {
     "file": "duo/07-pdf.png",
