@@ -45,3 +45,21 @@ fs.copyFileSync(
   path.join(pdfDistribution, 'LICENSE'),
   path.join(root, 'dist', 'pdf-data', 'LICENSE')
 );
+
+// Desktop recognition runs from these bundled assets, including on a first offline open.
+const ocrDest = path.join(root, 'dist', 'pdf-ocr');
+fs.mkdirSync(ocrDest, { recursive: true });
+for (const [source, destination] of [
+  ['tesseract.js/dist/worker.min.js', 'worker.min.js'],
+  ['tesseract.js/dist/worker.min.js.LICENSE.txt', 'worker.LICENSE.txt'],
+  [
+    'tesseract.js-core/tesseract-core-lstm.wasm.js',
+    'tesseract-core-lstm.wasm.js',
+  ],
+  ['tesseract.js-core/LICENSE', 'core.LICENSE'],
+  [
+    '@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz',
+    'eng.traineddata.gz',
+  ],
+])
+  fs.copyFileSync(require.resolve(source), path.join(ocrDest, destination));

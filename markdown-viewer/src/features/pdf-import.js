@@ -13,34 +13,48 @@ function pdfLiteral(text) {
     );
 }
 
-/** @param {string[]} pages @param {(source:string)=>boolean} admit */
+/** @param {string} text */
+export function pdfPageNeedsOCR(text) {
+  return (
+    text.replace(/[^\p{L}\p{N}]/gu, '').length < 12 ||
+    /^(?:Page\s+)?\d+(?:\s*(?:of|\/)\s*\d+)?$/i.test(text.trim())
+  );
+}
+
+/** @typedef {{text:string, recognized?:string, issue?:string}} ImportedPdfPage */
+/** @param {ImportedPdfPage[]} pages @param {(source:string)=>boolean} admit */
 export function openPdfPages(pages, admit) {
   const blocks = [];
-  const flagged = [];
+  let recognizedPages = 0;
+  let unresolved = 0;
   let hasText = false;
   for (const [index, page] of pages.entries()) {
-    const text = page.replace(/\r\n?/g, '\n').trim();
+    const selectable = page.text.replace(/\r\n?/g, '\n').trim();
+    const recognized = page.recognized?.trim() || '';
+    // Keep selectable lines verbatim when OCR also saw the header or footer.
+    const lines = new Set(
+      selectable.split(/\n/).map((line) => line.trim().toLowerCase())
+    );
+    const added = recognized
+      .split(/\r?\n/)
+      .filter((line) => !lines.has(line.trim().toLowerCase()))
+      .join('\n')
+      .trim();
+    const text = [selectable, added].filter(Boolean).join('\n\n');
     if (text) {
-      blocks.push(pdfLiteral(text));
       hasText = true;
+      blocks.push(pdfLiteral(text));
     }
-    // A short header or page number can sit above a scanned page body.
-    if (
-      text.replace(/[^\p{L}\p{N}]/gu, '').length < 12 ||
-      /^(?:Page\s+)?\d+(?:\s*(?:of|\/)\s*\d+)?$/i.test(text)
-    ) {
-      flagged.push(index + 1);
-      blocks.push(
-        '> Page ' +
-          (index + 1) +
-          (text ? ' has little selectable text.' : ' has no selectable text.') +
-          ' OCR may be needed.'
-      );
+    if (added) recognizedPages++;
+    if (page.issue) {
+      unresolved++;
+      blocks.push('> Page ' + (index + 1) + ' — ' + page.issue);
     }
   }
   if (!hasText) {
     showToast(
-      'This PDF has no selectable text. Run OCR on the PDF and open it again.',
+      'No readable text was imported. ' +
+        (pages.find((page) => page.issue)?.issue || 'OCR found no text.'),
       { type: 'warning', duration: 0 }
     );
     return false;
@@ -49,13 +63,17 @@ export function openPdfPages(pages, admit) {
   assertDocumentSize(markdown);
   const accepted = admit(markdown);
   if (accepted) {
-    const notice = flagged.length
-      ? 'Check pages ' +
-        flagged.slice(0, 12).join(', ') +
-        (flagged.length > 12 ? ' and others' : '') +
-        ' for OCR. Each is marked in the copy.'
+    const notice = recognizedPages
+      ? 'Text recognized on ' +
+        recognizedPages +
+        (recognizedPages === 1 ? ' page.' : ' pages.') +
+        ' Check the transcription.'
       : 'PDF imported. Check reading order, especially in columns and tables.';
-    showToast(notice, { type: flagged.length ? 'warning' : 'info' });
+    showToast(
+      notice +
+        (unresolved ? ' Pages needing review are marked in the copy.' : ''),
+      { type: unresolved ? 'warning' : 'info' }
+    );
   }
   return accepted;
 }

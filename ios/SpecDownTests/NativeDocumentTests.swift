@@ -142,9 +142,10 @@ final class NativeDocumentTests: XCTestCase {
                     if let text {
                         (text as NSString).draw(at: CGPoint(x: 25, y: 25), withAttributes: [.font: UIFont.systemFont(ofSize: 16)])
                     } else {
-                        let image = UIGraphicsImageRenderer(size: CGSize(width: 100, height: 100)).image { renderer in
-                            UIColor.gray.setFill()
-                            renderer.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
+                        let image = UIGraphicsImageRenderer(size: CGSize(width: 360, height: 80)).image { renderer in
+                            UIColor.white.setFill()
+                            renderer.fill(CGRect(x: 0, y: 0, width: 360, height: 80))
+                            ("Project Atlas 425" as NSString).draw(at: CGPoint(x: 12, y: 14), withAttributes: [.font: UIFont.boldSystemFont(ofSize: 32), .foregroundColor: UIColor.black])
                         }
                         image.draw(at: CGPoint(x: 25, y: 25))
                     }
@@ -175,12 +176,12 @@ final class NativeDocumentTests: XCTestCase {
         try await wait("exported Markdown") { (try? await web.evaluateJavaScript("document.getElementById('file-name').textContent")) as? String == "Exported.md" }
         let markdown = try String(contentsOf: destination, encoding: .utf8)
         XCTAssertTrue(markdown.contains("First selectable paragraph.") && markdown.contains("Last selectable paragraph."))
-        XCTAssertTrue(markdown.contains("Page 2 has no selectable text. OCR may be needed."))
+        XCTAssertTrue(markdown.range(of: #"First selectable paragraph\.[\s\S]*Project Atlas 425[\s\S]*Last selectable paragraph\."#, options: .regularExpression) != nil)
         XCTAssertEqual(try Data(contentsOf: mixed), original)
         bridge.openDocument(at: try makePDF("scan.pdf", pages: [nil]))
-        try await wait("scan OCR explanation") { (try? await web.evaluateJavaScript("document.getElementById('toast-region').textContent.includes('has no selectable text. Run OCR')")) as? Bool == true }
+        try await wait("scan OCR text") { bridge.currentDocumentName == "scan.pdf" }
         let current = try await web.evaluateJavaScript("document.getElementById('file-name').textContent") as? String
-        XCTAssertEqual(current, "Exported.md")
+        XCTAssertEqual(current, "scan.pdf")
     }
 
     func testAboutShowsNativeBundleBuildAndChannel() async throws {

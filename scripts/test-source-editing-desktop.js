@@ -330,7 +330,13 @@ app.whenReady().then(async () => {
       imported + 'Edited on desktop'
     );
     assert.deepEqual(fs.readFileSync(word), wordBytes);
-    for (const kind of ['text', 'columns', 'mixed', 'scanned']) {
+    for (const kind of [
+      'text',
+      'columns',
+      'ocr-scan',
+      'ocr-mixed',
+      'scanned',
+    ]) {
       const name = 'pdf-' + kind + '.pdf';
       const pdf = path.join(fixture, name);
       const pdfBytes = fs.readFileSync(
@@ -349,13 +355,13 @@ app.whenReady().then(async () => {
         await until(
           async () =>
             await js(
-              "document.getElementById('toast-region')?.textContent.includes('has no selectable text. Run OCR')"
+              "document.getElementById('toast-region')?.textContent.includes('No readable text was imported.')"
             ),
           'scanned PDF explanation'
         );
         assert.equal(
           await js("document.getElementById('file-name').textContent"),
-          'pdf-mixed.md'
+          'pdf-ocr-mixed.md'
         );
         continue;
       }
@@ -370,6 +376,10 @@ app.whenReady().then(async () => {
       const source = await js(
         "document.querySelector('#source-editor-host textarea:not([hidden])').value"
       );
+      if (kind === 'ocr-scan') {
+        assert.match(source, /Project Atlas 425/);
+        continue;
+      }
       assert.match(source, /Project review notes/);
       if (kind === 'columns') {
         for (const text of [
@@ -393,21 +403,25 @@ app.whenReady().then(async () => {
         assert.doesNotMatch(source, /OCR/);
         continue;
       }
-      assert.match(source, /Page 2 has no selectable text.*OCR/);
+      assert.match(
+        source,
+        /Project review notes[\s\S]*Project Atlas 425[\s\S]*Final selectable paragraph/
+      );
       assert.ok(
-        source.indexOf('Page 2') < source.indexOf('Final selectable paragraph')
+        source.indexOf('Project Atlas 425') <
+          source.indexOf('Final selectable paragraph')
       );
       await edit(source + 'Edited PDF text');
-      const output = path.join(fixture, 'pdf-mixed.md');
+      const output = path.join(fixture, 'pdf-ocr-mixed.md');
       dialog.showSaveDialog = async (_window, options) => {
-        assert.equal(options.defaultPath, 'pdf-mixed.md');
+        assert.equal(options.defaultPath, 'pdf-ocr-mixed.md');
         return { canceled: false, filePath: output };
       };
       await js("document.getElementById('source-save').click()");
       await until(
         async () =>
           await js(
-            "document.getElementById('file-name').textContent==='pdf-mixed.md'"
+            "document.getElementById('file-name').textContent==='pdf-ocr-mixed.md'"
           ),
         'PDF to Markdown copy'
       );

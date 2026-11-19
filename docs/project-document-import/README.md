@@ -2,7 +2,7 @@
 
 Product definition and delivery planning for lightweight Markdown source editing and experimental conversion of other documents into Markdown reading copies.
 
-Current status — edit/save development builds are implemented locally on `codex/source-edit-save-dev`. Desktop smoke checks and iPhone/iPad native save tests have passed. Owner accessibility/provider and other-platform acceptance remains open. Word (.docx) and text-bearing PDF files now open as locally converted Markdown copies in desktop and iOS Dev. The earlier MarkItDown experiment is recorded separately. See the [development acceptance record](2026-11-18-spec-edit-save-dev-acceptance.md).
+Current status — edit/save development builds are implemented locally on `codex/source-edit-save-dev`. Desktop smoke checks and iPhone/iPad native save tests have passed. Owner accessibility/provider and other-platform acceptance remains open. Word (.docx) and PDF files open as locally converted Markdown copies in direct desktop and iOS Dev. Sparse PDF pages receive local English OCR. The earlier MarkItDown experiment is recorded separately. See the [development acceptance record](2026-11-18-spec-edit-save-dev-acceptance.md).
 
 ## Linear planning
 
@@ -26,6 +26,7 @@ The completed advisory draft review has four proposed refinements in the [review
 | November 18, 2026 | Tasks | [Session 04 — contextual editing in Dev builds](2026-11-18-tasks-session-04-contextual-editor-dev.md)              |
 | November 18, 2026 | Tasks | [Session 05 — Open Word and save Markdown in Dev](2026-11-18-tasks-session-05-word-open-dev.md)                    |
 | November 18, 2026 | Tasks | [Session 06 — PDF text import in Dev](2026-11-18-tasks-session-06-pdf-open-dev.md)                                 |
+| November 18, 2026 | Tasks | [Session 07 — Local PDF OCR in Dev](2026-11-18-tasks-session-07-pdf-ocr-dev.md) |
 
 ## Naming
 

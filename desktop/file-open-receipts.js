@@ -72,7 +72,9 @@ function createFileOpenReceipts({
         receiver,
         frame,
         epoch,
-        expiresAt: now() + OPEN_RECEIPT_TTL_MS,
+        expiresAt:
+          now() +
+          (fileData.importFormat === 'pdf' ? 150000 : OPEN_RECEIPT_TTL_MS),
       });
       return { ...fileData, openReceipt: id };
     } catch {

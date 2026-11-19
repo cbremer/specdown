@@ -16,6 +16,28 @@ Linux), as an **iOS / iPadOS** app, and through the **Mac App Store**.
 
 ---
 
+## App names, build channels and versions
+
+On a Mac, **SpecDown Dev** is the local direct-download desktop build. **SpecDown Store Dev** is the local sandboxed Mac App Store build. On iPhone and iPad, **SpecDown Dev** is the Xcode development scheme. Each is built separately.
+
+| Where it runs | App or scheme | Bundle ID | Build configuration → local output or delivery |
+| --- | --- | --- | --- |
+| Browser / PWA | SpecDown | — | `npm run build` → `markdown-viewer/dist/`. GitHub Pages serves the web release. |
+| Direct desktop Dev (Mac) | SpecDown Dev | `com.specdown.desktop.dev` | `electron-builder.dev.js` → `dist/development-edit-save/mac-arm64/SpecDown Dev.app` |
+| Direct desktop release (Mac, Windows, Linux) | Specdown Desktop | `com.specdown.desktop` on Mac | `package.json` build config → `dist/`. Release workflow delivers installers through GitHub Releases. |
+| Mac App Store Dev | SpecDown Store Dev | `com.mosaicpando.specdown.dev` | `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Install the signed app locally. |
+| Mac App Store Beta | SpecDown Store Beta | `com.mosaicpando.specdown.beta` | `electron-builder.mas-beta.js` → `dist-mas/beta/`. Separate TestFlight app. |
+| Mac App Store production | SpecDown | `com.mosaicpando.specdown` | `electron-builder.mas.js` → `dist-mas/`. Mac App Store delivery. |
+| iPhone / iPad Dev | SpecDown Dev | `com.mosaicpando.specdown.dev` | Xcode scheme `SpecDown Dev`, run with `Dev Debug`. Install directly on a paired device. |
+| iPhone / iPad Beta | SpecDown Beta | `com.mosaicpando.specdown.beta` | Xcode scheme `SpecDown Beta`, archive with `Beta Release`. Separate TestFlight app. |
+| iPhone / iPad production | SpecDown | `com.mosaicpando.specdown` | Xcode scheme `SpecDown`, archive with `Release`. Production TestFlight and App Store delivery. |
+
+**Which version am I running?** The web viewer and direct desktop use the npm version in `package.json`, such as `0.0.234`. A local desktop Dev rebuild can reuse that number. Apple builds show a marketing version and a build number in About, such as `1.0.4 (251)`. iOS takes these from the resolved Xcode settings (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`). Mac Store packaging takes them from `extraMetadata.version` and `buildVersion` in the resolved Electron builder config. An iPhone build number alone tells you nothing about which Mac build is installed.
+
+**Where is my build?** The table gives default package outputs. Xcode writes the iOS app under the selected DerivedData directory in `Build/Products/<configuration>-iphoneos/` for a device or `<configuration>-iphonesimulator/` for a simulator. On a Mac, use Finder’s **Get Info** or inspect `Contents/Info.plist` in the specific app you open. Its `CFBundleIdentifier`, `CFBundleShortVersionString` and `CFBundleVersion` identify the channel, version and build. Local packaging overrides can differ from the checked-in defaults.
+
+**Which Dev command?** On this development branch, `scripts/build-edit-save-dev.sh` builds the direct Mac Dev app and iOS Dev simulator app. Physical iPhone installation uses the device build of the same Xcode scheme. For the separate **SpecDown Store Dev** app, build the shared viewer and the MAS native helper, then package with `electron-builder.mas-dev-channel.js`. The similarly named `npm run desktop:mas-dev` selects development signing with the **production Store bundle ID**.
+
 ## Features
 
 ### Markdown

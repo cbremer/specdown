@@ -1,3 +1,4 @@
+import Vision
 import PDFKit
 import WebKit
 import SwiftUI
@@ -378,7 +379,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let permit = DocumentReadPermit()
         activeProviderReads[operationID] = ProviderRead(request: request, permit: permit)
         let previous = recentID.flatMap { id in recentFiles.first { $0.id == id } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+        let filename = suppliedURL?.lastPathComponent ?? previous?.name ?? ""
+        let timeout: TimeInterval = filename.lowercased().hasSuffix(".pdf") ? 120 : 15
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self, self.activeProviderReads[operationID] != nil else { return }
             if self.documentLoadAcceptance.canDeliver(request) {
                 if let previous { self.recentFailed(previous, request: request) }
@@ -442,8 +445,39 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     private struct PDFImportFailure: Error { let message: String }
 
-    // Only page strings cross into the reader. The coordinated read never
-    // registers the original PDF as a writable Markdown source.
+    private struct ImportedPDFPage: Encodable {
+        let text: String
+        var recognized: String?
+        var issue: String?
+    }
+
+    private nonisolated static func recognizePDFPage(_ page: PDFPage) throws -> String {
+        guard let ref = page.pageRef else { throw PDFImportFailure(message: "Cannot render page.") }
+        let box = ref.getBoxRect(.cropBox)
+        let rotated = ref.rotationAngle % 180 != 0
+        let w = rotated ? box.height : box.width
+        let h = rotated ? box.width : box.height
+        guard w.isFinite, h.isFinite, w > 0, h > 0 else { throw PDFImportFailure(message: "Invalid page size.") }
+        let scale = min(3, 2200 / max(w, h))
+        let width = max(1, Int(ceil(w * scale))), height = max(1, Int(ceil(h * scale)))
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(),
+                                      bitmapInfo: CGImageAlphaInfo.none.rawValue) else {
+            throw PDFImportFailure(message: "Cannot render page.")
+        }
+        let target = CGRect(x: 0, y: 0, width: width, height: height)
+        context.setFillColor(gray: 1, alpha: 1)
+        context.fill(target)
+        context.concatenate(ref.getDrawingTransform(.cropBox, rect: target, rotate: 0, preserveAspectRatio: true))
+        context.drawPDFPage(ref)
+        guard let image = context.makeImage() else { throw PDFImportFailure(message: "Cannot render page.") }
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages = ["en-US"]
+        try VNImageRequestHandler(cgImage: image).perform([request])
+        return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    }
+
     private nonisolated static func extractPDFPages(_ data: Data, permit: DocumentReadPermit) throws -> String {
         guard let pdf = PDFDocument(data: data), pdf.pageCount > 0 else {
             throw PDFImportFailure(message: "Could not read this PDF.")
@@ -452,17 +486,34 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             throw PDFImportFailure(message: "Choose an unlocked PDF that permits copying text.")
         }
         guard pdf.pageCount <= 500 else { throw PDFImportFailure(message: "Choose a PDF with 500 pages or fewer.") }
-        var pages: [String] = []
+        var pages: [ImportedPDFPage] = []
+        var attempts = 0
+        let started = ProcessInfo.processInfo.systemUptime
         var bytes = 0
         for index in 0..<pdf.pageCount {
             guard !permit.isCancelled else { throw CancellationError() }
             guard let page = pdf.page(at: index) else { throw PDFImportFailure(message: "Could not read page \(index + 1).") }
             let text = page.string ?? ""
-            bytes += text.utf8.count
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            var entry = ImportedPDFPage(text: text)
+            if trimmed.unicodeScalars.filter(CharacterSet.alphanumerics.contains).count < 12 ||
+                trimmed.range(of: #"^(?:Page\s+)?\d+(?:\s*(?:of|/)\s*\d+)?$"#, options: [.regularExpression, .caseInsensitive]) != nil {
+                if attempts >= 24 || ProcessInfo.processInfo.systemUptime - started > 90 {
+                    entry.issue = "OCR limit reached. Open this page in a smaller PDF."
+                } else {
+                    attempts += 1
+                    do {
+                        let recognized = try autoreleasepool { try recognizePDFPage(page) }
+                        entry.recognized = recognized
+                        if recognized.isEmpty { entry.issue = "OCR found no readable text." }
+                    } catch { entry.issue = "Text recognition failed." }
+                }
+            }
+            bytes += text.utf8.count + (entry.recognized?.utf8.count ?? 0)
             guard bytes <= SpecDownSecurityPolicy.maximumDocumentBytes else {
                 throw PDFImportFailure(message: "Extracted PDF text exceeds 8 MiB.")
             }
-            pages.append(text)
+            pages.append(entry)
         }
         return String(decoding: try JSONEncoder().encode(pages), as: UTF8.self)
     }
