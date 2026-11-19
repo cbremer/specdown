@@ -60,14 +60,9 @@ function saveExistingMarkdown(target, content, expected, io = fs, sandbox) {
     io.writeFileSync(staged, content, {
       encoding: 'utf8',
       flag: 'wx',
+      flush: true,
       mode: original.stat.mode & 0o777,
     });
-    const stagedFD = io.openSync(staged, 'r');
-    try {
-      io.fsyncSync(stagedFD);
-    } finally {
-      io.closeSync(stagedFD);
-    }
     const latest = readSaveSource(resolved, io);
     if (
       latest.content !== expected ||
@@ -103,14 +98,9 @@ function saveMarkdownCopy(target, content, io = fs, sandbox) {
     io.writeFileSync(staged, content, {
       encoding: 'utf8',
       flag: 'wx',
+      flush: true,
       mode: 0o600,
     });
-    const fd = io.openSync(staged, 'r');
-    try {
-      io.fsyncSync(fd);
-    } finally {
-      io.closeSync(fd);
-    }
     if (sandbox) sandbox.commitNewFile(staged, target);
     else io.linkSync(staged, target); // Atomic no-clobber creation; EEXIST retains the draft.
     return { status: 'saved' };
