@@ -1,5 +1,12 @@
 # Changelog
 
+## Upcoming App Store release · 1.0.5
+
+- A quieter toolbar and a reading-progress bar make it easier to follow longer documents.
+- Open Word (.docx) and PDF files on iPhone, iPad and Mac. SpecDown recognizes English text on scanned pages and flags pages that need review.
+- Edit and preview Markdown, save changes to writable Markdown files, or save an imported document as a separate .md file.
+- Improved security when restoring annotation backups by checking their size before expanding nested records.
+
 ## v0.0.234 — 2026-11-11
 
 ### Bug Fixes

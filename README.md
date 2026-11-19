@@ -57,7 +57,7 @@ On Mac, Command-click a running app’s Dock icon to reveal that exact copy in F
 
 **Document-import Dev builds verified November 18, 2026.** The direct Mac Dev package reports **0.0.234**. Mac App Store Dev **1.0.4 (252)** was installed on Mac and verified through its sandboxed Save panel. iOS Dev **1.0.4 (251)** was installed on iPhone. Physical iPadOS installation and OCR acceptance are open. These are local Dev checkpoints. [iOS and direct Mac OCR results](docs/project-document-import/2026-11-18-tasks-session-07-pdf-ocr-dev.md) · [Mac App Store Dev results](docs/project-document-import/2026-11-18-tasks-session-08-mac-store-dev.md)
 
-**Design preview in Dev and Beta builds.** Both Mac editions, the iPhone/iPad app on Dev and Beta, and the local dev server show the C+ brand moments design: a brand bar that fills as you read, read ticks in Contents, a quieter toolbar, a brand drop moment and About, and the SpecDown diagram style on the bundled samples. [Spec](docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md)
+**Design in the Apple Store candidate.** The upcoming iPhone, iPad and Mac App Store release, native Dev and Beta builds, and the local dev server show the C+ brand moments design: a brand bar that fills as you read, read ticks in Contents, a quieter toolbar, a brand drop moment and About, and the SpecDown diagram style on the bundled samples. [Spec](docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md)
 
 ### Standard home for retained builds
 
@@ -113,7 +113,9 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
 
 ### Getting documents in
 
-**Word and PDF in Dev and Beta builds.** Open File imports a `.docx` or PDF as an editable Markdown copy. Both Mac editions and the shared iPhone/iPad app read Word’s main document XML locally using fflate. On Mac, PDF.js extracts selectable text and Tesseract.js recognizes English text on sparse pages. On iPhone and iPad, PDFKit and Apple Vision perform those steps. Save as Markdown writes a separate file.
+**Word, PDF and quick edits.** In the upcoming iPhone, iPad and Mac App Store release, choose **Open File** to open a Word document (`.docx`) or a PDF. SpecDown converts the text to Markdown on your device. For PDF pages with little selectable text, it tries English text recognition (OCR) and flags pages that still need attention. Choose **Edit** to correct the text or add a heading, then save a separate `.md` file. Your original Word document or PDF stays intact. You can also edit and save writable Markdown files directly.
+
+These imports are also available in both Mac Dev and Beta editions and the mobile Dev and Beta apps. [Upcoming Store release notes and screenshots](app-store/release-assets/1.0.5-257/)
 
 Microsoft MarkItDown successfully converted a sample Word document and a text PDF in an earlier offline Python experiment. Its use was limited to that evaluation. [MarkItDown experiment and results](docs/project-document-import/2026-11-18-spec-edit-save-dev-acceptance.md#markitdown-experiment)
 

@@ -1,0 +1,90 @@
+[
+  {
+    "file": "duo/01-home.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Open a document and start reading",
+    "subtitle": "Your Markdown, with room to focus",
+    "sha256": "19114f844ece1ccd20eabc01306eff55a5a4bd1be7c26899be4cf6357aee0b1e",
+    "captureSha256": "ddd4c437e578c9f465ed6e5322dc8c6a0f23939cbfdbcf6496f496231d78f750"
+  },
+  {
+    "file": "duo/02-presentation.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "See diagrams in presentation mode",
+    "subtitle": "Zoom, pan, and step through your diagrams",
+    "sha256": "d9827ab910b0cc442168f2952d428cebdac263b607defdca73fa08c08c6d8e93",
+    "captureSha256": "166a56301c5ea774770f95e63864408e3690af42dfc3079b15f805bf93d696e4"
+  },
+  {
+    "file": "duo/03-word.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Open a Word document",
+    "subtitle": "Bring headings and text into Markdown",
+    "sha256": "84ee2b778e64412f09b3f27cba531ba4fe4e6a3090ff65425f8e8593ff68dd73",
+    "captureSha256": "1f17965b2b01c55ca1b672d4a9f191a57af84a539740bff04156d734f275fc0b"
+  },
+  {
+    "file": "duo/04-edit.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Make a quick edit",
+    "subtitle": "Preview your changes and save as Markdown",
+    "sha256": "f118975f4ecad2198a99598d2f5b20fc6a19e7dea883cd8c62c6662b23ca96fd",
+    "captureSha256": "09dbaffc8ea393ccadfb2e02393882fca4bd26f06fbd306e2a8867ff88913271"
+  },
+  {
+    "file": "duo/05-mindmap.png",
+    "size": [
+      2007,
+      2853
+    ],
+    "headline": "Diagrams and tables together",
+    "subtitle": "See the big picture beside the details",
+    "sha256": "432df938136fed6dc27e378c667500296523e700ecfda3e1a2e0364f41935e70",
+    "captureSha256": "dc0cee41229dc2f3a1918155dac1008c2e0c199f4e26affe1e18fd84c38ac6a3"
+  },
+  {
+    "file": "duo/06-plan.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Follow the plan",
+    "subtitle": "Charts and diagrams beside your document",
+    "sha256": "5d98186e0bf79efdf2804d7bea510cf6c6040ccf776e460d6b6aa9172cd19f6c",
+    "captureSha256": "884df46ed4f4074ac4c5acf316b59523f9432403a9407a61cdcb51c2badbdc92"
+  },
+  {
+    "file": "duo/07-pdf.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Read text from a scan",
+    "subtitle": "Recognize PDF text on your device",
+    "sha256": "92eaeaaa2bd04032de457686e790b7c04fa956130322cae216bdd92755a4abfa",
+    "captureSha256": "ce6058fb84da4a51cb85785e23e0363161e541f5b7e488400510f4539f4cf235"
+  },
+  {
+    "file": "duo/08-light.png",
+    "size": [
+      2853,
+      2007
+    ],
+    "headline": "Just as clear in light mode",
+    "subtitle": "Choose the appearance that suits you",
+    "sha256": "03e83ee7078f59b98f02388f3c5faad69787d9dd575281bdcd39b04a64bfd22d",
+    "captureSha256": "ebaf44581d4c69a1e6f64f503420bad4be11e4f3f4d4ef7fb2fcc6e4159c8eaa"
+  }
+]
