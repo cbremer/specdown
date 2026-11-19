@@ -1,6 +1,6 @@
-# Specdown iOS
+# SpecDown for iPadOS and iOS
 
-Swift + WKWebView app wrapping the shared `markdown-viewer/` web codebase.
+iPadOS and iOS share one Swift + WKWebView target wrapping the shared `markdown-viewer/` codebase. Select the iPad or iPhone destination explicitly in build and test records.
 
 ## Prerequisites
 

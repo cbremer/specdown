@@ -14,6 +14,8 @@
 #import <Foundation/Foundation.h>
 #include <node_api.h>
 #include <string>
+#include <stdio.h>
+#include <errno.h>
 
 static NSMutableDictionary<NSNumber*, NSURL*>* gActive;
 static int64_t gNextId = 1;
@@ -119,13 +121,58 @@ static napi_value StopAccess(napi_env env, napi_callback_info info) {
   return result;
 }
 
+// The save panel grants the chosen file. Foundation supplies a writable staging
+// directory on the destination volume for safe replacement outside the container.
+static napi_value ReplacementDirectory(napi_env env, napi_callback_info info) {
+  NSString* path;
+  if (!ReadString(env, info, &path)) return nullptr;
+  NSError* error = nil;
+  NSURL* directory = [[NSFileManager defaultManager]
+      URLForDirectory:NSItemReplacementDirectory inDomain:NSUserDomainMask
+      appropriateForURL:[NSURL fileURLWithPath:path] create:YES error:&error];
+  if (!directory) {
+    ThrowNSError(env, error, "could not stage the Markdown file");
+    return nullptr;
+  }
+  return MakeString(env, directory.path);
+}
+
+// Like link(2) this fails if a concurrent writer creates the destination;
+// rename only needs permission for the two selected directory entries.
+static napi_value CommitNewFile(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value argv[2];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  std::string paths[2];
+  if (argc != 2) { napi_throw_type_error(env, nullptr, "expected two paths"); return nullptr; }
+  for (size_t i = 0; i < 2; i++) {
+    size_t len;
+    if (napi_get_value_string_utf8(env, argv[i], nullptr, 0, &len) != napi_ok) {
+      napi_throw_type_error(env, nullptr, "expected a file path");
+      return nullptr;
+    }
+    std::string buf(len + 1, '\0');
+    napi_get_value_string_utf8(env, argv[i], &buf[0], buf.size(), &len);
+    paths[i] = buf.c_str();
+  }
+  if (renamex_np(paths[0].c_str(), paths[1].c_str(), RENAME_EXCL) != 0) {
+    ThrowNSError(env, [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil], "could not save copy");
+    return nullptr;
+  }
+  napi_value result;
+  napi_get_undefined(env, &result);
+  return result;
+}
+
 static napi_value Init(napi_env env, napi_value exports) {
   napi_property_descriptor props[] = {
       {"createBookmark", nullptr, CreateBookmark, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"startAccess", nullptr, StartAccess, nullptr, nullptr, nullptr, napi_default, nullptr},
       {"stopAccess", nullptr, StopAccess, nullptr, nullptr, nullptr, napi_default, nullptr},
+      {"replacementDirectory", nullptr, ReplacementDirectory, nullptr, nullptr, nullptr, napi_default, nullptr},
+      {"commitNewFile", nullptr, CommitNewFile, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  napi_define_properties(env, exports, 3, props);
+  napi_define_properties(env, exports, sizeof(props) / sizeof(props[0]), props);
   return exports;
 }
 

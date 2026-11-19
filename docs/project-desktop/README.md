@@ -1,5 +1,7 @@
 # Project: Specdown Desktop
 
+For app names, Dev/Beta/Prod identities, build commands and install locations, see the [four-platform build guide](../../README.md#app-names-build-channels-and-versions).
+
 An Electron desktop application wrapping the shared SpecDown web viewer, distributed directly for macOS, Windows and Linux. A separate sandboxed Mac App Store channel shares the viewer. This index retains the project's history and links current testing guidance.
 
 **Testing entry point:** [Cross-platform testing runbook](2026-11-02-spec-platform-testing-runbook.md), including host authorization, safe test data, separate Windows/Linux commands, an agent prompt and a results template. It does not request or execute a test run.

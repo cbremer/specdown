@@ -1,5 +1,7 @@
 # Project: App Store release preparation
 
+For app names, Dev/Beta/Prod identities, build commands and install locations, see the [four-platform build guide](../../README.md#app-names-build-channels-and-versions).
+
 > The status paragraphs below are dated release records. Recheck the current checkout and provider state before acting; recorded approvals and kickoff prompts do not authorize new signing, account or publication actions. See the [documentation privacy audit](../project-security/README.md).
 
 End-to-end preparation of SpecDown's iPhone/iPad and native Mac App Store versions, with traceable builds, native QA, screenshots, complete draft listings and an explicit later submission boundary.

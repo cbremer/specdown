@@ -10,20 +10,9 @@ evidence; verify their assumptions against the current checkout.
 ## Project Overview
 
 **SpecDown** is a lightweight markdown viewer with interactive Mermaid diagram support.
-Its four distribution surfaces share the same `markdown-viewer/` codebase:
+Track four app platforms: **Mac desktop (direct download), Mac App Store, iPadOS and iOS**. Each has Dev, Beta and Prod channel names. The [root README build matrix](README.md#app-names-build-channels-and-versions) gives implementation status, exact app names, bundle IDs, build commands, install locations and version sources. The shared viewer also powers the web/PWA and Windows/Linux downloads.
 
-- **Web app** — GitHub Pages, with a custom domain in `markdown-viewer/public/CNAME`
-- **Direct desktop app** — Electron wrapper distributed as macOS DMG/ZIP,
-  Windows NSIS installer and Linux AppImage
-- **iOS/iPadOS app** — Swift/WKWebView shell with separate Dev, Beta and
-  production identities
-- **Mac App Store app** — sandboxed Electron MAS build, with separate Store
-  Dev/Beta identities and no direct updater
-
-For display names, bundle IDs, build configurations, output directories and
-version sources, use the [app channel table](README.md#app-names-build-channels-and-versions).
-“Desktop Dev” and “Mac App Store Dev” select separate Electron configurations.
-For an installed-version question, read the named bundle or the device's installed app metadata.
+Name the platform and channel when reporting a build. On Mac, distinguish **SpecDown Dev** (direct) from **SpecDown Store Dev** (sandboxed). iPadOS and iOS share the Xcode target but have separate device acceptance. Verify installed versions from the actual bundle or target device. See the [recommended retention layout](README.md#recommended-home-for-retained-builds) for packages that need to survive worktree cleanup.
 
 Dated channel evidence and acceptance boundaries are in
 `docs/project-appstore/2026-11-02-tasks-session-78-test-channels-signing-handoff.md`.

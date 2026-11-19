@@ -54,3 +54,42 @@ test('copy creation does not overwrite a destination created after selection', (
     fs.rmSync(folder, { recursive: true, force: true });
   }
 });
+
+test('Store saves stage outside a file-only grant for new copies and later edits', () => {
+  const {
+    saveMarkdownCopy,
+    saveExistingMarkdown,
+  } = require('../../desktop/markdown-save');
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-store-save-'));
+  const target = path.join(folder, 'copy.md');
+  const sandbox = {
+    replacementDirectory: jest.fn(() =>
+      fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-stage-'))
+    ),
+    commitNewFile: (from, to) => fs.renameSync(from, to),
+  };
+  const io = Object.create(fs);
+  io.writeFileSync = (file, ...args) => {
+    if (path.dirname(file) === folder) throw Error('outside the file grant');
+    return fs.writeFileSync(file, ...args);
+  };
+  try {
+    expect(saveMarkdownCopy(target, 'OCR page', io, sandbox).status).toBe(
+      'saved'
+    );
+    expect(
+      saveExistingMarkdown(target, 'edited', 'OCR page', io, sandbox).status
+    ).toBe('saved');
+    expect(saveMarkdownCopy(target, 'replaced', io, sandbox).status).toBe(
+      'saved'
+    );
+    expect(
+      sandbox.replacementDirectory.mock.calls.map(([item]) => item)
+    ).toEqual([folder, fs.realpathSync(target), fs.realpathSync(target)]);
+    expect(fs.readFileSync(target, 'utf8')).toBe('replaced');
+    for (const { value } of sandbox.replacementDirectory.mock.results)
+      expect(fs.existsSync(value)).toBe(false);
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});

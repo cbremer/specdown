@@ -6,8 +6,7 @@ your Markdown a clean reading view, with formatted tables, highlighted code and
 design docs, READMEs and notes with clean typography, and zoom, pan or expand
 diagrams for a closer look.
 
-One shared viewer runs in the **browser**, as a **desktop app** (macOS / Windows /
-Linux), as an **iOS / iPadOS** app, and through the **Mac App Store**.
+SpecDown has four app platforms: **Mac desktop (direct download), Mac App Store, iPadOS, and iOS**. They share a viewer that is also available on the web and in Windows and Linux desktop downloads.
 
 - 🌐 **Web** — runs on GitHub Pages, installable as a PWA
 - 🖥️ **Desktop downloads** — Electron app, signed & notarized on macOS
@@ -18,25 +17,52 @@ Linux), as an **iOS / iPadOS** app, and through the **Mac App Store**.
 
 ## App names, build channels and versions
 
-On a Mac, **SpecDown Dev** is the local direct-download desktop build. **SpecDown Store Dev** is the local sandboxed Mac App Store build. On iPhone and iPad, **SpecDown Dev** is the Xcode development scheme. Each is built separately.
+Choose the platform first, then **Dev** for local development, **Beta** for tester distribution, or **Prod** for public distribution. The app names below are the ones to look for in Finder or on the device.
 
-| Where it runs | App or scheme | Bundle ID | Build configuration → local output or delivery |
+| App platform | Dev | Beta | Prod |
 | --- | --- | --- | --- |
-| Browser / PWA | SpecDown | — | `npm run build` → `markdown-viewer/dist/`. GitHub Pages serves the web release. |
-| Direct desktop Dev (Mac) | SpecDown Dev | `com.specdown.desktop.dev` | `electron-builder.dev.js` → `dist/development-edit-save/mac-arm64/SpecDown Dev.app` |
-| Direct desktop release (Mac, Windows, Linux) | Specdown Desktop | `com.specdown.desktop` on Mac | `package.json` build config → `dist/`. Release workflow delivers installers through GitHub Releases. |
-| Mac App Store Dev | SpecDown Store Dev | `com.mosaicpando.specdown.dev` | `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Install the signed app locally. |
-| Mac App Store Beta | SpecDown Store Beta | `com.mosaicpando.specdown.beta` | `electron-builder.mas-beta.js` → `dist-mas/beta/`. Separate TestFlight app. |
-| Mac App Store production | SpecDown | `com.mosaicpando.specdown` | `electron-builder.mas.js` → `dist-mas/`. Mac App Store delivery. |
-| iPhone / iPad Dev | SpecDown Dev | `com.mosaicpando.specdown.dev` | Xcode scheme `SpecDown Dev`, run with `Dev Debug`. Install directly on a paired device. |
-| iPhone / iPad Beta | SpecDown Beta | `com.mosaicpando.specdown.beta` | Xcode scheme `SpecDown Beta`, archive with `Beta Release`. Separate TestFlight app. |
-| iPhone / iPad production | SpecDown | `com.mosaicpando.specdown` | Xcode scheme `SpecDown`, archive with `Release`. Production TestFlight and App Store delivery. |
+| Mac desktop (direct download) | **SpecDown Dev** | No dedicated Beta bundle ID or packaging config in this checkout | **Specdown Desktop**, delivered through GitHub Releases |
+| Mac App Store | **SpecDown Store Dev**, locally signed and installed | **SpecDown Store Beta**, separate TestFlight identity | **SpecDown**, delivered through the Mac App Store |
+| iPadOS | **SpecDown Dev** on iPad | **SpecDown Beta** on iPad | **SpecDown** on iPad |
+| iOS | **SpecDown Dev** on iPhone | **SpecDown Beta** on iPhone | **SpecDown** on iPhone |
 
-**Which version am I running?** The web viewer and direct desktop use the npm version in `package.json`, such as `0.0.234`. A local desktop Dev rebuild can reuse that number. Apple builds show a marketing version and a build number in About, such as `1.0.4 (251)`. iOS takes these from the resolved Xcode settings (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`). Mac Store packaging takes them from `extraMetadata.version` and `buildVersion` in the resolved Electron builder config. An iPhone build number alone tells you nothing about which Mac build is installed.
+### Build and install locations
 
-**Where is my build?** The table gives default package outputs. Xcode writes the iOS app under the selected DerivedData directory in `Build/Products/<configuration>-iphoneos/` for a device or `<configuration>-iphonesimulator/` for a simulator. On a Mac, use Finder’s **Get Info** or inspect `Contents/Info.plist` in the specific app you open. Its `CFBundleIdentifier`, `CFBundleShortVersionString` and `CFBundleVersion` identify the channel, version and build. Local packaging overrides can differ from the checked-in defaults.
+| Platform | Where it is built | Where to run it |
+| --- | --- | --- |
+| Mac desktop | Dev uses `electron-builder.dev.js` and produces `dist/development-edit-save/mac-arm64/SpecDown Dev.app`. Prod uses `package.json` and writes installers in `dist/`. | Launch the exact Dev bundle, or install the Prod app from its DMG into `/Applications/Specdown Desktop.app`. |
+| Mac App Store | Dev uses `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Beta uses `electron-builder.mas-beta.js` → `dist-mas/beta/`. Prod uses `electron-builder.mas.js` → `dist-mas/`. | The local Dev installation is `~/Applications/SpecDown Store Dev.app`. TestFlight installs Beta. The Mac App Store installs Prod. |
+| iPadOS | In `ios/SpecDown.xcodeproj`, select the Dev, Beta or Prod scheme from the table above and an iPad destination. | Install Dev on a paired iPad. Install Beta through TestFlight and Prod through the App Store. Verify iPad layout and file picking on iPad. |
+| iOS | In the same Xcode project, select the matching scheme and an iPhone destination. | Install Dev on a paired iPhone. Install Beta through TestFlight and Prod through the App Store. Verify iPhone layout and file picking on iPhone. |
 
-**Which Dev command?** On this development branch, `scripts/build-edit-save-dev.sh` builds the direct Mac Dev app and iOS Dev simulator app. Physical iPhone installation uses the device build of the same Xcode scheme. For the separate **SpecDown Store Dev** app, build the shared viewer and the MAS native helper, then package with `electron-builder.mas-dev-channel.js`. The similarly named `npm run desktop:mas-dev` selects development signing with the **production Store bundle ID**.
+iPadOS and iOS share the Swift target and a device binary supporting both families. A simulator build is a separate product. Xcode writes these under the chosen DerivedData directory in `Build/Products/<configuration>-iphoneos/` or `<configuration>-iphonesimulator/`. The [iOS build guide](ios/README.md#development-channels) lists the run and archive configurations.
+
+For this branch, `scripts/build-edit-save-dev.sh` builds direct Mac Dev and the mobile Dev simulator app. To build **Mac App Store Dev** for an Apple Silicon Mac with the existing matching development signing identity and `SPECDOWN_MAS_DEV_CHANNEL_PROFILE` set:
+
+```sh
+npm run build
+node scripts/build-mas-native.js
+npx --no-install electron-builder --config electron-builder.mas-dev-channel.js --mac mas-dev --arm64 --publish never
+```
+
+This produces `dist-mas/development/mas-dev-arm64/SpecDown Store Dev.app`. Set the intended Apple version and build explicitly when refreshing a numbered Dev build, e.g. append `-c.extraMetadata.version=1.0.4 -c.buildVersion=251`. The similarly named `npm run desktop:mas-dev` uses development signing with the **Prod** Store identity.
+
+### How to identify your copy
+
+The direct Mac app uses the npm version in `package.json` and can reuse the same version for local builds. Its Dev ID is `com.specdown.desktop.dev` and its Prod ID is `com.specdown.desktop`. Mac App Store, iPadOS and iOS use `com.mosaicpando.specdown.dev` (Dev), `com.mosaicpando.specdown.beta` (Beta) and `com.mosaicpando.specdown` (Prod). Their About screens report a marketing version and a build number. For example, **Mac App Store · Dev · 1.0.4 (252)** identifies a specific platform and channel.
+
+On Mac, Command-click a running app’s Dock icon to reveal that exact copy in Finder. Open its `Contents/Info.plist` to check `CFBundleIdentifier`, `CFBundleShortVersionString` and `CFBundleVersion`. On iPhone or iPad, open About on the specific device. A build on disk, a build installed on a device and a build available to testers are separate facts.
+
+**Document-import Dev builds verified November 18, 2026.** The direct Mac Dev package reports **0.0.234**. Mac App Store Dev **1.0.4 (252)** was installed on Mac and verified through its sandboxed Save panel. iOS Dev **1.0.4 (251)** was installed on iPhone. Physical iPadOS installation and OCR acceptance are open. These are local Dev checkpoints. [iOS and direct Mac OCR results](docs/project-document-import/2026-11-18-tasks-session-07-pdf-ocr-dev.md) · [Mac App Store Dev results](docs/project-document-import/2026-11-18-tasks-session-08-mac-store-dev.md)
+
+### Recommended home for retained builds
+
+Use worktrees for development and disposable build output. Keep the exact packages selected for installation, testing or release outside Git under **`~/Builds/SpecDown/<platform>/<channel>/<version>-<build>-<commit>/`**. For example, a Mac Store Dev folder could be `~/Builds/SpecDown/mac-store/dev/1.0.4-251-5bed90e/`. This is a proposed retention convention. Existing build scripts still write to the output folders above.
+
+- Use `mac-direct`, `mac-store`, `ipados` and `ios` for platform records, and `dev`, `beta` and `prod` for channels. When iPhone and iPad use the same binary, keep a single package and link both device records to it. Record the device family and test result separately.
+- Record the full source commit, platform, channel, bundle ID, actual version/build, architecture, package checksum and where it was installed. For a directory bundle, checksum a preserved ZIP or disk image. Keep device and simulator artifacts distinguishable. Give two builds from the same revision distinct records if the bytes differ.
+- Keep a known-good Dev rollback and retain distributed Beta and Prod archives with their matching symbols in backed-up storage. Apple calls for retaining each distributed Xcode archive, including its dSYMs. [Apple archive guidance](https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information)
+- Build independently in each worktree, then copy a verified artifact into its own retained folder. This avoids concurrent builds overwriting the same output and keeps old packages available when a worktree is removed. Electron supports an explicit per-build output directory. [electron-builder directory configuration](https://www.electron.build/docs/api/app-builder-lib.interface.metadatadirectories/)
 
 ## Features
 
