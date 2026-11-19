@@ -1,0 +1,64 @@
+<!-- @dsCard group="Dialogs · current" height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 300px">
+      <div style="inset: 0; display: flex">
+        <div
+          style="
+            flex: 1;
+            background: var(--bg-primary);
+            padding: 24px;
+            color: var(--text-secondary);
+          "
+        >
+          Document…
+        </div>
+        <aside class="annotation-panel">
+          <div class="annotation-panel-header">
+            <span>Notes · 2</span
+            ><button class="annotation-panel-close" aria-label="Close">
+              ✕
+            </button>
+          </div>
+          <ul style="list-style: none; margin: 0; padding: 0.5rem">
+            <li class="annotation-list-item">
+              <div class="annotation-list-context">
+                “DOMPurify drops HTML comments…”
+              </div>
+              <div class="annotation-list-note">
+                Check the sanitizer keeps these.
+              </div>
+            </li>
+            <li class="annotation-list-item">
+              <div class="annotation-list-context">
+                “Native shells ignore prompt()”
+              </div>
+              <div class="annotation-list-note">Link to the toast docs.</div>
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>

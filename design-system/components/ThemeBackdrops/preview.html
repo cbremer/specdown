@@ -1,0 +1,126 @@
+<!-- @dsCard group="Themes" height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 8px;
+        height: 284px;
+        box-sizing: border-box;
+      "
+    >
+      <div
+        data-sync-theme
+        data-visual-theme="default"
+        style="display: flex; flex-direction: column; min-width: 0"
+      >
+        <div
+          class="drop-zone"
+          style="padding: 16px; border-radius: 8px; height: 100%"
+        >
+          <div
+            class="drop-zone-content"
+            style="padding: 20px 12px; font-size: 0.85rem"
+          >
+            <strong>Basic</strong><br /><span
+              style="color: var(--text-secondary)"
+              >Drop a .md file</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        data-sync-theme
+        data-visual-theme="starfield"
+        style="display: flex; flex-direction: column; min-width: 0"
+      >
+        <div
+          class="drop-zone"
+          style="padding: 16px; border-radius: 8px; height: 100%"
+        >
+          <div
+            class="drop-zone-content"
+            style="padding: 20px 12px; font-size: 0.85rem"
+          >
+            <strong>Starfield</strong><br /><span
+              style="color: var(--text-secondary)"
+              >Drop a .md file</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        data-sync-theme
+        data-visual-theme="aurora"
+        style="display: flex; flex-direction: column; min-width: 0"
+      >
+        <div
+          class="drop-zone"
+          style="padding: 16px; border-radius: 8px; height: 100%"
+        >
+          <div
+            class="drop-zone-content"
+            style="padding: 20px 12px; font-size: 0.85rem"
+          >
+            <strong>Aurora</strong><br /><span
+              style="color: var(--text-secondary)"
+              >Drop a .md file</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        data-sync-theme
+        data-visual-theme="blueprint"
+        style="display: flex; flex-direction: column; min-width: 0"
+      >
+        <div
+          class="drop-zone"
+          style="padding: 16px; border-radius: 8px; height: 100%"
+        >
+          <div
+            class="drop-zone-content"
+            style="padding: 20px 12px; font-size: 0.85rem"
+          >
+            <strong>Blueprint</strong><br /><span
+              style="color: var(--text-secondary)"
+              >Drop a .md file</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var r = document.documentElement;
+        function s() {
+          var t = r.getAttribute('data-theme') || 'light';
+          document.querySelectorAll('[data-sync-theme]').forEach(function (e) {
+            e.setAttribute('data-theme', t);
+          });
+        }
+        s();
+        new MutationObserver(s).observe(r, {
+          attributes: true,
+          attributeFilter: ['data-theme'],
+        });
+      })();
+    </script>
+  </body>
+</html>

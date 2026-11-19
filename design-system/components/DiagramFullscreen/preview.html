@@ -1,0 +1,74 @@
+<!-- @dsCard group="Dialogs · current" height=280 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 280px">
+      <div class="fullscreen-overlay" style="inset: 0; display: block">
+        <div class="fullscreen-content" style="height: 100%">
+          <div class="fullscreen-controls">
+            <button class="zoom-in">+</button
+            ><button class="zoom-out">-</button>
+            <label class="zoom-range-label"
+              ><span class="zoom-percent">100%</span
+              ><input
+                class="zoom-range"
+                type="range"
+                min="25"
+                max="400"
+                value="100" /></label
+            ><button class="export-svg">SVG</button
+            ><button class="export-png">PNG</button
+            ><button class="close-fullscreen" aria-label="Exit fullscreen">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="fullscreen-diagram-wrapper"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              height: 180px;
+              color: var(--text-secondary);
+            "
+          >
+            [ diagram ]
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

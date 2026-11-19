@@ -24,6 +24,7 @@ Each project gets its own subdirectory:
 | [project-app-icons/](project-app-icons/) | Native desktop and iOS icon switching |
 | [project-appstore/](project-appstore/) | iPhone/iPad and native Mac App Store release preparation — execution plan, task tracker, native QA and kickoff prompts |
 | [project-security/](project-security/) | Documentation privacy audit, local-machine boundaries and remaining verification limits |
+| [project-design-system/](project-design-system/) | Design system history: audit, tokens, components, native shells, visual themes; the live system is in [`design-system/`](../design-system/README.md) |
 
 ## Naming Conventions
 

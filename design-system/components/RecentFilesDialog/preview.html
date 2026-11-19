@@ -1,0 +1,53 @@
+<!-- @dsCard group="Dialogs · current" height=380 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 380px">
+      <div class="recent-files-overlay" style="inset: 0">
+        <div class="recent-files-dialog">
+          <div class="recent-files-header">
+            <h2>Open Recent</h2>
+            <button class="recent-files-clear">Clear history</button>
+          </div>
+          <ul
+            class="recent-files-list"
+            style="
+              list-style: none;
+              margin: 0;
+              padding: 0;
+              display: grid;
+              gap: 0.5rem;
+            "
+          >
+            <li><button class="recent-file-item">roadmap.md</button></li>
+            <li><button class="recent-file-item">architecture.md</button></li>
+            <li>
+              <button class="recent-file-item">diagram-showcase.md</button>
+            </li>
+          </ul>
+          <button class="sample-button recent-files-close">Close</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

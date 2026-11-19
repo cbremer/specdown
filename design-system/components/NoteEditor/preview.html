@@ -1,0 +1,40 @@
+<!-- @dsCard group="Dialogs · current" height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 300px">
+      <div class="annotation-editor-backdrop" style="inset: 0; display: flex">
+        <div class="annotation-editor" role="dialog" aria-label="Edit note">
+          <textarea class="annotation-editor-input" rows="4">
+Check the sanitizer keeps HTML comments — DOMPurify drops them by default.</textarea>
+          <div class="annotation-editor-actions">
+            <button class="annotation-editor-delete">Delete</button
+            ><span class="annotation-editor-spacer"></span
+            ><button class="annotation-editor-cancel">Cancel</button
+            ><button class="annotation-editor-save">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

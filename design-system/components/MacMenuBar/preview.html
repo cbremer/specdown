@@ -1,0 +1,113 @@
+<!-- @dsCard group="Native · Mac" height=330 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      [data-theme='light'],
+      :root {
+        --m-bar: #ececec;
+        --m-menu: #f6f6f6;
+        --m-text: #1d1d1f;
+        --m-sec: #8a8a8e;
+        --m-sel: #0064e1;
+        --m-sep: #d6d6d6;
+      }
+      [data-theme='dark'] {
+        --m-bar: #2b2b2d;
+        --m-menu: #323234;
+        --m-text: #f2f2f2;
+        --m-sec: #98989d;
+        --m-sel: #0a5fd6;
+        --m-sep: #464649;
+      }
+      .m {
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-size: 13px;
+        color: var(--m-text);
+      }
+      .bar {
+        display: flex;
+        gap: 18px;
+        padding: 4px 14px;
+        background: var(--m-bar);
+        border-bottom: 1px solid var(--m-sep);
+      }
+      .bar b {
+        font-weight: 700;
+      }
+      .menu {
+        position: absolute;
+        left: 96px;
+        top: 30px;
+        width: 240px;
+        background: var(--m-menu);
+        border: 1px solid var(--m-sep);
+        border-radius: 8px;
+        padding: 5px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      .it {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 10px;
+        border-radius: 4px;
+      }
+      .it span:last-child {
+        color: var(--m-sec);
+      }
+      .it.sel {
+        background: var(--m-sel);
+        color: #fff;
+      }
+      .it.sel span:last-child {
+        color: #fff;
+      }
+      .sep {
+        height: 1px;
+        background: var(--m-sep);
+        margin: 5px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="m" style="position: relative; height: 310px">
+      <div class="bar">
+        <b>SpecDown</b><span>File</span><span>Edit</span><span>View</span
+        ><span
+          style="
+            background: var(--m-sel);
+            color: #fff;
+            border-radius: 4px;
+            padding: 0 6px;
+            margin: 0 -6px;
+          "
+          >Appearance</span
+        ><span>Window</span><span>Help</span>
+      </div>
+      <div class="menu" style="left: 228px">
+        <div class="it"><span>Load Custom CSS Theme…</span><span></span></div>
+        <div class="it"><span>Clear Custom Theme</span><span></span></div>
+        <div class="sep"></div>
+        <div class="it sel"><span>Theme</span><span>▸</span></div>
+        <div class="it"><span>App Icon</span><span>▸</span></div>
+      </div>
+      <div class="menu" style="left: 472px; top: 84px; width: 150px">
+        <div class="it"><span>Basic</span><span></span></div>
+        <div class="it"><span>✓ Starfield</span><span></span></div>
+        <div class="it"><span>Aurora</span><span></span></div>
+        <div class="it"><span>Blueprint</span><span></span></div>
+      </div>
+    </div>
+  </body>
+</html>

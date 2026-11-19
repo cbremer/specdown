@@ -1,0 +1,35 @@
+<!-- @dsCard group="Feedback" height=200 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 20px;
+      "
+    >
+      <div class="toast toast-success">Copied to clipboard</div>
+      <div class="toast toast-info">Opened from GitHub · main</div>
+      <div class="toast toast-error toast-has-action">
+        <span>Could not open this URL.</span
+        ><button class="toast-action">Retry</button>
+      </div>
+    </div>
+  </body>
+</html>

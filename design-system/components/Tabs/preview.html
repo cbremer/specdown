@@ -1,0 +1,36 @@
+<!-- @dsCard group="Navigation" height=110 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tab-bar" style="margin-top: 24px">
+      <div class="tab tab-active">
+        <span class="tab-watching-dot"></span
+        ><span class="tab-filename">README.md</span
+        ><button class="tab-close" aria-label="Close">×</button>
+      </div>
+      <div class="tab tab-has-changes">
+        <span class="tab-watching-dot"></span
+        ><span class="tab-filename">architecture.md</span
+        ><button class="tab-close" aria-label="Close">×</button>
+      </div>
+      <div class="tab">
+        <span class="tab-filename">diagram-showcase.md</span
+        ><button class="tab-close" aria-label="Close">×</button>
+      </div>
+      <button class="tab-new" aria-label="New tab">+</button>
+    </div>
+  </body>
+</html>

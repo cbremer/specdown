@@ -1,0 +1,204 @@
+<!-- @dsCard group="Dialogs · proposed" height=420 subtitle="Proposed shared pattern" -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1.35fr 0.75fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        height: 396px;
+        box-sizing: border-box;
+      }
+      .cell {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: var(--bg-primary);
+      }
+      .cell .sd-scrim {
+        position: absolute;
+      }
+      .lbl {
+        position: absolute;
+        left: 8px;
+        top: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        background: var(--bg-primary);
+        padding: 0 6px;
+        border-radius: var(--radius-sm);
+        z-index: 2;
+        letter-spacing: 0.02em;
+      }
+
+      .cell.dr {
+        display: flex;
+      }
+      .cell.dr .doc {
+        flex: 1;
+        padding: 28px 12px;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
+      .cell .sd-drawer {
+        position: static;
+        width: auto;
+        flex: 0 0 62%;
+        min-width: 0;
+        box-shadow: none;
+      }
+      .cell .sd-scrim--sheet .sd-modal {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font: inherit;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 0.6rem 0.7rem;
+      }
+      .note {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.25rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .note small {
+        display: block;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="cell">
+        <span class="lbl">Dialog · sm</span>
+        <div class="sd-scrim" style="inset: 0">
+          <div
+            class="sd-modal sd-modal--sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="t1"
+          >
+            <div class="sd-modal-header">
+              <h2 class="sd-modal-title" id="t1">Edit note</h2>
+              <button class="sd-modal-close" aria-label="Close">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div class="sd-modal-body">
+              <textarea rows="3">
+Check the sanitizer keeps HTML comments.</textarea>
+            </div>
+            <div class="sd-modal-footer">
+              <button class="sd-button sd-button--danger">Delete</button
+              ><button class="sd-button">Cancel</button
+              ><button class="sd-button sd-button--primary">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cell">
+        <span class="lbl">Sheet · phone</span>
+        <div class="sd-scrim sd-scrim--sheet" style="inset: 0; padding: 0">
+          <div
+            class="sd-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="t2"
+          >
+            <div class="sd-modal-header">
+              <h2 class="sd-modal-title" id="t2">File info</h2>
+              <button class="sd-modal-close" aria-label="Close">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div class="sd-modal-body" style="font-size: 0.85rem">
+              architecture.md<br /><span style="color: var(--text-secondary)"
+                >14.2 KB · 2,180 words</span
+              >
+            </div>
+            <div class="sd-modal-footer">
+              <button class="sd-button">Copy path</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cell dr">
+        <span class="lbl">Drawer</span>
+        <div class="doc">Document…</div>
+        <aside class="sd-drawer" aria-label="Notes">
+          <div class="sd-modal-header">
+            <h2 class="sd-modal-title">Notes · 2</h2>
+            <button class="sd-modal-close" aria-label="Close notes">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div class="sd-modal-body" style="padding: 8px 12px">
+            <div class="note">
+              Keep HTML comments<small>“DOMPurify drops…”</small>
+            </div>
+            <div class="note">
+              Link the toast docs<small>“Native shells ignore…”</small>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+<!-- @dsCard group="Native · iOS" height=420 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      [data-theme='light'],
+      :root {
+        --n-ground: #f2f2f7;
+        --n-cell: #ffffff;
+        --n-text: #000000;
+        --n-sec: #6c6c70;
+        --n-sep: #c6c6c8;
+        --n-tint: #007aff;
+      }
+      [data-theme='dark'] {
+        --n-ground: #000000;
+        --n-cell: #1c1c1e;
+        --n-text: #ffffff;
+        --n-sec: #98989f;
+        --n-sep: #38383a;
+        --n-tint: #0a84ff;
+      }
+      .n {
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        background: var(--n-ground);
+        color: var(--n-text);
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+      .n h6 {
+        margin: 14px 12px 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--n-sec);
+      }
+      .n .grp {
+        background: var(--n-cell);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .n .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-bottom: 0.5px solid var(--n-sep);
+      }
+      .n .row:last-child {
+        border-bottom: 0;
+      }
+      .n .row svg {
+        color: var(--n-tint);
+      }
+      .n .cap {
+        font-size: 12px;
+        color: var(--n-sec);
+      }
+      .n .tint {
+        color: var(--n-tint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="n">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin: 0 4px 8px;
+        "
+      >
+        <span></span><strong>App Icon</strong
+        ><span class="tint" style="font-weight: 600">Done</span>
+      </div>
+      <div class="grp" style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/1285546dda6f57fd236b506b403af839"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Original<span class="tint" style="margin-left: auto">✓</span>
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/2392bb1695b0761ee1ecad2cdc0ba1b5"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Flat
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/35b4065de5196ba6af323f1c200494a0"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Glass
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/edc0a6673342e8a56e81b8695ce353b5"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Ceramic
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/da520a163cfe1cec4fac8acc8ff8e3f9"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Metallic
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/e900fac1a59fb0b86346eab07f62b33e"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Layered
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/2d4e2f555b0104198f6c5e4061db38bd"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Minimal
+        </div>
+        <div class="row" style="border-bottom: 0.5px solid var(--n-sep)">
+          <img
+            src="/_blob/7c4b8f3d61f4be2a8335d47720ca2a43"
+            alt=""
+            width="44"
+            height="44"
+            style="border-radius: 10px"
+          />Light
+        </div>
+      </div>
+      <div class="cap" style="margin: 8px 12px">
+        Changes the icon on your Home Screen. iOS may show a confirmation.
+        Choose Original to reset.
+      </div>
+    </div>
+  </body>
+</html>

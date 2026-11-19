@@ -1,0 +1,58 @@
+<!-- @dsCard group="Document" height=560 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      .markdown-content h1:first-child {
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="markdown-content">
+      <h1>Render pipeline</h1>
+      <p>
+        SpecDown parses Markdown with <code>marked</code>, sanitizes with
+        DOMPurify, then renders <a href="#">Mermaid diagrams</a> in place.
+      </p>
+      <h2>Stages</h2>
+      <ul>
+        <li>Parse and sanitize</li>
+        <li>Highlight code blocks</li>
+        <li>Render diagrams, then build the table of contents</li>
+      </ul>
+      <blockquote>
+        Native shells ignore <code>window.prompt()</code>. Use in-app modals.
+      </blockquote>
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Shell</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mac</td>
+            <td>Electron</td>
+          </tr>
+          <tr>
+            <td>iPad</td>
+            <td>WKWebView</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
