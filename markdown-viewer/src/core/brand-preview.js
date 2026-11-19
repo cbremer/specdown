@@ -1,5 +1,6 @@
 // @ts-check
-// The local dev server and native Dev and Beta builds use the C+ design.
+// Apple Store shells expose an explicit production channel. The web and
+// direct-download production builds leave the channel unset.
 //
 // Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
 //
@@ -20,7 +21,8 @@ export function brandPreviewEnabled() {
   return (
     typeof window !== 'undefined' &&
     (window.specdownAppChannel === 'development' ||
-      window.specdownAppChannel === 'beta')
+      window.specdownAppChannel === 'beta' ||
+      window.specdownAppChannel === 'production')
   );
 }
 

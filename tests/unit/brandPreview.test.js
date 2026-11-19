@@ -20,7 +20,7 @@ describe('C+ brand preview gate', () => {
     document.documentElement.removeAttribute('data-brand-preview');
   });
 
-  it.each([undefined, 'production', 'unknown'])(
+  it.each([undefined, 'unknown'])(
     'stays off for channel %p: no attribute, no brand bar, diagrams unchanged',
     (channel) => {
       if (channel) window.specdownAppChannel = channel;
@@ -34,7 +34,7 @@ describe('C+ brand preview gate', () => {
     }
   );
 
-  it.each(['development', 'beta'])(
+  it.each(['development', 'beta', 'production'])(
     'turns on for %s and adds one brand bar',
     (channel) => {
       window.specdownAppChannel = channel;
