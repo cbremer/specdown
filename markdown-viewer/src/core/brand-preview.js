@@ -1,8 +1,5 @@
 // @ts-check
-// C+ brand moments preview (ZIL-235). Dev builds only: the local Vite dev
-// server and any native shell reporting the `development` channel (iOS/iPadOS
-// Dev, Mac App Store Dev, direct Mac Dev). Beta, Prod and the production web
-// build never turn it on, so they render exactly as before.
+// The local dev server and native Dev and Beta builds use the C+ design.
 //
 // Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
 //
@@ -21,7 +18,9 @@ export function brandPreviewEnabled() {
     __SPECDOWN_DEV_SERVER__ === true;
   if (brandPreviewDevServer) return true;
   return (
-    typeof window !== 'undefined' && window.specdownAppChannel === 'development'
+    typeof window !== 'undefined' &&
+    (window.specdownAppChannel === 'development' ||
+      window.specdownAppChannel === 'beta')
   );
 }
 

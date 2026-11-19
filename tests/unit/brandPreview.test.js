@@ -1,7 +1,4 @@
-/**
- * C+ brand moments preview (ZIL-235): on only for Dev builds, so Beta, Prod
- * and the production web build render exactly as before.
- */
+/** Channel and rendering checks for the C+ design preview. */
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 require('../mocks/marked');
 require('../mocks/mermaid');
@@ -23,7 +20,7 @@ describe('C+ brand preview gate', () => {
     document.documentElement.removeAttribute('data-brand-preview');
   });
 
-  it.each([undefined, 'production', 'beta'])(
+  it.each([undefined, 'production', 'unknown'])(
     'stays off for channel %p: no attribute, no brand bar, diagrams unchanged',
     (channel) => {
       if (channel) window.specdownAppChannel = channel;
@@ -37,20 +34,23 @@ describe('C+ brand preview gate', () => {
     }
   );
 
-  it('turns on for the development channel and adds one brand bar', () => {
-    window.specdownAppChannel = 'development';
-    expect(setupBrandPreview()).toBe(true);
-    setupBrandPreview();
-    expect(document.documentElement.getAttribute('data-brand-preview')).toBe(
-      'cplus'
-    );
-    const bars = document.querySelectorAll('#brand-bar');
-    expect(bars).toHaveLength(1);
-    expect(bars[0].getAttribute('aria-hidden')).toBe('true');
-    expect(document.querySelector('.app-container').firstElementChild.id).toBe(
-      'brand-bar'
-    );
-  });
+  it.each(['development', 'beta'])(
+    'turns on for %s and adds one brand bar',
+    (channel) => {
+      window.specdownAppChannel = channel;
+      expect(setupBrandPreview()).toBe(true);
+      setupBrandPreview();
+      expect(document.documentElement.getAttribute('data-brand-preview')).toBe(
+        'cplus'
+      );
+      const bars = document.querySelectorAll('#brand-bar');
+      expect(bars).toHaveLength(1);
+      expect(bars[0].getAttribute('aria-hidden')).toBe('true');
+      expect(
+        document.querySelector('.app-container').firstElementChild.id
+      ).toBe('brand-bar');
+    }
+  );
 
   it('gives only marked diagrams the SpecDown diagram style', () => {
     window.specdownAppChannel = 'development';
