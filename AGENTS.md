@@ -12,6 +12,12 @@ evidence; verify their assumptions against the current checkout.
 **SpecDown** is a lightweight markdown viewer with interactive Mermaid diagram support.
 Track four app platforms: **Mac desktop (direct download), Mac App Store, iPadOS and iOS**. Each has Dev, Beta and Prod channel names. The [root README build matrix](README.md#app-names-build-channels-and-versions) gives implementation status, exact app names, bundle IDs, build commands, install locations and version sources. The shared viewer also powers the web/PWA and Windows/Linux downloads.
 
+### Beta delivery
+
+A request for **Beta** means TestFlight for iOS, iPadOS and the Mac App Store edition. Upload the shared iPhone/iPad build once and the Mac Store package separately. Verify the requested build is available to the intended tester group on each platform. When installation is requested, verify the installed build separately. The direct-download Mac edition uses its own Beta package.
+
+A local run of the Beta configuration is a development check. If a session instruction postpones Apple sign-in or access, keep the TestFlight delivery pending and respect that instruction for its stated duration.
+
 ### Local build handoff
 
 1. Identify the platform and channel. Mac desktop Dev is **SpecDown Dev**. Mac App Store Dev is **SpecDown Store Dev**. iPhone and iPad share the Xcode target and have separate device acceptance.

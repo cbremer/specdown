@@ -19,6 +19,8 @@ SpecDown has four app platforms: **Mac desktop (direct download), Mac App Store,
 
 Choose the platform first, then **Dev** for local development, **Beta** for tester distribution, or **Prod** for public distribution. The app names below are the ones to look for in Finder or on the device.
 
+**Beta means delivery through TestFlight** for iPhone, iPad and the Mac App Store edition. iPhone and iPad share one upload. The Mac App Store edition has a separate macOS upload. Testers install the build in TestFlight once it is available to their group. The direct-download Mac edition uses a separate Beta package installed on the Mac.
+
 | App platform | Dev | Beta | Prod |
 | --- | --- | --- | --- |
 | Mac desktop (direct download) | **SpecDown Dev** | No dedicated Beta bundle ID or packaging config in this checkout | **Specdown Desktop**, delivered through GitHub Releases |
