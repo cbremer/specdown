@@ -23,7 +23,7 @@ Choose the platform first, then **Dev** for local development, **Beta** for test
 
 | App platform | Dev | Beta | Prod |
 | --- | --- | --- | --- |
-| Mac desktop (direct download) | **SpecDown Dev** | No dedicated Beta bundle ID or packaging config in this checkout | **Specdown Desktop**, delivered through GitHub Releases |
+| Mac desktop (direct download) | **SpecDown Dev** | **SpecDown Desktop Beta**, local test package | **Specdown Desktop**, delivered through GitHub Releases |
 | Mac App Store | **SpecDown Store Dev**, locally signed and installed | **SpecDown Store Beta**, separate TestFlight identity | **SpecDown**, delivered through the Mac App Store |
 | iPadOS | **SpecDown Dev** on iPad | **SpecDown Beta** on iPad | **SpecDown** on iPad |
 | iOS | **SpecDown Dev** on iPhone | **SpecDown Beta** on iPhone | **SpecDown** on iPhone |
@@ -32,7 +32,7 @@ Choose the platform first, then **Dev** for local development, **Beta** for test
 
 | Platform | Where it is built | Where to run it |
 | --- | --- | --- |
-| Mac desktop | Dev uses `electron-builder.dev.js` and produces `dist/development-edit-save/mac-arm64/SpecDown Dev.app`. Prod uses `package.json` and writes installers in `dist/`. | Launch the exact Dev bundle, or install the Prod app from its DMG into `/Applications/Specdown Desktop.app`. |
+| Mac desktop | Dev uses `electron-builder.dev.js` and produces `dist/development-edit-save/mac-arm64/SpecDown Dev.app`. Beta uses `electron-builder.beta.js` → `dist/direct-beta/`. Prod uses `package.json` and writes installers in `dist/`. | Launch the exact Dev bundle, or install the Prod app from its DMG into `/Applications/Specdown Desktop.app`. |
 | Mac App Store | Dev uses `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Beta uses `electron-builder.mas-beta.js` → `dist-mas/beta/`. Prod uses `electron-builder.mas.js` → `dist-mas/`. | The local Dev installation is `~/Applications/SpecDown Store Dev.app`. TestFlight installs Beta. The Mac App Store installs Prod. |
 | iPadOS | In `ios/SpecDown.xcodeproj`, select the Dev, Beta or Prod scheme from the table above and an iPad destination. | Install Dev on a paired iPad. Install Beta through TestFlight and Prod through the App Store. Verify iPad layout and file picking on iPad. |
 | iOS | In the same Xcode project, select the matching scheme and an iPhone destination. | Install Dev on a paired iPhone. Install Beta through TestFlight and Prod through the App Store. Verify iPhone layout and file picking on iPhone. |
@@ -51,7 +51,7 @@ This produces `dist-mas/development/mas-dev-arm64/SpecDown Store Dev.app`. Set t
 
 ### How to identify your copy
 
-The direct Mac app uses the npm version in `package.json` and can reuse the same version for local builds. Its Dev ID is `com.specdown.desktop.dev` and its Prod ID is `com.specdown.desktop`. Mac App Store, iPadOS and iOS use `com.mosaicpando.specdown.dev` (Dev), `com.mosaicpando.specdown.beta` (Beta) and `com.mosaicpando.specdown` (Prod). Their About screens report a marketing version and a build number. For example, **Mac App Store · Dev · 1.0.4 (252)** identifies a specific platform and channel.
+The direct Mac app uses the npm version in `package.json` and can reuse the same version for local builds. Its Dev ID is `com.specdown.desktop.dev`, its Beta ID is `com.specdown.desktop.beta` and its Prod ID is `com.specdown.desktop`. Mac App Store, iPadOS and iOS use `com.mosaicpando.specdown.dev` (Dev), `com.mosaicpando.specdown.beta` (Beta) and `com.mosaicpando.specdown` (Prod). Their About screens report a marketing version and a build number. For example, **Mac App Store · Dev · 1.0.4 (252)** identifies a specific platform and channel.
 
 On Mac, Command-click a running app’s Dock icon to reveal that exact copy in Finder. Open its `Contents/Info.plist` to check `CFBundleIdentifier`, `CFBundleShortVersionString` and `CFBundleVersion`. On iPhone or iPad, open About on the specific device. A build on disk, a build installed on a device and a build available to testers are separate facts.
 
@@ -111,7 +111,7 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
 
 ### Getting documents in
 
-**Word and PDF in Dev builds.** Open File imports a `.docx` or PDF as an editable Markdown copy. Both Mac editions and the shared iPhone/iPad app read Word’s main document XML locally using fflate. On Mac, PDF.js extracts selectable text and Tesseract.js recognizes English text on sparse pages. On iPhone and iPad, PDFKit and Apple Vision perform those steps. Save as Markdown writes a separate file.
+**Word and PDF in Dev and Beta builds.** Open File imports a `.docx` or PDF as an editable Markdown copy. Both Mac editions and the shared iPhone/iPad app read Word’s main document XML locally using fflate. On Mac, PDF.js extracts selectable text and Tesseract.js recognizes English text on sparse pages. On iPhone and iPad, PDFKit and Apple Vision perform those steps. Save as Markdown writes a separate file.
 
 Microsoft MarkItDown successfully converted a sample Word document and a text PDF in an earlier offline Python experiment. Its use was limited to that evaluation. [MarkItDown experiment and results](docs/project-document-import/2026-11-18-spec-edit-save-dev-acceptance.md#markitdown-experiment)
 

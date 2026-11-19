@@ -63,7 +63,7 @@ def identify(product):
     contents = app / "Contents" if mac else app
     info = plistlib.loads((contents / "Info.plist").read_bytes())
     bundle = info["CFBundleIdentifier"]
-    if mac and bundle in ("com.specdown.desktop", "com.specdown.desktop.dev"):
+    if mac and bundle in ("com.specdown.desktop", "com.specdown.desktop.dev", "com.specdown.desktop.beta"):
         platforms = ["mac-direct"]
         base = "com.specdown.desktop"
     else:

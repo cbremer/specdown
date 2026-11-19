@@ -1,5 +1,9 @@
 # Advisory review issues
 
+## Desktop editing smoke test, 2026-11-18
+
+GitHub Advanced Security (CodeQL) annotated `scripts/test-source-editing-desktop.js` in PR #443 at `f67bda97efa167e952ffd044d43b0ba439de4c6c`. The test interpolates JSON-encoded fixture text into JavaScript passed to the synthetic renderer. Proposed follow-up: pass fixture text as data through an isolated test input path. Status: proposed. The CodeQL check completed successfully.
+
 ## Document import PRD, 2026-11-18
 
 Reviewer — Codex `prd_review`, completed read-only review of

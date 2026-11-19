@@ -680,7 +680,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Native integrations
 
-    private static let documentImportEnabled = Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String == "development"
+    private static let documentImportEnabled = ["development", "beta"].contains(Bundle.main.object(forInfoDictionaryKey: "SpecDownChannel") as? String ?? "")
 
     private func presentDocumentPicker() {
         var types: [UTType] = [.plainText, .utf8PlainText, .sourceCode, .json, .xml]
