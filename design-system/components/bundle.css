@@ -2823,10 +2823,9 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   C+ brand moments (PREVIEW: Dev builds only)
+   C+ brand moments (Dev and Beta preview)
    On only when core/brand-preview.js sets html[data-brand-preview]:
-   the local dev server and native shells reporting the `development`
-   channel. Beta, Prod and the production web build never match these rules.
+   the local dev server and native shells reporting the `development` or `beta` channel.
    Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
    =========================== */
 html[data-brand-preview] {

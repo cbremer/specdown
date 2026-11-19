@@ -483,7 +483,7 @@ function restoreSession(entries) {
 
 // Channel the direct (non-Store) viewer reports: the packaged Dev/Beta
 // metadata, or `development` for an unpackaged local run. Prod reports none.
-// The viewer uses it for the About label and the Dev-only C+ brand preview.
+// The viewer uses it for the About label and the Dev and Beta C+ brand preview.
 function directViewerChannel(
   packaged = app.isPackaged,
   channel = PACKAGED_SPECDOWN_CHANNEL

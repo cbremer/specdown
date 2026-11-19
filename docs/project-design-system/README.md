@@ -12,6 +12,7 @@ SpecDown's shared visual language across web/PWA, Electron desktop (direct downl
 | 2026-11-19 | [Session 04](2026-11-19-tasks-session-04-shared-modal-and-dialog-a11y.md)          | Shared Modal in the app for Shortcuts, About, File info (ZIL-230); dialog accessibility gaps (ZIL-223) |
 | 2026-11-19 | [Spec: C+ brand moments](2026-11-19-spec-brand-moments-cplus.md)                   | Chosen direction, gate, tokens and rollout (ZIL-226)                                                   |
 | 2026-11-19 | [Session 05](2026-11-19-tasks-session-05-cplus-dev-preview.md)                     | C+ in Dev builds behind a Dev-only gate (ZIL-235)                                                      |
+| 2026-11-19 | [Session 06](2026-11-19-tasks-session-06-beta-256.md) | Promote the reviewed Dev 255 design to Beta 256 |
 
 ## Status
 
