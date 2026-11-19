@@ -15,7 +15,8 @@ const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
 const { createAnnotationIdentity } = require('./annotation-identity');
 
-if (require('../package.json').specdownChannel === 'development') process.env.SPECDOWN_DISABLE_UPDATER = '1';
+const isTestChannel = ['development', 'beta'].includes(require('../package.json').specdownChannel);
+if (isTestChannel) process.env.SPECDOWN_DISABLE_UPDATER = '1';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
 const MAX_RECENT_FILES = 15;
@@ -751,7 +752,7 @@ function buildFileMetadata(filePath) {
   };
 }
 
-const documentImportEnabled = !app.isPackaged || require('../package.json').specdownChannel === 'development';
+const documentImportEnabled = !app.isPackaged || isTestChannel;
 function openFileByPath(filePath, context) {
   const ext = typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
   const isImport = documentImportEnabled && ['.docx', '.pdf'].includes(ext);
