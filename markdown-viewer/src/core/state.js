@@ -12,6 +12,7 @@
  * fetch), surfaced by the File info sheet. Desktop file tabs read their metadata
  * live from disk instead, so they don't populate this.
  * @typedef {object} TabSourceMeta
+ * @property {boolean} [wordImport] Converted Word copy requiring Markdown export.
  * @property {{authorityId:string,sourceToken:string,requiresReconnect?:boolean}} [annotationSource] Successful native read identity; never a grant.
  * @property {string} [savedCopyId] Captured saved-copy collection identity.
  * @property {string} [sample] Explicit bundled namespace.

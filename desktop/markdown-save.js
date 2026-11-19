@@ -29,6 +29,13 @@ function saveExistingMarkdown(target, content, expected, io = fs) {
     throw Error('Markdown must be 8 MiB or smaller.');
   // Resolve symlinks only after access was granted, and preserve the selected item.
   const resolved = io.realpathSync(target);
+  // A .md destination can be a symlink to the Word input.
+  if (path.extname(resolved).toLowerCase() === '.docx') {
+    return {
+      status: 'error',
+      message: 'Choose a Markdown destination separate from the Word document.',
+    };
+  }
   const original = readSaveSource(resolved, io);
   if (original.content !== expected)
     return { status: 'conflict', content: original.content };

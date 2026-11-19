@@ -98,6 +98,37 @@ final class NativeDocumentTests: XCTestCase {
 
     }
 
+    func testWordOpenAndMarkdownExport() async throws {
+        let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
+        let web = try await host(bridge)
+        // Same synthetic, deflated DOCX corpus used by the Electron open-panel probe.
+        let bytes = try XCTUnwrap(Data(base64Encoded: "UEsDBBQAAAAIALeVcl33S4B1wgAAAHYBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbH2QuQ7CMAyGX6XKiqgRAwOiLMAKDLyAlbptRC7FLsfbk3INCBjt//gsLw7XSFxcnPVcqU4kzgFYd+SQyxDJZ6UJyaHkMbUQUR+xJZhOJjPQwQt5GcvQoZaLNTXYWyk2l7xmE3ylEllWxephHFiVwhit0ShZh5OvPyjjJ6HMybuHOxN5lA0KvhIG5TfgmdudKCVTU7HHJFt02QXnkGqog+5dTpb/a77cGZrGaHrnh7aYgiZm41tny7fi0PjX/XB/9/IGUEsDBBQAAAAIALeVcl1hey9DiQAAAPIAAAALAAAAX3JlbHMvLnJlbHONzzsOAiEQBuCrEA6ws1pYGKCy2dZ4AQLDIy6PDBj19lJYrMbCcuaffH9GnHHVPZbcQqyNPdKam+Sh93oEaCZg0m0qFfNIXKGk+xjJQ9Xmqj3Cfp4PQFuDK7E12WIlp8XuOLs8K/5jF+eiwVMxt4S5/6j4uhiyJo9d8nshC/a9ngbLQQn4eFG9AFBLAwQUAAAACAC3lXJdEYnG0QMBAAA7AgAAEQAAAHdvcmQvZG9jdW1lbnQueG1shZJNbsMgEIWvgjhAJ8miC2R70cZSK1VVVecCxExiSxgsmJT49sW/SaNE3TAwfO/NjCAJQtny1KAhdm608SKkvCJqBYAvK2ykf7Itmnh3sK6RFI/uCME61Tpbove1OTYaNqvVMzSyNjxLgthb1fWxHZYvN4SCOo0siB+pU/6GUkXlmkOWwMIMC2VFZ6hCqktWjViP0AC6EV/MJ8ULxu6Q/eGCqI2P9WqV8jWPG3miyrqUL/b8yuH9s8i/d/n2tlT06AGFerLa/GMVyR2eKdvmH/nkN6curjFzVZvJA6G7OyTtB5BGsryd+xW1ZtbgHS3M/AMVBftYBWNJmBqA+Unh8l2yX1BLAQIUAxQAAAAIALeVcl33S4B1wgAAAHYBAAATAAAAAAAAAAAAAACAAQAAAABbQ29udGVudF9UeXBlc10ueG1sUEsBAhQDFAAAAAgAt5VyXWF7L0OJAAAA8gAAAAsAAAAAAAAAAAAAAIAB8wAAAF9yZWxzLy5yZWxzUEsBAhQDFAAAAAgAt5VyXRGJxtEDAQAAOwIAABEAAAAAAAAAAAAAAIABpQEAAHdvcmQvZG9jdW1lbnQueG1sUEsFBgAAAAADAAMAuQAAANcCAAAAAA=="))
+        let url = fixture.appendingPathComponent("Report.docx")
+        try bytes.write(to: url)
+        _ = try await web.evaluateJavaScript("document.getElementById('browse-button').click()")
+        let presenter = try XCTUnwrap(retainedWindow?.rootViewController)
+        try await wait("Word open picker") { presenter.presentedViewController is UIDocumentPickerViewController }
+        let openPicker = try XCTUnwrap(presenter.presentedViewController as? UIDocumentPickerViewController)
+        openPicker.dismiss(animated: false)
+        bridge.documentPicker(openPicker, didPickDocumentsAt: [url])
+        try await wait("Word reading view") { bridge.currentDocumentName == "Report.docx" }
+        let heading = try await web.evaluateJavaScript("document.querySelector('#markdown-content h1')?.textContent") as? String
+        XCTAssertEqual(heading, "Synthetic heading")
+        _ = try await web.evaluateJavaScript("document.getElementById('source-edit').click(); const wordInput=document.querySelector('#source-editor-host textarea:not([hidden])'); wordInput.value += 'Edited on iOS'; wordInput.dispatchEvent(new Event('input')); document.getElementById('source-save').click()")
+        try await wait("Markdown export picker") { presenter.presentedViewController is UIDocumentPickerViewController }
+        let exportPicker = try XCTUnwrap(presenter.presentedViewController as? UIDocumentPickerViewController)
+        let folders = try FileManager.default.contentsOfDirectory(at: FileManager.default.temporaryDirectory, includingPropertiesForKeys: nil)
+        let prepared = try XCTUnwrap(folders.filter { $0.lastPathComponent.hasPrefix("specdown-markdown-") }.map { $0.appendingPathComponent("Report.md") }.first { (try? String(contentsOf: $0, encoding: .utf8))?.contains("Edited on iOS") == true })
+        let destination = fixture.appendingPathComponent("Exported.md")
+        try FileManager.default.copyItem(at: prepared, to: destination)
+        exportPicker.dismiss(animated: false)
+        bridge.documentPicker(exportPicker, didPickDocumentsAt: [destination])
+        try await wait("exported Markdown tab") { (try? await web.evaluateJavaScript("document.getElementById('file-name').textContent")) as? String == "Exported.md" }
+        let text = try String(contentsOf: destination, encoding: .utf8)
+        XCTAssertTrue(text.contains("# Synthetic heading") && text.contains("INSERTED") && !text.contains("DELETED") && text.contains("| Cell one | Cell two |"))
+        XCTAssertEqual(try Data(contentsOf: url), bytes)
+    }
+
     func testAboutShowsNativeBundleBuildAndChannel() async throws {
         let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
         let web = try await host(bridge)

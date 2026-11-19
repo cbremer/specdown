@@ -1,3 +1,4 @@
+import { openWordDocument } from '../features/word-import.js';
 import { protectSourceDraft } from '../features/source-editor.js';
 // @ts-check
 // Desktop (Electron) integration: the file-watch model, the watch-toggle UI,
@@ -199,7 +200,11 @@ export function setupDesktopIPC() {
     }
     let accepted = false;
     try {
-      accepted = createTab(fileData.filename, fileData.content, fileData.filePath, fileData.annotationSource ? {annotationSource:fileData.annotationSource} : null) === true;
+      if (fileData.wordImport) {
+        accepted = openWordDocument(fileData.content, fileData.filename, text =>
+          createTab(fileData.filename, text, null, { wordImport: true })
+        );
+      } else accepted = createTab(fileData.filename, fileData.content, fileData.filePath, fileData.annotationSource ? {annotationSource:fileData.annotationSource} : null) === true;
     } finally {
       // This is synchronous tab admission, before async diagram completion.
       // Report before unrelated renderer recent-list UI/persistence can fail.

@@ -216,8 +216,13 @@ export function syncSourceEditor() {
       !draft ||
       !!draft.saving ||
       (!isSourceDirty(/** @type {EditorTab} */ (tab)) &&
-        draft.external === undefined);
-    save.textContent = draft?.saving ? 'Saving…' : 'Save';
+        draft.external === undefined &&
+        !tab?.sourceMeta?.wordImport);
+    save.textContent = draft?.saving
+      ? 'Saving…'
+      : tab?.sourceMeta?.wordImport
+        ? 'Save as Markdown…'
+        : 'Save';
   }
   for (const id of ['source-save-as', 'source-cancel']) {
     const button = /** @type {HTMLButtonElement|null} */ (
@@ -243,6 +248,10 @@ export function syncSourceEditor() {
     );
     if (!button) continue;
     button.hidden = action === 'edit' ? !tab : !draft;
+    if (action === 'save')
+      button.textContent = tab?.sourceMeta?.wordImport
+        ? 'Save as Markdown…'
+        : 'Save Markdown';
     if (action === 'edit')
       button.textContent = inEditor
         ? 'Edit source'
@@ -352,6 +361,7 @@ export function sourceEditorChoice(title, choices, detail) {
 export async function saveSourceDraft(tab, copy = false) {
   const draft = sourceDrafts.get(tab.id);
   if (!draft || draft.saving) return false;
+  if (tab.sourceMeta?.wordImport) copy = true;
   // Reserve admission for the independent Save As tab before writing a copy.
   if (copy && state.tabs.length >= 10) {
     showToast('Close a tab before saving an independent copy.', {
@@ -461,7 +471,7 @@ export async function confirmSourceDiscard(tab) {
   if (!isSourceDirty(tab)) return true;
   const choice = await sourceEditorChoice(`Save changes to ${tab.filename}?`, [
     ['keep', 'Keep editing'],
-    ['save', 'Save'],
+    ['save', tab.sourceMeta?.wordImport ? 'Save as Markdown…' : 'Save'],
     ['discard', 'Discard'],
   ]);
   if (choice === 'discard') return true;
@@ -545,10 +555,13 @@ async function restoreSourceDrafts() {
 }
 /** @param {EditorTab} tab @param {string} text @param {string} expected @param {boolean} copy @returns {Promise<SourceSaveResult>} */
 async function nativeSourceSave(tab, text, expected, copy) {
+  const filename = tab.sourceMeta?.wordImport
+    ? tab.filename.replace(/\.docx$/i, '.md')
+    : tab.filename;
   if (window.specdown)
     return await bridgeSaveMarkdown({
       filePath: tab.filePath,
-      filename: tab.filename,
+      filename,
       content: text,
       expected,
       copy,
@@ -563,7 +576,7 @@ async function nativeSourceSave(tab, text, expected, copy) {
         data: {
           requestID,
           sourceID: tab.sourceMeta?.nativeDocument?.id || '',
-          filename: tab.filename,
+          filename,
           content: text,
           expected,
           copy,

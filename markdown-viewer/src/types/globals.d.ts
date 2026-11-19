@@ -22,6 +22,7 @@ interface SpecdownFileData {
 
 /** Main-issued receipt exists only for a newly delivered desktop open. */
 interface SpecdownFileOpenData extends SpecdownFileData {
+  wordImport?: boolean;
   workspaceId?: string;
   openReceipt: string;
 }
@@ -162,8 +163,8 @@ declare global {
     };
     /** Synchronously returns whether a native document passed preflight and opened. */
     specdownReloadImages?: (token: string) => void;
-    specdownLoadNativeDocument?: (content: string, filename: string, nativeDocument: {id: string, expectedToken?: string, deliveryID?: string}) => {accepted: boolean, token: string, openIDs: string[]};
-    loadFileContent?: (content: string, filename: string, nativeDocument?: {id: string, expectedToken?: string, deliveryID?: string}) => boolean;
+    specdownLoadNativeDocument?: (content: string, filename: string, nativeDocument: {id: string, expectedToken?: string, deliveryID?: string, format?: string}) => {accepted: boolean, token: string, openIDs: string[]};
+    loadFileContent?: (content: string, filename: string, nativeDocument?: {id: string, expectedToken?: string, deliveryID?: string, format?: string}) => boolean;
     /** Set by the app; called by the iOS shell to switch theme. */
     setTheme?: (theme: string) => void;
     /** Set by the app; called by the iOS shell on layout-class changes. */
