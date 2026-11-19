@@ -20,7 +20,18 @@ function readSaveSource(target, io) {
     io.closeSync(fd);
   }
 }
-function saveExistingMarkdown(target, content, expected, io = fs) {
+function cleanupSaveStage(staged, io, sandbox) {
+  if (io.existsSync(staged)) io.unlinkSync(staged);
+  if (sandbox) {
+    try {
+      io.rmdirSync(path.dirname(staged));
+    } catch {
+      // Foundation owns this temporary directory. A cleanup failure does not
+      // change whether the selected document was already saved.
+    }
+  }
+}
+function saveExistingMarkdown(target, content, expected, io = fs, sandbox) {
   if (
     typeof content !== 'string' ||
     Buffer.byteLength(content) > maxSaveBytes ||
@@ -33,17 +44,18 @@ function saveExistingMarkdown(target, content, expected, io = fs) {
   if (['.docx', '.pdf'].includes(path.extname(resolved).toLowerCase())) {
     return {
       status: 'error',
-      message: 'Choose a Markdown destination separate from the imported document.',
+      message:
+        'Choose a Markdown destination separate from the imported document.',
     };
   }
   const original = readSaveSource(resolved, io);
   if (original.content !== expected)
     return { status: 'conflict', content: original.content };
   io.accessSync(resolved, fs.constants.W_OK);
-  const staged = path.join(
-    path.dirname(resolved),
-    `.specdown-save-${randomUUID()}.tmp`
-  );
+  const directory = sandbox
+    ? sandbox.replacementDirectory(resolved)
+    : path.dirname(resolved);
+  const staged = path.join(directory, `.specdown-save-${randomUUID()}.tmp`);
   try {
     io.writeFileSync(staged, content, {
       encoding: 'utf8',
@@ -68,10 +80,10 @@ function saveExistingMarkdown(target, content, expected, io = fs) {
     io.renameSync(staged, resolved);
     return { status: 'saved' };
   } finally {
-    if (io.existsSync(staged)) io.unlinkSync(staged);
+    cleanupSaveStage(staged, io, sandbox);
   }
 }
-function saveMarkdownCopy(target, content, io = fs) {
+function saveMarkdownCopy(target, content, io = fs, sandbox) {
   if (typeof content !== 'string' || Buffer.byteLength(content) > maxSaveBytes)
     throw Error('Markdown must be 8 MiB or smaller.');
   if (io.existsSync(target))
@@ -79,12 +91,14 @@ function saveMarkdownCopy(target, content, io = fs) {
       target,
       content,
       readSaveSource(target, io).content,
-      io
+      io,
+      sandbox
     );
-  const staged = path.join(
-    path.dirname(target),
-    `.specdown-copy-${randomUUID()}.tmp`
-  );
+  // Foundation may create an empty file when asked about a nonexistent URL.
+  // Use the existing parent as the volume hint to preserve exclusive creation.
+  const parent = path.dirname(target);
+  const directory = sandbox ? sandbox.replacementDirectory(parent) : parent;
+  const staged = path.join(directory, `.specdown-copy-${randomUUID()}.tmp`);
   try {
     io.writeFileSync(staged, content, {
       encoding: 'utf8',
@@ -97,10 +111,11 @@ function saveMarkdownCopy(target, content, io = fs) {
     } finally {
       io.closeSync(fd);
     }
-    io.linkSync(staged, target); // Atomic no-clobber creation; EEXIST retains the draft.
+    if (sandbox) sandbox.commitNewFile(staged, target);
+    else io.linkSync(staged, target); // Atomic no-clobber creation; EEXIST retains the draft.
     return { status: 'saved' };
   } finally {
-    if (io.existsSync(staged)) io.unlinkSync(staged);
+    cleanupSaveStage(staged, io, sandbox);
   }
 }
 module.exports = { saveExistingMarkdown, saveMarkdownCopy };

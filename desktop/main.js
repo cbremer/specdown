@@ -139,10 +139,11 @@ const fileOpenReceipts = createFileOpenReceipts({
 // Every user-file read goes through fileAccess (see mas-access.js): a plain
 // main-held capability for the direct build, sandbox grants + persisted
 // security-scoped bookmarks for the Mac App Store build.
+const masNative = IS_MAS ? loadMasNative((msg, err) => logError(msg, err)) : null;
 const fileAccess = IS_MAS
   ? createMasAccess({
       getStore: () => store,
-      native: loadMasNative((msg, err) => logError(msg, err)),
+      native: masNative,
       electronApp: app,
       logInfo: (msg) => logInfo(msg),
       logError: (msg, err) => logError(msg, err),
@@ -1960,7 +1961,7 @@ handleTrustedIpc('save-markdown', async (_event, request) => {
   try {
     if (!request.copy && request.filePath) {
       if (!isValidMarkdownFile(request.filePath)) return {status:'error'};
-      const access = fileAccess.withAccess(request.filePath, resolved => saveExistingMarkdown(resolved, request.content, request.expected));
+      const access = fileAccess.withAccess(request.filePath, resolved => saveExistingMarkdown(resolved, request.content, request.expected, fs, masNative));
       return access.ok ? access.value : {status:'error',message:'Source access unavailable. Reopen the file or use Save As. Draft retained.'};
     }
     const result = await dialog.showSaveDialog(mainWindow, {
@@ -1976,7 +1977,7 @@ handleTrustedIpc('save-markdown', async (_event, request) => {
       const original = fileAccess.withAccess(request.filePath, resolved => fs.realpathSync(resolved));
       if (original.ok && fs.existsSync(result.filePath) && fs.realpathSync(result.filePath) === original.value) return {status:'error',message:'Choose a different file for Save As.'};
     }
-    const written = saveMarkdownCopy(result.filePath,request.content);
+    const written = saveMarkdownCopy(result.filePath,request.content, fs, masNative);
     if (written.status !== 'saved') return written;
     fileAccess.noteUserIntent(result.filePath,'file',result.bookmark);
     const read = fileAccess.withAccess(result.filePath, readMarkdownFile);
