@@ -50,11 +50,11 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 
 ## Dialogs and panels
 
-- Every modal surface follows the **Modal** pattern: a 40% black scrim, a `bg-primary` panel at `radius-xl` with `shadow-lg`, then header (title + 34px close), body and footer. Sizes are `sm` 26rem, `md` 32rem and `lg` 38rem.
-- Under 640px wide, and on iOS, a modal becomes a **Sheet** that rises from the bottom. Persistent side panels are **Drawers**.
+- Every modal surface follows the **Modal** pattern (build it with `createSdModal` in `src/core/modal.js`): a 40% black scrim, a `bg-primary` panel at `radius-xl` with `shadow-lg`, then header (title + 34px close), body and footer. Sizes are `sm` 26rem, `md` 32rem and `lg` 38rem.
+- Proposed next: under 640px wide, and on iOS, a modal becomes a **Sheet** that rises from the bottom, and persistent side panels become **Drawers**.
 - At most one primary button, filled `accent-color` with `text-on-accent`. Destructive actions are `color-danger` text on the far left.
 - Escape, the close button and a scrim click all dismiss. Focus is trapped and returned to the opener. Toasts stay visible above any open modal.
-- Today's 10 panels (including Bookmarks) are documented as they ship under "Dialogs · current". The Modal component lists what each one becomes.
+- Shortcuts, About and File info already use it. The other panels are documented as they ship under "Dialogs · current", and the Modal component lists what each one becomes.
 
 ## Motion
 
@@ -86,7 +86,7 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 
 - This folder is the source of truth. Read this file before any UI work on any surface, then the relevant section: `native-platforms.md`, `visual-themes.md`, or `components/<Name>/README.md`.
 - `tokens.json` holds every colour (light and dark), type style, spacing step, radius and shadow by the same name the CSS uses (`--<name>`). Use a token rather than a raw value. If no token fits, add one here in the same PR.
-- `components/bundle.css` is a copy of the component rules from `markdown-viewer/styles.css`, plus the proposed `.sd-*` Modal block. The app still loads `styles.css`, so change the app there and refresh the copy.
+- `components/bundle.css` is a copy of the component rules from `markdown-viewer/styles.css`, plus the `.sd-*` Modal block (Dialog shipped; Sheet and Drawer proposed). The app still loads `styles.css`, so change the app there and refresh the copy.
 - When a PR changes a token, a component's look or behaviour, a theme, or a native shell's UI, update the matching file here in the same PR.
 - `evolving.md` lists proposals. Its values are not tokens until they're adopted.
 - A browsable version (live previews in light and dark) is published as a private claude.ai artifact and is re-synced from this folder. Ask the owner for access. The repository copy wins if they differ.

@@ -1,4 +1,4 @@
-<!-- @dsCard group="Dialogs · current" height=320 -->
+<!-- @dsCard group="Dialogs · shared Modal" height=360 -->
 <!doctype html>
 <html>
   <head>
@@ -22,30 +22,55 @@
     </style>
   </head>
   <body>
-    <div class="stage" style="height: 320px">
-      <div class="file-info-overlay" style="inset: 0">
-        <div class="file-info-sheet">
-          <h2 class="file-info-title">File info</h2>
-          <dl class="file-info-list">
-            <div class="file-info-row">
-              <dt>Name</dt>
-              <dd>architecture.md</dd>
-            </div>
-            <div class="file-info-row">
-              <dt>Location</dt>
-              <dd class="file-info-mono">~/Specs/specdown/docs</dd>
-            </div>
-            <div class="file-info-row">
-              <dt>Size</dt>
-              <dd>14.2 KB · 2,180 words</dd>
-            </div>
-            <div class="file-info-row">
-              <dt>Modified</dt>
-              <dd>19 Nov 2026, 09:12</dd>
-            </div>
-          </dl>
-          <div class="file-info-actions">
-            <button class="file-info-copy">Copy path</button>
+    <div class="stage" style="height: 360px">
+      <div class="sd-scrim shortcuts-overlay" style="inset: 0">
+        <div
+          class="sd-modal file-info-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="t"
+        >
+          <div class="sd-modal-header">
+            <h2 class="sd-modal-title" id="t">File info</h2>
+            <button class="sd-modal-close" aria-label="Close">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div class="sd-modal-body">
+            <dl class="file-info-list">
+              <div class="file-info-row">
+                <dt>Name</dt>
+                <dd>architecture.md</dd>
+              </div>
+              <div class="file-info-row">
+                <dt>Location</dt>
+                <dd class="file-info-mono">~/Specs/specdown/docs</dd>
+              </div>
+              <div class="file-info-row">
+                <dt>Size</dt>
+                <dd>14.2 KB · 2,180 words</dd>
+              </div>
+              <div class="file-info-row">
+                <dt>Modified</dt>
+                <dd>19 Nov 2026, 09:12</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="sd-modal-footer">
+            <button class="sd-button file-info-copy">Copy path</button>
           </div>
         </div>
       </div>

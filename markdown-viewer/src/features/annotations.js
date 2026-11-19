@@ -18,6 +18,7 @@ import {
 // never replaces the accepted-view generation guard. iOS stays disabled.
 
 import { showToast } from './toast.js';
+import { trapFocus, canRestoreNonEditableFocus } from '../core/focus-trap.js';
 
 const ANNOTATIONS_KEY = 'specdown-annotations';
 const STORE_VERSION = 2;
@@ -644,13 +645,17 @@ function openAnnotationEditor(target, context = annDocumentContext) {
 
   textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
+  const annEditorOpener = document.activeElement;
   backdrop.style.display = 'flex';
+  // aria-modal alone doesn't stop Tab walking into the page behind.
+  const annEditorReleaseTrap = trapFocus(backdrop);
   setTimeout(() => textarea.focus(), 0);
 
   const close = () => {
     backdrop.style.display = 'none';
     if (editorCleanup) editorCleanup();
     editorCleanup = null;
+    if (canRestoreNonEditableFocus(annEditorOpener)) annEditorOpener.focus();
   };
   const save = async () => {
     if (await commitAnnotation(target, textarea.value, context)) close();
@@ -680,6 +685,7 @@ function openAnnotationEditor(target, context = annDocumentContext) {
   document.addEventListener('keydown', onKey);
 
   editorCleanup = () => {
+    annEditorReleaseTrap();
     saveBtn.removeEventListener('click', save);
     deleteBtn.removeEventListener('click', remove);
     cancelBtn.removeEventListener('click', close);

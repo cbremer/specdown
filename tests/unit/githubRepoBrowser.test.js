@@ -431,6 +431,26 @@ describe('GitHub Repo Browser', () => {
       );
     });
 
+    it('closes on Escape and returns focus to the opener', () => {
+      const opener = document.createElement('button');
+      opener.textContent = 'Browse';
+      document.body.appendChild(opener);
+      opener.focus();
+
+      showRepoBrowser(sampleFiles, 'https://github.com/owner/repo', jest.fn());
+      const modal = document.getElementById('repo-browser-modal');
+      expect(modal.style.display).toBe('flex');
+
+      modal
+        .querySelector('.repo-browser-content')
+        .dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+        );
+
+      expect(modal.style.display).toBe('none');
+      expect(document.activeElement).toBe(opener);
+    });
+
     it('creates and displays the repo browser modal', () => {
       showRepoBrowser(sampleFiles, 'https://github.com/owner/repo');
 

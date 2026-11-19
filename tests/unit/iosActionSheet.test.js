@@ -37,6 +37,33 @@ describe('iOS action sheet', () => {
     const sheet = css.match(/\.ios-sheet\s*\{[^}]*\}/)[0];
     expect(sheet).toMatch(/100dvh/);
   });
+
+  it.each(['ios-open-sheet', 'ios-toc-sheet', 'ios-action-sheet'])(
+    '%s is a labelled modal dialog',
+    (id) => {
+      const sheet = document.getElementById(id);
+      expect(sheet.getAttribute('role')).toBe('dialog');
+      expect(sheet.getAttribute('aria-modal')).toBe('true');
+      const title = document.getElementById(sheet.getAttribute('aria-labelledby'));
+      expect(title.textContent.trim().length).toBeGreaterThan(0);
+    }
+  );
+
+  it('closes on Escape and returns focus to the control that opened it', () => {
+    const opener = document.createElement('button');
+    opener.textContent = 'Open actions';
+    document.body.appendChild(opener);
+    opener.focus();
+
+    const sheet = document.getElementById('ios-action-sheet');
+    setIOSSheetVisibility(sheet, true);
+    expect(sheet.style.display).toBe('flex');
+
+    sheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(sheet.style.display).toBe('none');
+    expect(document.activeElement).toBe(opener);
+  });
 });
 
 describe('iOS 1.0 hides features planned for 1.1', () => {

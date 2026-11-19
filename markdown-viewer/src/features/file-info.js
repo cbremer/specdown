@@ -14,6 +14,7 @@
 import { state } from '../core/state.js';
 import { isDesktop } from '../core/platform.js';
 import { trapFocus } from '../core/focus-trap.js';
+import { createSdModal } from '../core/modal.js';
 import { bridgeGetFileMetadata } from '../platform/bridge.js';
 import { detectCreator } from './creator-detect.js';
 import { showToast } from './toast.js';
@@ -206,30 +207,15 @@ export function openFileInfoSheet() {
   const token = ++fileInfoOpenToken;
   fileInfoPreviouslyFocused = document.activeElement;
 
-  const overlay = document.createElement('div');
+  const fileInfoModal = createSdModal({
+    title: 'File info',
+    scrimClass: 'file-info-overlay',
+    dialogClass: 'file-info-sheet',
+    onClose: closeFileInfoSheet,
+  });
+  const overlay = fileInfoModal.scrim;
   fileInfoOverlay = overlay;
-  overlay.className = 'file-info-overlay';
-  overlay.addEventListener('mousedown', (e) => {
-    if (e.target === overlay) closeFileInfoSheet();
-  });
-
-  const dialog = document.createElement('div');
-  dialog.className = 'file-info-sheet';
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', 'File info');
-  dialog.tabIndex = -1;
-  dialog.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closeFileInfoSheet();
-    }
-  });
-
-  const heading = document.createElement('h2');
-  heading.className = 'file-info-title';
-  heading.textContent = 'File info';
-  dialog.appendChild(heading);
+  const dialog = fileInfoModal.dialog;
 
   const list = document.createElement('dl');
   list.className = 'file-info-list';
@@ -252,24 +238,20 @@ export function openFileInfoSheet() {
     rowEl.appendChild(dd);
     list.appendChild(rowEl);
   }
-  dialog.appendChild(list);
+  fileInfoModal.body.appendChild(list);
 
   // A one-click "Copy path" for the desktop location — the whole point is
   // knowing where the file is, so make it easy to grab.
   if (tab.filePath) {
-    const actions = document.createElement('div');
-    actions.className = 'file-info-actions';
     const copyBtn = document.createElement('button');
     copyBtn.type = 'button';
-    copyBtn.className = 'file-info-copy';
+    copyBtn.className = 'sd-button file-info-copy';
     copyBtn.textContent = 'Copy path';
     const pathToCopy = tab.filePath;
     copyBtn.addEventListener('click', () => copyPath(pathToCopy));
-    actions.appendChild(copyBtn);
-    dialog.appendChild(actions);
+    fileInfoModal.footer().appendChild(copyBtn);
   }
 
-  overlay.appendChild(dialog);
   document.body.appendChild(overlay);
   fileInfoReleaseTrap = trapFocus(overlay);
   dialog.focus();

@@ -26,7 +26,10 @@ describe('Keyboard shortcuts sheet', () => {
     expect(dialog).not.toBeNull();
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(dialog.getAttribute('aria-label')).toBe('Keyboard shortcuts');
+    const labelledBy = dialog.getAttribute('aria-labelledby');
+    expect(document.getElementById(labelledBy).textContent).toBe('Keyboard shortcuts');
+    // Shared modal: a visible close button that dismisses the dialog.
+    expect(dialog.querySelector('.sd-modal-close')).not.toBeNull();
 
     const rows = document.querySelectorAll('.shortcuts-row');
     expect(rows.length).toBeGreaterThan(0);
@@ -52,6 +55,26 @@ describe('Keyboard shortcuts sheet', () => {
     openShortcutsSheet();
     const dialog = document.querySelector('.shortcuts-sheet');
     dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(isShortcutsSheetOpen()).toBe(false);
+  });
+
+  it('closes from the shared header close button', () => {
+    openShortcutsSheet();
+    document.querySelector('.shortcuts-sheet .sd-modal-close').click();
+    expect(isShortcutsSheetOpen()).toBe(false);
+    expect(document.querySelector('.sd-scrim')).toBeNull();
+  });
+
+  it('closes on a scrim click but not on a click inside the panel', () => {
+    openShortcutsSheet();
+    document
+      .querySelector('.shortcuts-sheet')
+      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(isShortcutsSheetOpen()).toBe(true);
+
+    document
+      .querySelector('.shortcuts-overlay')
+      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(isShortcutsSheetOpen()).toBe(false);
   });
 });

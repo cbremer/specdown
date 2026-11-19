@@ -104,11 +104,15 @@ describe('focus trap', () => {
       const overlay = document.querySelector('.shortcuts-overlay');
       expect(overlay).not.toBeNull();
 
-      // The sheet has no tabbable children (dialog is tabindex=-1), so the
-      // trap pins focus rather than letting Tab escape to the page.
+      // The only tabbable child is the header close button. Tab from it must
+      // wrap back inside the sheet rather than escape to the page.
+      const closeButton = overlay.querySelector('.sd-modal-close');
+      expect(closeButton).not.toBeNull();
+      closeButton.focus();
       const e = tabEvent(false);
       overlay.dispatchEvent(e);
       expect(e.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(closeButton);
 
       closeShortcutsSheet();
     });
