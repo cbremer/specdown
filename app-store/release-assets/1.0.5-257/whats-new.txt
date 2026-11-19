@@ -1,0 +1,7 @@
+Open a Word document (.docx) or PDF and turn it into a Markdown file you can edit. SpecDown reads selectable PDF text and uses on-device text recognition for scanned pages. Pages that still need attention are marked in the text.
+
+Fix a typo, add a heading or revise a paragraph, then preview your changes. Save an existing Markdown file or save an imported document as a separate .md file. Your original Word document or PDF stays intact.
+
+The toolbar has a quieter look, and a bar at the top shows how far you’ve read.
+
+A security fix makes restoring annotation backups safer. SpecDown checks the size of nested records before restoring them.

@@ -1,0 +1,90 @@
+[
+  {
+    "file": "mac/01-home.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Open a document and start reading",
+    "subtitle": "Your Markdown, with room to focus",
+    "sha256": "41843e7959be4d85145c7d0496297b3587c6e94b9a5e77b8d4c738e70d3f4785",
+    "captureSha256": "4ab6df508fdccccaa85aa79c0a1cd32356c53f2968b83100d81d2e784415a7b6"
+  },
+  {
+    "file": "mac/02-presentation.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "See diagrams in presentation mode",
+    "subtitle": "Zoom, pan, and step through your diagrams",
+    "sha256": "e9dd45afe9224b9e6046b0ab48184dd9d6a5f2210857c73e8f34031fe7012d14",
+    "captureSha256": "796bc33ee2965085338c01a33a727200bb04326625e92575a496498dcd8671f1"
+  },
+  {
+    "file": "mac/03-word.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Open a Word document",
+    "subtitle": "Bring headings and text into Markdown",
+    "sha256": "b9498bc45af1d47d462cbd490463cbf734fc87441538e407836a5c2ae836ddd6",
+    "captureSha256": "1c1e51b98c7bbc39bf56a1d618b812561996f638a4b65a2aa23cfd40af874687"
+  },
+  {
+    "file": "mac/04-edit.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Make a quick edit",
+    "subtitle": "Preview your changes and save as Markdown",
+    "sha256": "de3f933882517bf90428d26a8d91f8143fcd810dce99a8735b91f40ceb0ae15d",
+    "captureSha256": "71b02e0685249fa8899004ab7110fc228f133335ec9764b31d3b0d12d2c04f41"
+  },
+  {
+    "file": "mac/05-mindmap.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Diagrams and tables together",
+    "subtitle": "See the big picture beside the details",
+    "sha256": "cd4e78991e2b0dd344544813eef86aab0ca29a72a4e4f29fd7b33f40d5b5dd4f",
+    "captureSha256": "85c8ec1998f6187244301ab9f9a0b00dd71ff418e3d74492ba44df477fdd3308"
+  },
+  {
+    "file": "mac/06-plan.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Follow the plan",
+    "subtitle": "Charts and diagrams beside your document",
+    "sha256": "8c77d40a6f624e5a0c364462da44b459b2f4333d101c45cb7fbba8025f1ff52b",
+    "captureSha256": "88ef9d9eebfe95ab699266d8bb8cda3062a8a6efdcfa7f85c1d913babee8ce9e"
+  },
+  {
+    "file": "mac/07-pdf.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Read text from a scan",
+    "subtitle": "Recognize PDF text on your device",
+    "sha256": "10ee444dc3fe59c6390c85916faf60e812c44c53e7b019e787be08fb2f274d86",
+    "captureSha256": "16aca1d150be535ef3319fd9226f70a31fca0ee744f1e9237fbadc905b2cb32e"
+  },
+  {
+    "file": "mac/08-light.png",
+    "size": [
+      2880,
+      1800
+    ],
+    "headline": "Just as clear in light mode",
+    "subtitle": "Choose the appearance that suits you",
+    "sha256": "84e104521b020c92382689356e9c5ce3b769c49419104c248a29c45cd005a779",
+    "captureSha256": "b664584ef10eac22c5bb20d4f806eab196c781d7c51986fececd0c98c7b50758"
+  }
+]

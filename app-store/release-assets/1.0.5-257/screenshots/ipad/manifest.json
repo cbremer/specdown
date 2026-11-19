@@ -1,0 +1,90 @@
+[
+  {
+    "file": "ipad/01-home.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Open a document and start reading",
+    "subtitle": "Your Markdown, with room to focus",
+    "sha256": "2a9fc6c92d4a857cef03ae05f74242c57e958b79aaead9cd3b723952221e55f7",
+    "captureSha256": "35085fc1770e7f95de6eb5580fd5c1cc7b4cc7ac12474b8d2a7a6b1bcb3ac0d2"
+  },
+  {
+    "file": "ipad/02-presentation.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "See diagrams in presentation mode",
+    "subtitle": "Zoom, pan, and step through your diagrams",
+    "sha256": "26be6f882f89ea7fd2f4332f0751753c3a278fc332a0d4da01fb98711d769a66",
+    "captureSha256": "e4e294b926a82433d6f2243eca5a1ec08692873a63f4e7d48430480bef27da5b"
+  },
+  {
+    "file": "ipad/03-word.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Open a Word document",
+    "subtitle": "Bring headings and text into Markdown",
+    "sha256": "3eda59f7549840c4b906a09fab7ab0d0ee3c6c4fa943f82d62e7d92b2d3ba72f",
+    "captureSha256": "848b24f73bd2478e2790cd2e0eeecebe2c273ee6a68d4b507345f1409ef9e3e6"
+  },
+  {
+    "file": "ipad/04-edit.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Make a quick edit",
+    "subtitle": "Preview your changes and save as Markdown",
+    "sha256": "5df848baeb411d8ec123832c8097a464131b5e3125463685cef1984bbb47e804",
+    "captureSha256": "b98c31e8552dd8f93fe54d0abf4b159b3a754eea7b297cd8f776c2e6f7aaaf50"
+  },
+  {
+    "file": "ipad/05-mindmap.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Diagrams and tables together",
+    "subtitle": "See the big picture beside the details",
+    "sha256": "23d22dc15d70bec2803e39b93c1dfc7f29e5c853e46f3a8b8bc356365876c119",
+    "captureSha256": "ff37156f5c8a22516c8c9d44a7edc860538f6200780b00a984b39550234c42b1"
+  },
+  {
+    "file": "ipad/06-plan.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Follow the plan",
+    "subtitle": "Charts and diagrams beside your document",
+    "sha256": "3d96a9e7f76a88c83db6345b2a7f682910f2cea4f4386f9db6c7bd59bae249df",
+    "captureSha256": "44992edbcb72358be06c30d61ae10cdd00bc1e40f3f9e7ab33c9d3cb3f4a4b36"
+  },
+  {
+    "file": "ipad/07-pdf.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Read text from a scan",
+    "subtitle": "Recognize PDF text on your device",
+    "sha256": "39e30537b2756232f3653d8867440089d608e8389074c967c923f3e78d06351b",
+    "captureSha256": "5a94df3859cc5bd86622af3095c2f0bdf9e26bb568027c02b1b42cc322d5c949"
+  },
+  {
+    "file": "ipad/08-light.png",
+    "size": [
+      2064,
+      2752
+    ],
+    "headline": "Just as clear in light mode",
+    "subtitle": "Choose the appearance that suits you",
+    "sha256": "5542be4ee1ab4b50390adb74585ae558d724e00f363fb539f98088679662c118",
+    "captureSha256": "a417bf24eea56ba53942f50444c5a3e320ae8356c8f292da56197ed39382ab24"
+  }
+]

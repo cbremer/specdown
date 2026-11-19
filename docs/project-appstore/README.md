@@ -150,6 +150,7 @@ historical checkpoints, before the Mac App Store launch.
 | Nov 8, 2026 | Tasks | [Session 96: Open File in 1.0.2](2026-11-08-tasks-session-96-open-file-release-102.md) | Integrate the approved wording into the release candidate and prepare fresh build-241 packages and affected screenshots. |
 
 | Nov 16, 2026 | Tasks | [Session 100: iOS 1.0.4 bottom background](2026-11-16-tasks-session-100-ios-104-bottom-background.md) | Prepare and test the iPhone layout fix on the current release baseline. |
+| Nov 19, 2026 | Tasks | [Session 101: import release candidate](2026-11-19-tasks-session-101-import-release-candidate.md) | Production Word and PDF import, on-device OCR, Markdown editing and submission artwork. |
 
 **Google Sheet:** Launch Weekend execution tab (owner-private document; link omitted)
 

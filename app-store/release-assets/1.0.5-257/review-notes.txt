@@ -1,0 +1,7 @@
+SpecDown opens without an account. The bundled Diagram Showcase is available offline.
+
+To try the import workflow, save the two supplied review files to Files on iPhone or iPad, or to a folder on Mac. Launch SpecDown and choose Open File.
+
+1. Open Stargazing guide.docx. The title, section headings and paragraphs appear as Markdown.
+2. Open Observing log.pdf. Its page is a scan. SpecDown recognizes the text on-device and asks you to check the transcription.
+3. Choose Edit (Edit Markdown in the iPhone actions menu). Add a heading, preview the change, then use Save as Markdown to choose a destination. Reopen the saved .md file to check your edit. The original PDF remains intact.

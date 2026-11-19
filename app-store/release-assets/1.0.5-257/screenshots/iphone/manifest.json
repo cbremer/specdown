@@ -1,0 +1,90 @@
+[
+  {
+    "file": "iphone/01-home.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Open a document and start reading",
+    "subtitle": "Your Markdown, with room to focus",
+    "sha256": "a9e1e19940fc87214357daf5a4f2318e3290d24830a6cd10a0ffc435de3743ee",
+    "captureSha256": "2d521c0a1d4554308ec9161af018e35ec3f20381809aa46c72a18993d5e508f9"
+  },
+  {
+    "file": "iphone/02-presentation.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "See diagrams in presentation mode",
+    "subtitle": "Zoom, pan, and step through your diagrams",
+    "sha256": "f91cd3ce8374c967f9c6c606abcfe2c47dba8e8bba8f9144a4b6b2d496b76fa9",
+    "captureSha256": "96458397e8f9341fbfc691c0f9ef4ca226ce2b3bc0e70715439cb1c5cd5eb70f"
+  },
+  {
+    "file": "iphone/03-word.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Open a Word document",
+    "subtitle": "Bring headings and text into Markdown",
+    "sha256": "dbb92dbca82be567361458294f9a639399a6e5aa0c0ef7279f156f85b419a2c1",
+    "captureSha256": "ec7c92e735d3608d54a4145cdea3cc17ddc288f25b75cc120c630ebc0f0a6af3"
+  },
+  {
+    "file": "iphone/04-edit.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Make a quick edit",
+    "subtitle": "Preview your changes and save as Markdown",
+    "sha256": "bf511e7203f2fa71f481a3b01f8126f01cd757edc8e3e6d4b687d9e114660a24",
+    "captureSha256": "5fc892fe031466c07e825fe2cfaa87029ad8613ffc9fcc753c3e2ee9e9911946"
+  },
+  {
+    "file": "iphone/05-mindmap.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Diagrams and tables together",
+    "subtitle": "See the big picture beside the details",
+    "sha256": "b1f6ec14f9b084b843482c2f1f1bc88d458758a71ca525ac88a19dae0566b067",
+    "captureSha256": "61bcba51c6b6907aafdee8687544fafb5a761f694652520acc2530bcd16ca90d"
+  },
+  {
+    "file": "iphone/06-plan.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Follow the plan",
+    "subtitle": "Charts and diagrams beside your document",
+    "sha256": "247dc1d5c736194474c7943fe2ac33f66a4db02fe28a96f55f4283855c148c79",
+    "captureSha256": "aa1a79b62ffcfaf14b301f919271d149ce93e512746bea20671d5e3b07c2b68b"
+  },
+  {
+    "file": "iphone/07-pdf.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Read text from a scan",
+    "subtitle": "Recognize PDF text on your device",
+    "sha256": "0b98e3aefdb9b6f03bc41864886726495fbf4ba64e15cb053a98af1a66ed289e",
+    "captureSha256": "9f6b06947b92d21f9bb72917a33c699f8e635e2ebc72f1f5a52c122bc53c5d9d"
+  },
+  {
+    "file": "iphone/08-light.png",
+    "size": [
+      1179,
+      2556
+    ],
+    "headline": "Just as clear in light mode",
+    "subtitle": "Choose the appearance that suits you",
+    "sha256": "d89e9a13d9f05274665d7745bd6d6a5be0f9de03c49656a19e79c948f6d38e0a",
+    "captureSha256": "227db55657f89dcf5fbba154e4870ed76325b3413bf3300cf549433110e927c6"
+  }
+]

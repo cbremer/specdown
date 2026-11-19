@@ -1,0 +1,84 @@
+{
+  "source": "Owner-approved SpecDown 1.0.3 (242) gallery",
+  "templates": {
+    "mac-1": "html,body{margin:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif}*{box-sizing:border-box}.scene{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(#0e172a,#1e2946);color:#fff;container-type:inline-size}header{height:18.3%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2% 5%;text-align:center}h1{font-size:3.6cqw;margin:0;font-weight:700;line-height:1.18}header p{font-size:1.95cqw;margin:1.5% 0 0;color:#aab8d0;line-height:1.3}.capture{position:absolute;top:18.3%;bottom:3%;left:5%;right:5%;display:flex;align-items:center;justify-content:center}.capture img{max-width:100%;max-height:100%;object-fit:contain;border-radius:1cqw;box-shadow:0 10px 25px #0005}",
+    "iphone-1": "html,body{margin:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif}*{box-sizing:border-box}.scene{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(#0e172a,#1e2946);color:#fff;container-type:inline-size}header{height:19.5%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2% 5%;text-align:center}h1{font-size:7.1cqw;margin:0;font-weight:700;line-height:1.18}header p{font-size:4.0cqw;margin:1.5% 0 0;color:#aab8d0;line-height:1.3}.capture{position:absolute;top:19.5%;bottom:3%;left:5%;right:5%;display:flex;align-items:center;justify-content:center}.capture img{max-width:100%;max-height:100%;object-fit:contain;border-radius:1cqw;box-shadow:0 10px 25px #0005}",
+    "ipad-1": "html,body{margin:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif}*{box-sizing:border-box}.scene{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(#0e172a,#1e2946);color:#fff;container-type:inline-size}header{height:16%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2% 5%;text-align:center}h1{font-size:3.6cqw;margin:0;font-weight:700;line-height:1.18}header p{font-size:1.95cqw;margin:1.5% 0 0;color:#aab8d0;line-height:1.3}.capture{position:absolute;top:16%;bottom:3%;left:5%;right:5%;display:flex;align-items:center;justify-content:center}.capture img{max-width:100%;max-height:100%;object-fit:contain;border-radius:1cqw;box-shadow:0 10px 25px #0005}"
+  },
+  "templateFor": {
+    "mac": {
+      "1": "mac-1",
+      "2": "mac-1",
+      "3": "mac-1",
+      "4": "mac-1",
+      "5": "mac-1",
+      "6": "mac-1",
+      "7": "mac-1",
+      "8": "mac-1"
+    },
+    "iphone": {
+      "1": "iphone-1",
+      "2": "iphone-1",
+      "3": "iphone-1",
+      "4": "iphone-1",
+      "5": "iphone-1",
+      "6": "iphone-1",
+      "7": "iphone-1",
+      "8": "iphone-1"
+    },
+    "ipad": {
+      "1": "ipad-1",
+      "2": "ipad-1",
+      "3": "ipad-1",
+      "4": "ipad-1",
+      "5": "ipad-1",
+      "6": "ipad-1",
+      "7": "ipad-1",
+      "8": "ipad-1"
+    },
+    "duo": {
+      "1": "ipad-1",
+      "2": "ipad-1",
+      "3": "ipad-1",
+      "4": "ipad-1",
+      "5": "ipad-1",
+      "6": "ipad-1",
+      "7": "ipad-1",
+      "8": "ipad-1"
+    }
+  },
+  "captions": {
+    "1": [
+      "Open a document and start reading",
+      "Your Markdown, with room to focus"
+    ],
+    "2": [
+      "See diagrams in presentation mode",
+      "Zoom, pan, and step through your diagrams"
+    ],
+    "3": [
+      "Read technical documents comfortably",
+      "Specs, plans and notes in a clear reading view"
+    ],
+    "4": [
+      "Source when you need it",
+      "Compare Markdown with its rendered result"
+    ],
+    "5": [
+      "Diagrams and tables together",
+      "See the big picture beside the details"
+    ],
+    "6": [
+      "Follow the plan",
+      "Charts and diagrams beside your document"
+    ],
+    "7": [
+      "Open Markdown from GitHub",
+      "Read public files without signing in"
+    ],
+    "8": [
+      "Just as clear in light mode",
+      "Choose the appearance that suits you"
+    ]
+  }
+}
