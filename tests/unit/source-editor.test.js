@@ -206,3 +206,106 @@ test('live updates leave the active and background dirty drafts intact', async (
     'Source changed'
   );
 });
+
+test('the contextual editor reuses the document header and keeps reading separate from preview', async () => {
+  localStorage.clear();
+  localStorage.setItem('visualTheme', 'default');
+  loadHTML(document);
+  loadApp(document);
+  createTab('context.md', '# Original');
+  const edit = document.getElementById('source-edit');
+  const bar = document.getElementById('source-editor-bar');
+  expect(bar.closest('.content-header')).not.toBeNull();
+  expect(bar.hidden).toBe(true);
+  expect(edit.hidden).toBe(false);
+  edit.click();
+  const tab = state.tabs[0],
+    input = document.querySelector('#source-editor-host textarea');
+  input.value = '# Draft';
+  input.dispatchEvent(new Event('input'));
+  document.getElementById('source-preview').click();
+  await Promise.resolve();
+  expect(bar.hidden).toBe(false);
+  expect(
+    document.getElementById('source-preview').getAttribute('aria-pressed')
+  ).toBe('true');
+  expect(document.getElementById('source-editor-host').hidden).toBe(true);
+  document.getElementById('source-more').click();
+  document.getElementById('source-return').click();
+  await Promise.resolve();
+  expect(bar.hidden).toBe(true);
+  expect(edit.textContent).toContain('Resume');
+  expect(sourceDraftText(tab)).toBe('# Draft');
+  expect(localStorage.getItem('specdown.sourceDrafts.v1')).toContain('# Draft');
+  edit.click();
+  expect(
+    document.querySelector('#source-editor-host textarea:not([hidden])')
+  ).toBe(input);
+  expect(input.value).toBe('# Draft');
+});
+
+test('editor More has keyboard dismissal without leaving the draft workspace', () => {
+  localStorage.clear();
+  localStorage.setItem('visualTheme', 'default');
+  loadHTML(document);
+  loadApp(document);
+  createTab('menu.md', '# Original');
+  startSourceEditing();
+  document.getElementById('source-more').click();
+  expect(
+    document.getElementById('source-more').getAttribute('aria-expanded')
+  ).toBe('true');
+  document.getElementById('source-menu').dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    })
+  );
+  expect(document.getElementById('source-menu').hidden).toBe(true);
+  expect(document.getElementById('source-editor-bar').hidden).toBe(false);
+});
+
+test('explicit discard offers a small confirmation, cancel retains the draft, and discard restores reading', async () => {
+  localStorage.clear();
+  localStorage.setItem('visualTheme', 'default');
+  loadHTML(document);
+  loadApp(document);
+  createTab('discard.md', '# Saved');
+  startSourceEditing();
+  const input = document.querySelector('#source-editor-host textarea');
+  input.value = '# Unsaved';
+  input.dispatchEvent(new Event('input'));
+  document.getElementById('source-more').click();
+  document.getElementById('source-cancel').click();
+  const confirmation = document.querySelector('dialog');
+  expect(confirmation.querySelector('h2').textContent).toBe('Discard changes?');
+  expect(
+    [...confirmation.querySelectorAll('button')].map((b) => b.textContent)
+  ).toEqual(['Cancel', 'Discard changes']);
+  confirmation.querySelector('[data-editor-choice=keep]').click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(document.querySelector('#source-editor-host textarea')).toBe(input);
+  expect(input.value).toBe('# Unsaved');
+  expect(localStorage.getItem('specdown.sourceDrafts.v1')).toContain(
+    '# Unsaved'
+  );
+  document.getElementById('source-more').click();
+  document.getElementById('source-cancel').click();
+  document.querySelector('[data-editor-choice=discard]').click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  for (
+    let attempt = 0;
+    attempt < 100 && document.activeElement?.id !== 'source-edit';
+    attempt++
+  )
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(document.activeElement.id).toBe('source-edit');
+  expect(document.getElementById('source-editor-bar').hidden).toBe(true);
+  expect(document.getElementById('markdown-content').textContent).toContain(
+    'Saved'
+  );
+  expect(localStorage.getItem('specdown.sourceDrafts.v1')).not.toContain(
+    '# Unsaved'
+  );
+});

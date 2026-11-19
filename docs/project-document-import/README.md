@@ -21,10 +21,9 @@ The completed advisory draft review has four proposed refinements in the [review
 | November 18, 2026 | Spec  | [Document import PRD](2026-11-18-spec-document-import-prd.md)                                                      |
 | November 18, 2026 | Tasks | [Session 01 — PRD and Linear execution planning](2026-11-18-tasks-session-01-prd-linear-plan.md)                   |
 | November 18, 2026 | Tasks | [Session 02 — source editing and experimental import planning](2026-11-18-tasks-session-02-source-editing-plan.md) |
-
-| November 18, 2026 | Tasks | [Session 03 — edit/save development builds](2026-11-18-tasks-session-03-edit-save-dev.md) |
-
-| November 18, 2026 | Spec | [Edit/save Dev acceptance and import feasibility](2026-11-18-spec-edit-save-dev-acceptance.md) |
+| November 18, 2026 | Tasks | [Session 03 — edit/save development builds](2026-11-18-tasks-session-03-edit-save-dev.md)                          |
+| November 18, 2026 | Spec  | [Edit/save Dev acceptance and import feasibility](2026-11-18-spec-edit-save-dev-acceptance.md)                     |
+| November 18, 2026 | Tasks | [Session 04 — contextual editing in Dev builds](2026-11-18-tasks-session-04-contextual-editor-dev.md)              |
 
 ## Naming
 

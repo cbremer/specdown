@@ -116,7 +116,8 @@ export function renderTabBar() {
       const dotTitle = hasChanges ? 'File changed on disk' : 'Watching for changes';
       html += `<span class="tab-watching-dot" title="${dotTitle}"></span>`;
     }
-    html += `<span class="tab-filename">${escapeHtml(tab.filename)}${isSourceDirty(tab) ? ' • Unsaved' : ''}</span>`;
+    if (isSourceDirty(tab)) html += '<span class="tab-source-dirty" title="Unsaved changes" aria-label="Unsaved changes"></span>';
+    html += `<span class="tab-filename">${escapeHtml(tab.filename)}</span>`;
     html += `<button class="tab-close" data-close-id="${tab.id}" title="Close tab" aria-label="Close ${escapeHtml(tab.filename)}">×</button>`;
     html += `</div>`;
   }

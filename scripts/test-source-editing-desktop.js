@@ -58,13 +58,31 @@ app.whenReady().then(async () => {
       loaded.exports.readMarkdownFile(target).annotationSource;
     const edit = async (text) => {
       await js(
-        "if(document.getElementById('source-editor-host').hidden) document.getElementById('source-edit').click()"
+        "if(document.getElementById('source-editor-host').hidden) document.getElementById(document.getElementById('source-editor-bar').hidden?'source-edit':'source-source').click()"
       );
       await js(
         `(()=>{const input=document.querySelector('#source-editor-host textarea:not([hidden])'); input.focus(); input.select(); document.execCommand('insertText',false,${JSON.stringify(text)});})()`
       );
     };
     await edit('# Changed');
+    assert.equal(
+      await js(
+        "!!document.getElementById('source-editor-bar').closest('.content-header')"
+      ),
+      true
+    );
+    assert.equal(
+      await js(
+        "document.getElementById('source-save').getBoundingClientRect().height"
+      ),
+      32
+    );
+    assert.equal(
+      await js(
+        "document.querySelector('#source-more svg').getBoundingClientRect().width"
+      ),
+      16
+    );
     await js("document.execCommand('undo')");
     assert.equal(
       await js("document.getElementById('source-status').textContent"),
@@ -76,7 +94,7 @@ app.whenReady().then(async () => {
       'Unsaved changes'
     );
     await js(
-      "document.querySelector('#source-editor-host textarea:not([hidden])').value='# Changed\\n\\n  tail  \\n'; document.querySelector('#source-editor-host textarea:not([hidden])').dispatchEvent(new Event('input')); document.getElementById('source-edit').click()"
+      "document.querySelector('#source-editor-host textarea:not([hidden])').value='# Changed\\n\\n  tail  \\n'; document.querySelector('#source-editor-host textarea:not([hidden])').dispatchEvent(new Event('input')); document.getElementById('source-preview').click()"
     );
     await until(
       async () =>
@@ -125,6 +143,30 @@ app.whenReady().then(async () => {
       'acknowledgment'
     );
     await edit('# Recover me');
+    await js(
+      "document.getElementById('source-more').click(); document.getElementById('source-return').click()"
+    );
+    await until(
+      async () =>
+        await js(
+          "document.getElementById('source-editor-bar').hidden && document.getElementById('source-edit').textContent==='Resume editing'"
+        ),
+      'return to reading'
+    );
+    assert.equal(fs.readFileSync(target, 'utf8'), '# My draft');
+    assert.equal(
+      await js(
+        "localStorage.getItem('specdown.sourceDrafts.v1').includes('# Recover me')"
+      ),
+      true
+    );
+    await js("document.getElementById('source-edit').click()");
+    assert.equal(
+      await js(
+        "document.querySelector('#source-editor-host textarea:not([hidden])').value"
+      ),
+      '# Recover me'
+    );
     win.webContents.once('will-prevent-unload', (event) =>
       event.preventDefault()
     );
@@ -178,7 +220,7 @@ app.whenReady().then(async () => {
     );
     assert.equal(fs.readFileSync(copy, 'utf8'), '# Recover me');
     await edit('# Mermaid\n\n```mermaid\ngraph TD\n A-->B\n```\n');
-    await js("document.getElementById('source-edit').click()");
+    await js("document.getElementById('source-preview').click()");
     await until(
       async () =>
         await js(
@@ -186,6 +228,46 @@ app.whenReady().then(async () => {
         ),
       'real Mermaid preview'
     );
+    await js(
+      "document.getElementById('source-more').click(); document.getElementById('source-cancel').click()"
+    );
+    const discardLayout = await js(
+      "(()=>{ const d=document.querySelector('dialog[open]'), r=d.getBoundingClientRect(), s=getComputedStyle(d); return {left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height, viewportWidth:innerWidth, viewportHeight:innerHeight, padding:parseFloat(s.padding)}; })()"
+    );
+    assert.ok(
+      discardLayout.padding >= 16,
+      'Confirmation needs interior spacing'
+    );
+    assert.ok(
+      Math.abs(
+        discardLayout.left -
+          (discardLayout.viewportWidth - discardLayout.width) / 2
+      ) <= 2,
+      'Confirmation must be horizontally centered'
+    );
+    assert.ok(
+      Math.abs(
+        discardLayout.top -
+          (discardLayout.viewportHeight - discardLayout.height) / 2
+      ) <= 2,
+      'Confirmation must be vertically centered'
+    );
+    await js("document.querySelector('[data-editor-choice=keep]').click()");
+    assert.equal(
+      await js("document.getElementById('source-status').textContent"),
+      'Unsaved changes'
+    );
+    await js(
+      "document.getElementById('source-more').click(); document.getElementById('source-cancel').click(); document.querySelector('[data-editor-choice=discard]').click()"
+    );
+    await until(
+      async () =>
+        await js(
+          "document.getElementById('source-editor-bar').hidden && document.getElementById('markdown-content').textContent.includes('Recover me')"
+        ),
+      'discard restores saved reading view'
+    );
+    assert.equal(fs.readFileSync(copy, 'utf8'), '# Recover me');
     const screenshot = path.join(fixture, 'desktop-preview.png');
     fs.writeFileSync(screenshot, (await win.webContents.capturePage()).toPNG());
     console.log(

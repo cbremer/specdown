@@ -184,10 +184,30 @@
                 <div class="file-info">
                     <span class="file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
                     <span id="file-name" class="file-name"></span>
+                    <span id="source-state" class="source-file-status" hidden></span>
+                    <span id="source-status" class="source-visually-hidden" role="status" aria-live="polite"></span>
                     <button id="watch-toggle" class="watch-chip" title="Live reload is on — this document updates automatically when the file changes on disk. Click to pause." aria-label="Toggle live reload" style="display: none;">
                         <span class="watch-chip-dot" aria-hidden="true"></span>
                         <span class="watch-toggle-label">Live</span>
                     </button>
+                </div>
+                <button id="source-edit" class="source-control source-read-entry" type="button" hidden>Edit</button>
+                <div id="source-editor-bar" role="region" aria-label="Source editing" hidden>
+                    <div class="source-view-switch" role="group" aria-label="Document view">
+                        <button id="source-source" class="source-control" type="button" aria-pressed="true">Source</button>
+                        <button id="source-preview" class="source-control" type="button" aria-pressed="false">Preview</button>
+                    </div>
+                    <div class="source-editor-actions">
+                        <button id="source-save" class="source-control source-primary" type="button">Save</button>
+                        <div class="source-menu-anchor">
+                            <button id="source-more" class="source-control source-more" type="button" title="More editing actions" aria-label="More editing actions" aria-haspopup="menu" aria-expanded="false" aria-controls="source-menu"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+                            <div id="source-menu" class="source-menu" role="menu" aria-label="Editing actions" hidden>
+                                <button id="source-return" type="button" role="menuitem">Return to reading <kbd>Esc</kbd></button>
+                                <button id="source-save-as" type="button" role="menuitem">Save As…</button>
+                                <button id="source-cancel" type="button" role="menuitem">Discard changes…</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="content-header-actions">
                     <button id="workspace-toggle" class="workspace-toggle-button overflow-only" title="Toggle workspace files" aria-label="Toggle workspace files" style="display: none;">
@@ -246,13 +266,6 @@
                 <button id="search-close" class="search-close-btn" title="Close search (Esc)" aria-label="Close search">&#10005;</button>
             </div>
 
-            <div id="source-editor-bar" role="region" aria-label="Source editing" hidden>
-                <button id="source-edit" type="button">Edit</button>
-                <button id="source-save" type="button" hidden>Save</button>
-                <button id="source-save-as" type="button" hidden>Save As…</button>
-                <button id="source-cancel" type="button" hidden>Cancel</button>
-                <span id="source-status" role="status" aria-live="polite"></span>
-            </div>
             <!-- Body with TOC sidebar + main content -->
             <div class="content-body">
                 <!-- Workspace (folder) Sidebar -->
@@ -336,10 +349,12 @@
                     <button id="ios-action-sheet-close" class="ios-sheet-close" title="Close actions">✕</button>
                 </div>
                 <div class="ios-sheet-actions">
-                    <button id="ios-source-edit" class="ios-sheet-action-button">Edit / Preview Markdown</button>
+                    <button id="ios-source-edit" class="ios-sheet-action-button">Edit Markdown</button>
+                    <button id="ios-source-preview" class="ios-sheet-action-button" hidden>Preview draft</button>
+                    <button id="ios-source-return" class="ios-sheet-action-button" hidden>Return to reading</button>
                     <button id="ios-source-save" class="ios-sheet-action-button">Save Markdown</button>
                     <button id="ios-source-save-as" class="ios-sheet-action-button">Save Markdown As…</button>
-                    <button id="ios-source-cancel" class="ios-sheet-action-button">Cancel Editing</button>
+                    <button id="ios-source-cancel" class="ios-sheet-action-button">Discard changes…</button>
                     <button id="ios-find-button" class="ios-sheet-action-button">Find in Document</button>
                     <button id="ios-split-button" class="ios-sheet-action-button">Split View</button>
                     <button id="ios-present-button" class="ios-sheet-action-button" style="display: none;">Present Diagrams</button>
