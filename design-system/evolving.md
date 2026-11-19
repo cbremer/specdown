@@ -9,9 +9,7 @@ Everything above describes SpecDown as it ships today. This section holds **prop
 ## 2. Fix the known contrast gaps
 
 - Add `color-success-text` / `color-warning-text` (or darken the light values) so success and warning can carry text. Today they work only as edges.
-- Dark `search-highlight`: either use dark text on `#b8860b` or a lighter amber. `search-highlight-current`: switch to dark text (`#1a1a1a` on `#ff9800` is ~8:1).
 - `border-color` for control outlines: add a `border-strong` around 3:1 for inputs and buttons, and keep `border-color` for dividers.
-- `logo-dark.svg` is identical to the light logo. Give "Spec" a light ink (`text-primary` dark) so the wordmark reads on dark headers.
 
 ## 2a. Converge the dialogs (proposed: the Modal component)
 
