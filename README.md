@@ -55,14 +55,25 @@ On Mac, Command-click a running app’s Dock icon to reveal that exact copy in F
 
 **Document-import Dev builds verified November 18, 2026.** The direct Mac Dev package reports **0.0.234**. Mac App Store Dev **1.0.4 (252)** was installed on Mac and verified through its sandboxed Save panel. iOS Dev **1.0.4 (251)** was installed on iPhone. Physical iPadOS installation and OCR acceptance are open. These are local Dev checkpoints. [iOS and direct Mac OCR results](docs/project-document-import/2026-11-18-tasks-session-07-pdf-ocr-dev.md) · [Mac App Store Dev results](docs/project-document-import/2026-11-18-tasks-session-08-mac-store-dev.md)
 
-### Recommended home for retained builds
+### Standard home for retained builds
 
-Use worktrees for development and disposable build output. Keep the exact packages selected for installation, testing or release outside Git under **`~/Builds/SpecDown/<platform>/<channel>/<version>-<build>-<commit>/`**. For example, a Mac Store Dev folder could be `~/Builds/SpecDown/mac-store/dev/1.0.4-251-5bed90e/`. This is a proposed retention convention. Existing build scripts still write to the output folders above.
+Open **`~/Builds/SpecDown`** in Finder to find a completed local build from any worktree. Pick the platform, then the channel. Each build folder contains the runnable app or archive, its matching packaging outputs, and a `manifest.json`. For example, the Mac App Store Dev builds are in `~/Builds/SpecDown/mac-store/dev/`.
 
-- Use `mac-direct`, `mac-store`, `ipados` and `ios` for platform records, and `dev`, `beta` and `prod` for channels. When iPhone and iPad use the same binary, keep a single package and link both device records to it. Record the device family and test result separately.
-- Record the full source commit, platform, channel, bundle ID, actual version/build, architecture, package checksum and where it was installed. For a directory bundle, checksum a preserved ZIP or disk image. Keep device and simulator artifacts distinguishable. Give two builds from the same revision distinct records if the bytes differ.
-- Keep a known-good Dev rollback and retain distributed Beta and Prod archives with their matching symbols in backed-up storage. Apple calls for retaining each distributed Xcode archive, including its dSYMs. [Apple archive guidance](https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information)
-- Build independently in each worktree, then copy a verified artifact into its own retained folder. This avoids concurrent builds overwriting the same output and keeps old packages available when a worktree is removed. Electron supports an explicit per-build output directory. [electron-builder directory configuration](https://www.electron.build/docs/api/app-builder-lib.interface.metadatadirectories/)
+| Platform folder | Contents |
+| --- | --- |
+| `mac-direct/` | Direct-download Mac apps and installers |
+| `mac-store/` | Sandboxed Mac App Store apps and installer packages |
+| `ios/` | iPhone device builds, simulator builds and Xcode archives |
+| `ipados/` | iPad builds. A relative link points to the same retained package when it supports both device families. |
+
+Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arrive. The app's bundle identifier determines its channel. The folder name includes the version, build number, source revision, product kind, architecture and a checksum prefix. This distinguishes simulator from device even when both are arm64. Matching repeats reuse a verified record. Different package bytes get a separate record. The manifest gives the full SHA-256 for each product, using a tree checksum for directory bundles.
+
+**Building locally**
+
+- **Mac desktop and Mac App Store.** The existing electron-builder commands above automatically retain the completed local Mac app and matching installer artifacts after packaging. Worktrees keep their normal scratch outputs in `dist/` or `dist-mas/`. Hosted CI keeps its workflow artifact handling.
+- **iPadOS and iOS.** Run `scripts/build-mobile.sh <dev|beta|prod> <device|simulator|archive>`. For example, `scripts/build-mobile.sh dev device MARKETING_VERSION=1.0.4 CURRENT_PROJECT_VERSION=251` builds, signs and retains a device app using the existing Xcode configuration. The `archive` option retains the entire `.xcarchive`, including available dSYMs. The combined `scripts/build-edit-save-dev.sh` command retains both direct Mac Dev and the mobile Dev simulator app.
+- **An existing build, including one made in Xcode.** Run `python3 scripts/retain-build.py --revision <build-commit> "/path/to/SpecDown.app"` or pass an `.xcarchive`. Add `--extra "/path/to/file"` for a corresponding installer, exported IPA or verified symbols. Use `--revision unknown` when the original revision is unavailable. Build scripts record the checkout revision and whether it had uncommitted changes.
+- **Installation and backup.** Run or install the retained copy separately. Keep normal records of the devices tested. Include this folder in backups, especially distributed archives and symbols. [Apple archive guidance](https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information)
 
 ## Features
 
@@ -97,6 +108,11 @@ Use worktrees for development and disposable build output. Keep the exact packag
 - Diagrams re-theme automatically with light/dark
 
 ### Getting documents in
+
+**Word and PDF in Dev builds.** Open File imports a `.docx` or PDF as an editable Markdown copy. Both Mac editions and the shared iPhone/iPad app read Word’s main document XML locally using fflate. On Mac, PDF.js extracts selectable text and Tesseract.js recognizes English text on sparse pages. On iPhone and iPad, PDFKit and Apple Vision perform those steps. Save as Markdown writes a separate file.
+
+Microsoft MarkItDown successfully converted a sample Word document and a text PDF in an earlier offline Python experiment. Its use was limited to that evaluation. [MarkItDown experiment and results](docs/project-document-import/2026-11-18-spec-edit-save-dev-acceptance.md#markitdown-experiment)
+
 - **Drag & drop** or **browse** for `.md` / `.markdown` files on web and desktop;
   use **Files**, **iCloud Drive** or a compatible app on iPhone and iPad
 - **Open from URL** using a public HTTPS link to a Markdown file. Links requiring
