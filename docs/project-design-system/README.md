@@ -4,9 +4,10 @@ SpecDown's shared visual language across web/PWA, Electron desktop (direct downl
 
 - [Linear project: SpecDown Design System](https://linear.app/zilla151/project/specdown-design-system-663e12a0f863)
 
-| Date       | Document                                                          | Summary                                                                                     |
-| ---------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 2026-11-19 | [Session 01](2026-11-19-tasks-session-01-codify-design-system.md) | Audit the shipped UI, codify tokens/components/native/themes, commit as the source of truth |
+| Date       | Document                                                                   | Summary                                                                                     |
+| ---------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 2026-11-19 | [Session 01](2026-11-19-tasks-session-01-codify-design-system.md)          | Audit the shipped UI, codify tokens/components/native/themes, commit as the source of truth |
+| 2026-11-19 | [Session 02](2026-11-19-tasks-session-02-toast-layer-and-save-contrast.md) | Fix toasts hidden under dialogs (ZIL-220) and dark-theme Save contrast (ZIL-219)            |
 
 ## Status
 
