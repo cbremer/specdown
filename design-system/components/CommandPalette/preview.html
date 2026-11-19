@@ -1,0 +1,47 @@
+<!-- @dsCard group="Overlays" height=330 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        background: rgba(0, 0, 0, 0.4);
+        padding: 28px 16px;
+        height: 270px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      "
+    >
+      <div class="command-palette">
+        <input class="command-palette-input" value="exp" aria-label="Command" />
+        <ul class="command-palette-list">
+          <li class="command-palette-item is-selected">
+            <span>Export as PDF</span
+            ><span class="command-palette-item-hint">⇧⌘E</span>
+          </li>
+          <li class="command-palette-item">
+            <span>Export diagram as PNG</span
+            ><span class="command-palette-item-hint"></span>
+          </li>
+          <li class="command-palette-item">
+            <span>Expand all sections</span
+            ><span class="command-palette-item-hint"></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

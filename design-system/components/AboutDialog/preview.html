@@ -1,0 +1,42 @@
+<!-- @dsCard group="Dialogs · current" height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 300px">
+      <div class="shortcuts-overlay" style="inset: 0">
+        <div class="shortcuts-sheet about-sheet">
+          <h2 class="shortcuts-title">SpecDown</h2>
+          <p class="about-tagline">
+            Markdown viewer with interactive Mermaid diagrams.
+          </p>
+          <p class="about-version">Version 1.42.0 (Dev)</p>
+          <ul class="about-links">
+            <li><a href="#">Release notes</a></li>
+            <li><a href="#">Report an issue</a></li>
+          </ul>
+          <button class="about-done">Done</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

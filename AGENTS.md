@@ -41,6 +41,7 @@ specdown/
 ├── vite.config.js               # Vite build config for the shared web app
 ├── eslint.config.js             # ESLint flat config
 ├── .prettierrc.json             # Prettier config
+├── design-system/               # SpecDown design system: tokens, brand book, components (UI source of truth)
 ├── docs/                        # All project documentation (AI-generated and human-edited)
 │   ├── README.md                # Index of all project doc folders
 │   ├── project-desktop/         # Electron desktop project — brainstorms, specs, tasks
@@ -139,6 +140,17 @@ Each project folder has a `README.md` that serves as the entry point with:
 - The naming conventions for that project
 
 When starting a new session, **add a tasks file** with the next session number and update the timeline table in the project's `README.md`.
+
+---
+
+## Design system
+
+`design-system/` is the source of truth for SpecDown's UI on every surface (web, desktop, Mac App Store, iOS, iPadOS).
+
+- **Before UI work**, read `design-system/README.md`, then the relevant section (`native-platforms.md`, `visual-themes.md`) or `components/<Name>/README.md`.
+- **Use tokens, not raw values.** `design-system/tokens.json` names every colour (light and dark), type style, spacing step, radius and shadow by its CSS variable name (`--<name>`). If nothing fits, add a token in the same PR.
+- **Keep it current.** A PR that changes a token, a component's look or behaviour, a visual theme, or native shell UI updates the matching `design-system/` file in the same PR. If you change a rule that `design-system/components/bundle.css` copies, refresh the copy.
+- **Proposals are not tokens.** `design-system/evolving.md` and the proposed `.sd-*` Modal are planned, not shipped. Don't treat them as current until adopted.
 
 ---
 

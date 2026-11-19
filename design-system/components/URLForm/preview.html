@@ -1,0 +1,100 @@
+<!-- @dsCard group="Native · iOS" height=320 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      [data-theme='light'],
+      :root {
+        --n-ground: #f2f2f7;
+        --n-cell: #ffffff;
+        --n-text: #000000;
+        --n-sec: #6c6c70;
+        --n-sep: #c6c6c8;
+        --n-tint: #007aff;
+      }
+      [data-theme='dark'] {
+        --n-ground: #000000;
+        --n-cell: #1c1c1e;
+        --n-text: #ffffff;
+        --n-sec: #98989f;
+        --n-sep: #38383a;
+        --n-tint: #0a84ff;
+      }
+      .n {
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        background: var(--n-ground);
+        color: var(--n-text);
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+      .n h6 {
+        margin: 14px 12px 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--n-sec);
+      }
+      .n .grp {
+        background: var(--n-cell);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .n .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-bottom: 0.5px solid var(--n-sep);
+      }
+      .n .row:last-child {
+        border-bottom: 0;
+      }
+      .n .row svg {
+        color: var(--n-tint);
+      }
+      .n .cap {
+        font-size: 12px;
+        color: var(--n-sec);
+      }
+      .n .tint {
+        color: var(--n-tint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="n" style="max-width: 420px">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          margin: 0 4px 10px;
+        "
+      >
+        <span class="tint">Cancel</span><strong>Open from URL</strong
+        ><span class="tint" style="font-weight: 600">Open</span>
+      </div>
+      <h6>URL</h6>
+      <div class="grp">
+        <div class="row"><span>https://github.com/cbremer/specdown</span></div>
+        <div class="row" style="color: #ff3b30">
+          Could not open this URL. Please try again.
+        </div>
+      </div>
+      <div class="cap" style="margin: 8px 12px">
+        Open an HTTPS Markdown file or browse a public GitHub repository, branch
+        or folder.
+      </div>
+    </div>
+  </body>
+</html>

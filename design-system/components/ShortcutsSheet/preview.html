@@ -1,0 +1,51 @@
+<!-- @dsCard group="Dialogs · current" height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 300px">
+      <div class="shortcuts-overlay" style="inset: 0">
+        <div class="shortcuts-sheet">
+          <h2 class="shortcuts-title">Keyboard shortcuts</h2>
+          <dl class="shortcuts-list">
+            <div class="shortcuts-row">
+              <dt><kbd>⌘K</kbd></dt>
+              <dd>Command palette</dd>
+            </div>
+            <div class="shortcuts-row">
+              <dt><kbd>⌘F</kbd></dt>
+              <dd>Find in document</dd>
+            </div>
+            <div class="shortcuts-row">
+              <dt><kbd>⌘O</kbd></dt>
+              <dd>Open file</dd>
+            </div>
+            <div class="shortcuts-row">
+              <dt><kbd>?</kbd></dt>
+              <dd>Show this sheet</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

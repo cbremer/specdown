@@ -1,0 +1,54 @@
+<!-- @dsCard group="Dialogs · current" height=320 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 320px">
+      <div class="file-info-overlay" style="inset: 0">
+        <div class="file-info-sheet">
+          <h2 class="file-info-title">File info</h2>
+          <dl class="file-info-list">
+            <div class="file-info-row">
+              <dt>Name</dt>
+              <dd>architecture.md</dd>
+            </div>
+            <div class="file-info-row">
+              <dt>Location</dt>
+              <dd class="file-info-mono">~/Specs/specdown/docs</dd>
+            </div>
+            <div class="file-info-row">
+              <dt>Size</dt>
+              <dd>14.2 KB · 2,180 words</dd>
+            </div>
+            <div class="file-info-row">
+              <dt>Modified</dt>
+              <dd>19 Nov 2026, 09:12</dd>
+            </div>
+          </dl>
+          <div class="file-info-actions">
+            <button class="file-info-copy">Copy path</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

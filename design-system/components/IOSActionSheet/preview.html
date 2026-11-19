@@ -1,0 +1,41 @@
+<!-- @dsCard group="Dialogs · current" height=340 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+      }
+      .stage > * {
+        position: absolute !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" style="height: 340px">
+      <div class="ios-sheet-backdrop" style="inset: 0; display: flex">
+        <div class="ios-sheet">
+          <div class="ios-sheet-header">
+            <h2 class="ios-sheet-title">Viewer Actions</h2>
+            <button class="ios-sheet-close" aria-label="Close">✕</button>
+          </div>
+          <div class="ios-sheet-actions">
+            <button class="ios-sheet-action-button active">Split view</button
+            ><button class="ios-sheet-action-button">Comments</button
+            ><button class="ios-sheet-action-button">Print…</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

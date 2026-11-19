@@ -1,0 +1,41 @@
+<!-- @dsCard group="Navigation" height=230 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        position: relative;
+        padding: 16px 24px;
+        height: 200px;
+        display: flex;
+        justify-content: flex-end;
+      "
+    >
+      <button class="overflow-toggle-button" aria-label="More">&#8942;</button>
+      <div class="overflow-menu" style="top: 56px; right: 24px">
+        <button class="overflow-menu-item">Print…</button>
+        <button
+          class="overflow-menu-item"
+          style="background: var(--accent-color); color: var(--text-on-accent)"
+        >
+          Export as PDF…
+        </button>
+        <button class="overflow-menu-item">Copy share link</button>
+        <button class="overflow-menu-item">File info</button>
+      </div>
+    </div>
+  </body>
+</html>

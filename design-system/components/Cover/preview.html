@@ -1,0 +1,121 @@
+<!-- @dsCard height=300 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-primary);
+      }
+      .cv {
+        position: relative;
+        width: 960px;
+        height: 300px;
+        overflow: hidden;
+        background: var(--bg-primary);
+        font-family: var(--font-sans);
+      }
+      .cv svg {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      .slab {
+        fill: var(--text-primary);
+        rx: var(--radius-xl);
+      }
+      .teal {
+        fill: var(--brand-teal);
+        rx: var(--radius-xl);
+      }
+      .coral {
+        fill: var(--brand-coral);
+        rx: var(--radius-lg);
+      }
+      .gold {
+        fill: var(--brand-gold);
+        rx: var(--radius-lg);
+      }
+      .accent {
+        fill: var(--accent-color);
+      }
+      .relief {
+        fill: var(--bg-tertiary);
+        rx: var(--radius-md);
+      }
+      .star {
+        fill: var(--bg-primary);
+      }
+      .txt {
+        position: absolute;
+        left: 48px;
+        bottom: 40px;
+        max-width: 440px;
+      }
+      .name {
+        font-size: 88px;
+        line-height: 0.95;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        margin: 0;
+      }
+      .tag {
+        margin: 16px 0 0;
+        font-size: 14px;
+        line-height: 1.4;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cv">
+      <svg width="960" height="300" viewBox="0 0 960 300" aria-hidden="true">
+        <!-- blocks: text-primary slab 160x220, brand-teal 264x120 (bleeds top/right), brand-coral 128x164, brand-gold 120x72, accent-color pill 120x76, bg-tertiary relief 160x64 — sides on space-4/space-6 multiples
+     arrangement: one tall slab with satellites, teal bleeding off the top-right like the logo halo's start
+     pattern: a sparse star/dot grid cut from the slab — "precise, technical" spec tool whose default theme is Starfield
+     scales: pitch space-6 (32px), gaps space-4 (16px), radii radius-md / radius-lg / radius-xl, pill = half short side -->
+        <rect class="slab" x="520" y="-12" width="160" height="232" />
+        <rect class="teal" x="696" y="-12" width="276" height="132" />
+        <rect class="coral" x="696" y="136" width="128" height="164" />
+        <rect class="gold" x="840" y="136" width="132" height="72" />
+        <rect class="accent" x="840" y="224" width="132" height="76" rx="38" />
+        <rect class="relief" x="520" y="236" width="160" height="64" />
+        <g class="star">
+          <circle cx="552" cy="40" r="2" />
+          <circle cx="584" cy="40" r="2" />
+          <circle cx="616" cy="40" r="3" />
+          <circle cx="648" cy="40" r="2" />
+          <circle cx="552" cy="72" r="2" />
+          <circle cx="584" cy="72" r="3" />
+          <circle cx="616" cy="72" r="2" />
+          <circle cx="648" cy="72" r="2" />
+          <circle cx="552" cy="104" r="3" />
+          <circle cx="584" cy="104" r="2" />
+          <circle cx="616" cy="104" r="2" />
+          <circle cx="648" cy="104" r="3" />
+          <circle cx="552" cy="136" r="2" />
+          <circle cx="584" cy="136" r="2" />
+          <circle cx="616" cy="136" r="3" />
+          <circle cx="648" cy="136" r="2" />
+          <circle cx="552" cy="168" r="2" />
+          <circle cx="584" cy="168" r="3" />
+          <circle cx="616" cy="168" r="2" />
+          <circle cx="648" cy="168" r="2" />
+          <circle cx="552" cy="200" r="3" />
+          <circle cx="584" cy="200" r="2" />
+          <circle cx="616" cy="200" r="2" />
+          <circle cx="648" cy="200" r="3" />
+        </g>
+      </svg>
+      <div class="txt">
+        <h1 class="name">SpecDown</h1>
+        <p class="tag">
+          A quiet reader for Markdown and Mermaid, on every screen.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,203 @@
+<!-- @dsCard group="Native · iOS" height=470 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      [data-theme='light'],
+      :root {
+        --n-ground: #f2f2f7;
+        --n-cell: #ffffff;
+        --n-text: #000000;
+        --n-sec: #6c6c70;
+        --n-sep: #c6c6c8;
+        --n-tint: #007aff;
+      }
+      [data-theme='dark'] {
+        --n-ground: #000000;
+        --n-cell: #1c1c1e;
+        --n-text: #ffffff;
+        --n-sec: #98989f;
+        --n-sep: #38383a;
+        --n-tint: #0a84ff;
+      }
+      .n {
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        background: var(--n-ground);
+        color: var(--n-text);
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+      .n h6 {
+        margin: 14px 12px 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--n-sec);
+      }
+      .n .grp {
+        background: var(--n-cell);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .n .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-bottom: 0.5px solid var(--n-sep);
+      }
+      .n .row:last-child {
+        border-bottom: 0;
+      }
+      .n .row svg {
+        color: var(--n-tint);
+      }
+      .n .cap {
+        font-size: 12px;
+        color: var(--n-sec);
+      }
+      .n .tint {
+        color: var(--n-tint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="n" style="max-width: 360px">
+      <div style="font-size: 22px; font-weight: 700; margin: 4px 12px 4px">
+        SpecDown
+      </div>
+      <h6>Open</h6>
+      <div class="grp">
+        <div class="row">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+            />
+            <path
+              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+            /></svg
+          >Open from URL…
+        </div>
+        <div class="row">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" /></svg
+          >Open File
+        </div>
+      </div>
+      <h6>Appearance</h6>
+      <div class="grp">
+        <div class="row">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+            <path
+              d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"
+            /></svg
+          >App Icon
+        </div>
+      </div>
+      <h6>Samples</h6>
+      <div class="grp">
+        <div class="row">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" /></svg
+          >Open Sample
+        </div>
+        <div class="row">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M3 15h18" />
+            <path d="M9 3v18" />
+            <path d="M15 3v18" /></svg
+          >Open Diagram Showcase
+        </div>
+      </div>
+      <h6>Recent Files</h6>
+      <div class="grp">
+        <div class="row">
+          <div>
+            roadmap.md
+            <div class="cap">iCloud Drive › Specs</div>
+          </div>
+        </div>
+      </div>
+      <div class="cap" style="margin: 10px 12px 0">
+        Icons here are stand-ins from the SpecDown set; the app uses SF Symbols.
+      </div>
+    </div>
+  </body>
+</html>
