@@ -21,21 +21,21 @@ Choose the platform first, then **Dev** for local development, **Beta** for test
 
 **Beta means delivery through TestFlight** for iPhone, iPad and the Mac App Store edition. iPhone and iPad share one upload. The Mac App Store edition has a separate macOS upload. Testers install the build in TestFlight once it is available to their group. The direct-download Mac edition uses a separate Beta package installed on the Mac.
 
-| App platform                  | Dev                                                  | Beta                                                  | Prod                                                    |
-| ----------------------------- | ---------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
-| Mac desktop (direct download) | **SpecDown Dev**                                     | **SpecDown Desktop Beta**, local test package         | **Specdown Desktop**, delivered through GitHub Releases |
-| Mac App Store                 | **SpecDown Store Dev**, locally signed and installed | **SpecDown Store Beta**, separate TestFlight identity | **SpecDown**, delivered through the Mac App Store       |
-| iPadOS                        | **SpecDown Dev** on iPad                             | **SpecDown Beta** on iPad                             | **SpecDown** on iPad                                    |
-| iOS                           | **SpecDown Dev** on iPhone                           | **SpecDown Beta** on iPhone                           | **SpecDown** on iPhone                                  |
+| App platform | Dev | Beta | Prod |
+| --- | --- | --- | --- |
+| Mac desktop (direct download) | **SpecDown Dev** | **SpecDown Desktop Beta**, local test package | **Specdown Desktop**, delivered through GitHub Releases |
+| Mac App Store | **SpecDown Store Dev**, locally signed and installed | **SpecDown Store Beta**, separate TestFlight identity | **SpecDown**, delivered through the Mac App Store |
+| iPadOS | **SpecDown Dev** on iPad | **SpecDown Beta** on iPad | **SpecDown** on iPad |
+| iOS | **SpecDown Dev** on iPhone | **SpecDown Beta** on iPhone | **SpecDown** on iPhone |
 
 ### Build and install locations
 
-| Platform      | Where it is built                                                                                                                                                                                                               | Where to run it                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Mac desktop   | Dev uses `electron-builder.dev.js` and produces `dist/development-edit-save/mac-arm64/SpecDown Dev.app`. Beta uses `electron-builder.beta.js` → `dist/direct-beta/`. Prod uses `package.json` and writes installers in `dist/`. | Launch the exact Dev bundle, or install the Prod app from its DMG into `/Applications/Specdown Desktop.app`.                                     |
-| Mac App Store | Dev uses `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Beta uses `electron-builder.mas-beta.js` → `dist-mas/beta/`. Prod uses `electron-builder.mas.js` → `dist-mas/`.                                       | The local Dev installation is `~/Applications/SpecDown Store Dev.app`. TestFlight installs Beta. The Mac App Store installs Prod.                |
-| iPadOS        | In `ios/SpecDown.xcodeproj`, select the Dev, Beta or Prod scheme from the table above and an iPad destination.                                                                                                                  | Install Dev on a paired iPad. Install Beta through TestFlight and Prod through the App Store. Verify iPad layout and file picking on iPad.       |
-| iOS           | In the same Xcode project, select the matching scheme and an iPhone destination.                                                                                                                                                | Install Dev on a paired iPhone. Install Beta through TestFlight and Prod through the App Store. Verify iPhone layout and file picking on iPhone. |
+| Platform | Where it is built | Where to run it |
+| --- | --- | --- |
+| Mac desktop | Dev uses `electron-builder.dev.js` and produces `dist/development-edit-save/mac-arm64/SpecDown Dev.app`. Beta uses `electron-builder.beta.js` → `dist/direct-beta/`. Prod uses `package.json` and writes installers in `dist/`. | Launch the exact Dev bundle, or install the Prod app from its DMG into `/Applications/Specdown Desktop.app`. |
+| Mac App Store | Dev uses `electron-builder.mas-dev-channel.js` → `dist-mas/development/`. Beta uses `electron-builder.mas-beta.js` → `dist-mas/beta/`. Prod uses `electron-builder.mas.js` → `dist-mas/`. | The local Dev installation is `~/Applications/SpecDown Store Dev.app`. TestFlight installs Beta. The Mac App Store installs Prod. |
+| iPadOS | In `ios/SpecDown.xcodeproj`, select the Dev, Beta or Prod scheme from the table above and an iPad destination. | Install Dev on a paired iPad. Install Beta through TestFlight and Prod through the App Store. Verify iPad layout and file picking on iPad. |
+| iOS | In the same Xcode project, select the matching scheme and an iPhone destination. | Install Dev on a paired iPhone. Install Beta through TestFlight and Prod through the App Store. Verify iPhone layout and file picking on iPhone. |
 
 iPadOS and iOS share the Swift target and a device binary supporting both families. A simulator build is a separate product. Xcode writes these under the chosen DerivedData directory in `Build/Products/<configuration>-iphoneos/` or `<configuration>-iphonesimulator/`. The [iOS build guide](ios/README.md#development-channels) lists the run and archive configurations.
 
@@ -63,12 +63,12 @@ On Mac, Command-click a running app’s Dock icon to reveal that exact copy in F
 
 Open **`~/Builds/SpecDown`** in Finder to find a completed local build from any worktree. Pick the platform, then the channel. Each build folder contains the runnable app or archive, its matching packaging outputs, and a `manifest.json`. For example, the Mac App Store Dev builds are in `~/Builds/SpecDown/mac-store/dev/`.
 
-| Platform folder | Contents                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------- |
-| `mac-direct/`   | Direct-download Mac apps and installers                                                                 |
-| `mac-store/`    | Sandboxed Mac App Store apps and installer packages                                                     |
-| `ios/`          | iPhone device builds, simulator builds and Xcode archives                                               |
-| `ipados/`       | iPad builds. A relative link points to the same retained package when it supports both device families. |
+| Platform folder | Contents |
+| --- | --- |
+| `mac-direct/` | Direct-download Mac apps and installers |
+| `mac-store/` | Sandboxed Mac App Store apps and installer packages |
+| `ios/` | iPhone device builds, simulator builds and Xcode archives |
+| `ipados/` | iPad builds. A relative link points to the same retained package when it supports both device families. |
 
 Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arrive. The app's bundle identifier determines its channel. The folder name includes the version, build number, source revision, product kind, architecture and a checksum prefix. This distinguishes simulator from device even when both are arm64. Matching repeats reuse a verified record. Different package bytes get a separate record. The manifest gives the full SHA-256 for each product, using a tree checksum for directory bundles.
 
@@ -82,7 +82,6 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
 ## Features
 
 ### Markdown
-
 - GitHub Flavored Markdown features, including tables, task lists and blockquotes
 - Syntax highlighting for code blocks, with a hover **Copy** button
 - Clean, readable typography in light and dark themes
@@ -104,7 +103,6 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
   saved file to verify it; unsupported capacity fails without truncation.
 
 ### Interactive Mermaid diagrams
-
 - Per-diagram **zoom, pan, reset, and fullscreen** controls
 - **Mouse-wheel zoom** and **click-drag pan** with a pointer; touch controls on iOS
 - **SVG / PNG diagram files** on web and desktop; the iOS 1.0.2 candidate adds
@@ -149,7 +147,6 @@ Microsoft MarkItDown successfully converted a sample Word document and a text PD
   re-reads the file on demand
 
 ### Navigation & UX
-
 - **Command palette** (`Cmd/Ctrl + K`) with fuzzy search for available commands
 - **Native icon choices** — eight approved artworks including Light; selections
   persist. Desktop choices affect the running Dock/window, while Finder and
@@ -165,21 +162,19 @@ Microsoft MarkItDown successfully converted a sample Word document and a text PD
 ## Use it
 
 ### Web
-
 The hosted app lives at **<https://specdown.mosaicpando.com>**. Open it, drop in a
 Markdown file (or open one from a public HTTPS URL), and go. Use your browser's
 **Install** option to add it as a PWA. Offline use depends on the app resources
 your browser has saved; online documents and remote images still need a connection.
 
 ### Desktop downloads (macOS / Windows / Linux)
-
 Download the latest installer from the **[Releases page](https://github.com/cbremer/specdown/releases)**:
 
-| Platform | Artifact                                   | Notes                                                     |
-| -------- | ------------------------------------------ | --------------------------------------------------------- |
-| macOS    | `Specdown-Desktop-<version>-universal.dmg` | **Signed & notarized**; universal (Intel + Apple Silicon) |
-| Windows  | `Specdown-Desktop-Setup-<version>.exe`     | NSIS installer                                            |
-| Linux    | `Specdown-Desktop-<version>.AppImage`      | mark executable, then run                                 |
+| Platform | Artifact | Notes |
+|---|---|---|
+| macOS | `Specdown-Desktop-<version>-universal.dmg` | **Signed & notarized**; universal (Intel + Apple Silicon) |
+| Windows | `Specdown-Desktop-Setup-<version>.exe` | NSIS installer |
+| Linux | `Specdown-Desktop-<version>.AppImage` | mark executable, then run |
 
 **Testing coverage:** Windows and Linux builds have received less testing than
 macOS builds. Please [report platform-specific issues on GitHub](https://github.com/cbremer/specdown/issues).
@@ -197,7 +192,6 @@ download remains available through GitHub Releases. See the
 [App Store release records](docs/project-appstore/README.md) for version status.
 
 ### iOS / iPadOS
-
 SpecDown is available free for iPhone and iPad on the
 **[App Store](https://apps.apple.com/app/specdown/id6822086808)**. Requires iOS or
 iPadOS 16.0 or later.
@@ -234,19 +228,19 @@ Device archives, uploads and Store submissions are separate release steps.
 
 ## Keyboard shortcuts
 
-| Shortcut                   | Action                                                           |
-| -------------------------- | ---------------------------------------------------------------- |
-| `Cmd/Ctrl + D`             | Bookmark the current file                                        |
-| `Cmd/Ctrl + K`             | Command palette                                                  |
-| `Cmd/Ctrl + F`             | Find in document (`Enter` / `Shift+Enter` next / previous match) |
-| `Cmd/Ctrl + P`             | Print / Save as PDF                                              |
-| `Cmd/Ctrl + Shift + E`     | Export as PDF (desktop app)                                      |
-| `?`                        | Keyboard shortcut sheet                                          |
-| `← →`                      | Previous / next diagram (presentation mode)                      |
-| `+` (or `=`) / `-` / `0`   | Zoom in / out / fit (presentation & fullscreen)                  |
-| Mouse wheel over a diagram | Zoom                                                             |
-| Drag a diagram             | Pan                                                              |
-| `Esc`                      | Exit fullscreen / close overlays                                 |
+| Shortcut | Action |
+|---|---|
+| `Cmd/Ctrl + D` | Bookmark the current file |
+| `Cmd/Ctrl + K` | Command palette |
+| `Cmd/Ctrl + F` | Find in document (`Enter` / `Shift+Enter` next / previous match) |
+| `Cmd/Ctrl + P` | Print / Save as PDF |
+| `Cmd/Ctrl + Shift + E` | Export as PDF (desktop app) |
+| `?` | Keyboard shortcut sheet |
+| `← →` | Previous / next diagram (presentation mode) |
+| `+` (or `=`) / `-` / `0` | Zoom in / out / fit (presentation & fullscreen) |
+| Mouse wheel over a diagram | Zoom |
+| Drag a diagram | Pan |
+| `Esc` | Exit fullscreen / close overlays |
 
 ---
 
@@ -269,7 +263,6 @@ npm run desktop:build  # build the web app + a desktop installer (in dist/)
 ```
 
 ### Quality checks
-
 ```bash
 npm test               # Jest unit + integration suite
 npm run lint           # ESLint (flat config) — must be clean
@@ -279,7 +272,6 @@ npm run format:check   # Prettier check; format only files you change
 ```
 
 ### Architecture
-
 - **`markdown-viewer/`** — the shared web app. `src/main.js` is the entry/wiring hub;
   cohesive features live under `src/core/`, `src/features/`, and `src/platform/`.
   Heavy deps (Mermaid) are lazy-loaded; the code is type-checked with TypeScript's
@@ -306,7 +298,6 @@ text, URLs or local paths. Review them before sharing. See the
 [security guidance](SECURITY.md) and [documentation audit](docs/project-security/README.md).
 
 ### Releasing
-
 Merges to `main` run the web quality gates and deploy the verified build to
 GitHub Pages. The version workflow opens a separate patch-version PR; after
 review and merge, it creates an immutable tag and a draft GitHub Release.

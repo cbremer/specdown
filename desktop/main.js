@@ -1,14 +1,5 @@
 const { saveExistingMarkdown, saveMarkdownCopy } = require('./markdown-save');
-const {
-  app,
-  BrowserWindow,
-  Menu,
-  dialog,
-  ipcMain,
-  globalShortcut,
-  shell,
-  nativeImage,
-} = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut, shell, nativeImage } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const fs = require('fs');
@@ -16,25 +7,16 @@ const os = require('os');
 const { randomUUID } = require('crypto');
 const chokidar = require('chokidar');
 const { createAppIconController } = require('./app-icons');
-const {
-  getDistributionChannel,
-  channelAllowsSelfUpdate,
-} = require('./distribution');
+const { getDistributionChannel, channelAllowsSelfUpdate } = require('./distribution');
 const { nativeAboutArguments } = require('./native-about');
-const {
-  createDirectAccess,
-  createMasAccess,
-  loadMasNative,
-} = require('./mas-access');
+const { createDirectAccess, createMasAccess, loadMasNative } = require('./mas-access');
 const { createFileResourcePolicy } = require('./file-resource-policy');
 const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
 const { createAnnotationIdentity } = require('./annotation-identity');
 
 const PACKAGED_SPECDOWN_CHANNEL = require('../package.json').specdownChannel;
-const isTestChannel = ['development', 'beta'].includes(
-  PACKAGED_SPECDOWN_CHANNEL
-);
+const isTestChannel = ['development', 'beta'].includes(PACKAGED_SPECDOWN_CHANNEL);
 if (isTestChannel) process.env.SPECDOWN_DISABLE_UPDATER = '1';
 
 const VALID_EXTENSIONS = ['.md', '.markdown'];
@@ -56,21 +38,14 @@ const RELEASES_URL = 'https://github.com/cbremer/specdown/releases/latest';
 // The only page allowed in the app window, and the only page whose IPC is
 // trusted. Anything else — a crafted link to a local .html file, a remote
 // page — must never reach the native bridge (Electron security checklist #13).
-const APP_INDEX_PATH = path.join(
-  __dirname,
-  '..',
-  'markdown-viewer',
-  'dist',
-  'index.html'
-);
+const APP_INDEX_PATH = path.join(__dirname, '..', 'markdown-viewer', 'dist', 'index.html');
 const APP_INDEX_URL = pathToFileURL(APP_INDEX_PATH).href;
 const fileResourcePolicy = createFileResourcePolicy(
   path.dirname(APP_INDEX_PATH),
   (filePath) => fileAccess.hasGrant(filePath),
-  (target, read) =>
-    IS_MAS
-      ? fileAccess.withAccess(target, read)
-      : { ok: true, value: read(target) }
+  (target, read) => IS_MAS
+    ? fileAccess.withAccess(target, read)
+    : { ok: true, value: read(target) }
 );
 const EXTERNAL_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 
@@ -78,9 +53,7 @@ const EXTERNAL_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:']);
 function fileUrlPathname(url) {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'file:'
-      ? decodeURIComponent(parsed.pathname)
-      : null;
+    return parsed.protocol === 'file:' ? decodeURIComponent(parsed.pathname) : null;
   } catch {
     return null;
   }
@@ -100,9 +73,7 @@ function isAppPageUrl(url) {
 function routeNavigation(url) {
   if (isAppPageUrl(url)) return 'allow';
   try {
-    return EXTERNAL_LINK_PROTOCOLS.has(new URL(url).protocol)
-      ? 'external'
-      : 'deny';
+    return EXTERNAL_LINK_PROTOCOLS.has(new URL(url).protocol) ? 'external' : 'deny';
   } catch {
     return 'deny';
   }
@@ -159,22 +130,18 @@ let logFilePath = null;
 const openRecovery = createOpenRecovery({
   isAppPage: isAppPageUrl,
   getStore: () => store,
-  locate: (filePath, current, context) =>
-    requestGrantAccess(filePath, current, context),
+  locate: (filePath, current, context) => requestGrantAccess(filePath, current, context),
 });
 const fileOpenReceipts = createFileOpenReceipts({
   isAppPage: isAppPageUrl,
   onAccepted: addRecentFile,
-  onResult: (filePath, accepted, context) =>
-    openRecovery.admitted(filePath, accepted, context),
+  onResult: (filePath, accepted, context) => openRecovery.admitted(filePath, accepted, context),
 });
 
 // Every user-file read goes through fileAccess (see mas-access.js): a plain
 // main-held capability for the direct build, sandbox grants + persisted
 // security-scoped bookmarks for the Mac App Store build.
-const masNative = IS_MAS
-  ? loadMasNative((msg, err) => logError(msg, err))
-  : null;
+const masNative = IS_MAS ? loadMasNative((msg, err) => logError(msg, err)) : null;
 const fileAccess = IS_MAS
   ? createMasAccess({
       getStore: () => store,
@@ -185,19 +152,12 @@ const fileAccess = IS_MAS
     })
   : createDirectAccess({ getStore: () => store });
 const appIconController = createAppIconController({
-  app,
-  nativeImage,
-  platform: process.platform,
-  getStore: () => store,
-  getWindow: () => mainWindow,
+  app, nativeImage, platform: process.platform,
+  getStore: () => store, getWindow: () => mainWindow,
   onChange: () => rebuildMenu(),
   onError: (error) => {
     logError('Unable to change app icon', error);
-    dialog.showMessageBox({
-      type: 'error',
-      message: 'Unable to change app icon',
-      detail: error.message,
-    });
+    dialog.showMessageBox({ type: 'error', message: 'Unable to change app icon', detail: error.message });
   },
 });
 // electron-updater instance (set in packaged builds only) + a flag marking a
@@ -266,9 +226,7 @@ function initAutoUpdater() {
   // Checked first so the MAS build never even requires electron-updater:
   // the App Store delivers updates (Guideline 2.4.5).
   if (!channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL)) {
-    logInfo(
-      'Auto-update disabled: Mac App Store build (updates come from the App Store).'
-    );
+    logInfo('Auto-update disabled: Mac App Store build (updates come from the App Store).');
     return;
   }
   if (!app.isPackaged) {
@@ -332,9 +290,7 @@ function initAutoUpdater() {
     // restart-to-update). The native OS notification from checkForUpdatesAndNotify
     // still fires as a fallback when the window isn't focused.
     if (mainWindow && mainWindow.webContents) {
-      mainWindow.webContents.send('update-downloaded', {
-        version: info && info.version,
-      });
+      mainWindow.webContents.send('update-downloaded', { version: info && info.version });
     }
   });
 
@@ -402,10 +358,7 @@ function showManualUpdateCheckError(err) {
   // A 404 on the update feed usually means a release was just published and
   // its platform artifacts are still building/notarizing (the release record
   // appears minutes before the assets do). Say that instead of dumping HTTP.
-  if (
-    /cannot find latest[^\s]*\.yml/i.test(detail) ||
-    /HttpError: 404/.test(detail)
-  ) {
+  if (/cannot find latest[^\s]*\.yml/i.test(detail) || /HttpError: 404/.test(detail)) {
     dialog.showMessageBox({
       type: 'info',
       message: 'The newest release is still being packaged',
@@ -481,8 +434,7 @@ function initStore() {
   };
 
   store = {
-    get: (key, fallback) =>
-      Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback,
+    get: (key, fallback) => (Object.prototype.hasOwnProperty.call(data, key) ? data[key] : fallback),
     set: (key, value) => {
       const next = { ...data, [key]: value };
       if (!write(next)) return false;
@@ -512,8 +464,7 @@ function addRecentFile(filePath) {
   let recent = store.get('recentFiles', []);
   recent = recent.filter((p) => p !== filePath);
   recent.unshift(filePath);
-  if (recent.length > MAX_RECENT_FILES)
-    recent = recent.slice(0, MAX_RECENT_FILES);
+  if (recent.length > MAX_RECENT_FILES) recent = recent.slice(0, MAX_RECENT_FILES);
   store.set('recentFiles', recent);
   rebuildMenu();
 }
@@ -550,12 +501,10 @@ function getViewerArguments() {
   if (IS_MAS) {
     const version = app.getVersion();
     // Native Store metadata only; reject malformed values without coercion.
-    const match =
-      typeof version === 'string'
-        ? version.match(/^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/)
-        : null;
-    if (match && match[0] === version)
-      args.push(`--specdown-app-version=${version}`);
+    const match = typeof version === 'string'
+      ? version.match(/^[0-9]{1,4}(?:\.[0-9]{1,4}){2}$/)
+      : null;
+    if (match && match[0] === version) args.push(`--specdown-app-version=${version}`);
     args.push(...nativeAboutArguments(app));
   }
   return args;
@@ -571,9 +520,7 @@ function isViewerNotLoading(window) {
 }
 
 function createWindow() {
-  const bounds = store
-    ? store.get('windowBounds', { width: 1200, height: 800 })
-    : { width: 1200, height: 800 };
+  const bounds = store ? store.get('windowBounds', { width: 1200, height: 800 }) : { width: 1200, height: 800 };
 
   mainWindow = new BrowserWindow({
     width: bounds.width,
@@ -627,13 +574,7 @@ function createWindow() {
   let startupDisposed = false;
   const currentViewerFrame = () => {
     try {
-      if (
-        startupDisposed ||
-        mainWindow !== appWindow ||
-        appWindow.webContents !== windowWebContents ||
-        windowWebContents.isDestroyed()
-      )
-        return null;
+      if (startupDisposed || mainWindow !== appWindow || appWindow.webContents !== windowWebContents || windowWebContents.isDestroyed()) return null;
       const frame = windowWebContents.mainFrame;
       return frame && !frame.detached && isAppPageUrl(frame.url) ? frame : null;
     } catch {
@@ -654,10 +595,7 @@ function createWindow() {
   };
   const drainStartup = () => {
     if (!successfulLoad || restored) return;
-    if (
-      successfulLoad.generation !== loadGeneration ||
-      successfulLoad.frame !== currentViewerFrame()
-    ) {
+    if (successfulLoad.generation !== loadGeneration || successfulLoad.frame !== currentViewerFrame()) {
       successfulLoad = null;
       return;
     }
@@ -665,9 +603,7 @@ function createWindow() {
     successfulLoad = null;
     restored = true;
     viewerReadyWindow = appWindow;
-    windowWebContents.mainFrame.send('workspace-ready', {
-      token: workspacePageToken,
-    });
+    windowWebContents.mainFrame.send('workspace-ready', { token: workspacePageToken });
     // Seed retained entries and a per-load save nonce before any renderer can
     // synchronously persist a cold Finder open. Displayed open order is unchanged.
     const restoredEntries = openRecovery.beginRestore();
@@ -694,7 +630,7 @@ function createWindow() {
     'did-fail-load': failedLoad,
     'did-fail-provisional-load': failedLoad,
     'render-process-gone': invalidateStartup,
-    destroyed: () => disposeStartup(),
+    'destroyed': () => disposeStartup(),
   };
   const disposeStartup = () => {
     startupDisposed = true;
@@ -720,9 +656,7 @@ function createWindow() {
     event.preventDefault();
     mainWindow.webContents.send('editor-close-request');
   });
-  mainWindow.webContents.on('will-prevent-unload', (event) => {
-    if (editorCloseApproved) event.preventDefault();
-  });
+  mainWindow.webContents.on('will-prevent-unload', (event) => { if (editorCloseApproved) event.preventDefault(); });
   mainWindow.on('closed', () => {
     disposeStartup();
     fileOpenReceipts.forget(windowWebContents);
@@ -777,8 +711,7 @@ function readDocumentBytes(filePath) {
 }
 
 function readMarkdownFile(filePath, continuity) {
-  if (!isValidMarkdownFile(filePath))
-    throw new Error('Unsupported document type.');
+  if (!isValidMarkdownFile(filePath)) throw new Error('Unsupported document type.');
   const bytes = readDocumentBytes(filePath);
   // No source-identity stat/realpath probes. The location is the logical path
   // supplied by the already authorized reader. Missing registry => ephemeral
@@ -788,14 +721,8 @@ function readMarkdownFile(filePath, continuity) {
     annotationIdentityRegistry ||= createAnnotationIdentity(
       path.join(app.getPath('userData'), 'annotation-identity.sqlite')
     );
-    const identityEvidence =
-      typeof continuity?.afterRead === 'function'
-        ? continuity.afterRead(filePath)
-        : continuity;
-    annotationSource = annotationIdentityRegistry.afterAuthorizedRead(
-      filePath,
-      identityEvidence
-    );
+    const identityEvidence=typeof continuity?.afterRead==='function' ? continuity.afterRead(filePath) : continuity;
+    annotationSource = annotationIdentityRegistry.afterAuthorizedRead(filePath,identityEvidence);
   } catch {}
   return {
     filename: path.basename(filePath),
@@ -843,15 +770,10 @@ function buildFileMetadata(filePath) {
 
 const documentImportEnabled = !app.isPackaged || isTestChannel || IS_MAS;
 function openFileByPath(filePath, context) {
-  const ext =
-    typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
+  const ext = typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
   const isImport = documentImportEnabled && ['.docx', '.pdf'].includes(ext);
   if (!isImport && !isValidMarkdownFile(filePath)) {
-    openRecovery.report(
-      filePath,
-      'Choose a Markdown file (.md or .markdown).',
-      context?.entry
-    );
+    openRecovery.report(filePath, 'Choose a Markdown file (.md or .markdown).', context?.entry);
     return false;
   }
 
@@ -889,19 +811,14 @@ function openFileByPath(filePath, context) {
 }
 
 function reportFileReadFailure(filePath, error, entry) {
-  const message =
-    error && String(error.message).includes('8 MiB')
-      ? 'This Markdown file exceeds the 8 MiB size limit.'
-      : 'This file could not be read. It may have moved, been deleted, or no longer be accessible.';
+  const message = error && String(error.message).includes('8 MiB')
+    ? 'This Markdown file exceeds the 8 MiB size limit.'
+    : 'This file could not be read. It may have moved, been deleted, or no longer be accessible.';
   openRecovery.report(filePath, message, entry);
 }
 
 function notifyFileAccessNeeded(filePath, entry) {
-  openRecovery.report(
-    filePath,
-    'SpecDown needs permission to open this file.',
-    entry
-  );
+  openRecovery.report(filePath, 'SpecDown needs permission to open this file.', entry);
 }
 
 // Open-panel options: the MAS build asks for security-scoped bookmarks so the
@@ -920,22 +837,14 @@ function noteDialogGrants(result, kind) {
 async function showOpenDialog() {
   if (!mainWindow) return;
 
-  const result = await dialog.showOpenDialog(
-    mainWindow,
-    withBookmarkOption({
-      title: 'Open File',
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        documentImportEnabled
-          ? {
-              name: 'Markdown, Word and PDF documents',
-              extensions: ['md', 'markdown', 'docx', 'pdf'],
-            }
-          : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
-        { name: 'All Files', extensions: ['*'] },
-      ],
-    })
-  );
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
+    title: 'Open File',
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      documentImportEnabled ? { name: 'Markdown, Word and PDF documents', extensions: ['md', 'markdown', 'docx', 'pdf'] } : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  }));
 
   if (result.canceled || !result.filePaths.length) return;
   noteDialogGrants(result, 'file');
@@ -948,16 +857,13 @@ async function showOpenDialog() {
 async function requestGrantAccess(filePath, current = () => true, context) {
   if (!mainWindow || typeof filePath !== 'string' || !filePath) return;
   const filename = path.basename(filePath);
-  const result = await dialog.showOpenDialog(
-    mainWindow,
-    withBookmarkOption({
-      title: 'Locate File',
-      message: `Select “${filename}” to give SpecDown access to it again.`,
-      defaultPath: filePath,
-      properties: ['openFile'],
-      filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown'] }],
-    })
-  );
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
+    title: 'Locate File',
+    message: `Select “${filename}” to give SpecDown access to it again.`,
+    defaultPath: filePath,
+    properties: ['openFile'],
+    filters: [{ name: 'Markdown Files', extensions: ['md', 'markdown'] }],
+  }));
   if (!current() || result.canceled || !result.filePaths.length) return false;
   noteDialogGrants(result, 'file');
   return openFileByPath(result.filePaths[0], context);
@@ -970,19 +876,8 @@ async function requestGrantAccess(filePath, current = () => true, context) {
 // is bounded (depth + count) and skips noisy directories so a large repo can't
 // hang the main process or flood the renderer.
 const WORKSPACE_IGNORE_DIRS = new Set([
-  'node_modules',
-  '.git',
-  '.svn',
-  '.hg',
-  'dist',
-  'build',
-  'out',
-  'coverage',
-  '.next',
-  '.cache',
-  '.vite',
-  '.idea',
-  '.vscode',
+  'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
+  'coverage', '.next', '.cache', '.vite', '.idea', '.vscode',
 ]);
 const WORKSPACE_MAX_DEPTH = 8;
 const WORKSPACE_MAX_FILES = 2000;
@@ -996,8 +891,7 @@ function scanWorkspace(rootDir) {
   const out = [];
 
   const walk = (dir, depth) => {
-    if (depth > WORKSPACE_MAX_DEPTH || out.length >= WORKSPACE_MAX_FILES)
-      return;
+    if (depth > WORKSPACE_MAX_DEPTH || out.length >= WORKSPACE_MAX_FILES) return;
 
     let entries;
     try {
@@ -1046,24 +940,16 @@ function resetWorkspaceContext(notify = true) {
   activeWorkspaceId = null;
   workspaceRoots.clear();
   if (notify && isViewerNotLoading(mainWindow)) {
-    mainWindow.webContents.mainFrame.send('workspace-closed', {
-      generation: workspaceGeneration,
-    });
+    mainWindow.webContents.mainFrame.send('workspace-closed', { generation: workspaceGeneration });
   }
   if (mainWindow) rebuildMenu();
 }
 
 function isCurrentWorkspaceRequest(event, payload) {
-  return !!(
-    payload &&
-    workspacePageToken &&
-    payload.pageToken === workspacePageToken &&
-    mainWindow &&
-    event.sender === mainWindow.webContents &&
+  return !!(payload && workspacePageToken && payload.pageToken === workspacePageToken &&
+    mainWindow && event.sender === mainWindow.webContents &&
     event.senderFrame === mainWindow.webContents.mainFrame &&
-    !event.senderFrame.detached &&
-    isViewerNotLoading(mainWindow)
-  );
+    !event.senderFrame.detached && isViewerNotLoading(mainWindow));
 }
 
 function captureWorkspaceOperation() {
@@ -1076,35 +962,22 @@ function captureWorkspaceOperation() {
 }
 
 function isWorkspaceOperationCurrent(operation) {
-  return (
-    operation.generation === workspaceOperationGeneration &&
-    operation.window === mainWindow &&
-    operation.pageToken === workspacePageToken &&
-    (!mainWindow ||
-      (operation.frame === mainWindow.webContents.mainFrame &&
-        !operation.frame?.detached &&
-        !mainWindow.webContents.isDestroyed()))
-  );
+  return operation.generation === workspaceOperationGeneration &&
+    operation.window === mainWindow && operation.pageToken === workspacePageToken &&
+    (!mainWindow || (operation.frame === mainWindow.webContents.mainFrame &&
+      !operation.frame?.detached && !mainWindow.webContents.isDestroyed()));
 }
 
 async function showOpenFolderDialog() {
   if (!mainWindow) return;
   const operation = captureWorkspaceOperation();
-  const result = await dialog.showOpenDialog(
-    operation.window,
-    withBookmarkOption({
-      title: 'Open Folder',
-      properties: ['openDirectory'],
-    })
-  );
+  const result = await dialog.showOpenDialog(operation.window, withBookmarkOption({
+    title: 'Open Folder',
+    properties: ['openDirectory'],
+  }));
   // A cancelled/replaced/closed picker must not resurrect a workspace or even
   // record a grant after its receiving page ceased to exist.
-  if (
-    !isWorkspaceOperationCurrent(operation) ||
-    result.canceled ||
-    !result.filePaths.length
-  )
-    return;
+  if (!isWorkspaceOperationCurrent(operation) || result.canceled || !result.filePaths.length) return;
   noteDialogGrants(result, 'folder');
   openWorkspace(result.filePaths[0], operation);
 }
@@ -1112,9 +985,7 @@ async function showOpenFolderDialog() {
 function openWorkspace(root, operation = captureWorkspaceOperation()) {
   if (!isWorkspaceOperationCurrent(operation)) return;
   let scan;
-  try {
-    scan = fileAccess.withAccess(root, scanWorkspace);
-  } catch (error) {
+  try { scan = fileAccess.withAccess(root, scanWorkspace); } catch (error) {
     logError('Could not read workspace folder.', error);
     return;
   }
@@ -1125,10 +996,7 @@ function openWorkspace(root, operation = captureWorkspaceOperation()) {
   workspaceGeneration += 1;
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.mainFrame.send('workspace-opened', {
-      root: scan.path,
-      files: scan.value,
-      id: activeWorkspaceId,
-      generation: workspaceGeneration,
+      root: scan.path, files: scan.value, id: activeWorkspaceId, generation: workspaceGeneration,
     });
     rebuildMenu();
   }
@@ -1140,8 +1008,7 @@ function openWorkspace(root, operation = captureWorkspaceOperation()) {
 function isInsideAnyWorkspace(targetPath) {
   for (const root of workspaceRoots) {
     const rel = path.relative(root, targetPath);
-    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel)))
-      return true;
+    if (rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))) return true;
   }
   return false;
 }
@@ -1152,8 +1019,7 @@ function isInsideAnyWorkspace(targetPath) {
 // openFileByPath, so a broken link is a safe no-op.
 function openRelativeFromFile(fromPath, href, workspaceId) {
   if (typeof fromPath !== 'string' || !fromPath) return;
-  if (typeof href !== 'string' || !href || !isInsideAnyWorkspace(fromPath))
-    return;
+  if (typeof href !== 'string' || !href || !isInsideAnyWorkspace(fromPath)) return;
 
   // Strip any query/hash and percent-decode so links like `./b.md#section`
   // or `../my%20doc.md` resolve to the real file on disk.
@@ -1198,8 +1064,8 @@ function openRelativeFromFile(fromPath, href, workspaceId) {
 // We also don't capture `webContents` in the event closure anymore: if
 // the renderer is reloaded (View > Reload), a captured reference becomes
 // stale. Instead we look up `mainWindow.webContents` lazily at event time.
-const watchers = new Map(); // filePath → { dir }
-const dirWatchers = new Map(); // dir → { watcher, files: Map<basename, filePath> }
+const watchers = new Map();          // filePath → { dir }
+const dirWatchers = new Map();       // dir → { watcher, files: Map<basename, filePath> }
 
 // Mac App Store build: the sandbox only grants the file itself (or a chosen
 // folder), so a parent-directory watch fails with EPERM. Instead hold the
@@ -1216,41 +1082,27 @@ function watchFilePolling(filePath) {
     return;
   }
   const listener = (curr, prev) => {
-    if (
-      curr.mtimeMs === prev.mtimeMs &&
-      curr.size === prev.size &&
-      curr.ino === prev.ino
-    )
-      return;
+    if (curr.mtimeMs === prev.mtimeMs && curr.size === prev.size && curr.ino === prev.ino) return;
     try {
       // Re-resolve the owned scoped bookmark for each actual read. A cached
       // old path may now contain an unrelated file after the original moved.
-      const access = fileAccess.withAccess(filePath, readMarkdownFile, held);
-      if (!access.ok) {
-        unwatchFilePolling(filePath);
-        notifyFileAccessNeeded(filePath);
-        return;
-      }
+      const access=fileAccess.withAccess(filePath,readMarkdownFile,held);
+      if(!access.ok){unwatchFilePolling(filePath);notifyFileAccessNeeded(filePath);return;}
       const fileData = { ...access.value, filePath };
       const wc = mainWindow && mainWindow.webContents;
       if (wc && !wc.isDestroyed()) wc.send('file-changed', fileData);
     } catch (err) {
       logError(`Failed to re-read watched file: ${held.path}`, err);
     } finally {
-      const entry = pollWatchers.get(filePath);
-      if (entry && entry.watchedPath !== held.path) {
-        fs.watchFile(held.path, { interval: MAS_POLL_INTERVAL_MS }, listener);
-        fs.unwatchFile(entry.watchedPath, listener);
-        entry.watchedPath = held.path;
+      const entry=pollWatchers.get(filePath);
+      if(entry && entry.watchedPath!==held.path){
+        fs.watchFile(held.path,{interval:MAS_POLL_INTERVAL_MS},listener);
+        fs.unwatchFile(entry.watchedPath,listener);entry.watchedPath=held.path;
       }
     }
   };
   fs.watchFile(held.path, { interval: MAS_POLL_INTERVAL_MS }, listener);
-  pollWatchers.set(filePath, {
-    watchedPath: held.path,
-    listener,
-    release: held.release,
-  });
+  pollWatchers.set(filePath, { watchedPath: held.path, listener, release: held.release });
 }
 
 function unwatchFilePolling(filePath) {
@@ -1269,15 +1121,9 @@ function watchFile(filePath, _webContents) {
       return stats.isFile() && stats.size <= MAX_DOCUMENT_BYTES;
     });
     if (!valid.ok || !valid.value) return;
-  } catch {
-    return;
-  }
-  if (
-    !watchers.has(filePath) &&
-    !pollWatchers.has(filePath) &&
-    watchers.size + pollWatchers.size >= MAX_FILE_WATCHERS
-  )
-    return;
+  } catch { return; }
+  if (!watchers.has(filePath) && !pollWatchers.has(filePath) &&
+      watchers.size + pollWatchers.size >= MAX_FILE_WATCHERS) return;
   if (IS_MAS) {
     watchFilePolling(filePath);
     return;
@@ -1317,9 +1163,7 @@ function watchFile(filePath, _webContents) {
     // for a handful of files and it works everywhere.
     const usePolling = process.env.SPECDOWN_WATCH_POLLING === '1';
     if (usePolling) {
-      logInfo(
-        `Chokidar polling mode enabled for ${dir} (SPECDOWN_WATCH_POLLING=1)`
-      );
+      logInfo(`Chokidar polling mode enabled for ${dir} (SPECDOWN_WATCH_POLLING=1)`);
     }
 
     const watcher = chokidar.watch(dir, {
@@ -1377,34 +1221,28 @@ function unwatchFile(filePath) {
 async function loadCustomCss() {
   if (!mainWindow) return;
 
-  const result = await dialog.showOpenDialog(
-    mainWindow,
-    withBookmarkOption({
-      title: 'Load Custom CSS Theme',
-      properties: ['openFile'],
-      filters: [
-        { name: 'CSS Files', extensions: ['css'] },
-        { name: 'All Files', extensions: ['*'] },
-      ],
-    })
-  );
+  const result = await dialog.showOpenDialog(mainWindow, withBookmarkOption({
+    title: 'Load Custom CSS Theme',
+    properties: ['openFile'],
+    filters: [
+      { name: 'CSS Files', extensions: ['css'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
+  }));
 
   if (result.canceled || !result.filePaths.length) return;
   noteDialogGrants(result, 'file');
 
   const cssPath = result.filePaths[0];
   try {
-    const css = fileAccess.withAccess(cssPath, (p) =>
-      fs.readFileSync(p, 'utf8')
-    );
+    const css = fileAccess.withAccess(cssPath, (p) => fs.readFileSync(p, 'utf8'));
     if (!css.ok) return;
     const cssContent = css.value;
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('apply-custom-css', cssContent);
     }
     const previousCssPath = store ? store.get('customCssPath', '') : '';
-    if (previousCssPath && previousCssPath !== cssPath)
-      fileAccess.forget(previousCssPath);
+    if (previousCssPath && previousCssPath !== cssPath) fileAccess.forget(previousCssPath);
     if (store) store.set('customCssPath', cssPath);
   } catch (err) {
     console.error('Failed to read CSS file:', cssPath, err);
@@ -1425,9 +1263,7 @@ function restoreCustomCss() {
   const cssPath = store.get('customCssPath', '');
   if (!cssPath) return;
   try {
-    const css = fileAccess.withAccess(cssPath, (p) =>
-      fs.readFileSync(p, 'utf8')
-    );
+    const css = fileAccess.withAccess(cssPath, (p) => fs.readFileSync(p, 'utf8'));
     if (!css.ok) throw new Error('no sandbox access');
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('apply-custom-css', css.value);
@@ -1454,39 +1290,23 @@ function restoreCustomCss() {
 // The HTML is staged through a temp file rather than a data: URL — data URLs
 // hit length limits and encoding issues on large documents.
 async function loadPrintableWindow(html) {
-  const tempDirectory = fs.mkdtempSync(
-    path.join(app.getPath('temp'), 'specdown-print-')
-  );
+  const tempDirectory = fs.mkdtempSync(path.join(app.getPath('temp'), 'specdown-print-'));
   const tempHtmlPath = path.join(tempDirectory, 'document.html');
   let printWindow;
   const removeHtml = () => {
     fileResourcePolicy.forgetPrintFile(tempHtmlPath);
-    try {
-      fs.unlinkSync(tempHtmlPath);
-    } catch {
-      /* Already removed. */
-    }
-    try {
-      fs.rmdirSync(tempDirectory);
-    } catch {
-      /* Already removed. */
-    }
+    try { fs.unlinkSync(tempHtmlPath); } catch { /* Already removed. */ }
+    try { fs.rmdirSync(tempDirectory); } catch { /* Already removed. */ }
   };
   const cleanup = () => {
     try {
       if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
-    } catch {
-      /* Window teardown is best-effort. */
-    }
+    } catch { /* Window teardown is best-effort. */ }
     removeHtml();
   };
   try {
     fs.chmodSync(tempDirectory, 0o700);
-    fs.writeFileSync(tempHtmlPath, html, {
-      encoding: 'utf8',
-      mode: 0o600,
-      flag: 'wx',
-    });
+    fs.writeFileSync(tempHtmlPath, html, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
     printWindow = new BrowserWindow({
       show: false,
       webPreferences: {
@@ -1534,10 +1354,7 @@ async function exportPdfFromHtml(payload) {
     printable = await loadPrintableWindow(payload.html);
   } catch (err) {
     logError('Failed to prepare document for PDF export', err);
-    dialog.showErrorBox(
-      'Export as PDF failed',
-      'The document could not be prepared for export.'
-    );
+    dialog.showErrorBox('Export as PDF failed', 'The document could not be prepared for export.');
     return;
   }
   const { printWindow, cleanup } = printable;
@@ -1596,24 +1413,14 @@ onTrustedIpc('request-close-workspace', (event, payload) => {
 });
 
 onTrustedIpc('request-workspace-file', (event, payload) => {
-  if (
-    !isCurrentWorkspaceRequest(event, payload) ||
-    !activeWorkspaceId ||
-    payload.id !== activeWorkspaceId ||
-    typeof payload.filePath !== 'string' ||
-    !isInsideAnyWorkspace(payload.filePath)
-  )
-    return;
+  if (!isCurrentWorkspaceRequest(event, payload) || !activeWorkspaceId || payload.id !== activeWorkspaceId ||
+      typeof payload.filePath !== 'string' || !isInsideAnyWorkspace(payload.filePath)) return;
   openFileByPath(payload.filePath, { workspaceId: activeWorkspaceId });
 });
 
 // Workspace: open a relative link clicked inside a workspace document.
 onTrustedIpc('request-open-relative', (event, payload) => {
-  if (
-    isCurrentWorkspaceRequest(event, payload) &&
-    activeWorkspaceId &&
-    payload.id === activeWorkspaceId
-  ) {
+  if (isCurrentWorkspaceRequest(event, payload) && activeWorkspaceId && payload.id === activeWorkspaceId) {
     openRelativeFromFile(payload.fromPath, payload.href, activeWorkspaceId);
   }
 });
@@ -1634,25 +1441,15 @@ onTrustedIpc('unwatch-file', (_event, filePath) => {
 
 // Request/response lets bookmarks recover from moved or inaccessible files.
 handleTrustedIpc('read-bookmarked-file', async (event, filePath) => {
-  if (
-    typeof filePath !== 'string' ||
-    !path.isAbsolute(filePath) ||
-    !isValidMarkdownFile(filePath)
-  )
-    return null;
+  if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
+      !isValidMarkdownFile(filePath)) return null;
   try {
     const access = fileAccess.withAccess(filePath, (resolved, continuity) => {
       const document = readMarkdownFile(resolved, continuity);
       fileResourcePolicy.noteDocument(resolved);
       return document;
     });
-    return access.ok
-      ? fileOpenReceipts.prepare(
-          access.value,
-          { requestedPath: filePath },
-          event
-        )
-      : null;
+    return access.ok ? fileOpenReceipts.prepare(access.value, { requestedPath: filePath }, event) : null;
   } catch {
     return null;
   }
@@ -1697,14 +1494,12 @@ onTrustedIpc('open-dropped-path', (event, absPath, pageToken) => {
   try {
     // A saved MAS grant is only metadata until acquired. Resolve moved
     // bookmarks and activate the scope before touching the dropped path.
-    const access = fileAccess.withAccess(absPath, (resolved) =>
-      fs.statSync(resolved)
-    );
+    const access = fileAccess.withAccess(absPath, (resolved) => fs.statSync(resolved));
     if (!access.ok) return;
     if (access.value.isDirectory()) {
-      if (isCurrentWorkspaceRequest(event, { pageToken }))
-        openWorkspace(access.path);
-    } else if (access.value.isFile()) openFileByPath(access.path);
+      if (isCurrentWorkspaceRequest(event, { pageToken })) openWorkspace(access.path);
+    }
+    else if (access.value.isFile()) openFileByPath(access.path);
   } catch (err) {
     logError(`Failed to stat dropped path: ${absPath}`, err);
   }
@@ -1721,14 +1516,9 @@ onTrustedIpc('note-user-picked-path', (_event, absPath) => {
     try {
       const stats = fs.statSync(absPath);
       if (stats.isFile() || stats.isDirectory()) {
-        fileAccess.noteUserIntent(
-          absPath,
-          stats.isDirectory() ? 'folder' : 'file'
-        );
+        fileAccess.noteUserIntent(absPath, stats.isDirectory() ? 'folder' : 'file');
       }
-    } catch {
-      /* The user-selected item may have disappeared. */
-    }
+    } catch { /* The user-selected item may have disappeared. */ }
   }
 });
 
@@ -1738,9 +1528,7 @@ onTrustedIpc('request-grant-access', (_event, filePath) => {
   requestGrantAccess(filePath);
 });
 
-handleTrustedIpc('resolve-file-open-failure', (event, request) =>
-  openRecovery.act(event, request)
-);
+handleTrustedIpc('resolve-file-open-failure', (event, request) => openRecovery.act(event, request));
 
 // Session save: renderer sends tab state when it changes
 onTrustedIpc('save-session', (event, tabs, token) => {
@@ -1772,8 +1560,7 @@ function normalizeVisualThemeCatalog(raw) {
     if (!entry || typeof entry !== 'object') continue;
     const id = typeof entry.id === 'string' ? entry.id.trim() : '';
     const label = typeof entry.label === 'string' ? entry.label.trim() : '';
-    if (!id || !label || !/^[a-z][a-z0-9-]*$/i.test(id) || seen.has(id))
-      continue;
+    if (!id || !label || !/^[a-z][a-z0-9-]*$/i.test(id) || seen.has(id)) continue;
     seen.add(id);
     next.push({ id, label });
   }
@@ -1784,15 +1571,10 @@ function applyVisualThemeCatalog(raw) {
   const next = normalizeVisualThemeCatalog(raw);
   if (!next) return false;
   visualThemeCatalogItems = next;
-  if (
-    !visualThemeCatalogItems.some((theme) => theme.id === currentVisualThemeId)
-  ) {
+  if (!visualThemeCatalogItems.some((theme) => theme.id === currentVisualThemeId)) {
     currentVisualThemeId = visualThemeCatalogItems[0].id;
   }
-  if (
-    typeof Menu.getApplicationMenu === 'function' &&
-    Menu.getApplicationMenu()
-  ) {
+  if (typeof Menu.getApplicationMenu === 'function' && Menu.getApplicationMenu()) {
     rebuildMenu();
   }
   return true;
@@ -1819,10 +1601,7 @@ onTrustedIpc('visual-theme-catalog', (_event, catalog) => {
 
 // Keep Appearance > Theme radio items in sync with the in-app picker.
 onTrustedIpc('visual-theme-changed', (_event, themeId) => {
-  if (
-    typeof themeId === 'string' &&
-    visualThemeCatalogItems.some((theme) => theme.id === themeId)
-  ) {
+  if (typeof themeId === 'string' && visualThemeCatalogItems.some((theme) => theme.id === themeId)) {
     currentVisualThemeId = themeId;
   }
   const menu = Menu.getApplicationMenu();
@@ -1840,45 +1619,40 @@ function buildMenu() {
   const isMac = process.platform === 'darwin';
   const recent = getRecentFiles();
 
-  const recentSubmenu =
-    recent.length === 0
-      ? [{ label: 'No Recent Files', enabled: false }]
-      : [
-          ...recent.map((filePath) => ({
-            label: path.basename(filePath),
-            sublabel: filePath,
-            click: () => openFileByPath(filePath),
-          })),
-          { type: 'separator' },
-          {
-            label: 'Clear Recent Files',
-            click: () => {
-              if (store) store.set('recentFiles', []);
-              rebuildMenu();
-            },
+  const recentSubmenu = recent.length === 0
+    ? [{ label: 'No Recent Files', enabled: false }]
+    : [
+        ...recent.map((filePath) => ({
+          label: path.basename(filePath),
+          sublabel: filePath,
+          click: () => openFileByPath(filePath),
+        })),
+        { type: 'separator' },
+        {
+          label: 'Clear Recent Files',
+          click: () => {
+            if (store) store.set('recentFiles', []);
+            rebuildMenu();
           },
-        ];
+        },
+      ];
 
   const template = [
     // macOS app menu
-    ...(isMac
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              { role: 'about' },
-              { type: 'separator' },
-              { role: 'services' },
-              { type: 'separator' },
-              { role: 'hide' },
-              { role: 'hideOthers' },
-              { role: 'unhide' },
-              { type: 'separator' },
-              { role: 'quit' },
-            ],
-          },
-        ]
-      : []),
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    }] : []),
     // File menu
     {
       label: 'File',
@@ -1931,7 +1705,10 @@ function buildMenu() {
             }
           },
         },
-        ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
+        ...(isMac ? [] : [
+          { type: 'separator' },
+          { role: 'quit' },
+        ]),
       ],
     },
     // Edit menu (macOS standard)
@@ -1998,9 +1775,12 @@ function buildMenu() {
       submenu: [
         { role: 'minimize' },
         { role: 'zoom' },
-        ...(isMac
-          ? [{ type: 'separator' }, { role: 'front' }]
-          : [{ role: 'close' }]),
+        ...(isMac ? [
+          { type: 'separator' },
+          { role: 'front' },
+        ] : [
+          { role: 'close' },
+        ]),
       ],
     },
     // Help menu — diagnostics live here so issues are reportable.
@@ -2008,15 +1788,13 @@ function buildMenu() {
       label: 'Help',
       submenu: [
         // The App Store build has no self-update path, so no update UI.
-        ...(channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL)
-          ? [
-              {
-                label: 'Check for Updates...',
-                click: () => checkForUpdatesManually(),
-              },
-              { type: 'separator' },
-            ]
-          : []),
+        ...(channelAllowsSelfUpdate(DISTRIBUTION_CHANNEL) ? [
+          {
+            label: 'Check for Updates...',
+            click: () => checkForUpdatesManually(),
+          },
+          { type: 'separator' },
+        ] : []),
         {
           label: 'Open Log File',
           click: () => {
@@ -2034,8 +1812,7 @@ function buildMenu() {
               }
               // shell.openPath returns Promise<string>: '' on success, an
               // error message string on failure. Both arms need handling.
-              shell
-                .openPath(logFilePath)
+              shell.openPath(logFilePath)
                 .then((result) => {
                   if (result) {
                     logError('Failed to open log file', new Error(result));
@@ -2144,11 +1921,7 @@ app.on('open-file', (event, filePath) => {
   event.preventDefault();
   // Finder/Dock opens are user grants in the sandbox: persist them.
   fileAccess.noteUserIntent(filePath, 'file');
-  if (
-    mainWindow &&
-    viewerReadyWindow === mainWindow &&
-    isViewerNotLoading(mainWindow)
-  ) {
+  if (mainWindow && viewerReadyWindow === mainWindow && isViewerNotLoading(mainWindow)) {
     openFileByPath(filePath);
   } else {
     // Window not ready yet — queue the file
@@ -2201,107 +1974,35 @@ module.exports = {
 
 // Saving uses the same trusted-page and selected-file capability boundaries as opening.
 handleTrustedIpc('save-markdown', async (_event, request) => {
-  if (
-    !request ||
-    typeof request.content !== 'string' ||
-    typeof request.expected !== 'string' ||
-    Buffer.byteLength(request.content) > MAX_DOCUMENT_BYTES ||
-    Buffer.byteLength(request.expected) > MAX_DOCUMENT_BYTES
-  )
-    return { status: 'error', message: 'Markdown must be 8 MiB or smaller.' };
+  if (!request || typeof request.content !== 'string' || typeof request.expected !== 'string' ||
+      Buffer.byteLength(request.content) > MAX_DOCUMENT_BYTES || Buffer.byteLength(request.expected) > MAX_DOCUMENT_BYTES) return {status:'error', message:'Markdown must be 8 MiB or smaller.'};
   try {
     if (!request.copy && request.filePath) {
-      if (!isValidMarkdownFile(request.filePath)) return { status: 'error' };
-      const access = fileAccess.withAccess(request.filePath, (resolved) =>
-        saveExistingMarkdown(
-          resolved,
-          request.content,
-          request.expected,
-          fs,
-          masNative
-        )
-      );
-      return access.ok
-        ? access.value
-        : {
-            status: 'error',
-            message:
-              'Source access unavailable. Reopen the file or use Save As. Draft retained.',
-          };
+      if (!isValidMarkdownFile(request.filePath)) return {status:'error'};
+      const access = fileAccess.withAccess(request.filePath, resolved => saveExistingMarkdown(resolved, request.content, request.expected, fs, masNative));
+      return access.ok ? access.value : {status:'error',message:'Source access unavailable. Reopen the file or use Save As. Draft retained.'};
     }
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: 'Save Markdown copy',
-      defaultPath: path.basename(
-        typeof request.filename === 'string' ? request.filename : 'Document.md'
-      ),
-      filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
-      securityScopedBookmarks: IS_MAS,
-      properties: ['showOverwriteConfirmation', 'createDirectory'],
+      title:'Save Markdown copy', defaultPath:path.basename(typeof request.filename === 'string' ? request.filename : 'Document.md'),
+      filters:[{name:'Markdown', extensions:['md','markdown']}], securityScopedBookmarks:IS_MAS,
+      properties:['showOverwriteConfirmation','createDirectory'],
     });
-    if (result.canceled || !result.filePath) return { status: 'canceled' };
-    if (!isValidMarkdownFile(result.filePath))
-      return {
-        status: 'error',
-        message: 'Choose a .md or .markdown filename.',
-      };
-    if (
-      request.filePath &&
-      path.resolve(request.filePath) === path.resolve(result.filePath)
-    )
-      return {
-        status: 'error',
-        message:
-          'Save As needs a different destination. Use Save to update the original.',
-      };
+    if (result.canceled || !result.filePath) return {status:'canceled'};
+    if (!isValidMarkdownFile(result.filePath)) return {status:'error',message:'Choose a .md or .markdown filename.'};
+    if (request.filePath && path.resolve(request.filePath) === path.resolve(result.filePath)) return {status:'error',message:'Save As needs a different destination. Use Save to update the original.'};
     // Only this fresh OS save-panel result authorizes creation/overwrite.
     if (request.filePath) {
-      const original = fileAccess.withAccess(request.filePath, (resolved) =>
-        fs.realpathSync(resolved)
-      );
-      if (
-        original.ok &&
-        fs.existsSync(result.filePath) &&
-        fs.realpathSync(result.filePath) === original.value
-      )
-        return {
-          status: 'error',
-          message: 'Choose a different file for Save As.',
-        };
+      const original = fileAccess.withAccess(request.filePath, resolved => fs.realpathSync(resolved));
+      if (original.ok && fs.existsSync(result.filePath) && fs.realpathSync(result.filePath) === original.value) return {status:'error',message:'Choose a different file for Save As.'};
     }
-    const written = saveMarkdownCopy(
-      result.filePath,
-      request.content,
-      fs,
-      masNative
-    );
+    const written = saveMarkdownCopy(result.filePath,request.content, fs, masNative);
     if (written.status !== 'saved') return written;
-    fileAccess.noteUserIntent(result.filePath, 'file', result.bookmark);
+    fileAccess.noteUserIntent(result.filePath,'file',result.bookmark);
     const read = fileAccess.withAccess(result.filePath, readMarkdownFile);
-    if (!read.ok)
-      return {
-        status: 'saved',
-        copied: true,
-        filename: path.basename(result.filePath),
-      };
+    if (!read.ok) return {status:'saved',copied:true,filename:path.basename(result.filePath)};
     fileResourcePolicy.noteDocument(result.filePath);
     addRecentFile(result.filePath);
-    return {
-      status: 'saved',
-      filePath: result.filePath,
-      filename: read.value.filename,
-      sourceMeta: read.value.annotationSource
-        ? { annotationSource: read.value.annotationSource }
-        : null,
-    };
-  } catch {
-    return {
-      status: 'error',
-      message:
-        'Save failed. Check destination access and available storage, then Retry or Save As. Draft retained.',
-    };
-  }
+    return {status:'saved',filePath:result.filePath,filename:read.value.filename, sourceMeta:read.value.annotationSource ? {annotationSource:read.value.annotationSource} : null};
+  } catch { return {status:'error',message:'Save failed. Check destination access and available storage, then Retry or Save As. Draft retained.'}; }
 });
-onTrustedIpc('editor-close-approved', () => {
-  editorCloseApproved = true;
-  mainWindow?.close();
-});
+onTrustedIpc('editor-close-approved', () => { editorCloseApproved = true; mainWindow?.close(); });
