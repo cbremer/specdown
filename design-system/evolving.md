@@ -28,9 +28,9 @@ Ten panels each hand-roll their own scrim, size, radius, title and close button.
 - **Radii:** 3px, 18px, 20px and 16px stragglers. Fold them into `radius-sm` / `radius-xl` / a new `radius-2xl` for the drop card.
 - **Motion:** `--transition` and `--transition-fast` exist as composites. Expose `duration-fast` 120ms, `duration-base` 200ms and `easing` as primitives.
 
-## 4. Brand in the chrome: decided, C+ (Dev and Beta preview)
+## 4. Brand in the chrome: shipped, C+ (default everywhere)
 
-Decided 19 Nov 2026 (ZIL-226): **C+ · brand moments**. Blue stays the only interaction colour; the logo's teal→coral appears where it has a job. Chris approved the design in Dev 255 for Beta 256. The owner approved the same design for the iPhone, iPad and Mac App Store 1.0.5 candidate. Full spec: `docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md`. The "C+ brand moments" section of the brand book lists what's in it.
+Decided 19 Nov 2026 (ZIL-226): **C+ · brand moments**. Blue stays the only interaction colour; the logo's teal→coral appears where it has a job. Chris approved the design in Dev 255 for Beta 256. The owner approved the same design for the iPhone, iPad and Mac App Store 1.0.5 candidate, then made it the default on every surface (ZIL-237). Full spec: `docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md`. The "C+ brand moments" section of the brand book lists what's in it.
 
 Options considered: A (keep blue, generic once a file is open), B (teal accent everywhere, competes with green status and needs a contrast pass on every fill), C (brand moments only). C+ extends C so each moment does something: reading progress, read sections, the drop moment.
 

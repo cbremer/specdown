@@ -179,8 +179,4 @@ declare global {
   // Vite `define` inlines this as true | false. Undeclared under the Jest
   // eval harness — htmlDocumentsEnabled() uses typeof first.
   const __HTML_DOCUMENTS_ENABLED__: boolean | undefined;
-
-  // Vite `define`: true only under the local dev server (`vite serve`).
-  // Gates the C+ brand preview (core/brand-preview.js). Undeclared under Jest.
-  const __SPECDOWN_DEV_SERVER__: boolean | undefined;
 }

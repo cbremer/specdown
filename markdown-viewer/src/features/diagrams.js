@@ -12,7 +12,7 @@ import { getSvgNaturalDimensions } from '../core/utils.js';
 import { iconSvg } from '../core/icons.js';
 import { getMermaidConfig, loadMermaid } from '../core/render-config.js';
 import { state } from '../core/state.js';
-import { brandDiagramSource } from '../core/brand-preview.js';
+import { brandDiagramSource } from '../core/brand-moments.js';
 import { updateMinimap, updateMinimapViewport } from './minimap.js';
 import { downloadDiagramSvg, downloadDiagramPng } from './diagram-export.js';
 

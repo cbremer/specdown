@@ -277,7 +277,7 @@ if (process.mas === true && isBundledViewerPage()) {
 
 // The direct (non-Store) build exposes only its channel, which main passes for
 // Dev and Beta packages and unpackaged local runs. Version and build stay
-// MAS-only. The viewer uses it for the About label and the Dev and Beta C+ preview.
+// MAS-only. The viewer uses it for the About label.
 if (process.mas !== true && isBundledViewerPage()) {
   const directChannelPrefix = '--specdown-app-channel=';
   const directChannelValues = process.argv.filter(

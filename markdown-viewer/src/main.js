@@ -128,7 +128,7 @@ import { bridgeRequestOpenPath } from './platform/bridge.js';
 import { registerAppCommands } from './features/app-commands.js';
 import { setupVersionInfo, checkForUpdates } from './features/version-check.js';
 import { setupAbout } from './features/about.js';
-import { setupBrandPreview } from './core/brand-preview.js';
+import { setupBrandMoments } from './core/brand-moments.js';
 import { setupDragAndDrop } from './features/drag-drop.js';
 import { setupGlobalKeyboardShortcuts } from './features/keyboard.js';
 import { setupIOSEventListeners } from './platform/ios-wiring.js';
@@ -254,7 +254,7 @@ function init() {
     setupToolbarOverflow();
     setupRecentFiles();
     setupAbout();
-    setupBrandPreview();
+    setupBrandMoments();
     setupWorkspace();
     setupComments();
     setupEventListeners();
