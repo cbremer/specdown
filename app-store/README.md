@@ -3,7 +3,7 @@
 Listing copy, screenshots and review material for the iPhone/iPad App Store and
 Mac App Store. Plan and tracker: [docs/project-appstore](../docs/project-appstore/).
 
-**Upcoming submission:** [1.0.5 (257) listing copy, review notes and screenshots](release-assets/1.0.5-257/).
+**Submitted for App Review on November 19, 2026** · [1.0.5 (257) listing copy, review notes and screenshots](release-assets/1.0.5-257/).
 
 **Historical status on November 8, 2026:** SpecDown 1.0.1 is publicly
 available on both the iPhone/iPad App Store and Mac App Store. The 1.0.2 update

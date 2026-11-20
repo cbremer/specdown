@@ -1,1 +1,1 @@
-Turn Word documents and PDFs into Markdown. Recognize text on scanned pages, make quick edits and save a copy, all on your device.
+Read the specs, plans and diagrams your AI workflow produces. See formatted Markdown, highlighted code and interactive Mermaid diagrams right in the document.

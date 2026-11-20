@@ -5,7 +5,7 @@ Prepare the iOS, iPadOS and Mac App Store production candidate as 1.0.5 (257). U
 - Runtime source is commit `3375ea4` (imports in `6db32f2`, approved design in `3375ea4`). Both production packages use explicit version and build overrides.
 - [Submission packet](../../app-store/release-assets/1.0.5-257/) contains the public descriptions, release notes, promotional text, reviewer walkthrough, fixtures and screenshots.
 - [Changelog](../../CHANGELOG.md) summarizes Word and PDF import, on-device recognition, basic edits and annotation recovery security improvements.
-- Owner testing and a decision to upload and submit the production candidate remain separate from preparation.
+- On November 19, the owner approved the corrected gallery and submission. Both App Store Connect records showed Waiting for Review for 1.0.5 (257) at 9:50 a.m. Pacific, with automatic release after approval.
 
 Both signed candidates use the production bundle ID and version 1.0.5 (257). Choose the retained artifacts from runtime revision `3375ea46db79` under the platform’s `prod` folder. An earlier local build 257 from `6db32f2` predates the design promotion. For Mac, choose the universal distribution installer. The ARM-only development-signed app was used for screenshot capture.
 
