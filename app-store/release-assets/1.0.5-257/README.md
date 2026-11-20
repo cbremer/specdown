@@ -1,6 +1,6 @@
 # SpecDown 1.0.5 (257) · App Store submission packet
 
-English (U.S.) listing drafts for the iPhone/iPad App Store and Mac App Store. Build 257 uses the production app identity and the production interface. Its reading interface matches the approved Beta 256 design.
+English (U.S.) listings submitted for iPhone/iPad and Mac on November 19, 2026. Both showed Waiting for Review at submission, with automatic release after approval. The promotional text matches the preceding listings. Word and PDF import and Markdown editing appear after the core features in both descriptions. Build 257 uses the production app identity and the production interface. Its reading interface matches the approved Beta 256 design.
 
 | Field | iPhone and iPad | Mac |
 | --- | --- | --- |
