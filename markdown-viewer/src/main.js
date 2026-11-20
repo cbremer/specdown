@@ -1,11 +1,18 @@
 // @ts-expect-error -- Vite stylesheet import
 import './features/source-editor.css';
-import {openPdfPages} from './features/pdf-import.js';
-import {openWordDocument} from './features/word-import.js';
-import {configureSourceEditor, setupSourceEditor, syncSourceEditor} from './features/source-editor.js';
+import { openPdfPages } from './features/pdf-import.js';
+import { openWordDocument } from './features/word-import.js';
+import {
+  configureSourceEditor,
+  setupSourceEditor,
+  syncSourceEditor,
+} from './features/source-editor.js';
 // @ts-check
 import { cancelDiagramRasterExport } from './features/diagram-export.js';
-import { getIOSDocumentView, beginIOSNativeDocumentDelivery } from './platform/ios-documents.js';
+import {
+  getIOSDocumentView,
+  beginIOSNativeDocumentDelivery,
+} from './platform/ios-documents.js';
 // SpecDown — shared viewer entry point.
 //
 // Phase 1 (modernization roadmap): the viewer is an ES-module graph bundled by
@@ -69,15 +76,8 @@ import {
   toggleToc,
   scheduleTocActiveHeadingUpdate,
 } from './features/toc.js';
-import {
-  toggleSplitView,
-  updateSplitRawPane,
-} from './features/split-view.js';
-import {
-  setupTheme,
-  toggleTheme,
-  configureTheme,
-} from './features/theme.js';
+import { toggleSplitView, updateSplitRawPane } from './features/split-view.js';
+import { setupTheme, toggleTheme, configureTheme } from './features/theme.js';
 import { setupVisualTheme } from './features/starfield.js';
 import {
   toggleViewMode,
@@ -89,12 +89,18 @@ import {
   configureShareLinks,
 } from './features/share-links.js';
 import { configureBookmarks, setupBookmarks } from './features/bookmarks.js';
-import { createTab, switchTab, configureTabs, renderTabBar } from './features/tabs.js';
-import { showToast } from './features/toast.js';
 import {
-  setupToolbarOverflow,
-} from './features/toolbar-overflow.js';
-import { registerServiceWorker, registerFileHandlerLaunchConsumer } from './features/pwa.js';
+  createTab,
+  switchTab,
+  configureTabs,
+  renderTabBar,
+} from './features/tabs.js';
+import { showToast } from './features/toast.js';
+import { setupToolbarOverflow } from './features/toolbar-overflow.js';
+import {
+  registerServiceWorker,
+  registerFileHandlerLaunchConsumer,
+} from './features/pwa.js';
 import {
   startPresentation,
   exitPresentation,
@@ -106,10 +112,7 @@ import {
   restoreLastSession,
 } from './features/recent-files.js';
 import { enhanceCodeBlocks } from './features/code-copy.js';
-import {
-  setupComments,
-  refreshCommentsUI,
-} from './features/comments.js';
+import { setupComments, refreshCommentsUI } from './features/comments.js';
 import {
   setupWorkspace,
   renderWorkspaceSidebar,
@@ -128,7 +131,7 @@ import { bridgeRequestOpenPath } from './platform/bridge.js';
 import { registerAppCommands } from './features/app-commands.js';
 import { setupVersionInfo, checkForUpdates } from './features/version-check.js';
 import { setupAbout } from './features/about.js';
-import { setupBrandPreview } from './core/brand-preview.js';
+import { setupBrandMoments } from './core/brand-moments.js';
 import { setupDragAndDrop } from './features/drag-drop.js';
 import { setupGlobalKeyboardShortcuts } from './features/keyboard.js';
 import { setupIOSEventListeners } from './platform/ios-wiring.js';
@@ -157,7 +160,8 @@ const $ = (/** @type {string} */ id) => document.getElementById(id);
 // `req` is for elements the app assumes always exist (used unguarded below); it
 // casts the null away. At runtime a missing element throws on first use, exactly
 // as before this typing pass.
-const req = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
+const req = (/** @type {string} */ id) =>
+  /** @type {HTMLElement} */ (document.getElementById(id));
 
 const dropZone = req('drop-zone');
 const fileInput = req('file-input');
@@ -169,9 +173,10 @@ const markdownContent = req('markdown-content');
 const fileName = req('file-name');
 const themeToggle = req('theme-toggle');
 // The fullscreen overlay carries expando properties set by features/diagrams.js.
-const fullscreenOverlay = /** @type {HTMLElement & { panzoomInstance?: any, fullscreenState?: { homeState: { scale: number, x: number, y: number } } }} */ (
+const fullscreenOverlay =
+  /** @type {HTMLElement & { panzoomInstance?: any, fullscreenState?: { homeState: { scale: number, x: number, y: number } } }} */ (
     document.getElementById('fullscreen-overlay')
-);
+  );
 const viewToggle = req('view-toggle');
 const urlInput = /** @type {HTMLInputElement | null} */ ($('url-input'));
 const openUrlBtn = $('open-url-btn');
@@ -187,92 +192,135 @@ const searchInput = /** @type {HTMLInputElement | null} */ ($('search-input'));
 const searchPrev = $('search-prev');
 const searchNext = $('search-next');
 const searchClose = $('search-close');
-const iosPresentButton = /** @type {HTMLButtonElement | null} */ ($('ios-present-button'));
+const iosPresentButton = /** @type {HTMLButtonElement | null} */ (
+  $('ios-present-button')
+);
 
 // ===========================
 // Initialization
 // ===========================
 function init() {
-    configureDocumentContext({
-        onInvalidate: () => {
-            // Invalidation happens only after a replacement is accepted. Do
-            // this before DOM mutation, never from an async render completion.
-            const focused = document.activeElement;
-            const presentation = document.querySelector('body > .presentation-overlay');
-            const ownedFocus = fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
-            cancelDiagramRasterExport();
-            closeFullscreen({ restoreFocus: false });
-            exitPresentation({ restoreFocus: false });
-            // Fullscreen remains in the DOM while hidden. Release only its
-            // still-active focus; a newer dialog keeps its own focus and draft.
-            if (ownedFocus && focused === document.activeElement && focused instanceof HTMLElement) focused.blur();
-        },
-    });
-    // Keep the helper in the module graph so Vite cannot DCE it.
-    // Session 01 gates open paths on this; Session 00 does not.
-    const htmlDocumentsEnabledAtBoot = htmlDocumentsEnabled();
-    void htmlDocumentsEnabledAtBoot;
-    configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
-    configureFileLoading({
-        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>
-            createTab(filename, content, filePath, sourceMeta),
-    });
-    configureLanding({
-        createTab: (/** @type {string} */ filename, /** @type {string} */ content, /** @type {string | null} */ filePath, /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta) =>
-            createTab(filename, content, filePath, sourceMeta),
-    });
-    configureShareLinks({
-        createTab: (/** @type {string} */ filename, /** @type {string} */ md) => createTab(filename, md),
-    });
-    configureViewMode({
-        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title) => renderMarkdown(content, title),
-    });
-    configureSourceEditor({render: renderMarkdown, changed: renderTabBar, createTab});
-    setupSourceEditor();
-    configureTabs({
-        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title, /** @type {{ html: string } | undefined} */ prepared) => renderMarkdown(content, title, prepared),
-        updateWatchToggle: () => updateWatchToggle(),
-        saveDesktopSession: () => saveDesktopSession(),
-        startWatchingFilePath: (/** @type {string | null} */ filePath) => startWatchingFilePath(filePath),
-        stopWatchingFilePath: (/** @type {string | null} */ filePath) => stopWatchingFilePath(filePath),
-    });
-    configureDesktop({
-        renderMarkdown: (/** @type {string} */ content, /** @type {string} */ title, /** @type {{ html: string } | undefined} */ prepared) => renderMarkdown(content, title, prepared),
-    });
-    configureRecentFiles({ onSelect: (entry) => openRecentEntry(entry) });
-    configureWorkspace({
-        openFile: (/** @type {string} */ name, /** @type {string} */ content) => createTab(name, content, null),
-    });
-    configureBookmarks({ createTab, switchTab });
-    setupBookmarks();
-    registerAppCommands();
-    setupVersionInfo(APP_VERSION);
-    setupTheme();
-    setupVisualTheme();
-    setupIOSNativeUI();
-    setupWebLanding();
-    setupToolbarOverflow();
-    setupRecentFiles();
-    setupAbout();
-    setupBrandPreview();
-    setupWorkspace();
-    setupComments();
-    setupEventListeners();
-    configureMarked();
-    checkForUpdates({ version: APP_VERSION, repo: SOURCE_REPO, repoUrl: SOURCE_REPO_URL });
-    checkForDiagramLink();
-    registerServiceWorker();
-    // Open .md/.markdown files launched via the OS "Open with" on an installed PWA.
-    registerFileHandlerLaunchConsumer((/** @type {File} */ file) => handleFile(file));
-    // Session restore (web only): reopen the last document on launch, unless a
-    // shared diagram link already opened something. The native shells manage
-    // their own session, so they're excluded.
-    if (!isDesktop && !isIOSNative && state.tabs.length === 0) {
-        restoreLastSession();
-    }
-    if (isDesktop) {
-        setupDesktopIPC();
-    }
+  configureDocumentContext({
+    onInvalidate: () => {
+      // Invalidation happens only after a replacement is accepted. Do
+      // this before DOM mutation, never from an async render completion.
+      const focused = document.activeElement;
+      const presentation = document.querySelector(
+        'body > .presentation-overlay'
+      );
+      const ownedFocus =
+        fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
+      cancelDiagramRasterExport();
+      closeFullscreen({ restoreFocus: false });
+      exitPresentation({ restoreFocus: false });
+      // Fullscreen remains in the DOM while hidden. Release only its
+      // still-active focus; a newer dialog keeps its own focus and draft.
+      if (
+        ownedFocus &&
+        focused === document.activeElement &&
+        focused instanceof HTMLElement
+      )
+        focused.blur();
+    },
+  });
+  // Keep the helper in the module graph so Vite cannot DCE it.
+  // Session 01 gates open paths on this; Session 00 does not.
+  const htmlDocumentsEnabledAtBoot = htmlDocumentsEnabled();
+  void htmlDocumentsEnabledAtBoot;
+  configureTheme({ reRenderDiagrams: () => reRenderMermaidDiagrams() });
+  configureFileLoading({
+    createTab: (
+      /** @type {string} */ filename,
+      /** @type {string} */ content,
+      /** @type {string | null} */ filePath,
+      /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta
+    ) => createTab(filename, content, filePath, sourceMeta),
+  });
+  configureLanding({
+    createTab: (
+      /** @type {string} */ filename,
+      /** @type {string} */ content,
+      /** @type {string | null} */ filePath,
+      /** @type {import('./core/state.js').TabSourceMeta | null} */ sourceMeta
+    ) => createTab(filename, content, filePath, sourceMeta),
+  });
+  configureShareLinks({
+    createTab: (/** @type {string} */ filename, /** @type {string} */ md) =>
+      createTab(filename, md),
+  });
+  configureViewMode({
+    renderMarkdown: (
+      /** @type {string} */ content,
+      /** @type {string} */ title
+    ) => renderMarkdown(content, title),
+  });
+  configureSourceEditor({
+    render: renderMarkdown,
+    changed: renderTabBar,
+    createTab,
+  });
+  setupSourceEditor();
+  configureTabs({
+    renderMarkdown: (
+      /** @type {string} */ content,
+      /** @type {string} */ title,
+      /** @type {{ html: string } | undefined} */ prepared
+    ) => renderMarkdown(content, title, prepared),
+    updateWatchToggle: () => updateWatchToggle(),
+    saveDesktopSession: () => saveDesktopSession(),
+    startWatchingFilePath: (/** @type {string | null} */ filePath) =>
+      startWatchingFilePath(filePath),
+    stopWatchingFilePath: (/** @type {string | null} */ filePath) =>
+      stopWatchingFilePath(filePath),
+  });
+  configureDesktop({
+    renderMarkdown: (
+      /** @type {string} */ content,
+      /** @type {string} */ title,
+      /** @type {{ html: string } | undefined} */ prepared
+    ) => renderMarkdown(content, title, prepared),
+  });
+  configureRecentFiles({ onSelect: (entry) => openRecentEntry(entry) });
+  configureWorkspace({
+    openFile: (/** @type {string} */ name, /** @type {string} */ content) =>
+      createTab(name, content, null),
+  });
+  configureBookmarks({ createTab, switchTab });
+  setupBookmarks();
+  registerAppCommands();
+  setupVersionInfo(APP_VERSION);
+  setupTheme();
+  setupVisualTheme();
+  setupIOSNativeUI();
+  setupWebLanding();
+  setupToolbarOverflow();
+  setupRecentFiles();
+  setupAbout();
+  setupBrandMoments();
+  setupWorkspace();
+  setupComments();
+  setupEventListeners();
+  configureMarked();
+  checkForUpdates({
+    version: APP_VERSION,
+    repo: SOURCE_REPO,
+    repoUrl: SOURCE_REPO_URL,
+  });
+  checkForDiagramLink();
+  registerServiceWorker();
+  // Open .md/.markdown files launched via the OS "Open with" on an installed PWA.
+  registerFileHandlerLaunchConsumer((/** @type {File} */ file) =>
+    handleFile(file)
+  );
+  // Session restore (web only): reopen the last document on launch, unless a
+  // shared diagram link already opened something. The native shells manage
+  // their own session, so they're excluded.
+  if (!isDesktop && !isIOSNative && state.tabs.length === 0) {
+    restoreLastSession();
+  }
+  if (isDesktop) {
+    setupDesktopIPC();
+  }
 }
 
 // ===========================
@@ -282,225 +330,268 @@ function init() {
 // re-read by the Electron main process over the requestOpenPath bridge.
 /** @param {import('./features/recent-files.js').RecentEntry} entry */
 function openRecentEntry(entry) {
-    if (entry.type === 'path') {
-        bridgeRequestOpenPath(entry.ref);
-        return;
-    }
-    handleUrl(entry.ref);
+  if (entry.type === 'path') {
+    bridgeRequestOpenPath(entry.ref);
+    return;
+  }
+  handleUrl(entry.ref);
 }
 
 // iOS API: called by Swift shell to load a file (Session 2+)
-window.loadFileContent = function(content, filename, nativeDocument) {
-    if (nativeDocument?.expectedToken && (getIOSDocumentView()?.token || '0-0') !== nativeDocument.expectedToken) return false;
-    const finishDelivery = beginIOSNativeDocumentDelivery(nativeDocument?.deliveryID);
-    try {
-        if (nativeDocument?.format === 'pdf') {
-            try {
-                return openPdfPages(JSON.parse(content), text =>
-                    createTab(filename, text, null, { importFormat: 'pdf', nativeDocument: { id: nativeDocument.id } })
-                );
-            } catch {
-                showToast('Could not import the extracted PDF text within the document limits.', { type: 'error' });
-                return false;
-            }
-        }
-        if (nativeDocument?.format === 'docx') {
-            return openWordDocument(content, filename, text =>
-                createTab(filename, text, null, { importFormat: 'docx', nativeDocument: { id: nativeDocument.id } })
-            );
-        }
-        return createTab(filename, content, null, nativeDocument ? { nativeDocument: {id: nativeDocument.id} } : null);
-    } finally { finishDelivery(); }
+window.loadFileContent = function (content, filename, nativeDocument) {
+  if (
+    nativeDocument?.expectedToken &&
+    (getIOSDocumentView()?.token || '0-0') !== nativeDocument.expectedToken
+  )
+    return false;
+  const finishDelivery = beginIOSNativeDocumentDelivery(
+    nativeDocument?.deliveryID
+  );
+  try {
+    if (nativeDocument?.format === 'pdf') {
+      try {
+        return openPdfPages(JSON.parse(content), (text) =>
+          createTab(filename, text, null, {
+            importFormat: 'pdf',
+            nativeDocument: { id: nativeDocument.id },
+          })
+        );
+      } catch {
+        showToast(
+          'Could not import the extracted PDF text within the document limits.',
+          { type: 'error' }
+        );
+        return false;
+      }
+    }
+    if (nativeDocument?.format === 'docx') {
+      return openWordDocument(content, filename, (text) =>
+        createTab(filename, text, null, {
+          importFormat: 'docx',
+          nativeDocument: { id: nativeDocument.id },
+        })
+      );
+    }
+    return createTab(
+      filename,
+      content,
+      null,
+      nativeDocument ? { nativeDocument: { id: nativeDocument.id } } : null
+    );
+  } finally {
+    finishDelivery();
+  }
 };
 
 // Native request/response also reports the accepted token. This keeps a later
 // serialized native dispatch current without binding it to the view at read start.
-window.specdownLoadNativeDocument = function(content, filename, nativeDocument) {
-    const accepted = window.loadFileContent?.(content, filename, nativeDocument) === true;
-    const openIDs = state.tabs.flatMap((tab) => { const id = tab.sourceMeta?.nativeDocument?.id; return id ? [id] : []; });
-    return { accepted, token: getIOSDocumentView()?.token || '0-0', openIDs };
+window.specdownLoadNativeDocument = function (
+  content,
+  filename,
+  nativeDocument
+) {
+  const accepted =
+    window.loadFileContent?.(content, filename, nativeDocument) === true;
+  const openIDs = state.tabs.flatMap((tab) => {
+    const id = tab.sourceMeta?.nativeDocument?.id;
+    return id ? [id] : [];
+  });
+  return { accepted, token: getIOSDocumentView()?.token || '0-0', openIDs };
 };
 
 // iOS API: called by the Swift shell when a picked/shared file can't be read
 // (e.g. not UTF-8 text), so the user sees why nothing opened.
-window.specdownShowError = function(/** @type {string} */ message) {
-    showToast(String(message || 'This file could not be opened.'), { type: 'error' });
+window.specdownShowError = function (/** @type {string} */ message) {
+  showToast(String(message || 'This file could not be opened.'), {
+    type: 'error',
+  });
 };
-
 
 // ===========================
 // Event Listeners
 // ===========================
 function setupEventListeners() {
-    window.addEventListener('storage', event => {
-        if(!isIOSNative && event.key==='specdown-annotations') showToast('An older window changed legacy notes. Open Unassigned notes and recovery to preserve another snapshot. New collections were not overwritten.',{type:'warning'});
+  window.addEventListener('storage', (event) => {
+    if (!isIOSNative && event.key === 'specdown-annotations')
+      showToast(
+        'An older window changed legacy notes. Open Unassigned notes and recovery to preserve another snapshot. New collections were not overwritten.',
+        { type: 'warning' }
+      );
+  });
+  window.addEventListener('specdown-annotations-changed', () => {
+    const tab = state.tabs.find((t) => t.id === state.activeTabId);
+    if (tab && !isIOSNative && state.currentViewMode === 'preview')
+      void renderAnnotations(tab.filename, captureDocumentContext());
+  });
+  // Browse button - stopPropagation prevents the dropZone click handler
+  // from calling fileInput.click() a second time (button is inside drop-zone-content)
+  browseButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (requestNativeOpenIfAvailable()) return;
+    fileInput.click();
+  });
+
+  if (openSampleBasic) {
+    openSampleBasic.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (requestBundledSampleIfAvailable('sample.md')) return;
+      void openLandingBundledSample('sample.md');
     });
-    window.addEventListener('specdown-annotations-changed', () => {
-        const tab=state.tabs.find(t=>t.id===state.activeTabId);
-        if(tab && !isIOSNative && state.currentViewMode==='preview') void renderAnnotations(tab.filename,captureDocumentContext());
+  }
+
+  if (openSampleMermaid) {
+    openSampleMermaid.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
+      void openLandingBundledSample('diagram-showcase.md');
     });
-    // Browse button - stopPropagation prevents the dropZone click handler
-    // from calling fileInput.click() a second time (button is inside drop-zone-content)
-    browseButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (requestNativeOpenIfAvailable()) return;
-        fileInput.click();
+  }
+
+  const openWebShowcase = $('open-web-showcase');
+  if (openWebShowcase) {
+    openWebShowcase.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
+      void openLandingBundledSample('diagram-showcase.md');
     });
+  }
 
-    if (openSampleBasic) {
-        openSampleBasic.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (requestBundledSampleIfAvailable('sample.md')) return;
-            void openLandingBundledSample('sample.md');
-        });
+  // File input change
+  fileInput.addEventListener('change', handleFileSelect);
+
+  // Drag and drop
+  dropZone.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement | null} */ (e.target);
+    if (isLandingDropClickIgnored(target)) return;
+    if (
+      e.target === dropZone ||
+      (target instanceof Element && target.closest('.drop-zone-content'))
+    ) {
+      if (requestNativeOpenIfAvailable()) return;
+      fileInput.click();
     }
+  });
 
-    if (openSampleMermaid) {
-        openSampleMermaid.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
-            void openLandingBundledSample('diagram-showcase.md');
-        });
-    }
+  setupDragAndDrop();
 
-    const openWebShowcase = $('open-web-showcase');
-    if (openWebShowcase) {
-        openWebShowcase.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (requestBundledSampleIfAvailable('diagram-showcase.md')) return;
-            void openLandingBundledSample('diagram-showcase.md');
-        });
-    }
+  // Color scheme (light/dark/auto). Visual theme dropdown is bound in
+  // setupVisualTheme(); iOS also has a sheet action that cycles looks.
+  themeToggle.addEventListener('click', toggleTheme);
 
-    // File input change
-    fileInput.addEventListener('change', handleFileSelect);
+  // View toggle (preview/raw)
+  viewToggle.addEventListener('click', toggleViewMode);
 
-    // Drag and drop
-    dropZone.addEventListener('click', (e) => {
-        const target = /** @type {HTMLElement | null} */ (e.target);
-        if (isLandingDropClickIgnored(target)) return;
-        if (e.target === dropZone || (target instanceof Element && target.closest('.drop-zone-content'))) {
-            if (requestNativeOpenIfAvailable()) return;
-            fileInput.click();
-        }
+  // TOC toggle
+  if (tocToggle) {
+    tocToggle.addEventListener('click', () => toggleToc());
+  }
+
+  // Annotation toggle (sync iOS chrome after toggling)
+  if (annotationToggle) {
+    annotationToggle.addEventListener('click', () => {
+      toggleAnnotationMode();
+      syncIOSChrome();
     });
+  }
 
-    setupDragAndDrop();
+  // Annotations list panel (toggle button + close button)
+  if (annotationListToggle) {
+    annotationListToggle.addEventListener('click', () =>
+      toggleAnnotationPanel()
+    );
+  }
+  if (annotationPanelClose) {
+    annotationPanelClose.addEventListener('click', () =>
+      toggleAnnotationPanel()
+    );
+  }
 
-    // Color scheme (light/dark/auto). Visual theme dropdown is bound in
-    // setupVisualTheme(); iOS also has a sheet action that cycles looks.
-    themeToggle.addEventListener('click', toggleTheme);
+  // Split view toggle
+  if (splitToggle) {
+    splitToggle.addEventListener('click', toggleSplitView);
+  }
 
-    // View toggle (preview/raw)
-    viewToggle.addEventListener('click', toggleViewMode);
+  // Print button
+  if (printButton) {
+    printButton.addEventListener('click', performPrint);
+  }
 
-    // TOC toggle
-    if (tocToggle) {
-        tocToggle.addEventListener('click', () => toggleToc());
-    }
+  // Search button (visible affordance for Cmd/Ctrl+F)
+  const searchButton = $('search-button');
+  if (searchButton) {
+    searchButton.addEventListener('click', () => openSearch());
+  }
 
-    // Annotation toggle (sync iOS chrome after toggling)
-    if (annotationToggle) {
-        annotationToggle.addEventListener('click', () => {
-            toggleAnnotationMode();
-            syncIOSChrome();
-        });
-    }
+  // Present button (shown only when the document has diagrams)
+  if (presentButton) {
+    presentButton.addEventListener('click', () => startPresentation());
+  }
 
-    // Annotations list panel (toggle button + close button)
-    if (annotationListToggle) {
-        annotationListToggle.addEventListener('click', () => toggleAnnotationPanel());
-    }
-    if (annotationPanelClose) {
-        annotationPanelClose.addEventListener('click', () => toggleAnnotationPanel());
-    }
+  setupIOSEventListeners();
+  hideIOSDeferredFeatures();
 
-    // Split view toggle
-    if (splitToggle) {
-        splitToggle.addEventListener('click', toggleSplitView);
-    }
-
-    // Print button
-    if (printButton) {
-        printButton.addEventListener('click', performPrint);
-    }
-
-    // Search button (visible affordance for Cmd/Ctrl+F)
-    const searchButton = $('search-button');
-    if (searchButton) {
-        searchButton.addEventListener('click', () => openSearch());
-    }
-
-    // Present button (shown only when the document has diagrams)
-    if (presentButton) {
-        presentButton.addEventListener('click', () => startPresentation());
-    }
-
-    setupIOSEventListeners();
-    hideIOSDeferredFeatures();
-
-    // Search bar events
-    if (searchInput) {
-        searchInput.addEventListener('input', () => runSearch(searchInput.value));
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.shiftKey ? navigateSearch(-1) : navigateSearch(1);
-            } else if (e.key === 'Escape') {
-                closeSearch();
-            }
-        });
-    }
-    if (searchPrev) searchPrev.addEventListener('click', () => navigateSearch(-1));
-    if (searchNext) searchNext.addEventListener('click', () => navigateSearch(1));
-    if (searchClose) searchClose.addEventListener('click', closeSearch);
-
-    // Fullscreen overlay close
-    fullscreenOverlay.addEventListener('click', (e) => {
-        if (e.target === fullscreenOverlay) {
-            closeFullscreen();
-        }
+  // Search bar events
+  if (searchInput) {
+    searchInput.addEventListener('input', () => runSearch(searchInput.value));
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.shiftKey ? navigateSearch(-1) : navigateSearch(1);
+      } else if (e.key === 'Escape') {
+        closeSearch();
+      }
     });
+  }
+  if (searchPrev)
+    searchPrev.addEventListener('click', () => navigateSearch(-1));
+  if (searchNext) searchNext.addEventListener('click', () => navigateSearch(1));
+  if (searchClose) searchClose.addEventListener('click', closeSearch);
 
-    setupGlobalKeyboardShortcuts();
-
-    // URL input. The fetch can be slow (remote host, big repo scan), so the
-    // Open button carries a busy state — without it the flow reads as frozen.
-    const openUrlWithBusyState = async (/** @type {string} */ url) => {
-        const btn = /** @type {HTMLButtonElement | null} */ (openUrlBtn);
-        if (!btn) {
-            await handleUrl(url);
-            return;
-        }
-        if (btn.disabled) return; // already loading — ignore re-clicks
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Opening…';
-        btn.setAttribute('aria-busy', 'true');
-        try {
-            await handleUrl(url);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
-            btn.removeAttribute('aria-busy');
-        }
-    };
-    if (openUrlBtn) {
-        openUrlBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openUrlWithBusyState(urlInput ? urlInput.value.trim() : '');
-        });
+  // Fullscreen overlay close
+  fullscreenOverlay.addEventListener('click', (e) => {
+    if (e.target === fullscreenOverlay) {
+      closeFullscreen();
     }
-    if (urlInput) {
-        urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') openUrlWithBusyState(urlInput.value.trim());
-        });
-        urlInput.addEventListener('click', (e) => e.stopPropagation());
-    }
+  });
 
-    // TOC scroll spy
-    markdownContent.addEventListener('scroll', scheduleTocActiveHeadingUpdate);
+  setupGlobalKeyboardShortcuts();
+
+  // URL input. The fetch can be slow (remote host, big repo scan), so the
+  // Open button carries a busy state — without it the flow reads as frozen.
+  const openUrlWithBusyState = async (/** @type {string} */ url) => {
+    const btn = /** @type {HTMLButtonElement | null} */ (openUrlBtn);
+    if (!btn) {
+      await handleUrl(url);
+      return;
+    }
+    if (btn.disabled) return; // already loading — ignore re-clicks
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Opening…';
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      await handleUrl(url);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.removeAttribute('aria-busy');
+    }
+  };
+  if (openUrlBtn) {
+    openUrlBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openUrlWithBusyState(urlInput ? urlInput.value.trim() : '');
+    });
+  }
+  if (urlInput) {
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') openUrlWithBusyState(urlInput.value.trim());
+    });
+    urlInput.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  // TOC scroll spy
+  markdownContent.addEventListener('scroll', scheduleTocActiveHeadingUpdate);
 }
-
 
 // ===========================
 // Markdown Rendering
@@ -512,80 +603,83 @@ function setupEventListeners() {
  * @returns {Promise<boolean>} Whether this render completed in its current view.
  */
 async function renderMarkdown(content, filename, prepared) {
-    let context = captureDocumentContext();
-    try {
-        // Parse and validate before replacing the current document's state/UI.
-        const safeHtmlContent = (prepared || prepareMarkdownDocument(content)).html;
+  let context = captureDocumentContext();
+  try {
+    // Parse and validate before replacing the current document's state/UI.
+    const safeHtmlContent = (prepared || prepareMarkdownDocument(content)).html;
 
-        context = invalidateDocumentContext();
-        state.currentRawMarkdown = content;
-        state.currentViewMode = 'preview';
-        updateViewToggleButton();
-        fileName.textContent = filename;
-        markdownContent.innerHTML = safeHtmlContent;
+    context = invalidateDocumentContext();
+    state.currentRawMarkdown = content;
+    state.currentViewMode = 'preview';
+    updateViewToggleButton();
+    fileName.textContent = filename;
+    markdownContent.innerHTML = safeHtmlContent;
 
-        // Reveal authored HTML comments as styled blocks, then sync the toggle.
-        revealHtmlComments(markdownContent);
-        refreshCommentsUI();
+    // Reveal authored HTML comments as styled blocks, then sync the toggle.
+    revealHtmlComments(markdownContent);
+    refreshCommentsUI();
 
-        // Add copy buttons to code blocks
-        enhanceCodeBlocks(markdownContent);
+    // Add copy buttons to code blocks
+    enhanceCodeBlocks(markdownContent);
 
-        // Show content area, hide drop zone
-        dropZone.style.display = 'none';
-        contentArea.style.display = 'flex';
-        syncIOSChrome();
-        syncSourceEditor();
+    // Show content area, hide drop zone
+    dropZone.style.display = 'none';
+    contentArea.style.display = 'flex';
+    syncIOSChrome();
+    syncSourceEditor();
 
-        // Process mermaid diagrams
-        await processMermaidDiagrams();
-        if (!isDocumentContextCurrent(context)) return false;
+    // Process mermaid diagrams
+    await processMermaidDiagrams();
+    if (!isDocumentContextCurrent(context)) return false;
 
-        // Reveal the Present entry points (desktop toolbar + iPhone action sheet)
-        // only when there are diagrams to present.
-        const canPresent = hasPresentableDiagrams();
-        if (presentButton) {
-            presentButton.style.display = canPresent ? '' : 'none';
-        }
-        if (iosPresentButton) {
-            iosPresentButton.style.display = canPresent ? '' : 'none';
-        }
-
-        // Reveal the workspace Files toggle when a folder is loaded, and refresh
-        // the sidebar so the active file is highlighted.
-        if (workspaceToggle) {
-            workspaceToggle.style.display = hasWorkspace() ? '' : 'none';
-        }
-        renderWorkspaceSidebar();
-
-        // Refresh TOC
-        buildToc();
-
-        // Update split raw pane if active
-        if (state.splitViewActive) {
-            updateSplitRawPane(content);
-        }
-
-        // Clear any active search
-        clearSearchHighlights();
-
-        // Render annotations for this document (re-arms handlers if active)
-        await renderAnnotations(filename, context);
-        if (!isDocumentContextCurrent(context)) return false;
-
-        // Scroll to top
-        markdownContent.scrollTop = 0;
-        syncIOSChrome();
-        return true;
-
-    } catch (error) {
-        if (!isDocumentContextCurrent(context)) return false;
-        console.error('Error rendering markdown:', error);
-        showToast(error instanceof Error && error.message.startsWith('This document') ? error.message : 'Error rendering markdown content. Please check the file format.', { type: 'error' });
-        return false;
+    // Reveal the Present entry points (desktop toolbar + iPhone action sheet)
+    // only when there are diagrams to present.
+    const canPresent = hasPresentableDiagrams();
+    if (presentButton) {
+      presentButton.style.display = canPresent ? '' : 'none';
     }
-}
+    if (iosPresentButton) {
+      iosPresentButton.style.display = canPresent ? '' : 'none';
+    }
 
+    // Reveal the workspace Files toggle when a folder is loaded, and refresh
+    // the sidebar so the active file is highlighted.
+    if (workspaceToggle) {
+      workspaceToggle.style.display = hasWorkspace() ? '' : 'none';
+    }
+    renderWorkspaceSidebar();
+
+    // Refresh TOC
+    buildToc();
+
+    // Update split raw pane if active
+    if (state.splitViewActive) {
+      updateSplitRawPane(content);
+    }
+
+    // Clear any active search
+    clearSearchHighlights();
+
+    // Render annotations for this document (re-arms handlers if active)
+    await renderAnnotations(filename, context);
+    if (!isDocumentContextCurrent(context)) return false;
+
+    // Scroll to top
+    markdownContent.scrollTop = 0;
+    syncIOSChrome();
+    return true;
+  } catch (error) {
+    if (!isDocumentContextCurrent(context)) return false;
+    console.error('Error rendering markdown:', error);
+    showToast(
+      error instanceof Error && error.message.startsWith('This document')
+        ? error.message
+        : 'Error rendering markdown content. Please check the file format.',
+      { type: 'error' }
+    );
+    return false;
+  }
+}
 
 // ===========================
 // Feature: Print / PDF Export

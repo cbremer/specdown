@@ -1,30 +1,16 @@
 // @ts-check
-// Apple Store shells expose an explicit production channel. The web and
-// direct-download production builds leave the channel unset.
+// C+ brand moments: SpecDown's default look on every surface (web, desktop,
+// Mac App Store, iOS, iPadOS). Adds the reading-progress brand bar; the rest
+// is CSS (the "C+ brand moments" section of styles.css) plus the SpecDown
+// diagram style for diagrams that opt in with BRAND_DIAGRAM_MARKER.
 //
 // Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
 //
-// The Jest eval harness inlines this module at global scope, where
-// `import.meta` is a SyntaxError: read the Vite define-replaced identifier,
-// never `import.meta.env`. Names are prefixed (brandPreview…) because the
-// harness also shares one global scope between modules.
+// Names are prefixed (brandMoments…) because the Jest eval harness shares one
+// global scope between modules.
 
 /** Mermaid comment line that opts a diagram into the SpecDown diagram style. */
 export const BRAND_DIAGRAM_MARKER = '%% specdown:brand';
-
-/** @returns {boolean} */
-export function brandPreviewEnabled() {
-  const brandPreviewDevServer =
-    typeof __SPECDOWN_DEV_SERVER__ !== 'undefined' &&
-    __SPECDOWN_DEV_SERVER__ === true;
-  if (brandPreviewDevServer) return true;
-  return (
-    typeof window !== 'undefined' &&
-    (window.specdownAppChannel === 'development' ||
-      window.specdownAppChannel === 'beta' ||
-      window.specdownAppChannel === 'production')
-  );
-}
 
 /**
  * Mermaid theme for the SpecDown diagram style.
@@ -65,15 +51,14 @@ export function brandDiagramThemeVariables(dark) {
 }
 
 /**
- * Source to hand Mermaid for one diagram. Unchanged unless the preview is on,
- * the diagram opts in with BRAND_DIAGRAM_MARKER, and it sets no init
- * directive of its own (an author's theme always wins).
+ * Source to hand Mermaid for one diagram. Unchanged unless the diagram opts in
+ * with BRAND_DIAGRAM_MARKER (our bundled samples do; users' Markdown doesn't)
+ * and sets no init directive of its own (an author's theme always wins).
  * @param {string} code
  * @param {boolean} dark
  * @returns {string}
  */
 export function brandDiagramSource(code, dark) {
-  if (!brandPreviewEnabled()) return code;
   if (!code.split('\n').some((line) => line.trim() === BRAND_DIAGRAM_MARKER))
     return code;
   if (/%%\{\s*init/.test(code)) return code;
@@ -85,10 +70,11 @@ export function brandDiagramSource(code, dark) {
 }
 
 /** @type {number | null} */
-let brandPreviewFrame = null;
+let brandMomentsFrame = null;
+let brandMomentsReady = false;
 
-function brandPreviewUpdateProgress() {
-  brandPreviewFrame = null;
+function brandMomentsUpdateProgress() {
+  brandMomentsFrame = null;
   const bar = document.getElementById('brand-bar');
   if (!bar) return;
   const content = document.getElementById('markdown-content');
@@ -104,19 +90,18 @@ function brandPreviewUpdateProgress() {
   bar.style.setProperty('--brand-reading-progress', String(progress));
 }
 
-function brandPreviewScheduleProgress() {
-  if (brandPreviewFrame !== null) return;
-  brandPreviewFrame = requestAnimationFrame(brandPreviewUpdateProgress);
+function brandMomentsScheduleProgress() {
+  if (brandMomentsFrame !== null) return;
+  brandMomentsFrame = requestAnimationFrame(brandMomentsUpdateProgress);
 }
 
 /**
- * Turn the preview on when allowed: mark <html>, add the brand bar and keep
- * its reading-progress fill in step with the document's scroll.
- * @returns {boolean} whether the preview is on
+ * Add the brand bar and keep its reading-progress fill in step with the
+ * document's scroll. Safe to call more than once.
  */
-export function setupBrandPreview() {
-  if (!brandPreviewEnabled()) return false;
-  document.documentElement.setAttribute('data-brand-preview', 'cplus');
+export function setupBrandMoments() {
+  if (brandMomentsReady) return;
+  brandMomentsReady = true;
 
   const container = document.querySelector('.app-container');
   if (container && !document.getElementById('brand-bar')) {
@@ -132,23 +117,22 @@ export function setupBrandPreview() {
 
   const content = document.getElementById('markdown-content');
   if (content) {
-    content.addEventListener('scroll', brandPreviewScheduleProgress, {
+    content.addEventListener('scroll', brandMomentsScheduleProgress, {
       passive: true,
     });
     // A new document (or switching to the empty state) replaces content
     // without a scroll event; re-measure when the content changes.
-    new MutationObserver(brandPreviewScheduleProgress).observe(content, {
+    new MutationObserver(brandMomentsScheduleProgress).observe(content, {
       childList: true,
     });
   }
   const area = document.getElementById('content-area');
   if (area) {
-    new MutationObserver(brandPreviewScheduleProgress).observe(area, {
+    new MutationObserver(brandMomentsScheduleProgress).observe(area, {
       attributes: true,
       attributeFilter: ['style'],
     });
   }
-  window.addEventListener('resize', brandPreviewScheduleProgress);
-  brandPreviewUpdateProgress();
-  return true;
+  window.addEventListener('resize', brandMomentsScheduleProgress);
+  brandMomentsUpdateProgress();
 }

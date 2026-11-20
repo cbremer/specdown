@@ -5,7 +5,6 @@
 
 import { trapFocus } from '../core/focus-trap.js';
 import { createSdModal } from '../core/modal.js';
-import { brandPreviewEnabled } from '../core/brand-preview.js';
 import { getAppVersion, getAvailableUpdate } from './version-check.js';
 
 const ABOUT_LINKS = [
@@ -61,17 +60,15 @@ export function openAboutDialog() {
   const dialog = aboutModal.dialog;
   const aboutBody = aboutModal.body;
 
-  // C+ brand preview (Dev builds): the app icon heads the dialog; the brand
-  // strip above the header is CSS (html[data-brand-preview] .about-sheet).
-  if (brandPreviewEnabled()) {
-    const aboutMark = document.createElement('img');
-    aboutMark.className = 'about-mark';
-    aboutMark.src = 'icons/icon.svg';
-    aboutMark.alt = '';
-    aboutMark.width = 72;
-    aboutMark.height = 72;
-    aboutBody.appendChild(aboutMark);
-  }
+  // C+ brand moments: the app icon heads the dialog; the brand strip above
+  // the header is CSS (.about-sheet::before).
+  const aboutMark = document.createElement('img');
+  aboutMark.className = 'about-mark';
+  aboutMark.src = 'icons/icon.svg';
+  aboutMark.alt = '';
+  aboutMark.width = 72;
+  aboutMark.height = 72;
+  aboutBody.appendChild(aboutMark);
 
   const tagline = document.createElement('p');
   tagline.className = 'about-tagline';

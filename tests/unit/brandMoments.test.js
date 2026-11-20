@@ -1,4 +1,9 @@
-/** Channel and rendering checks for the C+ design preview. */
+/**
+ * C+ brand moments: SpecDown's default look on every surface, with the
+ * SpecDown diagram style only for diagrams that opt in.
+ */
+const fs = require('fs');
+const path = require('path');
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 require('../mocks/marked');
 require('../mocks/mermaid');
@@ -7,9 +12,8 @@ require('../mocks/highlightjs');
 
 const DIAGRAM = 'graph TD\n%% specdown:brand\n  A --> B';
 
-describe('C+ brand preview gate', () => {
+describe('C+ brand moments', () => {
   beforeEach(() => {
-    document.documentElement.removeAttribute('data-brand-preview');
     delete window.specdownAppChannel;
     loadHTML(document);
     loadApp(document);
@@ -17,32 +21,14 @@ describe('C+ brand preview gate', () => {
 
   afterEach(() => {
     delete window.specdownAppChannel;
-    document.documentElement.removeAttribute('data-brand-preview');
   });
 
-  it.each([undefined, 'unknown'])(
-    'stays off for channel %p: no attribute, no brand bar, diagrams unchanged',
+  it.each([undefined, 'production', 'beta', 'development', 'unknown'])(
+    'adds exactly one brand bar whatever the channel (%p)',
     (channel) => {
       if (channel) window.specdownAppChannel = channel;
-      expect(brandPreviewEnabled()).toBe(false);
-      expect(setupBrandPreview()).toBe(false);
-      expect(document.documentElement.hasAttribute('data-brand-preview')).toBe(
-        false
-      );
-      expect(document.getElementById('brand-bar')).toBeNull();
-      expect(brandDiagramSource(DIAGRAM, false)).toBe(DIAGRAM);
-    }
-  );
-
-  it.each(['development', 'beta', 'production'])(
-    'turns on for %s and adds one brand bar',
-    (channel) => {
-      window.specdownAppChannel = channel;
-      expect(setupBrandPreview()).toBe(true);
-      setupBrandPreview();
-      expect(document.documentElement.getAttribute('data-brand-preview')).toBe(
-        'cplus'
-      );
+      setupBrandMoments();
+      setupBrandMoments();
       const bars = document.querySelectorAll('#brand-bar');
       expect(bars).toHaveLength(1);
       expect(bars[0].getAttribute('aria-hidden')).toBe('true');
@@ -52,8 +38,17 @@ describe('C+ brand preview gate', () => {
     }
   );
 
+  it('ships its styles ungated in the main stylesheet', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '../../markdown-viewer/styles.css'),
+      'utf8'
+    );
+    expect(css).not.toContain('data-brand-preview');
+    expect(css).toMatch(/:root \.tab-active\s*\{/);
+    expect(css).toMatch(/:root\[data-theme="dark"\]\s*\{[^}]*--accent-tint/);
+  });
+
   it('gives only marked diagrams the SpecDown diagram style', () => {
-    window.specdownAppChannel = 'development';
     const branded = brandDiagramSource(DIAGRAM, false);
     expect(branded.startsWith('%%{init: ')).toBe(true);
     expect(branded).toContain('"theme":"base"');
@@ -70,7 +65,6 @@ describe('C+ brand preview gate', () => {
   });
 
   it("never overrides a diagram's own init directive", () => {
-    window.specdownAppChannel = 'development';
     const own =
       '%%{init: {"theme":"forest"}}%%\ngraph TD\n%% specdown:brand\n  A --> B';
     expect(brandDiagramSource(own, false)).toBe(own);
@@ -100,12 +94,7 @@ describe('C+ brand preview gate', () => {
     expect(link('faq').classList.contains('toc-link-read')).toBe(false);
   });
 
-  it('adds the app icon to About only when the preview is on', () => {
-    openAboutDialog();
-    expect(document.querySelector('.about-mark')).toBeNull();
-    closeAboutDialog();
-
-    window.specdownAppChannel = 'development';
+  it('shows the app icon in About on every surface', () => {
     openAboutDialog();
     const mark = document.querySelector('.about-sheet .about-mark');
     expect(mark).not.toBeNull();

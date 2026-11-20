@@ -3921,12 +3921,14 @@ mark.search-highlight-current {
 }
 
 /* ===========================
-   C+ brand moments (Dev and Beta preview)
-   On only when core/brand-preview.js sets html[data-brand-preview]:
-   the local dev server and native shells reporting the `development` or `beta` channel.
+   C+ brand moments (default on every surface)
+   SpecDown's brand layer: the logo's teal→coral where it has a job, blue
+   still the only interaction colour. Rules are prefixed with :root so they
+   keep the cascade strength they had as a preview and still win over
+   stylesheets that load later (source-editor.css).
    Spec: docs/project-design-system/2026-11-19-spec-brand-moments-cplus.md
    =========================== */
-html[data-brand-preview] {
+:root {
     --brand-teal: #00a3bf;
     --brand-coral: #ff7a4d;
     --brand-gradient: linear-gradient(90deg, var(--brand-teal), var(--brand-coral));
@@ -3937,7 +3939,7 @@ html[data-brand-preview] {
     --brand-coral-tint: #ffefea;
 }
 
-html[data-brand-preview][data-theme="dark"] {
+:root[data-theme="dark"] {
     --accent-tint: #29333d;
     --brand-teal-text: #00a3bf;
     --brand-coral-text: #ff7a4d;
@@ -3964,7 +3966,7 @@ html[data-brand-preview][data-theme="dark"] {
 }
 
 /* 2. Active tab: gradient rule instead of solid accent. */
-html[data-brand-preview] .tab-active {
+:root .tab-active {
     border-top-color: transparent;
     background-image: var(--brand-gradient);
     background-size: 100% 2px;
@@ -3974,12 +3976,12 @@ html[data-brand-preview] .tab-active {
 }
 
 /* 3. Title signature: short gradient underline under the document title. */
-html[data-brand-preview] .markdown-content > h1:first-of-type {
+:root .markdown-content > h1:first-of-type {
     border-bottom: none;
     padding-bottom: 0;
 }
 
-html[data-brand-preview] .markdown-content > h1:first-of-type::after {
+:root .markdown-content > h1:first-of-type::after {
     content: "";
     display: block;
     width: 48px;
@@ -3990,7 +3992,7 @@ html[data-brand-preview] .markdown-content > h1:first-of-type::after {
 }
 
 /* 4. Read sections: teal tick on contents links already scrolled past. */
-html[data-brand-preview] .toc-link-read::before {
+:root .toc-link-read::before {
     content: "✓";
     display: inline-block;
     width: 1.1em;
@@ -3999,11 +4001,11 @@ html[data-brand-preview] .toc-link-read::before {
     font-weight: 700;
 }
 
-html[data-brand-preview] .toc-link-read {
+:root .toc-link-read {
     padding-left: calc(1rem + 1.1em);
 }
 
-html[data-brand-preview] .toc-link-active {
+:root .toc-link-active {
     color: var(--accent-color);
     background-color: var(--accent-tint);
     border-left-color: transparent;
@@ -4011,25 +4013,25 @@ html[data-brand-preview] .toc-link-active {
 }
 
 /* 5. Quieter toolbar: flat until hovered; active toggles take a tint. */
-html[data-brand-preview] :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-toggle-button, .annotation-list-toggle-button, .print-button, .present-button, .view-toggle-button, .search-toggle-button, .overflow-toggle-button, .source-read-entry) {
+:root :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-toggle-button, .annotation-list-toggle-button, .print-button, .present-button, .view-toggle-button, .search-toggle-button, .overflow-toggle-button, .source-read-entry) {
     background-color: transparent;
     border-color: transparent;
 }
 
-html[data-brand-preview] :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-toggle-button, .annotation-list-toggle-button, .print-button, .present-button, .view-toggle-button, .search-toggle-button, .overflow-toggle-button, .source-read-entry):hover {
+:root :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-toggle-button, .annotation-list-toggle-button, .print-button, .present-button, .view-toggle-button, .search-toggle-button, .overflow-toggle-button, .source-read-entry):hover {
     background-color: var(--bg-tertiary);
     border-color: transparent;
     color: var(--text-primary);
 }
 
-html[data-brand-preview] :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-list-toggle-button, .view-toggle-button).active {
+:root :is(.workspace-toggle-button, .toc-toggle-button, .split-toggle-button, .comments-toggle-button, .annotation-list-toggle-button, .view-toggle-button).active {
     background-color: var(--accent-tint);
     border-color: transparent;
     color: var(--accent-color);
 }
 
 /* 6. Drop moment: gradient ring and glow while a file is dragged over. */
-html[data-brand-preview] .drop-zone.drag-over .drop-zone-content {
+:root .drop-zone.drag-over .drop-zone-content {
     border: 3px solid transparent;
     background:
         linear-gradient(var(--bg-primary), var(--bg-primary)) padding-box,
@@ -4038,14 +4040,14 @@ html[data-brand-preview] .drop-zone.drag-over .drop-zone-content {
 }
 
 /* 7. About: brand strip above the header, app icon above the tagline. */
-html[data-brand-preview] .about-sheet::before {
+:root .about-sheet::before {
     content: "";
     height: 4px;
     flex-shrink: 0;
     background: var(--brand-gradient);
 }
 
-html[data-brand-preview] .about-mark {
+:root .about-mark {
     display: block;
     width: 72px;
     height: 72px;

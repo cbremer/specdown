@@ -26,16 +26,11 @@ SpecDown's identity, the logo's teal→coral, shows up in the app where it has a
 - Changing the accent colour (that was direction B).
 - iPhone toolbar (hidden there; the iOS action bar is unchanged).
 
-## Gate: Dev builds only
+## Gate (removed)
 
-C+ is a **preview**. It turns on when either is true:
+C+ started as a Dev-only preview (ZIL-235), widened to Beta and the Apple Store candidate after review (ZIL-236), and is now the default on every surface (ZIL-237, 20 Nov 2026). The `data-brand-preview` attribute, the `__SPECDOWN_DEV_SERVER__` define and `core/brand-preview.js` are gone. The rules sit in the C+ section of `styles.css`, prefixed with `:root` so they keep the cascade strength they had as a preview and still win over `source-editor.css`, which loads later. `core/brand-moments.js` adds the brand bar and the diagram style. The shell channel now only labels About.
 
-- `window.specdownAppChannel === 'development'`. iOS/iPadOS Dev and Mac App Store Dev already set this. Direct Mac Dev gets it in this change: `desktop/main.js` passes `--specdown-app-channel` when the packaged `specdownChannel` is `development` or `beta`, and the preload exposes the channel (only the channel) for the direct build too.
-- The page is served by the local Vite dev server (`npm run dev`), via the build-time define `__SPECDOWN_DEV_SERVER__`.
-
-When on, `core/brand-preview.js` sets `data-brand-preview="cplus"` on `<html>`. Every C+ rule in `styles.css` is scoped under `html[data-brand-preview]`, so Beta, Prod and the production web build render exactly as before. The few JavaScript additions (brand bar, About icon, diagram directive, read-tick classes) are also no-ops unless the gate is on, apart from the inert `toc-link-read` class.
-
-## Tokens (preview)
+## Tokens
 
 | Token              | Light     | Dark      | Use                                                                                   |
 | ------------------ | --------- | --------- | ------------------------------------------------------------------------------------- |
@@ -49,12 +44,12 @@ The gradient itself is always `brand-teal` → `brand-coral` (`#00a3bf` → `#ff
 
 ## Rollout
 
-1. **Dev** (this change, ZIL-235): gate as above. Verify on the dev server in light and dark; Chris reviews on device builds (ZIL-236).
-2. **Beta** (ZIL-237): widen the gate to `beta` after review.
-3. **Prod** (ZIL-237): remove the gate, make the rules the default, fold preview tokens into the main set.
+1. **Dev** (ZIL-235): Dev-only gate. Reviewed on device builds (ZIL-236). Done.
+2. **Beta and Apple Store candidate** (#464): gate widened to `beta` and `production` Store shells. Done.
+3. **Default** (ZIL-237): gate removed; web, direct-download desktop and the Store shells all show C+. Done.
 
 ## Risks
 
-- **Toolbar change is the most visible.** It changes every button's resting look. Kept behind the gate until review.
+- **Toolbar change is the most visible.** It changes every button's resting look. Reviewed in Dev 255 and Beta 256 before it became the default.
 - **Reading progress** listens to the document's scroll, throttled with `requestAnimationFrame`, so the cost is one style write per frame while scrolling.
 - **Diagram directive** is only prepended when the diagram has `%% specdown:brand` and no `%%{init` of its own, so an author's own theme always wins.

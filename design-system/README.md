@@ -56,9 +56,9 @@ SpecDown is a quiet reading tool for Markdown and Mermaid. The document is the h
 - Escape, the close button and a scrim click all dismiss. Focus is trapped and returned to the opener. Toasts stay visible above any open modal.
 - Shortcuts, About and File info already use it. The other panels are documented as they ship under "Dialogs · current", and the Modal component lists what each one becomes.
 
-## C+ brand moments (Apple Store release candidate)
+## C+ brand moments
 
-Dev and Beta builds, the local dev server and the Apple Store release candidate use the design. When the shell reports `development`, `beta` or `production`, `core/brand-preview.js` sets `html[data-brand-preview]`.
+SpecDown's default look on every surface: web, direct-download Mac, Windows, Linux, Mac App Store, iPhone and iPad. The rules sit in the C+ section of `styles.css` (prefixed with `:root`); `core/brand-moments.js` adds the brand bar and the diagram style.
 
 - **Brand bar:** a 3px `brand-teal`→`brand-coral` bar across the top of the app. In a document it fills with reading progress; on the empty state it's full.
 - **Active tab:** gradient top rule instead of solid `accent-color`.

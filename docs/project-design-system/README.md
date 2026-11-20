@@ -12,11 +12,12 @@ SpecDown's shared visual language across web/PWA, Electron desktop (direct downl
 | 2026-11-19 | [Session 04](2026-11-19-tasks-session-04-shared-modal-and-dialog-a11y.md)          | Shared Modal in the app for Shortcuts, About, File info (ZIL-230); dialog accessibility gaps (ZIL-223) |
 | 2026-11-19 | [Spec: C+ brand moments](2026-11-19-spec-brand-moments-cplus.md)                   | Chosen direction, gate, tokens and rollout (ZIL-226)                                                   |
 | 2026-11-19 | [Session 05](2026-11-19-tasks-session-05-cplus-dev-preview.md)                     | C+ in Dev builds behind a Dev-only gate (ZIL-235)                                                      |
-| 2026-11-19 | [Session 06](2026-11-19-tasks-session-06-beta-256.md) | Promote the reviewed Dev 255 design to Beta 256 |
+| 2026-11-19 | [Session 06](2026-11-19-tasks-session-06-beta-256.md)                              | Promote the reviewed Dev 255 design to Beta 256                                                        |
+| 2026-11-20 | [Session 07](2026-11-20-tasks-session-07-cplus-default.md)                         | C+ becomes the default on every surface, including web and direct-download desktop (ZIL-237)           |
 
 ## Status
 
-The system describes the UI **as it ships**. Values are copied from `markdown-viewer/styles.css`, the logos, `src/core/icons.js`, the visual-theme catalog, the iOS SwiftUI views and the Electron menu. Proposals (shared Modal, named scales, brand direction) are in [`design-system/evolving.md`](../../design-system/evolving.md) and the Linear project. They are not adopted yet.
+The system describes the UI **as it ships**. Values are copied from `markdown-viewer/styles.css`, the logos, `src/core/icons.js`, the visual-theme catalog, the iOS SwiftUI views and the Electron menu. C+ brand moments is the default look on every surface (session 07). Remaining proposals (the Modal Sheet and Drawer variants, named scales) are in [`design-system/evolving.md`](../../design-system/evolving.md) and the Linear project. They are not adopted yet.
 
 ## Naming conventions
 

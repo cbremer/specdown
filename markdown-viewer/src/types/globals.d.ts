@@ -124,9 +124,22 @@ interface SpecdownDesktopBridge {
     catalog: ReadonlyArray<{ id: string; label: string; icon?: string }>
   ) => void;
   onApplyCustomCss?: (cb: (cssContent: string) => void) => void;
-  saveMarkdown?: (request: {filePath:string|null; filename:string; content:string; expected:string; copy:boolean}) => Promise<{status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string}>;
-  onEditorClose?: (callback:()=>void)=>void;
-  closeEditorWindow?: ()=>void;
+  saveMarkdown?: (request: {
+    filePath: string | null;
+    filename: string;
+    content: string;
+    expected: string;
+    copy: boolean;
+  }) => Promise<{
+    status: string;
+    copied?: boolean;
+    message?: string;
+    content?: string;
+    filePath?: string;
+    filename?: string;
+  }>;
+  onEditorClose?: (callback: () => void) => void;
+  closeEditorWindow?: () => void;
   saveSession?: (tabs: SpecdownSessionTab[]) => void;
   onUpdateDownloaded?: (cb: (info: { version?: string }) => void) => void;
   restartToUpdate?: () => void;
@@ -138,7 +151,20 @@ interface WebkitMessageHandler {
 }
 
 declare global {
-  interface Window { specdownSourceSaveResult?: (id:string, result: {status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string; sourceMeta?:import('../core/state.js').TabSourceMeta|null})=>void; }
+  interface Window {
+    specdownSourceSaveResult?: (
+      id: string,
+      result: {
+        status: string;
+        copied?: boolean;
+        message?: string;
+        content?: string;
+        filePath?: string;
+        filename?: string;
+        sourceMeta?: import('../core/state.js').TabSourceMeta | null;
+      }
+    ) => void;
+  }
   interface Window {
     /** Electron preload bridge (desktop only). */
     specdown?: SpecdownDesktopBridge;
@@ -148,7 +174,10 @@ declare global {
     specdownAppVersion?: string;
     /** Actual native build number from the installed app's bundle metadata. */
     specdownAppBuild?: string;
-    specdownSubmitURL?: (url: string, id: string) => Promise<{status: string; message: string}>;
+    specdownSubmitURL?: (
+      url: string,
+      id: string
+    ) => Promise<{ status: string; message: string }>;
     specdownCancelURL?: (id: string) => void;
     specdownFinishURL?: (id: string) => void;
     /** Only explicit development/beta bundle channels receive an About label. */
@@ -163,8 +192,26 @@ declare global {
     };
     /** Synchronously returns whether a native document passed preflight and opened. */
     specdownReloadImages?: (token: string) => void;
-    specdownLoadNativeDocument?: (content: string, filename: string, nativeDocument: {id: string, expectedToken?: string, deliveryID?: string, format?: string}) => {accepted: boolean, token: string, openIDs: string[]};
-    loadFileContent?: (content: string, filename: string, nativeDocument?: {id: string, expectedToken?: string, deliveryID?: string, format?: string}) => boolean;
+    specdownLoadNativeDocument?: (
+      content: string,
+      filename: string,
+      nativeDocument: {
+        id: string;
+        expectedToken?: string;
+        deliveryID?: string;
+        format?: string;
+      }
+    ) => { accepted: boolean; token: string; openIDs: string[] };
+    loadFileContent?: (
+      content: string,
+      filename: string,
+      nativeDocument?: {
+        id: string;
+        expectedToken?: string;
+        deliveryID?: string;
+        format?: string;
+      }
+    ) => boolean;
     /** Set by the app; called by the iOS shell to switch theme. */
     setTheme?: (theme: string) => void;
     /** Set by the app; called by the iOS shell on layout-class changes. */
@@ -179,8 +226,4 @@ declare global {
   // Vite `define` inlines this as true | false. Undeclared under the Jest
   // eval harness — htmlDocumentsEnabled() uses typeof first.
   const __HTML_DOCUMENTS_ENABLED__: boolean | undefined;
-
-  // Vite `define`: true only under the local dev server (`vite serve`).
-  // Gates the C+ brand preview (core/brand-preview.js). Undeclared under Jest.
-  const __SPECDOWN_DEV_SERVER__: boolean | undefined;
 }
