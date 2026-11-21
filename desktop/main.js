@@ -768,12 +768,11 @@ function buildFileMetadata(filePath) {
   };
 }
 
-const documentImportEnabled = !app.isPackaged || isTestChannel || IS_MAS;
 function openFileByPath(filePath, context) {
   const ext = typeof filePath === 'string' ? path.extname(filePath).toLowerCase() : '';
-  const isImport = documentImportEnabled && ['.docx', '.pdf'].includes(ext);
+  const isImport = ['.docx', '.pdf'].includes(ext);
   if (!isImport && !isValidMarkdownFile(filePath)) {
-    openRecovery.report(filePath, 'Choose a Markdown file (.md or .markdown).', context?.entry);
+    openRecovery.report(filePath, 'Choose a Markdown (.md or .markdown), Word (.docx), or PDF file.', context?.entry);
     return false;
   }
 
@@ -841,7 +840,7 @@ async function showOpenDialog() {
     title: 'Open File',
     properties: ['openFile', 'multiSelections'],
     filters: [
-      documentImportEnabled ? { name: 'Markdown, Word and PDF documents', extensions: ['md', 'markdown', 'docx', 'pdf'] } : { name: 'Markdown Files', extensions: ['md', 'markdown'] },
+      { name: 'Markdown, Word and PDF documents', extensions: ['md', 'markdown', 'docx', 'pdf'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   }));

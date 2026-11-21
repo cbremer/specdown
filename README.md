@@ -113,9 +113,9 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
 
 ### Getting documents in
 
-**Word, PDF and quick edits.** In the upcoming iPhone, iPad and Mac App Store release, choose **Open File** to open a Word document (`.docx`) or a PDF. SpecDown converts the text to Markdown on your device. For PDF pages with little selectable text, it tries English text recognition (OCR) and flags pages that still need attention. Choose **Edit** to correct the text or add a heading, then save a separate `.md` file. Your original Word document or PDF stays intact. You can also edit and save writable Markdown files directly.
+**Word, PDF and quick edits.** In direct desktop v0.0.235 and the iPhone, iPad and Mac App Store 1.0.5 editions, choose **Open File** to open a Word document (`.docx`) or a PDF. SpecDown converts the text to Markdown on your device. For PDF pages with little selectable text, it tries English text recognition (OCR) and flags pages that still need attention. Choose **Edit** to correct the text or add a heading, then save a separate `.md` file. Your original Word document or PDF stays intact. You can also edit and save writable Markdown files directly.
 
-These imports are also available in both Mac Dev and Beta editions and the mobile Dev and Beta apps. [Upcoming Store release notes and screenshots](app-store/release-assets/1.0.5-257/)
+These imports are also available in both Mac Dev and Beta editions and the mobile Dev and Beta apps. [Store 1.0.5 release notes and screenshots](app-store/release-assets/1.0.5-257/)
 
 Microsoft MarkItDown successfully converted a sample Word document and a text PDF in an earlier offline Python experiment. Its use was limited to that evaluation. [MarkItDown experiment and results](docs/project-document-import/2026-11-18-spec-edit-save-dev-acceptance.md#markitdown-experiment)
 

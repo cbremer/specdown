@@ -10,6 +10,8 @@ const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'specdown-edit-probe-'));
 app.setName('SpecDown Editing Probe');
 app.setPath('userData', path.join(fixture, 'profile'));
 process.env.SPECDOWN_DISABLE_UPDATER = '1';
+// Exercise the packaged direct release path with the production manifest.
+Object.defineProperty(app, 'isPackaged', { value: true });
 const filename = path.resolve(__dirname, '../desktop/main.js');
 const loaded = new Module(filename, module);
 loaded.filename = filename;
@@ -42,6 +44,7 @@ app.whenReady().then(async () => {
       async () => await js("typeof window.loadFileContent==='function'"),
       'viewer'
     );
+    assert.ok(await js("!!document.querySelector('#brand-bar .brand-bar-fill')"));
     const original = '# Original\r\n\r\n  tail  \r\n';
     const target = path.join(fixture, 'source.md');
     fs.writeFileSync(target, original);
