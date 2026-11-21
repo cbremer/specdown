@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.0.235 — 2026-11-21
+
+### Features
+
+- ship Word and PDF imports with local OCR on direct desktop
+- Enable document imports in production Apple Store apps
+- Enable the reviewed Dev design in Beta 256
+- Add the C+ brand moments design as a Dev-build preview (#462)
+- Enable document import in local Beta test builds
+- Add the SpecDown design system as the UI source of truth
+- Support sandboxed Markdown saves and map the four app platforms
+- Add Markdown source editing and safe local save Dev builds
+
+### Bug Fixes
+
+- Fix search highlight contrast and correct the dark-logo finding (#458)
+- Fix bounded recovery restore and retryable direct file grants
+- Fix iOS background at the bottom safe area
+
+### Documentation
+
+- Document device-specific TestFlight install verification
+
+### Other Changes
+
+- Make C+ brand moments the default on every surface (ZIL-237) (#466)
+- Record the submitted 1.0.5 Store listings and review status
+- Recapture branded import diagrams for the 1.0.5 Store galleries
+- Prepare App Store 1.0.5 listing and refreshed screenshot galleries
+- Promote the approved design to the Apple Store release candidate
+- Move dialogs onto a shared Modal and close dialog accessibility gaps (#460)
+- Keep toasts above dialogs and fix dark-theme Save contrast (#452)
+- Define TestFlight delivery for SpecDown Beta requests
+- Flush staged Markdown through its writable handle on Windows
+- Retain local Apple builds by platform and channel outside worktrees
+- Recognize scanned PDF pages in Dev and document build channels
+- Import PDF text into editable Markdown copies in Dev
+- Open Word documents as editable Markdown copies in Dev
+- Refine contextual editor controls and discard confirmation
+
 ## Upcoming App Store release · 1.0.5
 
 - A quieter toolbar and a reading-progress bar make it easier to follow longer documents.
