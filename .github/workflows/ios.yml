@@ -101,6 +101,26 @@ jobs:
               --channel "$channel" --web markdown-viewer/dist
           done
 
+      - name: Exercise reader citations and the native viewer on a disposable iPhone
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          read -r runtime device_type < <(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          candidates = [(runtime, phone["deviceTypeIdentifier"])
+                        for runtime, phones in devices.items() if ".iOS-" in runtime
+                        for phone in phones if phone["name"].startswith("iPhone")]
+          print(*candidates[-1])')
+          phone=$(xcrun simctl create "SpecDown Reader Tests" "$device_type" "$runtime")
+          trap 'xcrun simctl delete "$phone"' EXIT
+          xcodebuild -project ios/SpecDown.xcodeproj -scheme 'SpecDown Synthetic Tests' \
+            -destination "platform=iOS Simulator,id=$phone" -parallel-testing-enabled NO \
+            -derivedDataPath "$RUNNER_TEMP/specdown-reader-tests" CODE_SIGNING_ALLOWED=NO \
+            -only-testing:SpecDownTests/ReaderExplanationTests \
+            -only-testing:SpecDownTests/NativeDocumentTests/testReaderAvailabilityReachesBundledViewer \
+            test | xcpretty
+
       - name: Surface Swift warnings
         if: always()
         run: |
