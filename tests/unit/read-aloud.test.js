@@ -1,7 +1,7 @@
 const { loadHTML, loadApp } = require('../helpers/loadApp');
 
 const pane = () => document.getElementById('markdown-content');
-const strip = () => document.querySelector('.read-aloud-controls');
+const strip = () => document.querySelector('.sd-transport');
 const flushSpeech = async () => {
   await Promise.resolve();
   await Promise.resolve();
@@ -78,7 +78,7 @@ test('reads from the current visible section and announces a skippable block', a
   speak().onstart();
   await flushSpeech();
   expect(pane().querySelector('pre').classList).toContain('read-aloud-block');
-  strip().querySelectorAll('button')[1].click();
+  strip().querySelector('[aria-label="Skip code block"]').click();
   expect(speak().text).toBe('Next.');
   expect(pane().querySelector('pre').classList).not.toContain(
     'read-aloud-block'
@@ -96,18 +96,22 @@ test('answer playback returns to the saved document occurrence and ignores stale
   speak().onend();
   await flushSpeech();
   const staleEnd = speak().onend;
-  const rail = document.createElement('div');
-  document.body.append(rail);
-  readAloudMountControls(rail);
+  const rail = document.getElementById('rail-playback-chip');
+  expect(rail.hidden).toBe(true);
   readAloudListen('An answer.');
   staleEnd();
   await flushSpeech();
   expect(speak().text).toBe('An answer.');
-  expect(strip().parentElement).toBe(rail);
+  expect(document.getElementById('content-main').contains(strip())).toBe(true);
+  expect(strip().querySelector('.sd-transport-meta').textContent).toBe(
+    'Document paused at sentence 2'
+  );
   speak().onend();
   await flushSpeech();
-  expect(strip().textContent).toContain('Resume document');
-  readAloudMountControls(null);
+  expect(strip().querySelector('.primary').getAttribute('aria-label')).toBe(
+    'Resume'
+  );
+
   strip().querySelector('button').click();
   speak().onstart();
   await flushSpeech();
@@ -139,16 +143,20 @@ test('voice discovery waits for a local voice and handles interruptions and rate
   expect(speak().voice).toBe(local);
   speak().onpause();
   await flushSpeech();
-  expect(strip().textContent).toContain('Resume document');
+  expect(strip().querySelector('.primary').getAttribute('aria-label')).toBe(
+    'Resume'
+  );
   strip().querySelector('button').click();
   const oldEnd = speak().onend;
-  const rate = strip().querySelector('select');
-  rate.value = '1.5';
-  rate.dispatchEvent(new Event('change'));
+  const rate = strip().querySelector('.read-aloud-rate');
+  rate.click();
+  rate.click();
   expect(speak().rate).toBe(1.5);
   oldEnd();
   await flushSpeech();
-  expect(strip().textContent).toContain('Pause');
+  expect(strip().querySelector('.primary').getAttribute('aria-label')).toBe(
+    'Pause'
+  );
 });
 
 test('a service-backed voice alone never receives text, and a silent engine times out', async () => {
@@ -182,7 +190,9 @@ test('iOS uses matching native IDs and resumes an interrupted sentence with a fr
   window.specdownSpeechEvent({ ...command, sentenceId: 'stale', type: 'end' });
   window.specdownSpeechEvent({ ...command, type: 'interrupted' });
   await flushSpeech();
-  expect(strip().textContent).toContain('Resume document');
+  expect(strip().querySelector('.primary').getAttribute('aria-label')).toBe(
+    'Resume'
+  );
   expect(send.mock.lastCall[0].command.action).toBe('stop');
   readAloudResume();
   expect(send.mock.lastCall[0].command).toMatchObject({
@@ -288,3 +298,197 @@ test('a long document creates only the current sentence range at startup', () =>
     range.mockRestore();
   }
 });
+
+test('transport identifies the section, queue position and brand progress', async () => {
+  pane().innerHTML = '<h2>Retry policy</h2><p>Try again. Stop here.</p>';
+  const synth = browserVoice();
+  readAloudToggle();
+  expect(strip().closest('#content-main')).not.toBeNull();
+  expect(strip().querySelector('.sd-transport-title').textContent).toBe(
+    'Reading · Retry policy'
+  );
+  expect(strip().querySelector('.sd-transport-meta').textContent).toBe(
+    'Sentence 1 of 3'
+  );
+  synth.speak.mock.lastCall[0].onend();
+  await flushSpeech();
+  expect(strip().querySelector('.sd-transport-meta').textContent).toBe(
+    'Sentence 2 of 3'
+  );
+  expect(
+    Number(
+      document
+        .getElementById('brand-bar')
+        .style.getPropertyValue('--brand-reading-progress')
+    )
+  ).toBeCloseTo(2 / 3);
+  readAloudToggle();
+  expect(strip().querySelector('.primary').getAttribute('aria-label')).toBe(
+    'Resume'
+  );
+  readAloudToggle();
+  strip()
+    .querySelector('.primary')
+    .dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    );
+  expect(strip()).toBeNull();
+});
+
+test('compact rail chip pauses, returns to the saved sentence, and yields to the floating bar on close', async () => {
+  const original = window.matchMedia;
+  window.matchMedia = () => ({ matches: true, addEventListener: () => {} });
+  try {
+    document.body.classList.add('side-rail-open');
+    pane().textContent = 'Current sentence.';
+    const synth = browserVoice();
+    readAloudStart();
+    const chip = document.getElementById('rail-playback-chip');
+    expect(strip().hidden).toBe(true);
+    expect(chip.hidden).toBe(false);
+    expect(chip.textContent).toBe('Reading');
+    chip.click();
+    expect(chip.textContent).toBe('Paused');
+    chip.click();
+    readAloudListen('Answer.');
+    synth.speak.mock.lastCall[0].onend();
+    await flushSpeech();
+    expect(chip.textContent).toBe('Resume document');
+    chip.click();
+    expect(synth.speak.mock.lastCall[0].text).toBe('Current sentence.');
+    document.body.classList.remove('side-rail-open');
+    document.dispatchEvent(new CustomEvent('specdown-rail-change'));
+    expect(strip().hidden).toBe(false);
+    expect(chip.hidden).toBe(true);
+  } finally {
+    document.body.classList.remove('side-rail-open');
+    window.matchMedia = original;
+  }
+});
+
+test('walkthrough labels track source steps even when a step spans several sentences', async () => {
+  const synth = browserVoice();
+  const events = [];
+  const listener = (e) => events.push(e.detail.index);
+  document.addEventListener('specdown-walkthrough-step', listener);
+  try {
+    readAloudWalkthrough(
+      ['One.', 'Two. Still two.', 'Three.'],
+      'Job sequence',
+      1
+    );
+    expect(strip().querySelector('.sd-transport-title').textContent).toBe(
+      'Walkthrough · Job sequence'
+    );
+    const speak = () => synth.speak.mock.lastCall[0];
+    speak().onstart();
+    await flushSpeech();
+    expect(events).toEqual([1]);
+    speak().onend();
+    await flushSpeech();
+    expect(strip().querySelector('.sd-transport-meta').textContent).toBe(
+      'Step 2 of 3'
+    );
+    speak().onend();
+    await flushSpeech();
+    speak().onstart();
+    await flushSpeech();
+    expect(strip().querySelector('.sd-transport-meta').textContent).toBe(
+      'Step 3 of 3'
+    );
+    readAloudStopWalkthrough();
+    expect(events).toEqual([1, 2, null]);
+  } finally {
+    document.removeEventListener('specdown-walkthrough-step', listener);
+  }
+});
+
+test('rate menu opens on context click and long press and supports keyboard selection', () => {
+  jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
+  browserVoice();
+  pane().textContent = 'Sentence.';
+  readAloudStart();
+  const rate = strip().querySelector('.read-aloud-rate');
+  const menu = strip().querySelector('[role=menu]');
+  rate.dispatchEvent(
+    new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+  );
+  expect(menu.hidden).toBe(false);
+  document.activeElement.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'End', bubbles: true })
+  );
+  document.activeElement.click();
+  expect(rate.textContent).toBe('2×');
+  rate.dispatchEvent(new MouseEvent('pointerdown', { button: 0 }));
+  jest.advanceTimersByTime(510);
+  rate.dispatchEvent(new MouseEvent('pointerup'));
+  rate.click();
+  expect(menu.hidden).toBe(false);
+  expect(rate.textContent).toBe('2×');
+});
+
+test('manual scrolling suspends sentence centering for four seconds', async () => {
+  jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
+  const synth = browserVoice();
+  pane().textContent = 'One. Two.';
+  pane().getBoundingClientRect = () => ({
+    top: 0,
+    bottom: 300,
+    left: 0,
+    right: 600,
+    height: 300,
+    width: 600,
+  });
+  const old = Range.prototype.getBoundingClientRect;
+  Range.prototype.getBoundingClientRect = () => ({ top: 500, height: 20 });
+  try {
+    readAloudStart();
+    synth.speak.mock.lastCall[0].onstart();
+    await flushSpeech();
+    expect(pane().scrollTop).toBe(360);
+    pane().dispatchEvent(new Event('wheel'));
+    pane().scrollTop = 100;
+    synth.speak.mock.lastCall[0].onend();
+    await flushSpeech();
+    synth.speak.mock.lastCall[0].onstart();
+    await flushSpeech();
+    jest.advanceTimersByTime(3999);
+    expect(pane().scrollTop).toBe(100);
+    jest.advanceTimersByTime(1);
+    expect(pane().scrollTop).toBe(460);
+  } finally {
+    if (old) Range.prototype.getBoundingClientRect = old;
+    else delete Range.prototype.getBoundingClientRect;
+  }
+});
+
+test.each([
+  [
+    'no-voice',
+    'Read aloud needs a voice. Add one in System Settings → Accessibility → Spoken Content.',
+  ],
+  [
+    undefined,
+    'Speech could not start. Check your system voice settings and try again.',
+  ],
+])(
+  'Mac speech error reason %s shows matching guidance and dismisses the transport',
+  async (reason, message) => {
+    pane().textContent = 'Hello.';
+    let notify;
+    const native = jest.fn(() => Promise.resolve(true));
+    window.specdown = {
+      platform: 'darwin',
+      readerSpeech: native,
+      onReaderSpeechEvent(fn) {
+        notify = fn;
+        return () => {};
+      },
+    };
+    readAloudStart();
+    notify({ ...native.mock.lastCall[0], type: 'error', reason });
+    await flushSpeech();
+    expect(document.querySelector('.toast-region').textContent).toBe(message);
+    expect(strip()).toBeNull();
+  }
+);

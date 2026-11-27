@@ -5,12 +5,19 @@ import { bridgeDesktopPlatform, bridgeReaderSpeechAdapter } from './bridge.js';
 /** @typedef {{sessionId:string, sentenceId:string}} SpeechIdentity */
 /** @typedef {SpeechIdentity & {text:string, rate:number}} ReaderUtterance */
 /** @typedef {(ReaderUtterance & {action:'speak'}) | (SpeechIdentity & {action:'stop'})} ReaderSpeechCommand */
-/** @typedef {SpeechIdentity & {type:'start'|'end'|'interrupted'|'error'}} ReaderSpeechEvent */
+/** @typedef {SpeechIdentity & {type:'start'|'end'|'interrupted'|'error',reason?:'no-voice'}} ReaderSpeechEvent */
 /** @typedef {(type:ReaderSpeechEvent['type'], message?:string)=>void} ReaderSpeechNotify */
 /** @typedef {{send:(command:ReaderSpeechCommand)=>void|Promise<boolean>, listen:(callback:(event:ReaderSpeechEvent)=>void)=>()=>void}} ReaderNativeSpeech */
 
-const readerMissingVoice =
-  'Install an offline voice in your system speech settings, then try Read Aloud again.';
+function readerMissingVoiceMessage() {
+  if (
+    window.iosNative ||
+    /Mac|iPad|iPhone/i.test(navigator.platform) ||
+    bridgeDesktopPlatform() === 'darwin'
+  )
+    return 'Read aloud needs a voice. Add one in System Settings → Accessibility → Spoken Content.';
+  return 'Read aloud needs a voice. Install an offline voice in your system speech settings, then try again.';
+}
 const readerSpeechUnavailable =
   'Speech could not start. Check your system voice settings and try again.';
 
@@ -40,10 +47,11 @@ function readerSpeakNative(native, item, emit) {
       event.sentenceId === item.sentenceId &&
       ['start', 'end', 'interrupted', 'error'].includes(event.type)
     ) {
-      emit(
-        event.type,
-        event.type === 'error' ? readerSpeechUnavailable : undefined
-      );
+      const error =
+        event.reason === 'no-voice'
+          ? readerMissingVoiceMessage()
+          : readerSpeechUnavailable;
+      emit(event.type, event.type === 'error' ? error : undefined);
     }
   });
   try {
@@ -82,13 +90,13 @@ function readerSpeakNative(native, item, emit) {
 function readerSpeakWeb(item, emit) {
   const synth = window.speechSynthesis;
   if (!synth || !window.SpeechSynthesisUtterance) {
-    emit('error', readerMissingVoice);
+    emit('error', readerMissingVoiceMessage());
     return () => {};
   }
   /** @type {SpeechSynthesisUtterance|null} */
   let utterance = null;
   const timeout = window.setTimeout(
-    () => emit('error', readerMissingVoice),
+    () => emit('error', readerMissingVoiceMessage()),
     2500
   );
   const poll = window.setInterval(discover, 250);

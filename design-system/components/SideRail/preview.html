@@ -1,0 +1,26 @@
+<!-- @dsCard group="Panels · proposed" height=320 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div style="display:flex;height:320px">
+      <div style="flex:1;background:var(--bg-primary);padding:24px;color:var(--text-secondary)">Document…</div>
+      <aside class="sd-rail" aria-label="Side panel">
+        <div class="sd-rail-resize" role="separator" aria-orientation="vertical" aria-valuemin="320" aria-valuemax="480" aria-valuenow="360" tabindex="0"></div>
+        <div class="sd-rail-header">
+          <div class="sd-rail-tabs" role="tablist">
+            <button class="sd-rail-tab" role="tab" aria-selected="true">Explain</button>
+            <button class="sd-rail-tab" role="tab" aria-selected="false">Notes <span class="sd-rail-tab-count">2</span></button>
+          </div>
+          <button class="sd-rail-close" aria-label="Close">✕</button>
+        </div>
+        <div style="padding:16px 20px;color:var(--text-secondary);font-size:0.9rem">Tab content</div>
+      </aside>
+    </div>
+  </body>
+</html>

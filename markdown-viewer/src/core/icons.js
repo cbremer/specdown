@@ -14,6 +14,9 @@ const SVG_OPEN =
 
 /** @type {Record<string, string>} */
 const PATHS = {
+  pause: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>',
+  play: '<path d="M6 4l14 8-14 8z"/>',
+  stop: '<rect x="5" y="5" width="14" height="14" rx="1"/>',
   moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
   sun:
     '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>' +

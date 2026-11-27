@@ -144,6 +144,19 @@ test('speech replies and stops apply only to the active utterance; disposal ends
   expect(emit).toHaveBeenCalledTimes(1);
 });
 
+test('relays only the specific missing-voice reason', () => {
+  const { reader, processes, emit } = fixture();
+  for (const reason of ['no-voice', 'other diagnostic']) {
+    reader.speech({ action: 'speak', ...ids, text: 'Hello.' });
+    processes[0].reply({ event: { ...ids, type: 'error', reason } });
+  }
+  expect(emit.mock.calls).toEqual([
+    [{ ...ids, type: 'error', reason: 'no-voice' }],
+    [{ ...ids, type: 'error' }],
+  ]);
+  reader.dispose();
+});
+
 test('a missing or broken helper reports failure and permits a fresh launch', async () => {
   const { reader, processes, emit } = fixture();
   const discovery = reader.explainAvailable();

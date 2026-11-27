@@ -120,7 +120,7 @@ export async function askExplain(input, signal) {
     }
     const ids = new Set(input.excerpts.map((excerpt) => excerpt.id));
     if (reply.sourceIds.some((id) => !ids.has(id)))
-      throw new Error('The answer could not be linked to this source.');
+      throw new Error('This answer couldn’t be matched to the document.');
     if (!reply.sourceIds.length)
       return {
         text: 'The selected source does not answer this question.',

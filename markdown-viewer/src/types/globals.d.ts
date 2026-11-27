@@ -76,6 +76,8 @@ type ExplainRequest = {
 type ExplainReply = {available?: boolean; reason?: string; text?: string; sourceIds?: string[]; error?: string};
 
 interface SpecdownDesktopBridge {
+  setReaderMenuState?: (available: boolean, hasSelection: boolean) => void;
+  onReaderAction?: (callback: (action: 'read' | 'explain') => void) => void;
   explainAvailable?: () => Promise<{available: boolean; reason?: string}>;
   askExplain?: (request: ExplainRequest) => Promise<ExplainReply>;
   cancelExplain?: (requestId: string) => void;
@@ -154,6 +156,7 @@ interface WebkitMessageHandler {
 declare global {
   interface Window { specdownSourceSaveResult?: (id:string, result: {status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string; sourceMeta?:import('../core/state.js').TabSourceMeta|null})=>void; }
   interface Window {
+    specdownReaderAction?: (action: 'read' | 'explain') => void;
     specdownSpeechEvent?: (event: import('../platform/speech.js').ReaderSpeechEvent) => void;
     specdownExplainResult?: (requestId: string, reply: ExplainReply) => void;
     /** Electron preload bridge (desktop only). */

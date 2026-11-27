@@ -39,3 +39,7 @@ Options considered: A (keep blue, generic once a file is open), B (teal accent e
 - Generate `tokens.css` for the web viewer and an `Assets.xcassets` colour set or Swift `Color` extension for iOS from the single `tokens.json`, so native tint and web accent can't drift.
 - Split the 3,900-line `styles.css` along this system's component boundaries (toolbar, tabs, menu, toast, palette, document, themes). It already has section headers for each.
 - Add a high-contrast theme as a third `color.themes` entry (text ≥ 7:1, control borders ≥ 3:1).
+
+## 6. Read aloud and Explain tokens
+
+`read-aloud-sentence`, `scope-mark`, `rail-width` / `-min` / `-max`, `touch-target`, and the first named z-layers (`z-menu`, `z-transport`, `z-rail`, `z-toast`) are defined in `tokens.json` and used in `styles.css`. Migrating the Notes panel into the shared side rail also retires its uppercase 0.75rem header.

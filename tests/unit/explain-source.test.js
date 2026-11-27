@@ -100,6 +100,15 @@ test('SVG citations match the label occurrence and preserve the reading DOM', ()
   expect(window.getSelection().getRangeAt(0).startContainer).toBe(
     root.querySelectorAll('.messageText')[5]
   );
+  expect(root.querySelector('.citation-reveal')).toBe(
+    root.querySelectorAll('.messageText')[5]
+  );
+  scope.walkthrough[3].reveal();
+  expect(root.querySelectorAll('.citation-reveal')).toHaveLength(1);
+  expect(root.querySelector('.citation-reveal')).toBe(
+    root.querySelectorAll('.messageText')[3]
+  );
+  clearExplainMarks();
   expect(root.innerHTML).toBe(before);
 });
 
@@ -286,4 +295,126 @@ test('selection keys include the end boundary even beyond the provider budget', 
     second.excerpts.map((e) => e.id)
   );
   expect(first.key).not.toBe(second.key);
+});
+
+test('a partial scope mark uses exact offsets without splitting source nodes, even across inline marks', () => {
+  root.innerHTML = '<h2>Plan</h2><p>Read <b>these</b> words.</p>';
+  const range = document.createRange();
+  range.setStart(root.querySelector('b').firstChild, 1);
+  range.setEnd(root.querySelector('p').lastChild, 3);
+  const [scope, section, whole] = captureExplainScopes(range);
+  const css = window.CSS;
+  const highlight = window.Highlight;
+  class FakeHighlight {
+    constructor(...ranges) {
+      this.ranges = ranges;
+    }
+  }
+  try {
+    window.CSS = { highlights: new Map() };
+    window.Highlight = FakeHighlight;
+    const html = root.innerHTML;
+    scope.mark();
+    const mark = window.CSS.highlights.get('explain-scope').ranges[0];
+    expect(mark.toString()).toBe('hese wo');
+    expect(mark.startContainer).toBe(range.startContainer);
+    expect(root.innerHTML).toBe(html);
+    expect(scope.excerpts[0].label).toBe('Plan, ¶1');
+    expect(scope.excerpts[0].ariaLabel).toBe('Plan, paragraph 1');
+    section.mark();
+    expect(window.CSS.highlights.size).toBe(0);
+    expect(root.querySelector('p').classList.contains('scope-mark')).toBe(true);
+    whole.mark();
+    expect(root.classList.contains('scope-mark')).toBe(true);
+    clearExplainMarks();
+    expect(root.innerHTML).toBe(html);
+    expect(root.classList.contains('scope-mark')).toBe(false);
+  } finally {
+    window.CSS = css;
+    window.Highlight = highlight;
+  }
+});
+
+test('citation outlines cover only clipped range fragments and move on subsequent citations', () => {
+  root.innerHTML = '<h2>Retry policy</h2><p>Again.</p><p>Again.</p>';
+  const previous = Range.prototype.getClientRects;
+  try {
+    root.getBoundingClientRect = () => ({
+      left: 10,
+      right: 100,
+      top: 10,
+      bottom: 100,
+    });
+    Range.prototype.getClientRects = () => [
+      { left: 0, right: 30, top: 10, bottom: 30 },
+      { left: 30, right: 46, top: 10, bottom: 30 },
+      { left: 30, right: 46, top: 10, bottom: 30 },
+      { left: 46, right: 60, top: 10, bottom: 30 },
+      { left: 40, right: 66, top: 40, bottom: 60 },
+    ];
+    const [section] = captureExplainScopes();
+    const second = section.excerpts[2];
+    expect(second.label).toBe('Retry policy, ¶2');
+    second.reveal();
+    const fragment = document.querySelector(
+      '.explain-mark-layer .citation-reveal'
+    );
+    expect(
+      document.querySelectorAll('.explain-mark-layer .citation-reveal')
+    ).toHaveLength(2);
+    expect(fragment.style.width).toBe('50px');
+    expect(fragment.style.left).toBe('10px');
+    expect(window.getSelection().getRangeAt(0).startContainer).toBe(
+      root.lastElementChild.firstChild
+    );
+    section.excerpts[1].reveal();
+    expect(fragment.isConnected).toBe(false);
+    expect(document.querySelectorAll('.explain-mark-layer')).toHaveLength(1);
+    clearExplainMarks();
+    expect(document.querySelector('.explain-mark-layer')).toBeNull();
+  } finally {
+    Range.prototype.getClientRects = previous;
+  }
+});
+
+test('citation cards preserve code line numbers in a selection and distinguish repeated branches', () => {
+  root.innerHTML =
+    '<h2>Worker lifecycle</h2><pre><code>line one\n<span>line two\nline three</span></code></pre>';
+  const range = document.createRange();
+  const text = root.querySelector('span').firstChild;
+  range.setStart(text, 11);
+  range.setEnd(text, text.length);
+  const [selected] = captureExplainScopes(range);
+  expect(selected.excerpts[0].ariaLabel).toBe('Worker lifecycle, line 3');
+  const button = diagram(timeoutDiagram);
+  root.insertAdjacentHTML('afterbegin', '<h2>Worker lifecycle</h2>');
+  const [scope] = captureExplainScopes(null, button);
+  expect(scope.walkthrough[3].branchLabel).toBe('If Job completes');
+  expect(scope.walkthrough[5].branchLabel).toBe('Otherwise, Worker times out');
+  expect(scope.walkthrough[5].label).toBe('API → Client · Response');
+  expect(scope.excerpts[5].ariaLabel).toBe('Worker lifecycle, step 6');
+});
+
+test('widening selects the actual containing section including the opening passage or a sibling branch', () => {
+  root.innerHTML =
+    '<p>Intro.</p><h1>Requirements</h1><h2>Retry policy</h2><p>Wait.</p><h2>Worker</h2><pre><code>send()</code></pre>';
+  const range = document.createRange();
+  range.selectNodeContents(root.firstElementChild);
+  const scopes = captureExplainScopes(range);
+  expect(scopes[0].containingSection.label).toBe('Section · Opening text');
+  expect(scopes[0].sectionKey).toBe(scopes[1].key);
+  expect(scopes[1].excerpts.map((e) => e.text)).toEqual(['Intro.']);
+  const code = scopes.find((s) => s.kind === 'code');
+  expect(code.containingSection.label).toBe('Section · Worker');
+  expect(code.containingSection.excerpts.map((e) => e.text)).toEqual([
+    'Worker',
+    'send()',
+  ]);
+  range.setStart(root.querySelector('h2'), 0);
+  range.setEndAfter(root.querySelector('code'));
+  expect(captureExplainScopes(range)[0].containingSection.label).toBe(
+    'Section · Requirements'
+  );
+  range.setStart(root.firstElementChild, 0);
+  expect(captureExplainScopes(range)[0].containingSection).toBeUndefined();
 });

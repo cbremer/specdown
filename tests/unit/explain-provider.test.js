@@ -28,7 +28,7 @@ it('displays the Mac model availability reason and rejects an out-of-scope citat
   expect(await explainAvailable()).toBe(false);
   expect(explainUnavailableReason()).toBe('The model is downloading.');
   await expect(askExplain(input, new AbortController().signal)).rejects.toThrow(
-    'linked'
+    'matched'
   );
 });
 

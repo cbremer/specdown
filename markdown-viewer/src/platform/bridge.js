@@ -272,3 +272,22 @@ export function bridgeAskExplain(request) {
 export function bridgeCancelExplain(id) {
   nativeBridge()?.cancelExplain?.(id);
 }
+
+/** @param {(action:'read'|'explain')=>void} callback */
+export function bridgeOnReaderAction(callback) {
+  if (window.iosNative) window.specdownReaderAction = callback;
+  else nativeBridge()?.onReaderAction?.(callback);
+}
+
+/** Native menus only need selection presence; text stays in the viewer.
+ * @param {boolean} available @param {boolean} hasSelection */
+export function bridgeSetReaderMenuState(available, hasSelection) {
+  if (window.iosNative) {
+    window.webkit?.messageHandlers?.specdown?.postMessage({
+      action: 'readerMenuState',
+      data: {available, hasSelection},
+    });
+  } else {
+    nativeBridge()?.setReaderMenuState?.(available, hasSelection);
+  }
+}

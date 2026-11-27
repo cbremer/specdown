@@ -2,13 +2,15 @@ import {
   captureDocumentContext,
   isDocumentContextCurrent,
 } from '../core/document-context.js';
+import { iconSvg } from '../core/icons.js';
+import { setBrandNarrationProgress } from '../core/brand-moments.js';
 import { speakReaderUtterance } from '../platform/speech.js';
 import { showToast } from './toast.js';
 // @ts-expect-error -- Vite stylesheet import
 import './read-aloud.css';
 
-/** @typedef {{text:string, range:Range|null, block?:Element}} ReadAloudSentence */
-/** @typedef {{sessionId:string, queue:Iterator<ReadAloudSentence>, sentence:ReadAloudSentence, kind:'document'|'answer', paused:boolean, opener:HTMLElement|null, context:ReturnType<typeof captureDocumentContext>}} ReadAloudSession */
+/** @typedef {{text:string, range:Range|null, block?:Element, section?:string, step?:number}} ReadAloudSentence */
+/** @typedef {{sessionId:string, queue:Iterator<ReadAloudSentence>, sentence:ReadAloudSentence, kind:'document'|'answer'|'walkthrough', position:number, total:number|null, title:string, returning:boolean, paused:boolean, opener:HTMLElement|null, context:ReturnType<typeof captureDocumentContext>}} ReadAloudSession */
 /** @typedef {{node:Text, offset:number, start:number, end:number}} NarrationSpan */
 
 /** @type {ReadAloudSession|null} */
@@ -18,9 +20,22 @@ let readerSavedDocument = null;
 let readerSerial = 0;
 let readerAttempt = 0;
 let readerRate = 1;
+/** @type {number|null} */
+let readerWalkthroughIndex = null;
+
+/** The rail highlights a source step only while that step is being spoken.
+ * A step may contain several sentences. @param {number|null} index */
+function readerAnnounceStep(index) {
+  if (readerWalkthroughIndex === index) return;
+  readerWalkthroughIndex = index;
+  document.dispatchEvent(
+    new CustomEvent('specdown-walkthrough-step', { detail: { index } })
+  );
+}
 let readerCancel = () => {};
-/** @type {HTMLElement|null} */
-let readerControlsHost = null;
+let readerScrollGraceUntil = 0;
+let readerFollowTimer = 0;
+let readerExpectedScroll = NaN;
 /** @type {ReturnType<typeof readerCreateControls>|null} */
 let readerControls = null;
 let readerClearHighlight = () => {};
@@ -71,10 +86,10 @@ function* readerSentenceOffsets(text) {
 
 /** Traverse one rendered block at a time. Long documents allocate ranges
  * only as they are spoken. Retain the iterator and current sentence on pause.
- * @param {HTMLElement} root @param {Range|null} selection
+ * @param {HTMLElement} root @param {Range|null} selection @param {boolean} [measure]
  * @returns {Generator<ReadAloudSentence>}
  */
-function* readAloudSentences(root, selection = null) {
+function* readAloudSentences(root, selection = null, measure = false) {
   const selected =
     selection &&
     !selection.collapsed &&
@@ -92,6 +107,17 @@ function* readAloudSentences(root, selection = null) {
       fromHeading = heading;
     }
   }
+  let section = '';
+  if (selected) {
+    for (const heading of root.querySelectorAll('h1,h2,h3,h4,h5,h6')) {
+      if (selected.comparePoint(heading, 0) > 0) break;
+      if (
+        selected.comparePoint(heading, 0) < 0 ||
+        heading.contains(selected.startContainer)
+      )
+        section = heading.textContent?.trim() || section;
+    }
+  }
   let reached = !fromHeading;
   let buffer = '';
   /** @type {NarrationSpan[]} */
@@ -105,6 +131,10 @@ function* readAloudSentences(root, selection = null) {
       while (spans[cursor]?.end < end) cursor++;
       const last = spans[cursor];
       if (!first || !last) continue;
+      if (measure) {
+        yield { text: '', range: null };
+        continue;
+      }
       const range = document.createRange();
       range.setStart(
         first.node,
@@ -114,7 +144,7 @@ function* readAloudSentences(root, selection = null) {
         last.node,
         last.offset + Math.min(last.end - last.start, end - last.start)
       );
-      yield { text: buffer.slice(start, end), range };
+      yield { text: buffer.slice(start, end), range, section };
     }
     buffer = '';
     spans = [];
@@ -143,18 +173,21 @@ function* readAloudSentences(root, selection = null) {
     )
       return;
     if (node === fromHeading) reached = true;
+    if (node.matches('h1,h2,h3,h4,h5,h6'))
+      section = node.textContent?.trim() || section;
     const diagram =
       node.classList.contains('diagram-container') ||
       (node.tagName === 'PRE' && !!node.querySelector('code.language-mermaid'));
     if (diagram || (node.tagName === 'PRE' && !selected)) {
       yield* flush();
       if (reached) {
-        const range = document.createRange();
-        range.selectNodeContents(node);
+        const range = measure ? null : document.createRange();
+        range?.selectNodeContents(node);
         yield {
           text: diagram ? 'Diagram.' : 'Code block.',
           range,
           block: node,
+          section,
         };
       }
       return;
@@ -190,7 +223,10 @@ function readerHighlight(item) {
   const range = item.range;
   if (!range) return;
   if (window.CSS?.highlights && window.Highlight) {
-    CSS.highlights.set('read-aloud-sentence', new Highlight(range));
+    const mark = new Highlight(range);
+    // Keep the spoken sentence visible inside the rail's broader scope mark.
+    mark.priority = 1;
+    CSS.highlights.set('read-aloud-sentence', mark);
     readerClearHighlight = () => CSS.highlights.delete('read-aloud-sentence');
     return;
   }
@@ -210,6 +246,7 @@ function readerHighlight(item) {
       const height = Math.min(pane.bottom, rect.bottom) - top;
       if (width <= 0 || height <= 0) continue;
       const mark = document.createElement('span');
+      mark.className = 'read-aloud-sentence';
       Object.assign(mark.style, {
         left: left + 'px',
         top: top + 'px',
@@ -227,6 +264,33 @@ function readerHighlight(item) {
     window.removeEventListener('scroll', paint, true);
     window.removeEventListener('resize', paint);
   };
+}
+
+/** @param {ReadAloudSentence} sentence */
+function readerFollowSentence(sentence) {
+  if (Date.now() < readerScrollGraceUntil || readerControls?.bar.hidden) return;
+  const root = readerSession?.context.root;
+  const box =
+    sentence.block?.getBoundingClientRect() ||
+    sentence.range?.getBoundingClientRect?.();
+  if (!root || !box?.height) return;
+  const pane = root.getBoundingClientRect();
+  const height = pane.height - (readerControls?.bar.offsetHeight || 0);
+  if (height <= 0) return;
+  const center = box.top + Math.min(box.height, height / 3) / 2 - pane.top;
+  if (center < height / 3 || center > (height * 2) / 3) {
+    root.scrollTop += center - height / 2;
+    readerExpectedScroll = root.scrollTop;
+  }
+}
+
+function readerPauseFollowing() {
+  readerScrollGraceUntil = Date.now() + 4000;
+  window.clearTimeout(readerFollowTimer);
+  readerFollowTimer = window.setTimeout(() => {
+    if (readerSession && !readerSession.paused)
+      readerFollowSentence(readerSession.sentence);
+  }, 4000);
 }
 
 function readerCancelSentence() {
@@ -276,10 +340,15 @@ function readerContextIsCurrent() {
 
 /** @param {boolean} [restoreFocus] */
 function readerFinish(restoreFocus = true) {
-  const hadFocus = readerControls?.bar.contains(document.activeElement);
+  readerAnnounceStep(null);
+  const chipFocused =
+    !!readerControls?.chip && readerControls.chip === document.activeElement;
+  const hadFocus =
+    chipFocused || readerControls?.bar.contains(document.activeElement);
   const opener = readerSession?.opener;
   readerCancelSentence();
   readerSession = readerSavedDocument;
+  if (readerSession) readerSession.returning = true;
   readerSavedDocument = null;
   readerWatchContent();
   readerUpdateControls();
@@ -289,9 +358,13 @@ function readerFinish(restoreFocus = true) {
       !opener.closest('[hidden], [inert]') &&
       opener !== document.body
         ? opener
-        : readerControlsHost?.closest('aside')?.querySelector('button') ||
-          document.getElementById('markdown-content');
-    target?.focus({ preventScroll: true });
+        : document.getElementById('markdown-content');
+    const railTab = chipFocused
+      ? document.querySelector('.sd-rail [role="tab"][aria-selected="true"]')
+      : null;
+    (railTab instanceof HTMLElement ? railTab : target)?.focus({
+      preventScroll: true,
+    });
   }
 }
 
@@ -301,6 +374,7 @@ function readerPlay() {
   if (!session || !readerContextIsCurrent()) return readAloudReset();
   const sentence = session.sentence;
   session.paused = false;
+  session.returning = false;
   readerUpdateControls();
   const attempt = readerAttempt;
   readerCancel = speakReaderUtterance(
@@ -316,7 +390,11 @@ function readerPlay() {
         // until the disposer for this exact utterance has been installed.
         if (attempt !== readerAttempt || session !== readerSession) return;
         if (!readerContextIsCurrent()) return readAloudReset();
-        if (type === 'start') readerHighlight(sentence);
+        if (type === 'start') {
+          readerAnnounceStep(sentence.step ? sentence.step - 1 : null);
+          readerHighlight(sentence);
+          readerFollowSentence(sentence);
+        }
         if (type === 'end') readerAdvance();
         if (type === 'interrupted') readAloudPause();
         if (type === 'error') {
@@ -336,22 +414,30 @@ function readerAdvance() {
   const next = readerSession.queue.next();
   if (next.done) return readerFinish();
   readerSession.sentence = next.value;
+  readerSession.position++;
   readerPlay();
 }
 
-/** @param {Iterator<ReadAloudSentence>} queue @param {'document'|'answer'} kind */
-function readerBegin(queue, kind) {
+/** @param {Iterator<ReadAloudSentence>} queue @param {ReadAloudSession['kind']} kind
+ * @param {string} [title] @param {number|null} [total] */
+function readerBegin(queue, kind, title = '', total = null) {
   const first = queue.next();
   if (first.done) {
     showToast('There is no text to read here.');
     return;
   }
-  if (kind === 'answer' && readerSession?.kind === 'document') {
+  readerAnnounceStep(null);
+  if (kind !== 'document' && readerSession?.kind === 'document') {
     readerSession.paused = true;
     readerSavedDocument = readerSession;
   }
-  if (kind === 'document') readerSavedDocument = null;
-  readerSession = {
+  if (kind === 'document') {
+    readerSavedDocument = null;
+    readerScrollGraceUntil = 0;
+    window.clearTimeout(readerFollowTimer);
+  }
+  /** @type {ReadAloudSession} */
+  const session = {
     sessionId: 'read-' + Date.now().toString(36) + '-' + ++readerSerial,
     opener:
       document.activeElement instanceof HTMLElement
@@ -360,37 +446,94 @@ function readerBegin(queue, kind) {
     sentence: first.value,
     queue,
     kind,
+    title,
+    total,
+    position: 1,
+    returning: false,
     paused: false,
     context: captureDocumentContext(),
   };
+  readerSession = session;
   readerWatchContent();
   readerPlay();
+  return session;
+}
+
+/** Count in short slices. Speech can begin immediately, even on a large
+ * document. Counting does not allocate DOM ranges. @param {ReadAloudSession} session
+ * @param {Iterator<ReadAloudSentence>} items */
+function readerCountSentences(session, items) {
+  let count = 0;
+  function batch() {
+    if (session !== readerSession && session !== readerSavedDocument) return;
+    for (let i = 0; i < 128; i++) {
+      if (items.next().done) {
+        session.total = count;
+        readerUpdateControls();
+        return;
+      }
+      count++;
+    }
+    window.setTimeout(batch, 0);
+  }
+  batch();
 }
 
 /** @param {Range|null} [range] */
 export function readAloudStart(range = null) {
   const root = document.getElementById('markdown-content');
-  if (root) readerBegin(readAloudSentences(root, range), 'document');
+  if (!root) return;
+  const session = readerBegin(
+    readAloudSentences(root, range),
+    'document',
+    range ? 'Selection' : 'Document'
+  );
+  if (session)
+    readerCountSentences(session, readAloudSentences(root, range, true));
+}
+
+/** @param {Range|null} [range] */
+export function readAloudToggle(range = null) {
+  if (!readerSession) readAloudStart(range);
+  else if (readerSession.paused) readAloudResume();
+  else readAloudPause();
+}
+
+/** @param {string} text @param {number} [step] */
+function* readerTextQueue(text, step) {
+  for (const [start, end] of readerSentenceOffsets(text))
+    yield { text: text.slice(start, end), range: null, step };
 }
 
 /** @param {string} text */
 export function readAloudListen(text) {
-  function* sentences() {
-    for (const [start, end] of readerSentenceOffsets(text))
-      yield { text: text.slice(start, end), range: null };
+  const session = readerBegin(readerTextQueue(text), 'answer');
+  if (session) readerCountSentences(session, readerTextQueue(text));
+}
+
+/** @param {string[]} steps @param {string} [title] @param {number} [startIndex] */
+export function readAloudWalkthrough(steps, title = 'Diagram', startIndex = 0) {
+  function* queue() {
+    for (let i = Math.max(0, startIndex); i < steps.length; i++)
+      yield* readerTextQueue(steps[i], i + 1);
   }
-  readerBegin(sentences(), 'answer');
+  readerBegin(queue(), 'walkthrough', title, steps.length);
 }
 
 export function readAloudPause() {
   if (!readerSession || readerSession.paused) return;
   readerSession.paused = true;
+  readerAnnounceStep(null);
   readerCancelSentence();
   readerUpdateControls();
 }
 
 export function readAloudResume() {
   if (readerSession?.paused) readerPlay();
+}
+
+export function readAloudStopWalkthrough() {
+  if (readerSession?.kind === 'walkthrough') readAloudStop();
 }
 
 export function readAloudStop() {
@@ -403,70 +546,306 @@ export function readAloudReset() {
   readerFinish(false);
 }
 
-/** @param {HTMLElement|null} slot */
-export function readAloudMountControls(slot) {
-  readerControlsHost = slot;
-  readerUpdateControls();
+/** Restore the saved document immediately, even mid-answer. */
+function readerResumeDocument() {
+  if (readerSavedDocument) readerFinish(false);
+  readAloudResume();
 }
 
 function readerCreateControls() {
+  const anchor = document.createElement('div');
+  anchor.className = 'read-aloud-anchor';
   const bar = document.createElement('div');
-  bar.className = 'read-aloud-controls';
-  bar.setAttribute('role', 'group');
+  bar.className = 'sd-transport';
+  bar.setAttribute('role', 'region');
   bar.setAttribute('aria-label', 'Read aloud');
-  const label = document.createElement('span');
-  label.className = 'read-aloud-label';
-  label.setAttribute('role', 'status');
-  /** @param {string} text @param {()=>void} action */
-  function button(text, action) {
-    const control = document.createElement('button');
-    control.type = 'button';
-    control.textContent = text;
-    control.addEventListener('click', action);
-    return control;
+  const abort = new AbortController();
+  const options = { signal: abort.signal };
+  /** @param {string} label @param {string} style @param {()=>void} fn */
+  function button(label, style, fn) {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = style;
+    el.textContent = label;
+    el.addEventListener('click', fn, options);
+    return el;
   }
-  const pause = button('Pause', () =>
-    readerSession?.paused ? readAloudResume() : readAloudPause()
+  const pause = button('Pause', 'sd-transport-button primary', () =>
+    readAloudToggle()
   );
-  const skip = button('Skip block', readerAdvance);
-  const stop = button('Stop', readAloudStop);
-  const rate = document.createElement('select');
-  rate.setAttribute('aria-label', 'Reading speed');
-  for (const speed of [0.75, 1, 1.25, 1.5, 2])
-    rate.add(new Option(speed + '×', String(speed)));
-  rate.value = String(readerRate);
-  rate.addEventListener('change', () => {
-    readerRate = Number(rate.value);
-    if (readerSession && !readerSession.paused) readerPlay();
+  const stop = button('Stop', 'sd-transport-button', readAloudStop);
+  stop.innerHTML = iconSvg('stop');
+  stop.setAttribute('aria-label', 'Stop');
+  stop.title = 'Stop';
+  const divider = document.createElement('span');
+  divider.className = 'sd-transport-divider';
+  const label = document.createElement('div');
+  label.className = 'sd-transport-label';
+  const title = document.createElement('span');
+  title.className = 'sd-transport-title';
+  title.setAttribute('role', 'status');
+  const meta = document.createElement('span');
+  meta.className = 'sd-transport-meta';
+  label.append(title, meta);
+  const skip = button('Skip', 'sd-transport-pill', readerAdvance);
+  const resume = button(
+    'Resume document',
+    'sd-transport-pill',
+    readerResumeDocument
+  );
+  const speeds = [0.75, 1, 1.25, 1.5, 2];
+  const rate = button('', 'sd-transport-pill read-aloud-rate', () => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
+    setRate(speeds[(speeds.indexOf(readerRate) + 1) % speeds.length]);
   });
-  bar.append(label, pause, skip, stop, rate);
-  return { bar, label, pause, skip };
+  const menu = document.createElement('div');
+  menu.className = 'read-aloud-rate-menu';
+  menu.hidden = true;
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Playback rate');
+  rate.setAttribute('aria-haspopup', 'menu');
+  rate.setAttribute('aria-expanded', 'false');
+  function closeMenu() {
+    menu.hidden = true;
+    rate.setAttribute('aria-expanded', 'false');
+  }
+  function showMenu() {
+    menu.hidden = false;
+    rate.setAttribute('aria-expanded', 'true');
+    const selected = menu.querySelector('[aria-checked="true"]');
+    if (selected instanceof HTMLButtonElement)
+      selected.focus({ preventScroll: true });
+  }
+  /** @param {number} speed */
+  function setRate(speed) {
+    readerRate = speed;
+    closeMenu();
+    if (readerSession && !readerSession.paused) readerPlay();
+    else readerUpdateControls();
+  }
+  for (const speed of speeds) {
+    const option = button(speed + '×', 'sd-transport-pill', () => {
+      setRate(speed);
+      rate.focus({ preventScroll: true });
+    });
+    option.setAttribute('role', 'menuitemradio');
+    option.dataset.speed = String(speed);
+    menu.append(option);
+  }
+  let pressTimer = 0;
+  let suppressClick = false;
+  rate.addEventListener(
+    'pointerdown',
+    (e) => {
+      suppressClick = false;
+      if (e.button === 0)
+        pressTimer = window.setTimeout(() => {
+          suppressClick = true;
+          showMenu();
+        }, 500);
+    },
+    options
+  );
+  for (const event of ['pointerup', 'pointercancel', 'pointerleave'])
+    rate.addEventListener(event, () => clearTimeout(pressTimer), options);
+  rate.addEventListener(
+    'contextmenu',
+    (e) => {
+      e.preventDefault();
+      clearTimeout(pressTimer);
+      showMenu();
+    },
+    options
+  );
+  rate.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        showMenu();
+      }
+    },
+    options
+  );
+  menu.addEventListener(
+    'keydown',
+    (e) => {
+      const buttons = Array.from(menu.querySelectorAll('button'));
+      const index = buttons.indexOf(
+        /** @type {HTMLButtonElement} */ (document.activeElement)
+      );
+      const next = {
+        ArrowDown: (index + 1) % buttons.length,
+        ArrowUp: (index - 1 + buttons.length) % buttons.length,
+        Home: 0,
+        End: buttons.length - 1,
+      }[e.key];
+      if (next !== undefined) {
+        e.preventDefault();
+        buttons[next].focus();
+      }
+    },
+    options
+  );
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.target instanceof Node && !bar.contains(e.target)) closeMenu();
+    },
+    options
+  );
+  bar.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        readAloudStop();
+      }
+    },
+    options
+  );
+  bar.append(pause, stop, divider, label, skip, resume, rate, menu);
+  anchor.append(bar);
+  const host = document.getElementById('content-main');
+  const pane = document.getElementById('markdown-content');
+  const actionBar = document.getElementById('ios-action-bar');
+  host?.append(anchor);
+  const compact = window.matchMedia?.('(max-width: 699.98px)');
+  const chip = /** @type {HTMLButtonElement|null} */ (
+    document.getElementById('rail-playback-chip')
+  );
+  chip?.addEventListener('click', () => readAloudToggle(), options);
+  function layout() {
+    const compactRail =
+      !!compact?.matches && document.body.classList.contains('side-rail-open');
+    if (chip) chip.hidden = !compactRail;
+    bar.hidden = compactRail;
+    if (compactRail || !host || !pane) return;
+    // The preview can share content-main with a horizontal or vertical raw pane.
+    const parent = host.getBoundingClientRect(),
+      rect = pane.getBoundingClientRect();
+    const actionTop = actionBar?.getClientRects().length
+      ? actionBar.getBoundingClientRect().top
+      : Infinity;
+    Object.assign(anchor.style, {
+      left: rect.left - parent.left + 'px',
+      top: rect.top - parent.top + 'px',
+      width: rect.width + 'px',
+      height: Math.max(0, Math.min(rect.bottom, actionTop) - rect.top) + 'px',
+    });
+  }
+  compact?.addEventListener?.('change', layout, options);
+  document.addEventListener('specdown-rail-change', layout, options);
+  window.addEventListener('resize', layout, options);
+  const observer =
+    typeof ResizeObserver === 'function' ? new ResizeObserver(layout) : null;
+  for (const el of [pane, host, actionBar]) if (el) observer?.observe(el);
+  const passive = { ...options, passive: true };
+  pane?.addEventListener('wheel', readerPauseFollowing, passive);
+  pane?.addEventListener('touchmove', readerPauseFollowing, passive);
+  pane?.addEventListener(
+    'scroll',
+    () => {
+      if (pane.scrollTop !== readerExpectedScroll) readerPauseFollowing();
+      readerExpectedScroll = NaN;
+    },
+    passive
+  );
+  layout();
+  return {
+    bar,
+    pause,
+    title,
+    meta,
+    skip,
+    resume,
+    rate,
+    menu,
+    chip,
+    destroy() {
+      clearTimeout(pressTimer);
+      clearTimeout(readerFollowTimer);
+      observer?.disconnect();
+      abort.abort();
+      if (chip) chip.hidden = true;
+      anchor.remove();
+    },
+  };
 }
 
 function readerUpdateControls() {
   if (!readerSession) {
-    readerControls?.bar.remove();
+    readerControls?.destroy();
     readerControls = null;
+    setBrandNarrationProgress(null);
     return;
   }
+  const session = readerSession;
   readerControls ??= readerCreateControls();
-  const { bar, label, pause, skip } = readerControls;
-  const host = readerControlsHost?.isConnected
-    ? readerControlsHost
-    : document.getElementById('content-area');
-  if (host && bar.parentElement !== host)
-    host.insertBefore(bar, host.querySelector(':scope > .content-body'));
-  const documentSession = readerSession.kind === 'document';
-  const status = readerSession.paused
-    ? 'Paused'
-    : documentSession
-      ? 'Reading document'
-      : 'Reading explanation';
-  if (label.textContent !== status) label.textContent = status;
-  pause.textContent = readerSession.paused
-    ? documentSession
+  const { pause, title, meta, skip, resume, rate, menu, chip } = readerControls;
+  const verb = session.paused ? 'Resume' : 'Pause';
+  if (pause.getAttribute('aria-label') !== verb) {
+    pause.innerHTML = iconSvg(session.paused ? 'play' : 'pause');
+    pause.setAttribute('aria-label', verb);
+    pause.title = verb;
+  }
+  const block = session.sentence.block;
+  const n = session.sentence.step || session.position;
+  const indexText = String(n) + (session.total ? ' of ' + session.total : '');
+  let heading =
+    (session.paused ? 'Paused · ' : 'Reading · ') +
+    (session.sentence.section || session.title);
+  let detail = 'Sentence ' + indexText;
+  if (session.kind === 'answer') {
+    heading = session.paused ? 'Answer · Paused' : 'Answer · Listening';
+    if (readerSavedDocument)
+      detail = 'Document paused at sentence ' + readerSavedDocument.position;
+  } else if (session.kind === 'walkthrough') {
+    heading = 'Walkthrough · ' + session.title;
+    detail = 'Step ' + indexText;
+  } else if (block) {
+    heading = session.sentence.section || session.title;
+    detail =
+      session.sentence.text === 'Diagram.'
+        ? 'Next: diagram'
+        : 'Next: code block';
+  }
+  if (title.textContent !== heading) title.textContent = heading;
+  meta.textContent = detail;
+  skip.hidden = !block;
+  skip.setAttribute(
+    'aria-label',
+    session.sentence.text === 'Diagram.' ? 'Skip diagram' : 'Skip code block'
+  );
+  resume.hidden = !readerSavedDocument && !session.returning;
+  rate.textContent = readerRate + '×';
+  rate.setAttribute('aria-label', 'Playback rate, ' + readerRate + '×');
+  rate.title = 'Cycle playback rate. Right-click or hold to choose.';
+  for (const choice of menu.querySelectorAll('button'))
+    choice.setAttribute(
+      'aria-checked',
+      String(Number(choice.dataset.speed) === readerRate)
+    );
+  if (chip) {
+    const text = session.returning
       ? 'Resume document'
-      : 'Resume'
-    : 'Pause';
-  skip.hidden = !readerSession.sentence.block;
+      : session.paused
+        ? 'Paused'
+        : 'Reading';
+    chip.innerHTML = iconSvg(session.paused ? 'play' : 'pause');
+    chip.append(document.createTextNode(text));
+    chip.setAttribute(
+      'aria-label',
+      session.returning
+        ? 'Resume document'
+        : (session.paused ? 'Resume' : 'Pause') + ' reading'
+    );
+  }
+  setBrandNarrationProgress(
+    session.total ? Math.min(1, n / session.total) : null
+  );
 }

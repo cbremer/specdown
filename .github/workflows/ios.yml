@@ -119,6 +119,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/specdown-reader-tests" CODE_SIGNING_ALLOWED=NO \
             -only-testing:SpecDownTests/ReaderExplanationTests \
             -only-testing:SpecDownTests/NativeDocumentTests/testReaderAvailabilityReachesBundledViewer \
+            -only-testing:SpecDownTests/NativeDocumentTests/testNativeReaderMenuRoutesToCurrentViewer \
             test | xcpretty
 
       - name: Surface Swift warnings

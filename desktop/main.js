@@ -174,6 +174,8 @@ function isSignedUpdatePlatform(platform) {
 }
 
 let mainWindow = null;
+let readerMenuAvailable = false;
+let readerMenuHasSelection = false;
 let editorCloseApproved = false;
 let viewerReadyWindow = null;
 let store = null;
@@ -638,6 +640,8 @@ function createWindow() {
     // BrowserWindow.webContents can throw after native window destruction.
     // Captured window identity still proves ownership without that getter.
     if (mainWindow === appWindow) {
+      readerMenuAvailable = false;
+      readerMenuHasSelection = false;
       resetWorkspaceContext(false);
       workspacePageToken = randomUUID();
     }
@@ -1666,6 +1670,21 @@ onTrustedIpc('visual-theme-changed', (_event, themeId) => {
 // ===========================
 // Native Menu
 // ===========================
+onTrustedIpc('reader-menu-state', (event, available, hasSelection, pageToken) => {
+  if (!isCurrentViewerRequest(event, { pageToken }) ||
+      typeof available !== 'boolean' || typeof hasSelection !== 'boolean') return;
+  if (readerMenuAvailable === available && readerMenuHasSelection === hasSelection) return;
+  readerMenuAvailable = available;
+  readerMenuHasSelection = hasSelection;
+  rebuildMenu();
+});
+
+function triggerReaderAction(action) {
+  if (readerMenuAvailable && isViewerNotLoading(mainWindow)) {
+    mainWindow.webContents.mainFrame.send('trigger-reader-action', action);
+  }
+}
+
 function buildMenu() {
   const isMac = process.platform === 'darwin';
   const recent = getRecentFiles();
@@ -1789,6 +1808,19 @@ function buildMenu() {
     {
       label: 'View',
       submenu: [
+        {
+          label: readerMenuHasSelection ? 'Read Selection' : 'Read from Here',
+          accelerator: 'CmdOrCtrl+Alt+R',
+          enabled: readerMenuAvailable,
+          click: () => triggerReaderAction('read'),
+        },
+        {
+          label: 'Explain…',
+          accelerator: 'CmdOrCtrl+Alt+E',
+          enabled: readerMenuAvailable,
+          click: () => triggerReaderAction('explain'),
+        },
+        { type: 'separator' },
         { role: 'reload' },
         { role: 'forceReload' },
         ...(app.isPackaged ? [] : [{ role: 'toggleDevTools' }]),

@@ -268,6 +268,30 @@ test('File menu Close is enabled only for an active context, including an empty 
   expect(getClose().enabled).toBe(false);
   expect(main.workspaceRoots.size).toBe(0);
 });
+
+test('reading commands use the current viewer selection and disable on reload', () => {
+  const items = () => native.Menu.buildFromTemplate.mock.calls.at(-1)[0]
+    .find((menu) => menu.label === 'View').submenu;
+  const read = () => items().find((item) => item.accelerator === 'CmdOrCtrl+Alt+R');
+  const explain = () => items().find((item) => item.accelerator === 'CmdOrCtrl+Alt+E');
+  const state = handler('reader-menu-state');
+  main.buildMenu();
+  expect(read()).toMatchObject({ label: 'Read from Here', enabled: false });
+  const originalToken = token();
+  state(event(), true, true, originalToken);
+  expect(read()).toMatchObject({ label: 'Read Selection', enabled: true });
+  expect(explain()).toMatchObject({ label: 'Explain…', enabled: true });
+  read().click();
+  expect(sent('trigger-reader-action')).toBe('read');
+  explain().click();
+  expect(sent('trigger-reader-action')).toBe('explain');
+  state(event(), true, false, originalToken);
+  expect(read()).toMatchObject({ label: 'Read from Here', enabled: true });
+  wc.emit('did-start-navigation', { isMainFrame: true, isSameDocument: false });
+  state(event(), true, true, originalToken);
+  expect(read().enabled).toBe(false);
+  expect(explain().enabled).toBe(false);
+});
 test('a failed scan keeps the previous context unchanged', () => {
   const before = open();
   main.fileAccess.noteUserIntent(rootB, 'folder');

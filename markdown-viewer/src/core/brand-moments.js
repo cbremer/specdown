@@ -72,6 +72,16 @@ export function brandDiagramSource(code, dark) {
 /** @type {number | null} */
 let brandMomentsFrame = null;
 let brandMomentsReady = false;
+/** @type {number | null} */
+let brandNarrationProgress = null;
+
+/** While narrating, the brand bar tracks the reading queue. Reset to scroll
+ * progress when the transport closes. @param {number|null} fraction */
+export function setBrandNarrationProgress(fraction) {
+  if (brandNarrationProgress === fraction) return;
+  brandNarrationProgress = fraction;
+  brandMomentsUpdateProgress();
+}
 
 function brandMomentsUpdateProgress() {
   brandMomentsFrame = null;
@@ -87,7 +97,7 @@ function brandMomentsUpdateProgress() {
         ? Math.min(1, Math.max(0, content.scrollTop / scrollable))
         : 1;
   }
-  bar.style.setProperty('--brand-reading-progress', String(progress));
+  bar.style.setProperty('--brand-reading-progress', String(brandNarrationProgress ?? progress));
 }
 
 function brandMomentsScheduleProgress() {

@@ -29,6 +29,7 @@ struct ContentView: View {
                 viewerSurface
             }
         }
+            .focusedSceneObject(bridge)
             .sheet(isPresented: $bridge.showsAppIconPicker) { AppIconPicker() }
             .onAppear {
                 bridge.applyTheme(colorScheme)

@@ -149,6 +149,8 @@ export function setupIOSEventListeners() {
         iosRead.textContent = readerMenuReadLabel();
       }
       if (iosExplain) iosExplain.hidden = !readerActionsAvailable();
+      const divider = iosWiringEl('ios-reading-divider');
+      if (divider) divider.hidden = !readerActionsAvailable();
       closeIOSActionSheet();
       closeIOSTocSheet();
       setIOSSheetVisibility(iosActionSheet, true);

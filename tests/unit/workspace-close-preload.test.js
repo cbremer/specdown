@@ -75,3 +75,19 @@ test('workspace close events expose only payload, not Electron event authority',
 test('untrusted page receives no workspace capability', () => {
   expect(boot('https://other.test').api).toBeUndefined();
 });
+test('reading menus receive the latest cold-start selection after the viewer is ready', () => {
+  const { ipcRenderer, api } = boot();
+  const listener = (name) => ipcRenderer.on.mock.calls.find(([channel]) => channel === name)[1];
+  const token = '12345678-1234-1234-1234-123456789012';
+  api.setReaderMenuState(true, false);
+  api.setReaderMenuState(true, true);
+  expect(ipcRenderer.send).not.toHaveBeenCalled();
+  listener('workspace-ready')({}, { token });
+  expect(ipcRenderer.send.mock.calls).toEqual([['reader-menu-state', true, true, token]]);
+  const callback = jest.fn();
+  api.onReaderAction(callback);
+  listener('trigger-reader-action')({}, 'read');
+  listener('trigger-reader-action')({}, 'explain');
+  listener('trigger-reader-action')({}, 'unexpected');
+  expect(callback.mock.calls).toEqual([['read'], ['explain']]);
+});

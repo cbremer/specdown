@@ -265,3 +265,60 @@ describe('Toolbar overflow menu (desktop bridge)', () => {
     expect(labels).not.toContain('Reload from disk');
   });
 });
+
+describe('reader menu and shortcuts', () => {
+  beforeEach(() => {
+    loadHTML(document);
+    loadApp(document);
+    createTab('reading.md', '# Policy\n\nThe client retries twice.');
+  });
+
+  it('puts both reading actions first with hints and a separator', () => {
+    openOverflowMenu();
+    const items = [...document.querySelector('.overflow-menu').children];
+    expect(
+      items.slice(0, 2).map((item) => item.getAttribute('aria-label'))
+    ).toEqual(['Read from here', 'Explain…']);
+    expect(
+      items
+        .slice(0, 2)
+        .map(
+          (item) => item.querySelector('.overflow-menu-shortcut').textContent
+        )
+    ).toEqual([readerShortcutLabel('read'), readerShortcutLabel('explain')]);
+    expect(items[2].getAttribute('role')).toBe('separator');
+    closeOverflowMenu();
+    const mobile = [
+      ...document.querySelector('#ios-action-sheet .ios-sheet-actions')
+        .children,
+    ];
+    expect(mobile.slice(0, 3).map((item) => item.id)).toEqual([
+      'ios-read-aloud',
+      'ios-explain',
+      'ios-reading-divider',
+    ]);
+  });
+
+  it('accepts physical shortcut keys and excludes AltGr or shifted keys', () => {
+    const apple = readerShortcutLabel('read').startsWith('⌥');
+    function event(overrides = {}) {
+      return {
+        altKey: true,
+        metaKey: apple,
+        ctrlKey: !apple,
+        code: 'KeyE',
+        key: '´',
+        getModifierState: () => false,
+        ...overrides,
+      };
+    }
+    expect(readerShortcutAction(event())).toBe('explain');
+    expect(readerShortcutAction(event({ code: 'KeyR' }))).toBe('read');
+    expect(readerShortcutAction(event({ shiftKey: true }))).toBeNull();
+    expect(
+      readerShortcutAction(
+        event({ getModifierState: (name) => name === 'AltGraph' })
+      )
+    ).toBeNull();
+  });
+});

@@ -10,7 +10,9 @@ const viewerRoot = path.join(__dirname, '..', '..', 'markdown-viewer');
 const stylesheets = [
   'styles.css',
   'bookmarks.css',
-  path.join('src', 'features', 'source-editor.css'),
+  ...['source-editor', 'side-rail', 'read-aloud', 'explain-rail'].map((name) =>
+    path.join('src', 'features', name + '.css')
+  ),
 ].map((file) => ({
   file,
   css: fs.readFileSync(path.join(viewerRoot, file), 'utf8'),
@@ -28,12 +30,24 @@ function ruleBody(css, selector) {
 describe('stylesheet layering', () => {
   it('stacks toasts above every other fixed layer in the viewer', () => {
     const toastBody = ruleBody(mainCss, '.toast-region');
-    const toastZ = Number(/z-index:\s*(\d+)/.exec(toastBody)[1]);
+    const layers = new Map(
+      Array.from(mainCss.matchAll(/(--z-[\w-]+):\s*(\d+)/g), (match) => [
+        match[1],
+        Number(match[2]),
+      ])
+    );
+    function layerIndex(value) {
+      if (!value.startsWith('var(')) return Number(value);
+      const token = value.slice(4, -1);
+      if (!layers.has(token)) throw new Error('Unknown layer ' + token);
+      return layers.get(token);
+    }
+    const toastZ = layerIndex(/z-index:\s*([^;]+)/.exec(toastBody)[1]);
 
     const others = [];
     for (const { file, css } of stylesheets) {
-      for (const match of css.matchAll(/z-index:\s*(\d+)/g)) {
-        others.push({ file, z: Number(match[1]) });
+      for (const match of css.matchAll(/z-index:\s*(\d+|var\(--z-[\w-]+\))/g)) {
+        others.push({ file, z: layerIndex(match[1]) });
       }
     }
     const above = others.filter(({ z }) => z > toastZ);

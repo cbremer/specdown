@@ -52,6 +52,7 @@ final class NativeDocumentTests: XCTestCase {
             window.webkit.messageHandlers.specdown.postMessage({
               action: 'explainAvailable', data: { requestId: 'availability-test' }
             });
+            true;
             """)
         try await wait("reader availability reply") {
             (try? await web.evaluateJavaScript("typeof window.readerAvailabilityForTest?.available === 'boolean'")) as? Bool == true
@@ -60,6 +61,26 @@ final class NativeDocumentTests: XCTestCase {
         if result?["available"] as? Bool == false {
             XCTAssertFalse(try XCTUnwrap(result?["reason"] as? String).isEmpty)
         }
+    }
+
+    func testNativeReaderMenuRoutesToCurrentViewer() async throws {
+        let bridge = WebBridge(defaults: UserDefaults(suiteName: suite)!)
+        let web = try await host(bridge)
+        _ = try await web.evaluateJavaScript("""
+            window.specdownReaderAction = action => { window.readerActionForTest = action; };
+            window.webkit.messageHandlers.specdown.postMessage({
+              action: 'readerMenuState', data: { available: true, hasSelection: true }
+            });
+            true;
+            """)
+        try await wait("selection in native menu") { bridge.readerMenuAvailable && bridge.readerMenuHasSelection }
+        bridge.performReaderAction("explain")
+        try await wait("native menu command in viewer") {
+            (try? await web.evaluateJavaScript("window.readerActionForTest === 'explain'")) as? Bool == true
+        }
+        bridge.pageWillLoad()
+        XCTAssertFalse(bridge.readerMenuAvailable)
+        XCTAssertFalse(bridge.readerMenuHasSelection)
     }
 
     func testSourceEditingSaveConflictAndDraftPreview() async throws {

@@ -99,7 +99,12 @@ function createMacReader(executable, emit, spawnHelper = spawn) {
     ) {
       const current = activeSpeech;
       if (event.type !== 'start') activeSpeech = null;
-      emit({ ...current, type: event.type });
+      const noVoice = event.type === 'error' && event.reason === 'no-voice';
+      emit({
+        ...current,
+        type: event.type,
+        ...(noVoice ? { reason: 'no-voice' } : {}),
+      });
     }
     const result = message?.result;
     if (!result || !validId(message.requestId)) return;

@@ -32,11 +32,14 @@ Open [reader-retry-policy.md](../../tests/fixtures/reader-retry-policy.md) as a 
 | Select “retries twice” across formatting and choose Read selection | Only the selection is spoken. Pause, resume, rate and stop affect that reading session. |
 | Choose Read from here at the Retry policy heading | Sentences highlight in order. Code and diagrams receive short announcements. |
 | Select the retry sentence and choose Explain… | The right rail opens with Selection as the source. An available model explains the two retries with a link to that occurrence. |
-| Ask whether permission errors are retried | The selection alone does not establish the permission-error policy. Switch to Whole document and ask again. The supported answer cites the permission-errors section. |
+| Ask whether permission errors are retried | The selection alone does not establish the permission-error policy. Use the containing section, then Whole document, and ask again. The supported answer cites the permission-errors section. |
 | Select the code block as the source | Inspect why the function stops after two attempts and follow the citation to its source. |
 | Pick the Worker lifecycle diagram | The timeout branch shows the API canceling the job and returning the timeout. The two “Record outcome” occurrences lead to different steps. |
 | Listen to an answer while reading the document | Only one stream plays. Resume document returns to the saved sentence. |
-| Narrow the window, open a citation, and return | The rail fills the compact window. Back to explanation restores the thread. Closing the rail restores the reading position. |
+| Narrow the window, open a citation, and return | The rail fills the compact window. Back to answer restores the thread. Closing the rail restores the reading position. |
+| Open Notes from Explain on desktop | The same rail switches tabs. Returning to Explain preserves the thread and the unsent question. |
+| Resize the rail, close it and reopen it | The width is remembered. The separator accepts arrow keys and double-click resets the preferred width to 360 px. |
+| Open Explain during narration at phone width | The rail takes the full width. Its header chip pauses or resumes playback. Closing the rail returns to the floating transport. |
 | Switch files while speech or an answer is pending | Audio stops. A late answer cannot appear in the new file. |
 | Try without an available model or local voice | The rail describes model availability. Source navigation and the deterministic sequence walkthrough remain available. Speech reports an unavailable local voice when playback cannot start. |
 

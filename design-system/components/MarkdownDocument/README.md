@@ -10,4 +10,4 @@ Rendered Markdown document: the hero surface every platform shares.
 - Inline code: `bg-tertiary`, 3px radius, 0.9em. The source uses 'Courier New' here rather than `mono` (drift).
 - **Never print this live layout.** Print and PDF render `buildPrintableDocument()` instead.
 
-Read Aloud highlights the active sentence with `accent-color` and `text-on-accent`. Older browsers underline the same range. Code and diagram announcements outline their source block. During playback a compact strip between the header and document provides pause, stop and reading speed. A block announcement adds Skip block. Opening Explain moves the strip into the rail. Listening to an explanation saves the current document sentence and offers Resume document when the explanation ends.
+Read Aloud highlights the spoken sentence with the teal `read-aloud-sentence` fill and a `brand-teal-text` underline. The floating [Read Aloud transport](../ReadAloudTransport/README.md) follows the document pane. On compact screens, opening the [Side Rail](../SideRail/README.md) replaces the transport with its playback chip.

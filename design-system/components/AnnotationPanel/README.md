@@ -1,9 +1,5 @@
-# AnnotationPanel
+# Notes tab
 
-Annotations panel: a list of every note in the document, with jump, edit and delete actions.
+The Notes tab lists the document’s annotations in the [shared side rail](../SideRail/README.md). The count beside Notes reflects the current document. Switching to Explain preserves the notes list and scroll position. Creating, editing and deleting notes uses the existing annotation editor on web and desktop.
 
-**Source:** `.annotation-panel*`, `.annotation-list-*`. Static rendition.
-
-- **A docked side panel, not a modal:** 280px on `bg-secondary` with a left hairline. Below 700px it becomes a right-hand overlay up to 360px wide, z-index 600, with `shadow-lg` and no scrim.
-- Header: uppercase 0.75rem/600, +0.06em tracking, in `text-secondary`, with a small ✕ close.
-- **Target:** the **Drawer** variant of the shared pattern. Same header anatomy, docked on wide screens and overlaid on narrow ones.
+List styles are defined by `.annotation-list` and its children. The shared rail owns the tab header, resize handle, focus behavior and close button.

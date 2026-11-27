@@ -14,6 +14,10 @@ Readers can listen to a spec, ask what a passage means, and follow up in a right
 | Linux | Electron speech synthesis, subject to installed voice and backend | Source walkthrough | More actions menu and shared right rail |
 | Web and installed PWA | Browser speech synthesis when usable | Source walkthrough | More actions menu and shared right rail |
 
+## Reader design
+
+The [reader UX decisions](../../project-read-aloud/2026-11-27-spec-ux-decisions.md) and component previews define the current design: one resizable Explain/Notes rail on platforms with annotations, a bottom playback bar, a compact playback chip and source-linked citations. The reader explicitly widens the selection to its section and then to the whole document. Narrow-screen citation navigation uses **Back to answer**.
+
 ## Explain in the right rail
 
 Open the existing **More actions (⋯)** menu and choose **Explain…**. On iPhone use the existing More action sheet to launch the rail. Capture the selection before the menu takes focus. The rail header names the target, for example **Selection · Retry policy**, and the body opens with a plain-language explanation and clickable source references. Initial scope follows the selection, explicitly focused code block or diagram, current section, then document. The scope picker also offers **Whole document**.

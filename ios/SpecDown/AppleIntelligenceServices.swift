@@ -128,9 +128,12 @@ final class AppleReaderServices: NSObject, AVSpeechSynthesizerDelegate {
         guard action == "speak" else { return }
         stopSpeech()
         guard let text = command["text"] as? String, (1...500).contains(text.utf16.count),
-              let rate = command["rate"] as? Double, (0.75...2.0).contains(rate),
-              !AVSpeechSynthesisVoice.speechVoices().isEmpty else {
+              let rate = command["rate"] as? Double, (0.75...2.0).contains(rate) else {
             speechEvent(["type": "error", "sessionId": session, "sentenceId": sentence])
+            return
+        }
+        guard !AVSpeechSynthesisVoice.speechVoices().isEmpty else {
+            speechEvent(["type": "error", "reason": "no-voice", "sessionId": session, "sentenceId": sentence])
             return
         }
         #if os(iOS)

@@ -21,6 +21,7 @@ describe('Explain rail', () => {
     localStorage.setItem('visualTheme', 'default');
     loadHTML(document);
     loadApp(document);
+    state.activeTabId = 1;
     reader = document.getElementById('markdown-content');
     document.getElementById('content-area').style.display = 'flex';
     reader.innerHTML =
@@ -44,6 +45,8 @@ describe('Explain rail', () => {
       sourceIds: [excerpts[0].id],
     }));
     global.readAloudListen = jest.fn();
+    global.readAloudWalkthrough = jest.fn();
+    global.copyToClipboard = jest.fn(async () => {});
   });
   afterEach(() => {
     resetExplainRail();
@@ -60,7 +63,16 @@ describe('Explain rail', () => {
     ]);
     expect(rail().textContent).toContain('It retries <twice>.');
     expect(rail().querySelector('twice')).toBeNull();
-    button('Source 1').click();
+    const pill = rail().querySelector('.sd-cite');
+    expect(pill.getAttribute('aria-label')).toMatch(/^Source 1: /);
+    const sources = button('Sources · 1');
+    sources.click();
+    const card = rail().querySelector('.sd-source');
+    expect(card.textContent).toContain('retries twice');
+    expect(card.closest('[hidden]')).toBeNull();
+    card.click();
+    button('Copy').click();
+    expect(copyToClipboard).toHaveBeenCalledWith('It retries <twice>.');
     expect(window.getSelection().toString()).toBe('retries twice');
     button('Listen').click();
     expect(readAloudListen).toHaveBeenCalledWith('It retries <twice>.');
@@ -74,7 +86,7 @@ describe('Explain rail', () => {
     ]);
     expect(followup.excerpts).toEqual(first.excerpts);
     expect(rail().querySelectorAll('.explain-turn')).toHaveLength(2);
-    button('Close').click();
+    document.querySelector('.sd-rail-close').click();
     expect(document.activeElement).toBe(toggle);
     openExplainRail(range);
     await settle();
@@ -113,7 +125,11 @@ describe('Explain rail', () => {
     );
     openExplainRail(range);
     await settle();
-    button('Use whole document').click();
+    const picker = rail().querySelector('select');
+    picker.selectedIndex = [...picker.options].findIndex(
+      (option) => option.text === 'Whole document'
+    );
+    picker.dispatchEvent(new Event('change'));
     const [[first, firstSignal], [whole, wholeSignal]] = askExplain.mock.calls;
     expect(firstSignal.aborted).toBe(true);
     expect(whole.history).toEqual([]);
@@ -163,12 +179,21 @@ describe('Explain rail', () => {
     button('Retry').click();
     await settle();
     expect(rail().textContent).not.toMatch(/Wrong source|Outdated answer/);
-    expect(rail().textContent).toContain('could not be linked');
+    expect(rail().textContent).toContain('couldn’t be matched to the document');
+    expect(button('Listen')).toBeUndefined();
     button('Retry').click();
     await settle();
     expect(rail().textContent).not.toContain('Made-up retry');
     expect(rail().textContent).toContain('does not provide enough information');
-    expect(button('Use whole document').hidden).toBe(false);
+    expect(button('Use whole document')).toBeUndefined();
+    askExplain.mockResolvedValueOnce({ text: 'Unknown', sourceIds: [] });
+    button('Use section: Retries').click();
+    await settle();
+    expect(rail().querySelector('.sd-thread-divider').textContent).toBe(
+      'New thread · Section'
+    );
+    expect(button('Use whole document')).toBeDefined();
+    expect(askExplain.mock.lastCall[0].history).toEqual([]);
   });
 
   it('returns from a compact citation and restores selection, scroll and focus on Escape', async () => {
@@ -176,13 +201,15 @@ describe('Explain rail', () => {
     reader.scrollTop = 57;
     openExplainRail(range);
     await settle();
-    expect(rail().getAttribute('aria-modal')).toBe('true');
+    expect(rail().closest('.sd-rail').getAttribute('aria-modal')).toBe('true');
     expect(reader.closest('[inert]')).not.toBeNull();
-    const citation = button('Source 1');
+    const citation = rail().querySelector('.sd-cite');
     citation.click();
     expect(reader.closest('[inert]')).toBeNull();
-    expect(rail().hidden).toBe(true);
-    expect(document.activeElement.textContent).toBe('Back to explanation');
+    expect(activeSideRailTab()).toBeNull();
+    expect(document.activeElement.getAttribute('aria-label')).toBe(
+      'Back to answer'
+    );
     document.activeElement.click();
     expect(document.activeElement).toBe(citation);
     window.getSelection().removeAllRanges();
@@ -199,6 +226,74 @@ describe('Explain rail', () => {
     expect(document.activeElement).toBe(toggle);
   });
 
+  it('discards an interrupted answer on a same-file edit and retries from current source', async () => {
+    let finish;
+    global.askExplain.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    openExplainRail(null);
+    await settle();
+    const [first, signal] = askExplain.mock.lastCall;
+    invalidateDocumentContext();
+    reader.querySelector('p').textContent = 'Revised policy';
+    expect(signal.aborted).toBe(true);
+    finish({ text: 'Obsolete answer', sourceIds: [first.excerpts[0].id] });
+    await settle();
+    expect(rail().textContent).not.toContain('Obsolete answer');
+    expect(rail().textContent).toContain('it was discarded');
+    button('Ask again').click();
+    await settle();
+    expect(askExplain.mock.lastCall[0].excerpts.map((e) => e.text)).toContain(
+      'Revised policy'
+    );
+    global.askExplain.mockImplementationOnce(() => new Promise(() => {}));
+    sendQuestion('Private question');
+    state.activeTabId = 2;
+    invalidateDocumentContext();
+    expect(activeSideRailTab()).toBeNull();
+    expect(rail().textContent).toBe('');
+  });
+
+  it('lets the reader confirm a replacement source when an edit removes their selection', async () => {
+    global.askExplain.mockImplementationOnce(() => new Promise(() => {}));
+    openExplainRail(range);
+    await settle();
+    invalidateDocumentContext();
+    reader.innerHTML = '<h2>Changed</h2><p>A different policy.</p>';
+    button('Ask again').click();
+    await settle();
+    expect(askExplain).toHaveBeenCalledTimes(1);
+    const field = rail().querySelector('textarea');
+    expect(field.value).toBe('Explain this source in plain language.');
+    expect(rail().querySelector('select').selectedOptions[0].text).toContain(
+      'Changed'
+    );
+    sendQuestion(field.value);
+    await settle();
+    expect(askExplain.mock.lastCall[0].excerpts.map((e) => e.text)).toContain(
+      'A different policy.'
+    );
+  });
+
+  it('keeps a draft and scoped conversation when switching between Notes and Explain', async () => {
+    openSideRail('notes');
+    openSideRail('explain');
+    await settle();
+    const field = rail().querySelector('textarea');
+    field.value = 'A draft';
+    openSideRail('notes');
+    openSideRail('explain');
+    expect(rail().querySelector('textarea')).toBe(field);
+    expect(field.value).toBe('A draft');
+    expect(askExplain).toHaveBeenCalledTimes(1);
+    expect(rail().querySelector('.sd-composer-note').textContent).toMatch(
+      /Generated on this .+ from the scope above. Check the sources./
+    );
+  });
+
   it('keeps source steps, listening and fallback available without a model', async () => {
     global.explainAvailable.mockResolvedValue(false);
     global.explainUnavailableReason.mockReturnValue(
@@ -213,11 +308,20 @@ describe('Explain rail', () => {
     const steps = [...rail().querySelectorAll('ol button')];
     expect(steps).toHaveLength(2);
     expect(steps[1].textContent).toContain('Accepted');
+    document.dispatchEvent(
+      new CustomEvent('specdown-walkthrough-step', { detail: { index: 1 } })
+    );
+    expect(steps[1].getAttribute('aria-current')).toBe('step');
+    document.dispatchEvent(
+      new CustomEvent('specdown-walkthrough-step', { detail: { index: null } })
+    );
+    expect(steps[1].hasAttribute('aria-current')).toBe(false);
     steps[1].click();
     expect(window.getSelection().toString()).toContain('Accepted');
     button('Listen to walkthrough').click();
-    expect(readAloudListen).toHaveBeenCalledWith(
-      steps.map((step) => step.textContent).join('\n')
+    expect(readAloudWalkthrough).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringContaining('Accepted')]),
+      expect.stringContaining('Diagram')
     );
     expect(askExplain).not.toHaveBeenCalled();
   });

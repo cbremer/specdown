@@ -31,6 +31,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     @Published private(set) var currentDocumentName = "SpecDown Document"
     @Published private(set) var recentFiles: [RecentDocuments.Entry]
     @Published private(set) var hasLoadedDocument = false
+    @Published private(set) var readerMenuAvailable = false
+    @Published private(set) var readerMenuHasSelection = false
     @Published var showsAppIconPicker = false
     @Published private(set) var viewerPresentationRequest: UInt = 0
 
@@ -119,6 +121,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let data = body["data"] as? [String: Any]
 
         switch action {
+        case "readerMenuState":
+            guard let available = data?["available"] as? Bool,
+                  let hasSelection = data?["hasSelection"] as? Bool else { return }
+            if readerMenuAvailable != available { readerMenuAvailable = available }
+            if readerMenuHasSelection != hasSelection { readerMenuHasSelection = hasSelection }
         case "readerSpeech":
             if let command = body["command"] as? [String: Any] { reader.speech(command) }
         case "explainAvailable", "askExplain", "cancelExplain":
@@ -200,6 +207,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Swift → JS
 
+    func performReaderAction(_ action: String) {
+        guard readerMenuAvailable, action == "read" || action == "explain" else { return }
+        evaluateJavaScript(function: "window.specdownReaderAction", arguments: [action], context: "readerMenu")
+    }
+
     /// A navigation can finish before WebKit has evaluated the module graph.
     /// Keep cold-start files, errors and appearance changes queued until the
     /// actual renderer bridge exists; navigation completion alone is not ready.
@@ -257,6 +269,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func pageWillLoad() {
         reader.reset()
+        readerMenuAvailable = false
+        readerMenuHasSelection = false
         urlInputController?.cancel()
         pageLoaded = false
         diagramExports.invalidate(unless: "")

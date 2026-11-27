@@ -70,6 +70,18 @@ SpecDown's default look on every surface: web, direct-download Mac, Windows, Lin
 - **SpecDown diagram style:** teal nodes and edges (`brand-teal-tint`, `brand-teal-text`), coral secondary (`brand-coral-tint`, `brand-coral-text`). Only for diagrams that carry the Mermaid comment line `%% specdown:brand`, which our bundled samples do. Users' Markdown is never restyled, and a diagram's own `%%{init}%%` always wins.
 - The gradient is decorative. It never carries text, and blue still means "you can act on this".
 
+## Read aloud and Explain
+
+Decided 27 Nov 2026 with the owner. Specs: `components/SideRail/`, `components/ExplainRail/`, `components/ReadAloudTransport/`, `components/Citation/`. CSS: the "Read Aloud and Explain" block at the end of `components/bundle.css`.
+
+- **Entry is always More.** The overflow menu gains a reading group at the top, then a hairline: "Read selection" (or "Read from here" with no selection) ⌥⌘R, and "Explain…" ⌥⌘E. Ctrl+Alt+R / Ctrl+Alt+E on Windows and Linux. The toolbar layout never changes.
+- **One side rail, two tabs.** Explain and Notes share a single right rail with tabs in its header. Default `rail-width` 360px, resizable 320–480px, remembered per device. Full width and not resizable under 700px.
+- **Teal is the voice.** The spoken sentence uses `read-aloud-sentence` with a `brand-teal-text` underline. Search stays yellow, interaction stays blue.
+- **Citations are blue** because they act: numbered pills in the answer plus a Sources list. Revealing one outlines the passage in `accent-color`.
+- **The scope stays visible** in the document as a `scope-mark` while the rail is open.
+- **One transport** floats at the bottom of the document pane for document and answer narration. On compact screens, opening the rail hides it and the rail header shows a playback chip instead.
+- **Copy:** no "AI", sparkle icon, avatar or typing dots. "Writing an answer…", "Stopped.", "Generated on this Mac from the scope above. Check the sources."
+
 ## Motion
 
 - Two speeds: 200ms for surface changes and 120ms for hover/press feedback. Animate only colour, background, border, shadow, opacity and transform, never `all`.
