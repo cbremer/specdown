@@ -11,7 +11,7 @@ const COPIED_RESET_MS = 1500;
  * @param {string} text
  * @returns {Promise<void>}
  */
-function copyToClipboard(text) {
+export function copyToClipboard(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     return navigator.clipboard.writeText(text);
   }

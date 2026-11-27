@@ -251,3 +251,43 @@ export async function bridgeSaveMarkdown(request) { return await nativeBridge()?
 /** @param {()=>void} callback */
 export function bridgeOnEditorClose(callback) { nativeBridge()?.onEditorClose?.(callback); }
 export function bridgeCloseEditorWindow() { nativeBridge()?.closeEditorWindow?.(); }
+
+/** The desktop preload exposes the installed host speech engine. */
+export function bridgeReaderSpeechAdapter() {
+  const bridge = nativeBridge();
+  if (!bridge?.readerSpeech || !bridge.onReaderSpeechEvent) return null;
+  return { send: bridge.readerSpeech, listen: bridge.onReaderSpeechEvent };
+}
+
+export async function bridgeExplainAvailable() {
+  return await nativeBridge()?.explainAvailable?.();
+}
+
+/** @param {Parameters<NonNullable<DesktopBridge['askExplain']>>[0]} request */
+export function bridgeAskExplain(request) {
+  return nativeBridge()?.askExplain?.(request);
+}
+
+/** @param {string} id */
+export function bridgeCancelExplain(id) {
+  nativeBridge()?.cancelExplain?.(id);
+}
+
+/** @param {(action:'read'|'explain')=>void} callback */
+export function bridgeOnReaderAction(callback) {
+  if (window.iosNative) window.specdownReaderAction = callback;
+  else nativeBridge()?.onReaderAction?.(callback);
+}
+
+/** Native menus only need selection presence; text stays in the viewer.
+ * @param {boolean} available @param {boolean} hasSelection */
+export function bridgeSetReaderMenuState(available, hasSelection) {
+  if (window.iosNative) {
+    window.webkit?.messageHandlers?.specdown?.postMessage({
+      action: 'readerMenuState',
+      data: {available, hasSelection},
+    });
+  } else {
+    nativeBridge()?.setReaderMenuState?.(available, hasSelection);
+  }
+}

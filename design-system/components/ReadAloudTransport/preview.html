@@ -1,0 +1,22 @@
+<!-- @dsCard group="Actions · proposed" height=200 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div style="position:relative;height:200px;background:var(--bg-primary);padding:24px;line-height:1.6">
+      <p style="margin:0">The client retries twice after a timeout. <span class="read-aloud-sentence">Each retry reuses the original job ID, so the API can discard duplicates.</span></p>
+      <div class="sd-transport" role="region" aria-label="Read aloud">
+        <button class="sd-transport-button primary" aria-label="Pause"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg></button>
+        <button class="sd-transport-button" aria-label="Stop"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="1" /></svg></button>
+        <span class="sd-transport-divider"></span>
+        <div class="sd-transport-label"><span class="sd-transport-title">Reading · Retry policy</span><span class="sd-transport-meta">Sentence 2 of 14</span></div>
+        <button class="sd-transport-pill" aria-label="Playback rate">1×</button>
+      </div>
+    </div>
+  </body>
+</html>

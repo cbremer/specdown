@@ -4,6 +4,8 @@
   "description": "SpecDown: A lightweight, browser-based markdown viewer with enhanced diagram navigation capabilities",
   "main": "desktop/main.js",
   "scripts": {
+    "predesktop": "node scripts/build-mac-reader.js",
+    "predesktop:html": "node scripts/build-mac-reader.js",
     "desktop": "npm run build && electron .",
     "desktop:html": "npm run build:html && node scripts/desktop-html.js",
     "desktop:build": "npm run build && electron-builder",
@@ -95,7 +97,7 @@
     ]
   },
   "build": {
-    "afterPack": "./scripts/retain-electron-build.js",
+    "afterPack": "./scripts/build-mac-reader.js",
     "afterAllArtifactBuild": "./scripts/retain-electron-build.js",
     "electronDownload": {
       "checksums": {

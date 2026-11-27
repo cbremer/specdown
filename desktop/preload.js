@@ -33,8 +33,12 @@ if (isBundledViewerPage()) ipcRenderer.on('session-save-ready', (_event, info) =
 // Per-load workspace commands cannot survive a renderer reload or act on a
 // newer window. The token stays in the isolated preload, alongside sessionSaveToken.
 let workspacePageToken = null;
+let readerMenuState = null;
 if (isBundledViewerPage()) ipcRenderer.on('workspace-ready', (_event, info) => {
   workspacePageToken = typeof info?.token === 'string' && info.token.length === 36 ? info.token : null;
+  if (workspacePageToken && readerMenuState) {
+    ipcRenderer.send('reader-menu-state', ...readerMenuState, workspacePageToken);
+  }
 });
 
 if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
@@ -50,6 +54,28 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // The renderer uses it to keep update UI and GitHub release polling out of
   // the App Store build.
   distribution: process.mas === true ? 'mas' : 'direct',
+
+  setReaderMenuState: (available, hasSelection) => {
+    readerMenuState = [available === true, hasSelection === true];
+    if (workspacePageToken) ipcRenderer.send('reader-menu-state', ...readerMenuState, workspacePageToken);
+  },
+  onReaderAction: (callback) => {
+    ipcRenderer.on('trigger-reader-action', (_event, action) => {
+      if (action === 'read' || action === 'explain') callback(action);
+    });
+  },
+
+  readerSpeech: (command) => ipcRenderer.invoke('reader-speech', command, workspacePageToken),
+  onReaderSpeechEvent: (callback) => {
+    const listener = (_event, info) => callback(info);
+    ipcRenderer.on('reader-speech-event', listener);
+    return () => ipcRenderer.removeListener('reader-speech-event', listener);
+  },
+  ...(process.platform === 'darwin' ? {
+    explainAvailable: () => ipcRenderer.invoke('explain-available', workspacePageToken),
+    askExplain: (input) => ipcRenderer.invoke('ask-explain', input, workspacePageToken),
+    cancelExplain: (requestId) => ipcRenderer.invoke('cancel-explain', requestId, workspacePageToken),
+  } : {}),
 
   saveMarkdown: (request) => ipcRenderer.invoke('save-markdown', request),
   onEditorClose: (callback) => ipcRenderer.on('editor-close-request', () => callback()),

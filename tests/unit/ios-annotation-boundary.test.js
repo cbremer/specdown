@@ -151,9 +151,7 @@ describe('native iOS keeps deferred annotations inactive', () => {
         '.annotation-badge, .annotation-popover, .annotation-editor, .annotatable'
       )
     ).toBeNull();
-    expect(document.getElementById('annotation-panel').style.display).toBe(
-      'none'
-    );
+    expect(document.getElementById('annotation-panel').hidden).toBe(true);
     expect(document.getElementById('annotation-list').children).toHaveLength(0);
     expectNotesUntouched(current);
   });

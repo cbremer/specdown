@@ -90,6 +90,8 @@ import {
 } from './features/share-links.js';
 import { configureBookmarks, setupBookmarks } from './features/bookmarks.js';
 import { createTab, switchTab, configureTabs, renderTabBar } from './features/tabs.js';
+import { setupExplainRailTab } from './features/explain-rail.js';
+import { setupReaderMenuCapture, resetReadingFeatures } from './features/reader-actions.js';
 import { showToast } from './features/toast.js';
 import {
   setupToolbarOverflow,
@@ -178,7 +180,6 @@ const openUrlBtn = $('open-url-btn');
 const tocToggle = $('toc-toggle');
 const annotationToggle = $('annotation-toggle');
 const annotationListToggle = $('annotation-list-toggle');
-const annotationPanelClose = $('annotation-panel-close');
 const splitToggle = $('split-toggle');
 const printButton = $('print-button');
 const presentButton = $('present-button');
@@ -200,6 +201,7 @@ function init() {
             const focused = document.activeElement;
             const presentation = document.querySelector('body > .presentation-overlay');
             const ownedFocus = fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
+            resetReadingFeatures();
             cancelDiagramRasterExport();
             closeFullscreen({ restoreFocus: false });
             exitPresentation({ restoreFocus: false });
@@ -251,6 +253,8 @@ function init() {
     setupVisualTheme();
     setupIOSNativeUI();
     setupWebLanding();
+    setupExplainRailTab();
+    setupReaderMenuCapture();
     setupToolbarOverflow();
     setupRecentFiles();
     setupAbout();
@@ -410,9 +414,6 @@ function setupEventListeners() {
     // Annotations list panel (toggle button + close button)
     if (annotationListToggle) {
         annotationListToggle.addEventListener('click', () => toggleAnnotationPanel());
-    }
-    if (annotationPanelClose) {
-        annotationPanelClose.addEventListener('click', () => toggleAnnotationPanel());
     }
 
     // Split view toggle

@@ -2,6 +2,7 @@
 // Keyboard-shortcut reference sheet: a small accessible modal listing the app's
 // shortcuts. Opened with `?` or from the command palette.
 
+import { readerShortcutLabel } from './reader-actions.js';
 import { trapFocus } from '../core/focus-trap.js';
 import { createSdModal } from '../core/modal.js';
 
@@ -16,6 +17,8 @@ const SHORTCUTS = [
   { keys: `${MOD} K`, label: 'Open command palette' },
   { keys: `${MOD} D`, label: 'Bookmark this file' },
   { keys: `${MOD} F`, label: 'Find in document' },
+  { keys: readerShortcutLabel('read'), label: 'Read selection or read from here · pause / resume' },
+  { keys: readerShortcutLabel('explain'), label: 'Explain…' },
   { keys: 'Enter / Shift Enter', label: 'Next / previous search match' },
   { keys: `${MOD} P`, label: 'Print / save as PDF' },
   { keys: `${MOD} ⇧ E`, label: 'Export as PDF (desktop app)' },

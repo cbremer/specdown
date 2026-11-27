@@ -26,6 +26,11 @@ jest.mock('electron', () => ({
   shell: { openExternal: jest.fn() },
 }));
 jest.mock('chokidar', () => ({ watch: jest.fn() }));
+jest.mock('../../desktop/mac-reader', () => ({ createMacReader: jest.fn() }));
+jest.mock('../../desktop/portable-speech', () => ({
+  createPortableSpeech: jest.fn(),
+}));
+
 jest.mock('../../desktop/mas-access', () => ({
   ...jest.requireActual('../../desktop/mas-access'),
   loadMasNative: () => null,
@@ -120,6 +125,45 @@ describe.each([false, true])('startup delivery (MAS=%s)', (mas) => {
         if (!previous.has(listener)) process.removeListener(name, listener);
       }
     }
+  });
+
+  test('reader requests and events belong to one loaded viewer, including same-frame reloads', async () => {
+    const makeReader =
+      process.platform === 'darwin'
+        ? require('../../desktop/mac-reader').createMacReader
+        : require('../../desktop/portable-speech').createPortableSpeech;
+    const reader = { speech: jest.fn(() => true), dispose: jest.fn() };
+    let emit;
+    makeReader.mockImplementation((...args) => {
+      emit = args.at(-1);
+      return reader;
+    });
+    wc.emit('did-finish-load');
+    stopLoading();
+    const invoke = electron.ipcMain.handle.mock.calls.find(
+      ([name]) => name === 'reader-speech'
+    )[1];
+    const token = wc.mainFrame.send.mock.calls.find(
+      ([name]) => name === 'workspace-ready'
+    )[1].token;
+    const event = { sender: wc, senderFrame: wc.mainFrame };
+    await expect(invoke(event, {}, 'old-token')).resolves.toBe(false);
+    await expect(
+      invoke({ ...event, sender: { mainFrame: wc.mainFrame } }, {}, token)
+    ).resolves.toBe(false);
+    expect(reader.speech).not.toHaveBeenCalled();
+    await expect(invoke(event, { action: 'speak' }, token)).resolves.toBe(true);
+    expect(reader.speech).toHaveBeenCalledWith({ action: 'speak' });
+    emit({ type: 'start' });
+    expect(wc.mainFrame.send).toHaveBeenCalledWith('reader-speech-event', {
+      type: 'start',
+    });
+    navigation();
+    expect(reader.dispose).toHaveBeenCalledTimes(1);
+    wc.mainFrame.send.mockClear();
+    emit({ type: 'end' });
+    expect(wc.mainFrame.send).not.toHaveBeenCalled();
+    await expect(invoke(event, {}, token)).resolves.toBe(false);
   });
 
   test('successful finish waits for stop, restores once, and still requires strict ACK', () => {

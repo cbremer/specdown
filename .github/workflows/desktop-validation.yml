@@ -9,6 +9,8 @@ on:
       - 'markdown-viewer/**'
       - 'vite.config.js'
       - 'scripts/copy-static.js'
+      - 'scripts/build-mac-reader.js'
+      - 'ios/SpecDown/AppleIntelligenceServices.swift'
       - 'electron-builder*.js'
       - 'scripts/patch-macos-keychain.js'
       - 'scripts/test-desktop-watchers.js'
@@ -58,3 +60,21 @@ jobs:
           BUILD_ARGS: ${{ matrix.args }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: npm run desktop:build -- $BUILD_ARGS --publish never
+      - name: Check the bundled Mac reader
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          helper='dist/mac-universal/Specdown Desktop.app/Contents/Helpers/SpecDownReader'
+          lipo "$helper" -verify_arch arm64 x86_64
+          node - "$helper" <<'JS'
+          const { execFileSync } = require('node:child_process');
+          const assert = require('node:assert/strict');
+          const data = { requestId: 'ci.discovery' };
+          const reply = JSON.parse(execFileSync(process.argv[2], [], {
+            input: JSON.stringify({ action: 'explainAvailable', data }) + '\n',
+            encoding: 'utf8', timeout: 15000,
+          }));
+          assert.equal(reply.requestId, data.requestId);
+          assert.equal(typeof reply.result.available, 'boolean');
+          if (!reply.result.available) assert.ok(reply.result.reason);
+          JS

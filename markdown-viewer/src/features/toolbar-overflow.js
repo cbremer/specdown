@@ -18,6 +18,14 @@ import {
   exportActivePdf,
 } from '../platform/desktop.js';
 import { openFileInfoSheet } from './file-info.js';
+import { activeSideRailTab } from './side-rail.js';
+import {
+  readerShortcutLabel,
+  prepareReaderMenu,
+  readerActionsAvailable,
+  readerMenuReadLabel,
+  runReaderMenuAction,
+} from './reader-actions.js';
 import { bookmarkCurrentFile } from './bookmarks.js';
 
 const el = (/** @type {string} */ id) => document.getElementById(id);
@@ -37,8 +45,20 @@ const overflowHasDesktopFileTab = () => {
 // File info and bookmarking both require an active document.
 const overflowHasOpenDocument = () => state.activeTabId !== null;
 
-/** @type {Array<{ label: string, targetId?: string, run?: () => void, isAvailable?: () => boolean }>} */
+/** @type {Array<{ label: string | (() => string), readerAction?: 'read' | 'explain', targetId?: string, run?: () => void, isAvailable?: () => boolean }>} */
 const OVERFLOW_ACTIONS = [
+  {
+    readerAction: 'read',
+    label: readerMenuReadLabel,
+    run: () => runReaderMenuAction('read'),
+    isAvailable: readerActionsAvailable,
+  },
+  {
+    readerAction: 'explain',
+    label: 'Explain…',
+    run: () => runReaderMenuAction('explain'),
+    isAvailable: readerActionsAvailable,
+  },
   {
     label: 'File info',
     run: () => openFileInfoSheet(),
@@ -82,24 +102,46 @@ export function openOverflowMenu() {
   const toggle = el('overflow-toggle');
   if (!toggle) return;
 
+  prepareReaderMenu();
   const built = document.createElement('div');
   built.className = 'overflow-menu';
   built.setAttribute('role', 'menu');
 
   for (const action of OVERFLOW_ACTIONS) {
+    const label =
+      typeof action.label === 'function' ? action.label() : action.label;
     // run-entries carry their own availability + behavior (no toolbar button).
     if (action.run) {
       if (action.isAvailable && !action.isAvailable()) continue;
       const item = document.createElement('button');
       item.className = 'overflow-menu-item';
       item.setAttribute('role', 'menuitem');
-      item.textContent = action.label;
+      item.textContent = label;
+      if (action.readerAction) {
+        item.dataset.readerAction = action.readerAction;
+        item.setAttribute('aria-label', label);
+        const hint = document.createElement('span');
+        hint.className = 'overflow-menu-shortcut';
+        hint.setAttribute('aria-hidden', 'true');
+        hint.textContent = readerShortcutLabel(action.readerAction);
+        item.append(hint);
+        if (action.readerAction === 'explain') {
+          item.setAttribute('aria-controls', 'side-rail');
+          item.classList.toggle('active', activeSideRailTab() === 'explain');
+        }
+      }
       const runAction = action.run;
       item.addEventListener('click', () => {
         closeOverflowMenu();
         runAction();
       });
       built.appendChild(item);
+      if (action.readerAction === 'explain') {
+        const divider = document.createElement('div');
+        divider.className = 'overflow-menu-separator';
+        divider.setAttribute('role', 'separator');
+        built.append(divider);
+      }
       continue;
     }
 
@@ -110,7 +152,7 @@ export function openOverflowMenu() {
     const item = document.createElement('button');
     item.className = 'overflow-menu-item';
     item.setAttribute('role', 'menuitem');
-    item.textContent = action.label;
+    item.textContent = label;
     item.addEventListener('click', () => {
       closeOverflowMenu();
       const proxied = action.targetId ? el(action.targetId) : null;

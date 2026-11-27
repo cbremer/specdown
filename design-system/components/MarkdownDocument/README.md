@@ -9,3 +9,5 @@ Rendered Markdown document: the hero surface every platform shares.
 - Lists indent 2em. Blockquotes get a 4px `accent-color` rule and `text-secondary`. Tables use 1px `border-color` cells, `bg-secondary` headers, and scroll inside themselves.
 - Inline code: `bg-tertiary`, 3px radius, 0.9em. The source uses 'Courier New' here rather than `mono` (drift).
 - **Never print this live layout.** Print and PDF render `buildPrintableDocument()` instead.
+
+Read Aloud highlights the spoken sentence with the teal `read-aloud-sentence` fill and a `brand-teal-text` underline. The floating [Read Aloud transport](../ReadAloudTransport/README.md) follows the document pane. On compact screens, opening the [Side Rail](../SideRail/README.md) replaces the transport with its playback chip.

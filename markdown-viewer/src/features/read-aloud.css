@@ -1,0 +1,96 @@
+#content-main {
+  position: relative;
+}
+.read-aloud-anchor {
+  position: absolute;
+  pointer-events: none;
+  z-index: var(--z-transport);
+}
+.read-aloud-anchor .sd-transport {
+  pointer-events: auto;
+  max-width: calc(100% - var(--space-4));
+}
+.sd-transport-label {
+  min-width: 0;
+}
+.sd-transport-title,
+.sd-transport-meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sd-transport-button,
+.sd-transport-pill {
+  flex-shrink: 0;
+}
+.sd-transport[hidden],
+.sd-transport [hidden],
+#rail-playback-chip[hidden] {
+  display: none !important;
+}
+.read-aloud-rate-menu {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  right: 0;
+  padding: var(--space-1);
+  display: grid;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.read-aloud-rate-menu button {
+  background: var(--bg-primary);
+}
+.read-aloud-rate-menu button[aria-checked='true'] {
+  background: var(--accent-tint);
+  color: var(--accent-color);
+}
+::highlight(read-aloud-sentence) {
+  background-color: var(--read-aloud-sentence);
+  text-decoration: underline solid var(--brand-teal-text) 2px;
+}
+.read-aloud-block {
+  outline: 2px solid var(--brand-teal-text);
+}
+.read-aloud-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+/* The fallback paints over glyphs, so use a translucent wash. */
+.read-aloud-overlay .read-aloud-sentence {
+  position: absolute;
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--brand-teal-text);
+}
+.read-aloud-overlay .read-aloud-sentence::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background: var(--brand-teal-text);
+}
+@media (max-width: 699.98px) {
+  .read-aloud-anchor .sd-transport {
+    max-width: none;
+    flex-wrap: wrap;
+  }
+  .read-aloud-anchor .sd-transport-label {
+    flex: 1 1 6rem;
+    min-width: 0;
+  }
+  #rail-playback-chip {
+    min-height: var(--touch-target);
+  }
+  .ios-native .read-aloud-anchor .sd-transport {
+    bottom: var(--space-2);
+  }
+}
+@media print {
+  .read-aloud-anchor,
+  .read-aloud-overlay {
+    display: none;
+  }
+}

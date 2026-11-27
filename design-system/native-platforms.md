@@ -25,7 +25,9 @@ The shared viewer renders inside every shell. Native code owns only what the ope
 
 ## Mac menu bar (Electron)
 
-`SpecDown` (About, Services, Hide, Quit) · `File` (Open File…, Open Folder…, Close Folder, Open Recent ▸, Close Tab, Print…, Export as PDF…) · `Edit` (Undo … Select All, Find…) · `View` (Reload, Zoom, Full Screen; DevTools in dev builds only) · `Appearance` (Load Custom CSS Theme…, Clear Custom Theme, Theme ▸ Basic / Starfield / Aurora / Blueprint, App Icon ▸) · `Window` · `Help` (Check for Updates… outside the Mac App Store, Open Log File).
+`SpecDown` (About, Services, Hide, Quit) · `File` (Open File…, Open Folder…, Close Folder, Open Recent ▸, Close Tab, Print…, Export as PDF…) · `Edit` (Undo … Select All, Find…) · `View` (Read Selection or Read from Here, Explain…, Reload, Zoom, Full Screen; DevTools in dev builds only) · `Appearance` (Load Custom CSS Theme…, Clear Custom Theme, Theme ▸ Basic / Starfield / Aurora / Blueprint, App Icon ▸) · `Window` · `Help` (Check for Updates… outside the Mac App Store, Open Log File).
+
+The native reading commands use ⌥⌘R and ⌥⌘E on Mac and Apple hardware keyboards. Windows and Linux use Ctrl+Alt+R and Ctrl+Alt+E. Both commands target the active viewer. Selecting document text changes the read command to **Read Selection**. iPadOS also exposes these commands in its system menu where supported.
 
 ## iOS sidebar (SwiftUI, `.listStyle(.sidebar)`)
 

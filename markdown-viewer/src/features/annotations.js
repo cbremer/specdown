@@ -10,6 +10,12 @@ import { openAnnotationRecovery } from './annotation-recovery-ui.js';
 import { state } from '../core/state.js';
 import { isIOSNative } from '../core/platform.js';
 import {
+  activeSideRailTab,
+  openSideRail,
+  closeSideRail,
+  sideRailCompact,
+} from './side-rail.js';
+import {
   captureDocumentContext,
   isDocumentContextCurrent,
 } from '../core/document-context.js';
@@ -646,6 +652,7 @@ function openAnnotationEditor(target, context = annDocumentContext) {
   textarea.value = existing ? existing.text : '';
   deleteBtn.style.display = existing ? '' : 'none';
   const annEditorOpener = document.activeElement;
+  const fromNotesPanel = !!annEditorOpener?.closest('#annotation-panel');
   backdrop.style.display = 'flex';
   // aria-modal alone doesn't stop Tab walking into the page behind.
   const annEditorReleaseTrap = trapFocus(backdrop);
@@ -656,6 +663,16 @@ function openAnnotationEditor(target, context = annDocumentContext) {
     if (editorCleanup) editorCleanup();
     editorCleanup = null;
     if (canRestoreNonEditableFocus(annEditorOpener)) annEditorOpener.focus();
+    else if (fromNotesPanel && activeSideRailTab() === 'notes') {
+      const row = Array.from(
+        document.querySelectorAll('#annotation-list [data-note-id]')
+      ).find((item) => item.getAttribute('data-note-id') === target.id);
+      const replacement =
+        row?.querySelector('.annotation-list-edit') ??
+        document.getElementById('rail-notes-tab');
+      if (replacement instanceof HTMLElement)
+        replacement.focus({ preventScroll: true });
+    }
   };
   const save = async () => {
     if (await commitAnnotation(target, textarea.value, context)) close();
@@ -802,17 +819,15 @@ export function renderAnnotationPanel() {
     if (count) count.textContent = String(notes.length);
   }
 
-  // An open-but-now-empty panel should close itself.
-  if (notes.length === 0) {
-    const panel = document.getElementById('annotation-panel');
-    if (panel) {
-      panel.style.display = 'none';
-      panel.classList.remove('open');
-    }
-    if (toggle) toggle.classList.remove('active');
-  }
+  const count = document.getElementById('rail-note-count');
+  if (count) count.textContent = String(notes.length);
+  const empty = document.getElementById('rail-notes-empty');
+  if (empty) empty.hidden = notes.length > 0;
 
   if (!list) return;
+  const previousFocus = Array.from(list.querySelectorAll('button')).findIndex(
+    (button) => button === document.activeElement
+  );
   list.innerHTML = '';
 
   // Resolve each note to a block, then order rows by document position
@@ -838,6 +853,7 @@ export function renderAnnotationPanel() {
 
     const li = document.createElement('li');
     li.className = 'annotation-list-item';
+    li.dataset.noteId = note.id;
 
     const jump = document.createElement('button');
     jump.type = 'button';
@@ -853,9 +869,13 @@ export function renderAnnotationPanel() {
     if (reason === 'fallback' || reason === 'missing')
       ctxEl.classList.add('annotation-list-context-orphaned');
     jump.append(note_, ctxEl);
-    jump.addEventListener('click', () =>
-      jumpToAnnotation(note.id, panelContext)
-    );
+    jump.addEventListener('click', () => {
+      if (sideRailCompact() && idx >= 0 && annIsContextCurrent(panelContext)) {
+        closeSideRail(false);
+        root?.focus({ preventScroll: true });
+      }
+      jumpToAnnotation(note.id, panelContext);
+    });
 
     const edit = document.createElement('button');
     edit.type = 'button';
@@ -901,36 +921,26 @@ export function renderAnnotationPanel() {
     pager.append(previous, next);
     list.append(pager);
   }
-}
-
-/** Show/hide the annotations panel. */
-export function toggleAnnotationPanel() {
-  if (isIOSNative) return;
-  const panel = document.getElementById('annotation-panel');
-  if (!panel) return;
-  const toggle = document.getElementById('annotation-list-toggle');
-  if (panel.classList.contains('open')) {
-    panel.classList.remove('open');
-    panel.style.display = 'none';
-    if (toggle) toggle.classList.remove('active');
-  } else {
-    renderAnnotationPanel();
-    panel.classList.add('open');
-    panel.style.display = '';
-    if (toggle) toggle.classList.add('active');
+  if (previousFocus >= 0 && activeSideRailTab() === 'notes') {
+    const buttons = list.querySelectorAll('button');
+    const next =
+      buttons[Math.min(previousFocus, buttons.length - 1)] ??
+      document.getElementById('rail-notes-tab');
+    next?.focus({ preventScroll: true });
   }
 }
 
-/** Open the annotations panel (idempotent). */
+/** Toggle Notes from the toolbar or More menu. */
+export function toggleAnnotationPanel() {
+  if (isIOSNative) return;
+  if (activeSideRailTab() === 'notes') closeSideRail();
+  else openAnnotationPanel();
+}
+
 export function openAnnotationPanel() {
   if (isIOSNative) return;
-  const panel = document.getElementById('annotation-panel');
-  if (!panel) return;
   renderAnnotationPanel();
-  panel.classList.add('open');
-  panel.style.display = '';
-  const toggle = document.getElementById('annotation-list-toggle');
-  if (toggle) toggle.classList.add('active');
+  openSideRail('notes');
 }
 
 /**

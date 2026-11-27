@@ -63,6 +63,7 @@ module.exports = {
     ...base.files.filter((pattern) => pattern !== '!desktop/native/**'),
     '!desktop/native/mas-bookmarks/{build,binding.gyp,bookmarks.mm}',
     '!desktop/native/mas-bookmarks/build/**',
+    '!desktop/native/reader/**',
     // Never loaded in this channel (distribution.js); keep it out of the bundle.
     '!node_modules/electron-updater{,/**}',
   ],

@@ -289,13 +289,21 @@
                     </div>
                 </div>
 
-                <!-- Annotations panel (list of the current doc's notes) -->
-                <aside id="annotation-panel" class="annotation-panel" style="display: none;">
-                    <div class="annotation-panel-header">
-                        <span>Annotations</span>
-                        <button id="annotation-panel-close" class="annotation-panel-close" title="Close annotations" aria-label="Close annotations">✕</button>
+                <aside id="side-rail" class="sd-rail" aria-label="Document details" hidden>
+                    <div class="sd-rail-resize" role="separator" aria-label="Resize document details" aria-orientation="vertical" aria-controls="side-rail" aria-valuemin="320" aria-valuemax="480" aria-valuenow="360" tabindex="0"></div>
+                    <div class="sd-rail-header">
+                        <div class="sd-rail-tabs" role="tablist" aria-label="Document details">
+                            <button id="rail-explain-tab" class="sd-rail-tab" type="button" role="tab" aria-selected="false" aria-controls="explain-rail" tabindex="-1">Explain</button>
+                            <button id="rail-notes-tab" class="sd-rail-tab" type="button" role="tab" aria-selected="false" aria-controls="annotation-panel" tabindex="-1">Notes <span id="rail-note-count" class="sd-rail-tab-count">0</span></button>
+                        </div>
+                        <button id="rail-playback-chip" class="sd-rail-playback-chip" type="button" hidden></button>
+                        <button class="sd-rail-close" type="button" aria-label="Close document details" title="Close document details">✕</button>
                     </div>
-                    <ul id="annotation-list" class="annotation-list"></ul>
+                    <section id="explain-rail" role="tabpanel" aria-labelledby="rail-explain-tab" hidden></section>
+                    <section id="annotation-panel" role="tabpanel" aria-labelledby="rail-notes-tab" hidden>
+                        <p id="rail-notes-empty">No notes on this document.</p>
+                        <ul id="annotation-list" class="annotation-list"></ul>
+                    </section>
                 </aside>
             </div>
         </div>
@@ -349,6 +357,9 @@
                     <button id="ios-action-sheet-close" class="ios-sheet-close" title="Close actions">✕</button>
                 </div>
                 <div class="ios-sheet-actions">
+                    <button id="ios-read-aloud" class="ios-sheet-action-button">Read from here</button>
+                    <button id="ios-explain" class="ios-sheet-action-button">Explain…</button>
+                    <div id="ios-reading-divider" class="overflow-menu-separator" role="separator"></div>
                     <button id="ios-source-edit" class="ios-sheet-action-button">Edit Markdown</button>
                     <button id="ios-source-preview" class="ios-sheet-action-button" hidden>Preview draft</button>
                     <button id="ios-source-return" class="ios-sheet-action-button" hidden>Return to reading</button>

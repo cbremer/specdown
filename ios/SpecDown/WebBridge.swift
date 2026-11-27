@@ -31,6 +31,8 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     @Published private(set) var currentDocumentName = "SpecDown Document"
     @Published private(set) var recentFiles: [RecentDocuments.Entry]
     @Published private(set) var hasLoadedDocument = false
+    @Published private(set) var readerMenuAvailable = false
+    @Published private(set) var readerMenuHasSelection = false
     @Published var showsAppIconPicker = false
     @Published private(set) var viewerPresentationRequest: UInt = 0
 
@@ -43,6 +45,13 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private var pendingFile: PendingFile?
     private var pendingError: String?
     private let diagramExports = NativeDiagramExport()
+    private lazy var reader = AppleReaderServices(
+        speechEvent: { [weak self] event in
+            self?.evaluateJavaScript(function: "window.specdownSpeechEvent", arguments: [event], context: "readerSpeech")
+        },
+        explainResult: { [weak self] id, result in
+            self?.evaluateJavaScript(function: "window.specdownExplainResult", arguments: [id, result], context: "askExplain")
+        })
     private(set) var urlInputController: NativeURLInputController?
     private weak var pendingURLInputSource: UIView?
     private var pendingURLInputRect: CGRect?
@@ -112,6 +121,15 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let data = body["data"] as? [String: Any]
 
         switch action {
+        case "readerMenuState":
+            guard let available = data?["available"] as? Bool,
+                  let hasSelection = data?["hasSelection"] as? Bool else { return }
+            if readerMenuAvailable != available { readerMenuAvailable = available }
+            if readerMenuHasSelection != hasSelection { readerMenuHasSelection = hasSelection }
+        case "readerSpeech":
+            if let command = body["command"] as? [String: Any] { reader.speech(command) }
+        case "explainAvailable", "askExplain", "cancelExplain":
+            if let data { reader.explain(action: action, data: data) }
         case "openURLInput":
             guard let webView, let data,
                   let x = data["x"] as? Double, let y = data["y"] as? Double,
@@ -158,7 +176,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 for operation in activeProviderReads.values { operation.permit.cancel() }
             }
             diagramExports.invalidate(unless: token)
-            if previousToken != token { invalidateImageFolderPicker() }
+            if previousToken != token {
+                reader.reset()
+                invalidateImageFolderPicker()
+            }
             let ids = (data?["openIDs"] as? [String] ?? []).prefix(10).filter { $0.utf8.count <= 128 }
             openSourceIDs = Set(ids)
             pruneSourceURLs()
@@ -185,6 +206,11 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     }
 
     // MARK: - Swift → JS
+
+    func performReaderAction(_ action: String) {
+        guard readerMenuAvailable, action == "read" || action == "explain" else { return }
+        evaluateJavaScript(function: "window.specdownReaderAction", arguments: [action], context: "readerMenu")
+    }
 
     /// A navigation can finish before WebKit has evaluated the module graph.
     /// Keep cold-start files, errors and appearance changes queued until the
@@ -242,6 +268,9 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     }
 
     func pageWillLoad() {
+        reader.reset()
+        readerMenuAvailable = false
+        readerMenuHasSelection = false
         urlInputController?.cancel()
         pageLoaded = false
         diagramExports.invalidate(unless: "")

@@ -1,0 +1,20 @@
+<!-- @dsCard group="Panels · proposed" height=220 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <div style="display:flex;flex-direction:column;gap:12px;padding:20px;font-size:0.9rem">
+      <div>Every retry keeps the same job ID. <button class="sd-cite" aria-label="Source 1">1</button> <button class="sd-cite" aria-current="true" aria-label="Source 2">2</button></div>
+      <div class="sd-sources">
+        <button class="sd-source"><span class="sd-source-label">1 · Retry policy, ¶1</span>“The client retries twice after a timeout…”</button>
+        <button class="sd-source"><span class="sd-source-label">2 · Retry policy, ¶1</span>“Each retry reuses the original job ID…”</button>
+      </div>
+      <p style="margin:0;background:var(--bg-primary);padding:12px"><span class="citation-reveal">Each retry reuses the original job ID, so the API can discard duplicates.</span></p>
+    </div>
+  </body>
+</html>

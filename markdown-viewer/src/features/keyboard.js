@@ -20,6 +20,8 @@ import { closeOverflowMenu, isOverflowMenuOpen } from './toolbar-overflow.js';
 import { closeFullscreen, updateZoomUI, resetToFit } from './diagrams.js';
 import { openSearch, closeSearch } from './search.js';
 import { bookmarkCurrentFile, isBookmarksOpen } from './bookmarks.js';
+import { readerActionsAvailable, readerShortcutAction, runReaderShortcut } from './reader-actions.js';
+import { activeSideRailTab, closeSideRail } from './side-rail.js';
 import { performPrint } from '../platform/ios-chrome.js';
 
 // True when the event target is a text-entry element, so global single-key
@@ -49,6 +51,18 @@ export function setupGlobalKeyboardShortcuts() {
     // Do not apply that same event to the surface it just revealed.
     if (e.defaultPrevented) return;
     if (isBookmarksOpen()) return;
+    const readerAction = readerShortcutAction(e);
+    if (readerAction && readerActionsAvailable() && !isTypingTarget(e.target) &&
+        !isCommandPaletteOpen() && !isShortcutsSheetOpen() && !isFileInfoSheetOpen() &&
+        !isPresentationOpen() && (!fullscreenOverlay || fullscreenOverlay.style.display === 'none')) {
+      e.preventDefault();
+      if (isOverflowMenuOpen()) closeOverflowMenu();
+      if (!e.repeat) runReaderShortcut(readerAction);
+      return;
+    }
+    // Compact rails own focus. Let their controls and Escape handler handle
+    // keys without opening an unrelated dialog behind the drawer.
+    if (document.getElementById('side-rail')?.getAttribute('aria-modal') === 'true') return;
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd' && !e.shiftKey && !e.altKey) {
       if (document.querySelector('[role="dialog"]')) return;
       e.preventDefault();
@@ -86,6 +100,8 @@ export function setupGlobalKeyboardShortcuts() {
         closeFullscreen();
       } else if (searchBar && searchBar.style.display !== 'none') {
         closeSearch();
+      } else if (activeSideRailTab() && !(e.target instanceof Element && e.target.closest('[role="dialog"]'))) {
+        closeSideRail();
       }
       return;
     }

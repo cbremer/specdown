@@ -14,6 +14,8 @@ const { createFileResourcePolicy } = require('./file-resource-policy');
 const { createFileOpenReceipts } = require('./file-open-receipts');
 const { createOpenRecovery } = require('./open-recovery');
 const { createAnnotationIdentity } = require('./annotation-identity');
+const { createMacReader } = require('./mac-reader');
+const { createPortableSpeech } = require('./portable-speech');
 
 const PACKAGED_SPECDOWN_CHANNEL = require('../package.json').specdownChannel;
 const isTestChannel = ['development', 'beta'].includes(PACKAGED_SPECDOWN_CHANNEL);
@@ -107,6 +109,55 @@ function handleTrustedIpc(channel, handler) {
   });
 }
 
+// Only a live main viewer page can start a reader. Its helper and event target
+// are captured together so reloads and replacement windows cannot share state.
+const pageReaders = new Map();
+
+function disposePageReader(contents) {
+  const owner = pageReaders.get(contents);
+  pageReaders.delete(contents);
+  owner?.reader.dispose();
+}
+
+function readerFor(event, pageToken) {
+  if (!isCurrentViewerRequest(event, { pageToken })) return null;
+  const contents = event.sender;
+  const frame = event.senderFrame;
+  let owner = pageReaders.get(contents);
+  if (owner?.frame === frame) return owner.reader;
+  disposePageReader(contents);
+  const emit = (info) => {
+    if (pageReaders.get(contents) === owner && !contents.isDestroyed() &&
+        !frame.detached && frame === contents.mainFrame && isAppPageUrl(frame.url)) {
+      frame.send('reader-speech-event', info);
+    }
+  };
+  let reader;
+  if (process.platform === 'darwin') {
+    const executable = app.isPackaged
+      ? path.join(process.resourcesPath, '..', 'Helpers', 'SpecDownReader')
+      : path.join(__dirname, '..', 'dist', 'native', 'SpecDownReader');
+    reader = createMacReader(executable, emit);
+  } else {
+    reader = createPortableSpeech(emit);
+  }
+  owner = { frame, reader };
+  pageReaders.set(contents, owner);
+  return reader;
+}
+
+handleTrustedIpc('reader-speech', (event, command, token) =>
+  readerFor(event, token)?.speech(command) ?? false);
+handleTrustedIpc('explain-available', (event, token) =>
+  readerFor(event, token)?.explainAvailable?.() ?? { available: false });
+handleTrustedIpc('ask-explain', (event, input, token) => {
+  const reader = readerFor(event, token);
+  if (!reader?.askExplain) throw new Error('Local explanations are unavailable.');
+  return reader.askExplain(input);
+});
+handleTrustedIpc('cancel-explain', (event, id, token) =>
+  readerFor(event, token)?.cancelExplain?.(id) ?? false);
+
 // 'mas' (Mac App Store) or 'direct' (Developer ID DMG/ZIP). See distribution.js.
 const DISTRIBUTION_CHANNEL = getDistributionChannel();
 const IS_MAS = DISTRIBUTION_CHANNEL === 'mas';
@@ -123,6 +174,8 @@ function isSignedUpdatePlatform(platform) {
 }
 
 let mainWindow = null;
+let readerMenuAvailable = false;
+let readerMenuHasSelection = false;
 let editorCloseApproved = false;
 let viewerReadyWindow = null;
 let store = null;
@@ -582,10 +635,13 @@ function createWindow() {
     }
   };
   const invalidateStartup = () => {
+    disposePageReader(windowWebContents);
     loadGeneration += 1;
     // BrowserWindow.webContents can throw after native window destruction.
     // Captured window identity still proves ownership without that getter.
     if (mainWindow === appWindow) {
+      readerMenuAvailable = false;
+      readerMenuHasSelection = false;
       resetWorkspaceContext(false);
       workspacePageToken = randomUUID();
     }
@@ -944,7 +1000,7 @@ function resetWorkspaceContext(notify = true) {
   if (mainWindow) rebuildMenu();
 }
 
-function isCurrentWorkspaceRequest(event, payload) {
+function isCurrentViewerRequest(event, payload) {
   return !!(payload && workspacePageToken && payload.pageToken === workspacePageToken &&
     mainWindow && event.sender === mainWindow.webContents &&
     event.senderFrame === mainWindow.webContents.mainFrame &&
@@ -1404,22 +1460,22 @@ onTrustedIpc('request-open-path', (_event, filePath) => {
 
 // Workspace: open a folder picker and scan it for markdown files.
 onTrustedIpc('request-open-folder', (event, payload) => {
-  if (isCurrentWorkspaceRequest(event, payload)) showOpenFolderDialog();
+  if (isCurrentViewerRequest(event, payload)) showOpenFolderDialog();
 });
 
 onTrustedIpc('request-close-workspace', (event, payload) => {
-  if (isCurrentWorkspaceRequest(event, payload)) resetWorkspaceContext();
+  if (isCurrentViewerRequest(event, payload)) resetWorkspaceContext();
 });
 
 onTrustedIpc('request-workspace-file', (event, payload) => {
-  if (!isCurrentWorkspaceRequest(event, payload) || !activeWorkspaceId || payload.id !== activeWorkspaceId ||
+  if (!isCurrentViewerRequest(event, payload) || !activeWorkspaceId || payload.id !== activeWorkspaceId ||
       typeof payload.filePath !== 'string' || !isInsideAnyWorkspace(payload.filePath)) return;
   openFileByPath(payload.filePath, { workspaceId: activeWorkspaceId });
 });
 
 // Workspace: open a relative link clicked inside a workspace document.
 onTrustedIpc('request-open-relative', (event, payload) => {
-  if (isCurrentWorkspaceRequest(event, payload) && activeWorkspaceId && payload.id === activeWorkspaceId) {
+  if (isCurrentViewerRequest(event, payload) && activeWorkspaceId && payload.id === activeWorkspaceId) {
     openRelativeFromFile(payload.fromPath, payload.href, activeWorkspaceId);
   }
 });
@@ -1496,7 +1552,7 @@ onTrustedIpc('open-dropped-path', (event, absPath, pageToken) => {
     const access = fileAccess.withAccess(absPath, (resolved) => fs.statSync(resolved));
     if (!access.ok) return;
     if (access.value.isDirectory()) {
-      if (isCurrentWorkspaceRequest(event, { pageToken })) openWorkspace(access.path);
+      if (isCurrentViewerRequest(event, { pageToken })) openWorkspace(access.path);
     }
     else if (access.value.isFile()) openFileByPath(access.path);
   } catch (err) {
@@ -1614,6 +1670,21 @@ onTrustedIpc('visual-theme-changed', (_event, themeId) => {
 // ===========================
 // Native Menu
 // ===========================
+onTrustedIpc('reader-menu-state', (event, available, hasSelection, pageToken) => {
+  if (!isCurrentViewerRequest(event, { pageToken }) ||
+      typeof available !== 'boolean' || typeof hasSelection !== 'boolean') return;
+  if (readerMenuAvailable === available && readerMenuHasSelection === hasSelection) return;
+  readerMenuAvailable = available;
+  readerMenuHasSelection = hasSelection;
+  rebuildMenu();
+});
+
+function triggerReaderAction(action) {
+  if (readerMenuAvailable && isViewerNotLoading(mainWindow)) {
+    mainWindow.webContents.mainFrame.send('trigger-reader-action', action);
+  }
+}
+
 function buildMenu() {
   const isMac = process.platform === 'darwin';
   const recent = getRecentFiles();
@@ -1737,6 +1808,19 @@ function buildMenu() {
     {
       label: 'View',
       submenu: [
+        {
+          label: readerMenuHasSelection ? 'Read Selection' : 'Read from Here',
+          accelerator: 'CmdOrCtrl+Alt+R',
+          enabled: readerMenuAvailable,
+          click: () => triggerReaderAction('read'),
+        },
+        {
+          label: 'Explain…',
+          accelerator: 'CmdOrCtrl+Alt+E',
+          enabled: readerMenuAvailable,
+          click: () => triggerReaderAction('explain'),
+        },
+        { type: 'separator' },
         { role: 'reload' },
         { role: 'forceReload' },
         ...(app.isPackaged ? [] : [{ role: 'toggleDevTools' }]),
@@ -1904,6 +1988,7 @@ process.on('unhandledRejection', (reason) => {
 })();
 
 app.on('will-quit', () => {
+  for (const contents of pageReaders.keys()) disposePageReader(contents);
   annotationIdentityRegistry?.close();
   annotationIdentityRegistry = null;
   globalShortcut.unregisterAll();

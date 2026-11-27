@@ -119,7 +119,8 @@ describe('HTML comments', () => {
       renderAnnotations('doc.md');
 
       document.getElementById('ios-annotations-button').dispatchEvent(new Event('click', { bubbles: true }));
-      expect(document.getElementById('annotation-panel').classList.contains('open')).toBe(true);
+      expect(document.getElementById('annotation-panel').hidden).toBe(false);
+      expect(document.getElementById('rail-notes-tab').getAttribute('aria-selected')).toBe('true');
     });
   });
 });

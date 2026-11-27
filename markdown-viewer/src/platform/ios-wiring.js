@@ -24,6 +24,7 @@ import { openAnnotationPanel } from '../features/annotations.js';
 import { startPresentation } from '../features/presentation.js';
 import { openFileInfoSheet } from '../features/file-info.js';
 import { openSearch } from '../features/search.js';
+import { prepareReaderMenu, readerActionsAvailable, readerMenuReadLabel, runReaderMenuAction } from '../features/reader-actions.js';
 import { requestIOSURLEntry } from './ios-url-entry.js';
 
 const iosWiringEl = (/** @type {string} */ id) => document.getElementById(id);
@@ -43,6 +44,16 @@ export function setupIOSEventListeners() {
   // Find has no other entry point in the phone-style layout (the document
   // header's search button is hidden there), so offer it in the sheet.
   iosWiringEl('ios-find-button')?.addEventListener('click', () => { closeIOSActionSheet(); openSearch(); });
+  const iosRead = iosWiringEl('ios-read-aloud');
+  const iosExplain = iosWiringEl('ios-explain');
+  iosRead?.addEventListener('click', () => {
+    closeIOSActionSheet();
+    runReaderMenuAction('read');
+  });
+  iosExplain?.addEventListener('click', () => {
+    closeIOSActionSheet();
+    runReaderMenuAction('explain');
+  });
   const iosOpenButton = iosWiringEl('ios-open-button');
   const iosContentsButton = /** @type {HTMLButtonElement | null} */ (
     iosWiringEl('ios-contents-button')
@@ -132,6 +143,14 @@ export function setupIOSEventListeners() {
   if (iosMoreButton) {
     iosMoreButton.addEventListener('click', () => {
       if (iosMoreButton.disabled) return;
+      prepareReaderMenu();
+      if (iosRead) {
+        iosRead.hidden = !readerActionsAvailable();
+        iosRead.textContent = readerMenuReadLabel();
+      }
+      if (iosExplain) iosExplain.hidden = !readerActionsAvailable();
+      const divider = iosWiringEl('ios-reading-divider');
+      if (divider) divider.hidden = !readerActionsAvailable();
       closeIOSActionSheet();
       closeIOSTocSheet();
       setIOSSheetVisibility(iosActionSheet, true);

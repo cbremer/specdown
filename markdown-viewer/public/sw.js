@@ -54,7 +54,7 @@ self.addEventListener('fetch', (event) => {
   if (url.search || relativePath === null) return;
   const isShell = relativePath === '' || relativePath === 'index.html';
   const isAsset =
-    /^assets\/[A-Za-z0-9_-]+\.(?:js|css|woff2?)$/.test(relativePath) ||
+    /^assets\/[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.(?:js|css|woff2?)$/.test(relativePath) ||
     [
       'icons/icon.svg',
       'icons/icon-512.png',

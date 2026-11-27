@@ -1,0 +1,33 @@
+<!-- @dsCard group="Panels · proposed" height=560 -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <aside class="sd-rail" style="height:560px">
+      <div class="sd-rail-header">
+        <div class="sd-rail-tabs" role="tablist"><button class="sd-rail-tab" role="tab" aria-selected="true">Explain</button><button class="sd-rail-tab" role="tab" aria-selected="false">Notes</button></div>
+        <button class="sd-rail-close" aria-label="Close">✕</button>
+      </div>
+      <div class="sd-scope">
+        <button class="sd-scope-picker"><span><span class="sd-scope-kind">Selection · </span>Retry policy</span><span aria-hidden="true">▾</span></button>
+        <div class="sd-scope-preview">“The client retries twice after a timeout, waiting 2 s and then 4 s…”</div>
+      </div>
+      <div class="sd-thread" aria-live="polite">
+        <div>When a request times out, the client tries twice more, waiting 2 seconds and then 4. <button class="sd-cite" aria-label="Source 1">1</button> Every retry keeps the same job ID, so the API ignores duplicates. <button class="sd-cite" aria-label="Source 2">2</button></div>
+        <div class="sd-turn-actions"><button class="sd-turn-action">Listen</button><button class="sd-turn-action">Copy</button><button class="sd-turn-action">Sources · 2</button></div>
+        <div class="sd-turn-question">Does that also apply to a permission error?</div>
+        <div>The selection doesn't mention permission errors, so I can't tell from it alone.</div>
+        <div class="sd-scope-actions"><button class="present-button">Use section: Retry policy</button><button class="present-button">Use whole document</button></div>
+      </div>
+      <div class="sd-composer">
+        <div class="sd-composer-field"><textarea class="sd-composer-input" rows="1" aria-label="Ask a follow-up" placeholder="Ask a follow-up…"></textarea><button class="sd-composer-send" aria-label="Send"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg></button></div>
+        <div class="sd-composer-note">Generated on this Mac from the scope above. Check the sources.</div>
+      </div>
+    </aside>
+  </body>
+</html>
