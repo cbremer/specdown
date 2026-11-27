@@ -1,0 +1,184 @@
+#explain-rail {
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: column;
+  align-self: flex-start;
+  flex: 0 0 min(34%, 28rem);
+  width: min(34%, 28rem);
+  min-width: 17rem;
+  height: 100%;
+  max-height: var(--explain-available-height, 100%);
+  overflow: hidden;
+  border-inline-start: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: 0.9rem/1.5 var(--font-sans);
+}
+
+#explain-rail[hidden],
+#explain-rail [hidden],
+.explain-return[hidden] {
+  display: none;
+}
+
+#explain-rail header,
+#explain-rail form {
+  flex: none;
+  padding: var(--space-2) var(--space-4);
+}
+
+#explain-rail header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+#explain-rail h2 {
+  font-size: 1.125rem;
+}
+#explain-rail h3 {
+  font-size: 1rem;
+}
+#explain-rail label {
+  font-weight: 600;
+}
+
+.explain-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.explain-body select,
+#explain-rail input {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  font: inherit;
+  min-width: 0;
+  width: 100%;
+}
+
+.explain-body select {
+  margin-block: var(--space-1) var(--space-2);
+}
+.explain-body p,
+.explain-body blockquote {
+  white-space: pre-wrap;
+}
+.explain-body blockquote {
+  border-inline-start: 2px solid var(--border-color);
+  margin-block: var(--space-3);
+  padding-inline-start: var(--space-3);
+  color: var(--text-secondary);
+}
+.explain-body details,
+.explain-turn,
+.explain-body > button {
+  margin-top: var(--space-3);
+}
+.explain-body summary {
+  font-weight: 600;
+  cursor: pointer;
+  padding-block: var(--space-1);
+}
+.explain-body ol {
+  padding-inline-start: var(--space-5);
+}
+.explain-body details > button {
+  display: block;
+  margin-block: var(--space-1);
+}
+
+#explain-rail .explain-source-link {
+  color: var(--accent-color);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  width: auto;
+  height: auto;
+  min-height: 2rem;
+  padding: var(--space-1);
+  text-decoration: underline;
+}
+.explain-turn {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--space-3);
+}
+.explain-turn h3 {
+  margin-bottom: var(--space-1);
+}
+.explain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+#explain-rail form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border-color);
+}
+#explain-rail form label {
+  grid-column: 1 / -1;
+}
+#explain-rail input {
+  font-size: 1rem;
+}
+.explain-return {
+  align-self: flex-end;
+  margin: var(--space-1) var(--space-3);
+}
+
+@media (max-width: 767px) {
+  #explain-rail {
+    position: fixed;
+    z-index: 920;
+    inset-block-start: var(--explain-viewport-top, 0px);
+    inset-inline-end: 0;
+    width: 100%;
+    min-width: 0;
+    height: var(--explain-viewport-height, 100%);
+    max-height: none;
+    border: 0;
+    padding-block-start: max(
+      env(safe-area-inset-top, 0px),
+      var(--native-safe-top, 0px)
+    );
+    padding-block-end: max(
+      env(safe-area-inset-bottom, 0px),
+      var(--native-safe-bottom, 0px)
+    );
+    padding-inline: max(
+        env(safe-area-inset-left, 0px),
+        var(--native-safe-left, 0px)
+      )
+      max(env(safe-area-inset-right, 0px), var(--native-safe-right, 0px));
+  }
+  #explain-rail button,
+  #explain-rail select,
+  #explain-rail input,
+  #explain-rail .explain-source-link,
+  .explain-return {
+    min-height: 44px;
+  }
+}
+
+@media print {
+  #explain-rail,
+  .explain-return {
+    display: none !important;
+  }
+}

@@ -1,0 +1,62 @@
+.read-aloud-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  font: 0.9rem var(--font-sans);
+}
+
+.read-aloud-label {
+  margin-inline-end: auto;
+  color: var(--text-secondary);
+}
+
+.read-aloud-controls button,
+.read-aloud-controls select {
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.read-aloud-controls button:hover,
+.read-aloud-controls button:active {
+  color: var(--text-on-accent);
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+::highlight(read-aloud-sentence) {
+  color: var(--text-on-accent);
+  background-color: var(--accent-color);
+}
+
+.read-aloud-block {
+  outline: 2px solid var(--accent-color);
+}
+
+.read-aloud-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.read-aloud-overlay span {
+  position: absolute;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+@media print {
+  .read-aloud-controls,
+  .read-aloud-overlay {
+    display: none;
+  }
+}

@@ -90,6 +90,7 @@ import {
 } from './features/share-links.js';
 import { configureBookmarks, setupBookmarks } from './features/bookmarks.js';
 import { createTab, switchTab, configureTabs, renderTabBar } from './features/tabs.js';
+import { setupReaderMenuCapture, resetReadingFeatures } from './features/reader-actions.js';
 import { showToast } from './features/toast.js';
 import {
   setupToolbarOverflow,
@@ -200,6 +201,7 @@ function init() {
             const focused = document.activeElement;
             const presentation = document.querySelector('body > .presentation-overlay');
             const ownedFocus = fullscreenOverlay?.contains(focused) || presentation?.contains(focused);
+            resetReadingFeatures();
             cancelDiagramRasterExport();
             closeFullscreen({ restoreFocus: false });
             exitPresentation({ restoreFocus: false });
@@ -251,6 +253,7 @@ function init() {
     setupVisualTheme();
     setupIOSNativeUI();
     setupWebLanding();
+    setupReaderMenuCapture();
     setupToolbarOverflow();
     setupRecentFiles();
     setupAbout();

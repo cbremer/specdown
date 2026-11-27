@@ -251,3 +251,24 @@ export async function bridgeSaveMarkdown(request) { return await nativeBridge()?
 /** @param {()=>void} callback */
 export function bridgeOnEditorClose(callback) { nativeBridge()?.onEditorClose?.(callback); }
 export function bridgeCloseEditorWindow() { nativeBridge()?.closeEditorWindow?.(); }
+
+/** The desktop preload exposes the installed host speech engine. */
+export function bridgeReaderSpeechAdapter() {
+  const bridge = nativeBridge();
+  if (!bridge?.readerSpeech || !bridge.onReaderSpeechEvent) return null;
+  return { send: bridge.readerSpeech, listen: bridge.onReaderSpeechEvent };
+}
+
+export async function bridgeExplainAvailable() {
+  return await nativeBridge()?.explainAvailable?.();
+}
+
+/** @param {Parameters<NonNullable<DesktopBridge['askExplain']>>[0]} request */
+export function bridgeAskExplain(request) {
+  return nativeBridge()?.askExplain?.(request);
+}
+
+/** @param {string} id */
+export function bridgeCancelExplain(id) {
+  nativeBridge()?.cancelExplain?.(id);
+}

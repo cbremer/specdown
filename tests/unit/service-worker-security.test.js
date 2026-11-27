@@ -9,6 +9,8 @@ test('the service worker ignores documents, sibling sites and query-bearing requ
     'utf8'
   );
   const context = {
+    caches: { match: () => Promise.resolve(null) },
+    fetch: () => Promise.resolve(null),
     URL,
     self: {
       location: new URL('https://example.com/specdown/sw.js'),
@@ -31,4 +33,14 @@ test('the service worker ignores documents, sibling sites and query-bearing requ
     });
     expect(respondWith).not.toHaveBeenCalled();
   }
+  const respondWith = jest.fn();
+  events.fetch({
+    request: {
+      url: 'https://example.com/specdown/assets/mermaid.core-B8VgHKRb.js',
+      method: 'GET',
+      mode: 'cors',
+    },
+    respondWith,
+  });
+  expect(respondWith).toHaveBeenCalledTimes(1);
 });

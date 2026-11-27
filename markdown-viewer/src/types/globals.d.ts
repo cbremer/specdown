@@ -67,7 +67,21 @@ interface SpecdownOpenFailure {
   canForget: boolean;
 }
 
+type ExplainRequest = {
+  requestId: string;
+  excerpts: Array<{id: string; text: string}>;
+  question: string;
+  history: Array<{role: 'user' | 'assistant'; text: string}>;
+};
+type ExplainReply = {available?: boolean; reason?: string; text?: string; sourceIds?: string[]; error?: string};
+
 interface SpecdownDesktopBridge {
+  explainAvailable?: () => Promise<{available: boolean; reason?: string}>;
+  askExplain?: (request: ExplainRequest) => Promise<ExplainReply>;
+  cancelExplain?: (requestId: string) => void;
+
+  readerSpeech?: (command: import('../platform/speech.js').ReaderSpeechCommand) => Promise<boolean>;
+  onReaderSpeechEvent?: (callback: (event: import('../platform/speech.js').ReaderSpeechEvent) => void) => () => void;
   isDesktop?: boolean;
   /** Shell OS (Node `process.platform`): 'darwin' | 'win32' | 'linux'. */
   platform?: string;
@@ -140,6 +154,8 @@ interface WebkitMessageHandler {
 declare global {
   interface Window { specdownSourceSaveResult?: (id:string, result: {status:string; copied?:boolean; message?:string; content?:string; filePath?:string; filename?:string; sourceMeta?:import('../core/state.js').TabSourceMeta|null})=>void; }
   interface Window {
+    specdownSpeechEvent?: (event: import('../platform/speech.js').ReaderSpeechEvent) => void;
+    specdownExplainResult?: (requestId: string, reply: ExplainReply) => void;
     /** Electron preload bridge (desktop only). */
     specdown?: SpecdownDesktopBridge;
     /** Truthy inside the iOS/iPadOS WKWebView shell. */

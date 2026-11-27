@@ -102,6 +102,14 @@ Channel folders are `dev/`, `beta/` and `prod/`. They are created as builds arri
   Restore never grants file access. Keep the original backup and reselect the
   saved file to verify it; unsupported capacity fails without truncation.
 
+### Read Aloud and Explain
+
+With a document open in preview, open **More (⋯)**. Select text first for **Read selection**, or choose **Read from here** to start at the current heading. The playback controls let you pause, stop or change speed. On Windows and Linux, the desktop app can fall back to Windows system speech or an installed `espeak-ng` / `espeak` executable when Chromium has no usable local voice.
+
+Choose **Explain…** to open the right rail. Its Source menu covers selected text, sections, code, diagrams and the whole document. Open a citation to find the supporting passage. On small screens **Back to explanation** brings you back to the thread. On supported Apple devices, the rail answers follow-up questions using Apple’s local model. Other platforms can navigate the captured source and follow supported Mermaid sequence diagrams step by step. When a long source exceeds the model input budget, the rail shows where coverage stops.
+
+Use the [desktop build and device test guide](docs/project-reader/2026-11-27-tasks-session-01-reader-acceptance.md) to try the Dev builds with a sample spec.
+
 ### Interactive Mermaid diagrams
 - Per-diagram **zoom, pan, reset, and fullscreen** controls
 - **Mouse-wheel zoom** and **click-drag pan** with a pointer; touch controls on iOS

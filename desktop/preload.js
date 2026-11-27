@@ -51,6 +51,18 @@ if (isBundledViewerPage()) contextBridge.exposeInMainWorld('specdown', {
   // the App Store build.
   distribution: process.mas === true ? 'mas' : 'direct',
 
+  readerSpeech: (command) => ipcRenderer.invoke('reader-speech', command, workspacePageToken),
+  onReaderSpeechEvent: (callback) => {
+    const listener = (_event, info) => callback(info);
+    ipcRenderer.on('reader-speech-event', listener);
+    return () => ipcRenderer.removeListener('reader-speech-event', listener);
+  },
+  ...(process.platform === 'darwin' ? {
+    explainAvailable: () => ipcRenderer.invoke('explain-available', workspacePageToken),
+    askExplain: (input) => ipcRenderer.invoke('ask-explain', input, workspacePageToken),
+    cancelExplain: (requestId) => ipcRenderer.invoke('cancel-explain', requestId, workspacePageToken),
+  } : {}),
+
   saveMarkdown: (request) => ipcRenderer.invoke('save-markdown', request),
   onEditorClose: (callback) => ipcRenderer.on('editor-close-request', () => callback()),
   closeEditorWindow: () => ipcRenderer.send('editor-close-approved'),

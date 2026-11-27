@@ -43,6 +43,13 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private var pendingFile: PendingFile?
     private var pendingError: String?
     private let diagramExports = NativeDiagramExport()
+    private lazy var reader = AppleReaderServices(
+        speechEvent: { [weak self] event in
+            self?.evaluateJavaScript(function: "window.specdownSpeechEvent", arguments: [event], context: "readerSpeech")
+        },
+        explainResult: { [weak self] id, result in
+            self?.evaluateJavaScript(function: "window.specdownExplainResult", arguments: [id, result], context: "askExplain")
+        })
     private(set) var urlInputController: NativeURLInputController?
     private weak var pendingURLInputSource: UIView?
     private var pendingURLInputRect: CGRect?
@@ -112,6 +119,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let data = body["data"] as? [String: Any]
 
         switch action {
+        case "readerSpeech":
+            if let command = body["command"] as? [String: Any] { reader.speech(command) }
+        case "explainAvailable", "askExplain", "cancelExplain":
+            if let data { reader.explain(action: action, data: data) }
         case "openURLInput":
             guard let webView, let data,
                   let x = data["x"] as? Double, let y = data["y"] as? Double,
@@ -158,7 +169,10 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 for operation in activeProviderReads.values { operation.permit.cancel() }
             }
             diagramExports.invalidate(unless: token)
-            if previousToken != token { invalidateImageFolderPicker() }
+            if previousToken != token {
+                reader.reset()
+                invalidateImageFolderPicker()
+            }
             let ids = (data?["openIDs"] as? [String] ?? []).prefix(10).filter { $0.utf8.count <= 128 }
             openSourceIDs = Set(ids)
             pruneSourceURLs()
@@ -242,6 +256,7 @@ final class WebBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     }
 
     func pageWillLoad() {
+        reader.reset()
         urlInputController?.cancel()
         pageLoaded = false
         diagramExports.invalidate(unless: "")

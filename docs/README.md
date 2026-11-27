@@ -11,6 +11,7 @@ Each project gets its own subdirectory:
 
 | Folder | Description |
 |---|---|
+| [project-reader/](project-reader/) | Read Aloud, document explanations and cross-platform qualification |
 | [project-desktop/](project-desktop/) | Electron desktop app — brainstorms, specs, session task checklists |
 | [project-ios/](project-ios/) | iOS & iPad app — brainstorms, specs, session task checklists |
 | [project-url/](project-url/) | URL-based file opening — load markdown from GitHub or any web URL |
